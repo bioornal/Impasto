@@ -1,0 +1,53 @@
+import type { CatalogData } from "@/types";
+
+export const STATIC_DATA: CatalogData = {
+  pizzas: [
+    { id: "p01", nombre: "Margherita", categoria: "clasica", precio: 8900, desc: "Salsa de tomate San Marzano, mozzarella abundante, albahaca fresca y oliva.", tags: ["vegetariana"], popular: true },
+    { id: "p02", nombre: "Napolitana", categoria: "clasica", precio: 9200, desc: "Mozzarella, tomate en rodajas, ajo, oliva y orégano.", tags: ["vegetariana"] },
+    { id: "p03", nombre: "Fugazzetta", categoria: "clasica", precio: 9500, desc: "Mozzarella, cebolla blanca confitada, orégano y aceite de oliva.", tags: ["vegetariana"], popular: true },
+    { id: "p04", nombre: "Jamón y Morrones", categoria: "clasica", precio: 10200, desc: "Mozzarella, jamón cocido natural y morrones asados.", tags: [] },
+    { id: "p05", nombre: "Calabresa", categoria: "clasica", precio: 10800, desc: "Mozzarella, longaniza calabresa, aceitunas verdes y orégano.", tags: ["picante"] },
+    { id: "p06", nombre: "Cuatro Quesos", categoria: "clasica", precio: 11500, desc: "Mozzarella, provolone, parmesano y azul.", tags: ["vegetariana"], popular: true },
+    { id: "p07", nombre: "Anchoas", categoria: "clasica", precio: 10900, desc: "Mozzarella, anchoas del Cantábrico y aceitunas negras.", tags: [] },
+    { id: "p08", nombre: "Especial Impasto", categoria: "gourmet", precio: 13900, desc: "Mozzarella, prosciutto crudo, rúcula, parmesano en láminas y tomate seco.", tags: ["gourmet"], popular: true },
+    { id: "p09", nombre: "Tartufo", categoria: "gourmet", precio: 15200, desc: "Crema de trufa negra, mozzarella, champignones salteados y yema curada.", tags: ["gourmet", "vegetariana"] },
+    { id: "p10", nombre: "Quattro Formaggi al Miele", categoria: "gourmet", precio: 14500, desc: "Mozzarella, gorgonzola, brie, parmesano y miel de caña.", tags: ["gourmet", "vegetariana"] },
+    { id: "p11", nombre: "Diavola", categoria: "gourmet", precio: 13200, desc: "Mozzarella, salame picante, chile calabrés, mozzarella ahumada.", tags: ["gourmet", "picante"] },
+    { id: "p12", nombre: "Parmigiana", categoria: "gourmet", precio: 13500, desc: "Berenjena asada, mozzarella di bufala, parmesano, tomate y albahaca.", tags: ["gourmet", "vegetariana"] },
+    { id: "p13", nombre: "Prosciutto e Rucola", categoria: "gourmet", precio: 14800, desc: "Mozzarella, prosciutto di Parma, rúcula y grana padano.", tags: ["gourmet"] },
+    { id: "p14", nombre: "Pera y Gorgonzola", categoria: "gourmet", precio: 13900, desc: "Mozzarella, gorgonzola dolce, pera laminada, nueces y miel.", tags: ["gourmet", "vegetariana"] },
+    { id: "p15", nombre: "Bresaola", categoria: "gourmet", precio: 15500, desc: "Base blanca, bresaola, rúcula, parmesano, oliva y limón.", tags: ["gourmet"] },
+    { id: "p16", nombre: "Patagónica", categoria: "gourmet", precio: 15900, desc: "Mozzarella, cordero braseado, cebolla morada y chimichurri suave.", tags: ["gourmet"], popular: true },
+    { id: "p17", nombre: "Funghi Porcini", categoria: "gourmet", precio: 14200, desc: "Crema trufada, porcini, mozzarella ahumada y tomillo.", tags: ["gourmet", "vegetariana"] },
+    { id: "p18", nombre: "Capricciosa", categoria: "clasica", precio: 12200, desc: "Mozzarella, jamón, champignones, alcauciles y aceitunas negras.", tags: [] },
+    { id: "p19", nombre: "Vegetariana del Huerto", categoria: "gourmet", precio: 12800, desc: "Zucchini, berenjena, morrones, cebolla morada, pesto y mozzarella.", tags: ["gourmet", "vegetariana"] },
+    { id: "p20", nombre: "Salmón & Burrata", categoria: "gourmet", precio: 17200, desc: "Base blanca, salmón ahumado, burrata, alcaparras, eneldo y limón.", tags: ["gourmet"], popular: true },
+  ],
+  empanadas: [
+    { id: "e01", nombre: "Carne Suave", desc: "Carne cortada a cuchillo, cebolla, huevo, aceituna y comino.", tags: [] },
+    { id: "e02", nombre: "Carne Picante", desc: "Carne cortada a cuchillo con pimentón ahumado y ají molido.", tags: ["picante"] },
+    { id: "e03", nombre: "Jamón y Queso", desc: "Jamón cocido, mozzarella y una pizca de orégano.", tags: [] },
+    { id: "e04", nombre: "Caprese", desc: "Mozzarella, tomate confitado y albahaca.", tags: ["vegetariana"] },
+    { id: "e05", nombre: "Pollo al Verdeo", desc: "Pollo desmenuzado, cebolla de verdeo y crema.", tags: [] },
+    { id: "e06", nombre: "Dulce de Leche", desc: "Dulce de leche repostero con nuez, espolvoreada con azúcar.", tags: ["dulce"] },
+  ],
+  bebidas: [
+    { id: "b01", nombre: "Coca-Cola 1.5L", precio: 3200 },
+    { id: "b02", nombre: "Coca-Cola Zero 1.5L", precio: 3200 },
+    { id: "b03", nombre: "Sprite 1.5L", precio: 3100 },
+    { id: "b04", nombre: "Agua Mineral 500ml", precio: 1800 },
+    { id: "b05", nombre: "Cerveza Artesanal IPA 500ml", precio: 4200 },
+    { id: "b06", nombre: "Vino Malbec Patagónico 750ml", precio: 8900 },
+  ],
+  promos: [
+    { id: "pr01", titulo: "2x1 Martes & Miércoles", desc: "En todas las pizzas clásicas. Solo delivery y take away.", badge: "Promo" },
+    { id: "pr02", titulo: "Combo Familiar", desc: "1 Pizza grande + 12 empanadas + bebida 1.5L a $24.900", badge: "Combo" },
+    { id: "pr03", titulo: "Docena + Bebida", desc: "12 empanadas saladas + gaseosa 1.5L a $15.900", badge: "Docena" },
+  ],
+  reviews: [
+    { nombre: "María L.", texto: "La mejor fugazzetta de Neuquén, masa perfecta y sabor único.", rating: 5 },
+    { nombre: "Joaquín P.", texto: "Las empanadas de carne cortada a cuchillo son de otro nivel. Recomendado 100%.", rating: 5 },
+    { nombre: "Carolina S.", texto: "Pedí la Patagónica y la Tartufo, las dos espectaculares. Llegó calentita.", rating: 5 },
+    { nombre: "Diego R.", texto: "Atención impecable y sabor artesanal real. Ya soy cliente fijo.", rating: 5 },
+  ],
+};

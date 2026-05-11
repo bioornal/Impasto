@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(taskkill /PID 20164 /F)",
+      "PowerShell(Stop-Process -Id 20164 -Force)",
+      "Read(//c/Users/spezi/Desktop/design_handoff_impasto/**)"
+    ]
+  }
+}
