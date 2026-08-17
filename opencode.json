@@ -1,0 +1,16 @@
+{
+  "mcp": {
+    "insforge": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@insforge/mcp@latest"
+      ],
+        "environment": {
+          "API_KEY": "{env:INSFORGE_API_KEY}",
+          "API_BASE_URL": "{env:INSFORGE_API_BASE_URL}"
+        }
+    }
+  }
+}

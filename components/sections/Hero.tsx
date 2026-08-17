@@ -10,7 +10,7 @@ export function Hero({ onCta }: { onCta: (n: string) => void }) {
         <div>
           <div className="eyebrow">Pizza híbrida · desde 2018</div>
           <h1>Pizza <em>híbrida</em>, al gusto argentino.</h1>
-          <p className="hero-lede">Inspirada en la napoletana pero más crocante, con fermentación lenta de 48 horas y mozzarella abundante. Hecha en Neuquén para vos.</p>
+          <p className="hero-lede">Inspirada en la napoletana pero más crocante, con fermentación lenta de 48 horas y mozzarella abundante. Hecha en Puerto Iguazú para vos.</p>
           <div className="hero-ctas">
             <button className="btn btn-primary btn-lg" onClick={() => onCta("pizzas")}>Pedir ahora</button>
             <button className="btn btn-ghost btn-lg" onClick={() => onCta("empanadas")}>Ver empanadas</button>
@@ -23,7 +23,7 @@ export function Hero({ onCta }: { onCta: (n: string) => void }) {
         </div>
         <div className="hero-visual" aria-hidden>
           <div className="plate" />
-          <div className="stamp"><div><b>2×1</b><span>Mar · Mié</span></div></div>
+          <div className="stamp"><div><b>48h</b><span>fermentación</span></div></div>
           <div className="hero-badge">
             <div>
               <div className="hero-badge-stars">★★★★★</div>

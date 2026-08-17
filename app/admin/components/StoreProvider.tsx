@@ -1,13 +1,14 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { AdminState, AdminProduct, Testimonial } from "./types";
+import { DELIVERY_FEE } from "@/lib/business";
 
 const TESTI_KEY = "impasto_testimonials_v2";
 
 function defaultTestimonials(): Testimonial[] {
   const h = (hrs: number) => new Date(Date.now() - hrs * 3600000).toISOString();
   return [
-    { id: "t01", nombre: "María L.", texto: "La mejor fugazzetta de Neuquén, masa perfecta y sabor único.", rating: 5, estado: "aprobado", fecha: h(48) },
+    { id: "t01", nombre: "María L.", texto: "La mejor fugazzetta de Iguazú, masa perfecta y sabor único.", rating: 5, estado: "aprobado", fecha: h(48) },
     { id: "t02", nombre: "Joaquín P.", texto: "Las empanadas de carne cortada a cuchillo son de otro nivel. Recomendado 100%.", rating: 5, estado: "aprobado", fecha: h(72) },
     { id: "t03", nombre: "Carolina S.", texto: "Pedí la Patagónica y la Tartufo, las dos espectaculares. Llegó calentita.", rating: 5, estado: "aprobado", fecha: h(96) },
     { id: "t04", nombre: "Valentina R.", texto: "Excelente atención y la pizza llegó rapidísimo. La Diavola es adictiva.", rating: 5, estado: "pendiente", fecha: h(2) },
@@ -29,7 +30,8 @@ function saveTestimonials(list: Testimonial[]) {
 /* ── adaptadores InsForge → admin ── */
 function adaptProduct(p: Record<string, unknown>): AdminProduct {
   const nombre = String(p.nombre || "");
-  const type = (p.tipo as string) || (Number(p.precio) === 0 ? "empanada" : "pizza");
+  const category = String(p.categoria || "").toLowerCase();
+  const type = category.includes("empan") ? "empanada" : category.includes("bebida") ? "bebida" : (p.tipo as string) || "pizza";
   return {
     _dbId: String(p.id),
     id: String(p.id),
@@ -47,6 +49,8 @@ function adaptProduct(p: Record<string, unknown>): AdminProduct {
 
 function adaptOrder(p: Record<string, unknown>) {
   const isDelivery = p.direccion && p.direccion !== "Retiro en local";
+  const total = Number(p.total || 0);
+  const shipping = isDelivery ? DELIVERY_FEE : 0;
   const items = Array.isArray(p.productos)
     ? p.productos.map((i: Record<string, unknown>) => ({ name: String(i.name || i.nombre || "?"), qty: Number(i.qty || i.cantidad || 1), price: Number(i.price || i.precio || 0) }))
     : [];
@@ -60,20 +64,21 @@ function adaptOrder(p: Record<string, unknown>) {
     dir: isDelivery ? String(p.direccion || "") : "",
     zona: "",
     items,
-    subtotal: Number(p.total_con_descuento || p.total || 0),
-    shipping: 0,
-    total: Number(p.total || 0),
+    subtotal: Math.max(0, Number(p.total_con_descuento || total) - shipping),
+    shipping,
+    total,
     pago: "n/d",
-    estado: String(p.status || "nuevo"),
+    estado: String(p.status || "nuevo") === "normal" ? "nuevo" : String(p.status || "nuevo"),
     fecha: String(p.created_at || new Date().toISOString()),
     notas: "",
   };
 }
 
 function adaptCustomer(c: Record<string, unknown>) {
+  const id = String(c.id || c.telefono || "");
   return {
-    _dbId: String(c.id),
-    id: String(c.id),
+    _dbId: id,
+    id,
     nombre: String(c.nombre || "—"),
     tel: String(c.telefono || "—"),
     email: String(c.email || ""),
@@ -86,17 +91,31 @@ function adaptCustomer(c: Record<string, unknown>) {
   };
 }
 
+function adaptTestimonial(t: Record<string, unknown>): Testimonial {
+  return {
+    id: String(t.id),
+    nombre: String(t.nombre || "Cliente"),
+    texto: String(t.texto || ""),
+    rating: Number(t.rating || 5),
+    estado: (String(t.estado || "pendiente") as Testimonial["estado"]),
+    fecha: String(t.created_at || t.updated_at || new Date().toISOString()),
+  };
+}
+
 async function loadAll() {
   const [prodRes, pedRes, cliRes] = await Promise.all([
     fetch("/api/admin/productos").then(r => r.json()).catch(() => ({ data: [] })),
     fetch("/api/admin/pedidos").then(r => r.json()).catch(() => ({ data: [] })),
     fetch("/api/admin/clientes").then(r => r.json()).catch(() => ({ data: [] })),
   ]);
+  const testiRes = await fetch("/api/admin/testimonios").then(r => r.json()).catch(() => ({ data: [] }));
   return {
-    products: (prodRes.data || []).map(adaptProduct),
+    products: (prodRes.data || []).filter((p: Record<string, unknown>) => ["pizzas", "empanadas", "bebidas"].includes(String(p.categoria || "").toLowerCase())).map(adaptProduct),
     orders: (pedRes.data || []).map(adaptOrder),
     customers: (cliRes.data || []).map(adaptCustomer),
-    testimonials: loadTestimonials(),
+    testimonials: Array.isArray(testiRes.data) && testiRes.data.length > 0
+      ? testiRes.data.map(adaptTestimonial)
+      : loadTestimonials(),
   };
 }
 
@@ -109,8 +128,8 @@ interface StoreCtx {
   createProduct: (p: Partial<AdminProduct>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   updateOrderStatus: (id: string, estado: string) => Promise<void>;
-  updateTestimonial: (id: string, estado: string) => void;
-  deleteTestimonial: (id: string) => void;
+  updateTestimonial: (id: string, estado: string) => Promise<void>;
+  deleteTestimonial: (id: string) => Promise<void>;
   reset: () => Promise<void>;
 }
 
@@ -172,13 +191,31 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (patch.nombre !== undefined) body.nombre = patch.nombre;
         if (patch.precio !== undefined) body.precio = patch.precio;
         if (patch.active !== undefined) body.disponible = patch.active;
+        if (patch.type !== undefined) body.tipo = patch.type;
+        if (patch.categoria !== undefined) body.categoria = patch.categoria;
+        if (patch.desc !== undefined) body.desc = patch.desc;
+        if (patch.tags !== undefined) body.tags = patch.tags;
+        if (patch.popular !== undefined) body.popular = patch.popular;
         await fetch(`/api/admin/productos/${prod._dbId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       }
       showToast("Producto actualizado");
     },
 
     createProduct: async (p) => {
-      await fetch("/api/admin/productos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre: p.nombre, precio: p.precio || 0, disponible: true }) });
+      await fetch("/api/admin/productos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: p.nombre,
+          precio: p.precio || 0,
+          disponible: p.active !== false,
+          tipo: p.type || "pizza",
+          categoria: p.categoria || "pizzas",
+          desc: p.desc || "",
+          tags: p.tags || [],
+          popular: Boolean(p.popular),
+        }),
+      });
       await load();
       showToast("Producto creado");
     },
@@ -197,17 +234,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       showToast(`Pedido ${id} → ${estado}`);
     },
 
-    updateTestimonial: (id, estado) => {
+    updateTestimonial: async (id, estado) => {
       const next = stateRef.current.testimonials.map(t => t.id === id ? { ...t, estado: estado as Testimonial["estado"] } : t);
       setState(s => ({ ...s, testimonials: next }));
-      saveTestimonials(next);
+      const response = await fetch(`/api/admin/testimonios/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado }),
+      }).catch(() => null);
+      if (!response?.ok) saveTestimonials(next);
       showToast("Testimonio actualizado");
     },
 
-    deleteTestimonial: (id) => {
+    deleteTestimonial: async (id) => {
       const next = stateRef.current.testimonials.filter(t => t.id !== id);
       setState(s => ({ ...s, testimonials: next }));
-      saveTestimonials(next);
+      const response = await fetch(`/api/admin/testimonios/${id}`, { method: "DELETE" }).catch(() => null);
+      if (!response?.ok) saveTestimonials(next);
       showToast("Testimonio eliminado");
     },
 

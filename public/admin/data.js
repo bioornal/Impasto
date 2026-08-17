@@ -1,4 +1,4 @@
-// Catálogo Impasto - Neuquén Capital
+// Catálogo Impasto - Puerto Iguazú
 window.IMPASTO_DATA = {
   pizzas: [
     { id: 'p01', nombre: 'Margherita', categoria: 'clasica', precio: 8900, desc: 'Salsa de tomate San Marzano, mozzarella abundante, albahaca fresca y oliva.', tags: ['vegetariana'], popular: true },
@@ -44,7 +44,7 @@ window.IMPASTO_DATA = {
     { id: 'pr03', titulo: 'Docena + Bebida', desc: '12 empanadas saladas + gaseosa 1.5L a $15.900', badge: 'Docena' },
   ],
   reviews: [
-    { nombre: 'María L.', texto: 'La mejor fugazzetta de Neuquén, masa perfecta y sabor único.', rating: 5 },
+    { nombre: 'María L.', texto: 'La mejor fugazzetta de Iguazú, masa perfecta y sabor único.', rating: 5 },
     { nombre: 'Joaquín P.', texto: 'Las empanadas de carne cortada a cuchillo son de otro nivel. Recomendado 100%.', rating: 5 },
     { nombre: 'Carolina S.', texto: 'Pedí la Patagónica y la Tartufo, las dos espectaculares. Llegó calentita.', rating: 5 },
     { nombre: 'Diego R.', texto: 'Atención impecable y sabor artesanal real. Ya soy cliente fijo.', rating: 5 },

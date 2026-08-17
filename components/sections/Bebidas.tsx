@@ -5,6 +5,7 @@ import type { Bebida } from "@/types";
 
 export function Bebidas({ bebidas }: { bebidas: Bebida[] }) {
   const { add } = useCart();
+  if (bebidas.length === 0) return null;
   return (
     <section className="section" id="bebidas">
       <div className="container">

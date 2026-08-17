@@ -11,6 +11,7 @@ export interface Pizza {
 export interface Empanada {
   id: string;
   nombre: string;
+  precio?: number;
   desc: string;
   tags: string[];
 }
@@ -38,6 +39,7 @@ export interface CatalogData {
   pizzas: Pizza[];
   empanadas: Empanada[];
   bebidas: Bebida[];
+  empanadaBoxPrices: Record<6 | 12 | 24, number>;
   promos: Promo[];
   reviews: Review[];
 }
@@ -52,4 +54,7 @@ export interface CartItem {
   qty: number;
   illus?: string;
   unique?: boolean;
+  variant?:
+    | { kind: "half"; ids: [string, string] }
+    | { kind: "empanadas-box"; size: 6 | 12 | 24; selections: Record<string, number> };
 }

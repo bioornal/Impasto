@@ -8,6 +8,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (body.nombre !== undefined) fields.nombre = body.nombre;
   if (body.precio !== undefined) fields.precio = parseInt(body.precio);
   if (body.disponible !== undefined) fields.disponible = !!body.disponible;
+  if (body.tipo !== undefined) fields.tipo = body.tipo;
+  if (body.categoria !== undefined) fields.categoria = body.categoria;
+  if (body.desc !== undefined) fields.desc = body.desc;
+  if (body.tags !== undefined) fields.tags = Array.isArray(body.tags) ? body.tags : [];
+  if (body.popular !== undefined) fields.popular = !!body.popular;
   const { data, error } = await db.database.from("productos").update(fields).eq("id", id);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, data });

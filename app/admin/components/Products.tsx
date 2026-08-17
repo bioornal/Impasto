@@ -94,7 +94,7 @@ export function Products() {
 }
 
 function ProductEdit({ product, onClose, onSave, isNew }: { product?: AdminProduct; onClose: () => void; onSave: (p: Partial<AdminProduct>) => void; isNew?: boolean }) {
-  const [data, setData] = useState<Partial<AdminProduct>>(product || { type: "pizza", nombre: "", desc: "", precio: 0, categoria: "clasica", stock: 0, tags: [], active: true, popular: false });
+  const [data, setData] = useState<Partial<AdminProduct>>(product || { type: "pizza", nombre: "", desc: "", precio: 0, categoria: "pizzas", stock: 0, tags: [], active: true, popular: false });
   const set = <K extends keyof AdminProduct>(k: K, v: AdminProduct[K]) => setData(d => ({ ...d, [k]: v }));
   const toggleTag = (t: string) => set("tags", (data.tags || []).includes(t) ? (data.tags || []).filter(x => x !== t) : [...(data.tags || []), t]);
 
@@ -120,8 +120,8 @@ function ProductEdit({ product, onClose, onSave, isNew }: { product?: AdminProdu
             {data.type === "pizza" && (
               <div className="field">
                 <label>Categoría</label>
-                <select value={data.categoria || "clasica"} onChange={e => set("categoria", e.target.value)}>
-                  <option value="clasica">Clásica</option><option value="gourmet">Gourmet</option>
+               <select value={data.categoria || "pizzas"} onChange={e => set("categoria", e.target.value)}>
+                 <option value="pizzas">Pizzas</option><option value="empanadas">Empanadas</option><option value="bebidas">Bebidas</option>
                 </select>
               </div>
             )}

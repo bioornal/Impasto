@@ -1,14 +1,15 @@
 "use client";
 import { useCart } from "@/components/providers/CartProvider";
+import type { BusinessConfig } from "@/lib/business";
 
-function Topbar() {
+function Topbar({ business }: { business: BusinessConfig }) {
   return (
     <div className="topbar">
       <div className="container topbar-inner">
-        <div><span className="dot" />Abierto hoy · 19:30 a 00:00</div>
+        <div><span className="dot" />{business.hours}</div>
         <div className="topbar-links">
-          <span>Neuquén Capital</span>
-          <span>(0299) 555-0184</span>
+          <span>{business.locationLabel}</span>
+          <span>{business.phone}</span>
           <span>WhatsApp</span>
         </div>
       </div>
@@ -20,21 +21,22 @@ interface HeaderProps {
   onCartClick: () => void;
   onNav: (n: string) => void;
   current: string;
+  business: BusinessConfig;
 }
 
-export function Header({ onCartClick, onNav, current }: HeaderProps) {
+export function Header({ onCartClick, onNav, current, business }: HeaderProps) {
   const { count } = useCart();
   return (
     <>
-      <Topbar />
+      <Topbar business={business} />
       <header className="header">
         <div className="container header-inner">
           <button className="logo" onClick={() => onNav("home")} style={{ background: "none", border: "none", cursor: "pointer" }}>
             <div className="logo-mark">I</div>
-            <div>Impasto<small>pizza híbrida · neuquén</small></div>
+            <div>Impasto<small>pizza híbrida · iguazú</small></div>
           </button>
           <nav className="nav">
-            {["home", "pizzas", "empanadas", "bebidas"].map((n) => (
+            {["home", "pizzas", "empanadas"].map((n) => (
               <button key={n} className={current === n ? "active" : ""} onClick={() => onNav(n)} style={{ background: "none", border: "none", cursor: "pointer" }}>
                 {n === "home" ? "Inicio" : n.charAt(0).toUpperCase() + n.slice(1)}
               </button>

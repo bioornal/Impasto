@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 
@@ -31,7 +32,8 @@ export function Topbar({ title, subtitle, onMenu, right }: { title: string; subt
 
 export function Dashboard() {
   const { state } = useStore();
-  const today = state.orders.filter(o => (Date.now() - new Date(o.fecha).getTime()) < 86400000);
+  const [now] = useState(() => Date.now());
+  const today = state.orders.filter(o => (now - new Date(o.fecha).getTime()) < 86400000);
   const todayRevenue = today.filter(o => o.estado !== "cancelado").reduce((s, o) => s + o.total, 0);
   const activeOrders = state.orders.filter(o => ["nuevo", "preparando", "en-camino"].includes(o.estado)).length;
   const avgTicket = state.orders.length ? state.orders.reduce((s, o) => s + o.total, 0) / state.orders.length : 0;

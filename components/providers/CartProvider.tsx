@@ -18,17 +18,42 @@ const CartCtx = createContext<CartCtx | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("impasto_cart") || "[]");
-      if (stored.length > 0) setItems(stored);
-    } catch {}
+    fetch("/api/cart/draft")
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok || !result.ok) throw new Error(result.error || "Borrador no disponible");
+        if (Array.isArray(result.items) && result.items.length > 0) {
+          setItems(result.items);
+          return;
+        }
+        const stored = JSON.parse(localStorage.getItem("impasto_cart") || "[]");
+        if (Array.isArray(stored) && stored.length > 0) setItems(stored);
+      })
+      .catch(() => {
+        try {
+          const stored = JSON.parse(localStorage.getItem("impasto_cart") || "[]");
+          if (Array.isArray(stored) && stored.length > 0) setItems(stored);
+        } catch {}
+      })
+      .finally(() => setReady(true));
   }, []);
 
   useEffect(() => {
+    if (!ready) return;
     localStorage.setItem("impasto_cart", JSON.stringify(items));
-  }, [items]);
+    if (items.length === 0) {
+      fetch("/api/cart/draft", { method: "DELETE" }).catch(() => {});
+      return;
+    }
+    fetch("/api/cart/draft", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items }),
+    }).catch(() => {});
+  }, [items, ready]);
 
   const add = (item: Omit<CartItem, "cartId">) =>
     setItems((prev) => {

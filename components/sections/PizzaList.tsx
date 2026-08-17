@@ -7,8 +7,7 @@ import { fmt } from "@/lib/utils";
 import type { Pizza } from "@/types";
 
 const filters: [string, string][] = [
-  ["todas", "Todas"], ["clasica", "Clásicas"], ["gourmet", "Gourmet"],
-  ["vegetariana", "Vegetarianas"], ["picante", "Picantes"],
+  ["todas", "Todas"],
 ];
 
 interface PizzaListProps {

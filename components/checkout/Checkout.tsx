@@ -1,31 +1,61 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/components/providers/CartProvider";
 import { fmt } from "@/lib/utils";
+import type { BusinessConfig } from "@/lib/business";
+import type { CartItem } from "@/types";
 
-interface CheckoutData {
-  mode: string; nombre: string; tel: string; dir: string; zona: string;
+export interface CheckoutData {
+  mode: "delivery" | "takeaway"; nombre: string; tel: string; dir: string;
   ref: string; pago: string; cambio: string; notas: string;
+}
+
+export interface CheckoutOrder extends CheckoutData {
+  items: CartItem[];
 }
 
 interface CheckoutProps {
   onClose: () => void;
-  onConfirm: (order: CheckoutData & { items: unknown[]; subtotal: number; shipping: number; total: number; numero: string; fecha: Date }) => void;
+  onConfirm: (order: CheckoutOrder) => Promise<void>;
+  business: BusinessConfig;
 }
 
-const shippingByZone: Record<string, number> = {
-  "capital-centro": 3000, "capital-oeste": 4000, "capital-este": 4500, "capital-norte": 5000, "fuera-capital": 6000,
-};
-
-export function Checkout({ onClose, onConfirm }: CheckoutProps) {
-  const { items, subtotal } = useCart();
+export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
+  const { items, subtotal: localSubtotal } = useCart();
   const [step, setStep] = useState(1);
-  const [data, setData] = useState<CheckoutData>({ mode: "delivery", nombre: "", tel: "", dir: "", zona: "capital-centro", ref: "", pago: "mercadopago", cambio: "", notas: "" });
+  const [data, setData] = useState<CheckoutData>({ mode: "delivery", nombre: "", tel: "", dir: "", ref: "", pago: "efectivo", cambio: "", notas: "" });
   const [errors, setErrors] = useState<Partial<CheckoutData>>({});
+  const [quote, setQuote] = useState<{ key: string; items: CartItem[]; subtotal: number; shipping: number; total: number } | null>(null);
+  const [quoteError, setQuoteError] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const quoteKey = JSON.stringify({ items, mode: data.mode });
 
-  const shipping = data.mode === "delivery" ? shippingByZone[data.zona] : 0;
-  const total = subtotal + shipping;
-  const set = (k: keyof CheckoutData, v: string) => setData((d) => ({ ...d, [k]: v }));
+  useEffect(() => {
+    let active = true;
+    fetch("/api/orders/quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items, mode: data.mode }),
+    })
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok || !result.ok) throw new Error(result.error || "No se pudo actualizar el total");
+        if (active) {
+          setQuote({ key: quoteKey, items: result.items, subtotal: result.subtotal, shipping: result.shipping, total: result.total });
+          setQuoteError("");
+        }
+      })
+      .catch(() => { if (active) { setQuote(null); setQuoteError("No se pudo actualizar el total. Intentá nuevamente."); } });
+    return () => { active = false; };
+  }, [data.mode, items, quoteKey]);
+
+  const quoteLoading = quote?.key !== quoteKey;
+  const subtotal = quoteLoading ? localSubtotal : (quote?.subtotal ?? localSubtotal);
+  const shipping = quoteLoading ? (data.mode === "delivery" ? business.deliveryFee : 0) : (quote?.shipping ?? 0);
+  const total = quoteLoading ? subtotal + shipping : (quote?.total ?? subtotal + shipping);
+  const lineItems = quoteLoading || !quote?.items.length ? items : quote.items;
+  const set = <K extends keyof CheckoutData>(k: K, v: CheckoutData[K]) => setData((d) => ({ ...d, [k]: v }));
 
   const validateStep1 = () => {
     const e: Partial<CheckoutData> = {};
@@ -37,7 +67,17 @@ export function Checkout({ onClose, onConfirm }: CheckoutProps) {
   };
 
   const next = () => { if (step === 1 && !validateStep1()) return; setStep(step + 1); };
-  const pay = () => onConfirm({ ...data, items: [...items], subtotal, shipping, total, numero: "IM-" + Math.floor(Math.random() * 9000 + 1000), fecha: new Date() });
+  const pay = async () => {
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      await onConfirm({ ...data, items: [...items] });
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "No se pudo registrar el pedido");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="checkout-screen">
@@ -75,8 +115,8 @@ export function Checkout({ onClose, onConfirm }: CheckoutProps) {
                     {errors.nombre && <span className="err">{errors.nombre}</span>}
                   </div>
                   <div className={`field ${errors.tel ? "error" : ""}`}>
-                    <label>Teléfono</label>
-                    <input value={data.tel} onChange={(e) => set("tel", e.target.value)} placeholder="299 555 1234" />
+                      <label>Teléfono</label>
+                      <input value={data.tel} onChange={(e) => set("tel", e.target.value)} placeholder="3757 555 1234" />
                     {errors.tel && <span className="err">{errors.tel}</span>}
                   </div>
                 </div>
@@ -87,20 +127,14 @@ export function Checkout({ onClose, onConfirm }: CheckoutProps) {
                   <div className="form-row">
                     <div className={`field ${errors.dir ? "error" : ""}`} style={{ gridColumn: "1 / -1" }}>
                       <label>Calle y altura</label>
-                      <input value={data.dir} onChange={(e) => set("dir", e.target.value)} placeholder="Av. Argentina 1234, Piso 2 Dto. B" />
+                      <input value={data.dir} onChange={(e) => set("dir", e.target.value)} placeholder="Calle, altura y referencias" />
                       {errors.dir && <span className="err">{errors.dir}</span>}
                     </div>
                   </div>
                   <div className="form-row">
                     <div className="field">
-                      <label>Zona</label>
-                      <select value={data.zona} onChange={(e) => set("zona", e.target.value)}>
-                        <option value="capital-centro">Capital · Centro ({fmt(3000)})</option>
-                        <option value="capital-oeste">Capital · Oeste ({fmt(4000)})</option>
-                        <option value="capital-este">Capital · Este ({fmt(4500)})</option>
-                        <option value="capital-norte">Capital · Norte ({fmt(5000)})</option>
-                        <option value="fuera-capital">Fuera de capital ({fmt(6000)})</option>
-                      </select>
+                      <label>Envío</label>
+                      <input value={`Tarifa única · ${fmt(business.deliveryFee)}`} readOnly />
                     </div>
                     <div className="field">
                       <label>Referencia (opcional)</label>
@@ -125,7 +159,7 @@ export function Checkout({ onClose, onConfirm }: CheckoutProps) {
               <div className="form-section">
                 <h4>Método de pago</h4>
                 <div className="radio-row" style={{ flexDirection: "column" }}>
-                  {([ ["mercadopago", "Mercado Pago", "Pago online seguro"], ["tarjeta", "Tarjeta de débito/crédito", "Al momento de la entrega con POS"], ["efectivo", "Efectivo", "Pagás al recibir el pedido"], ["transferencia", "Transferencia bancaria", "Te enviamos CBU al confirmar"] ] as [string,string,string][]).map(([k, t, s]) => (
+                  {([ ["tarjeta", "Tarjeta de débito/crédito", "Al momento de la entrega con POS"], ["efectivo", "Efectivo", "Pagás al recibir el pedido"], ["transferencia", "Transferencia bancaria", "Te enviamos CBU al confirmar"] ] as [string,string,string][]).map(([k, t, s]) => (
                     <div key={k} className={`radio-card ${data.pago === k ? "active" : ""}`} onClick={() => set("pago", k)}><b>{t}</b><small>{s}</small></div>
                   ))}
                 </div>
@@ -137,22 +171,26 @@ export function Checkout({ onClose, onConfirm }: CheckoutProps) {
               </div>
               <div style={{ display: "flex", gap: 10 }}>
                 <button className="btn btn-light" onClick={() => setStep(1)}>← Atrás</button>
-                <button className="btn btn-primary btn-lg" style={{ flex: 1 }} onClick={pay}>Confirmar pedido · {fmt(total)}</button>
+                <button className="btn btn-primary btn-lg" style={{ flex: 1 }} onClick={pay} disabled={submitting || quoteLoading || Boolean(quoteError)}>
+                  {submitting ? "Registrando pedido…" : quoteLoading ? "Actualizando total…" : `Confirmar pedido · ${fmt(total)}`}
+                </button>
               </div>
+              {quoteError && <div className="field err" style={{ marginTop: 12 }}>{quoteError}</div>}
+              {submitError && <div className="field err" style={{ marginTop: 12 }}>{submitError}</div>}
             </>
           )}
         </div>
 
         <aside className="summary">
           <h4>Resumen</h4>
-          {items.map((i) => (
+           {lineItems.map((i) => (
             <div className="line" key={i.cartId}><span>{i.qty}× {i.name}</span><span>{fmt(i.price * i.qty)}</span></div>
           ))}
           <div className="line"><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
           <div className="line"><span>Envío {data.mode === "takeaway" ? "(take away)" : ""}</span><span>{shipping === 0 ? "—" : fmt(shipping)}</span></div>
           <div className="tot-row big"><span>Total</span><span>{fmt(total)}</span></div>
           <div style={{ marginTop: 16, padding: 12, background: "var(--bg-2)", borderRadius: 8, fontSize: 12, color: "var(--muted)" }}>
-            {data.mode === "delivery" ? "El envío lo realiza una empresa externa. Tiempo estimado: 30-40 min." : "Retiro en Av. Argentina 875, Neuquén Capital. Listo en 20 min."}
+             {data.mode === "delivery" ? `Envío con tarifa única de ${fmt(business.deliveryFee)}. Tiempo estimado: 30-40 min.` : `Retiro en ${business.address}, ${business.city}. Listo en 20 min.`}
           </div>
         </aside>
       </div>

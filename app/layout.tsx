@@ -3,8 +3,8 @@ import "./globals.css";
 import "./impasto.css";
 
 export const metadata: Metadata = {
-  title: "Impasto · Pizzas y Empanadas · Neuquén Capital",
-  description: "Pizza híbrida argentina con fermentación lenta de 48 horas. Delivery y take away en Neuquén Capital.",
+  title: "Impasto · Pizzas y Empanadas · Puerto Iguazú",
+  description: "Pizza híbrida argentina con fermentación lenta de 48 horas. Delivery y take away en Puerto Iguazú.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

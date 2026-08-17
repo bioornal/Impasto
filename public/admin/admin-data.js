@@ -83,7 +83,7 @@
   function defaultTestimonials() {
     const h = (hrs) => new Date(Date.now() - hrs * 3600000).toISOString();
     return [
-      { id: 't01', nombre: 'María L.', texto: 'La mejor fugazzetta de Neuquén, masa perfecta y sabor único.', rating: 5, estado: 'aprobado', fecha: h(48) },
+      { id: 't01', nombre: 'María L.', texto: 'La mejor fugazzetta de Iguazú, masa perfecta y sabor único.', rating: 5, estado: 'aprobado', fecha: h(48) },
       { id: 't02', nombre: 'Joaquín P.', texto: 'Las empanadas de carne cortada a cuchillo son de otro nivel. Recomendado 100%.', rating: 5, estado: 'aprobado', fecha: h(72) },
       { id: 't03', nombre: 'Carolina S.', texto: 'Pedí la Patagónica y la Tartufo, las dos espectaculares. Llegó calentita.', rating: 5, estado: 'aprobado', fecha: h(96) },
       { id: 't04', nombre: 'Valentina R.', texto: 'Excelente atención y la pizza llegó rapidísimo. La Diavola es adictiva.', rating: 5, estado: 'pendiente', fecha: h(2) },

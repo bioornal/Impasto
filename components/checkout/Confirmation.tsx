@@ -1,5 +1,6 @@
 "use client";
 import { fmt } from "@/lib/utils";
+import type { BusinessConfig } from "@/lib/business";
 
 interface Order {
   numero: string;
@@ -11,7 +12,7 @@ interface Order {
   pago: string;
 }
 
-export function Confirmation({ order, onClose }: { order: Order; onClose: () => void }) {
+export function Confirmation({ order, onClose, business }: { order: Order; onClose: () => void; business: BusinessConfig }) {
   return (
     <div className="confirm-screen">
       <div className="confirm-card modern">
@@ -24,8 +25,8 @@ export function Confirmation({ order, onClose }: { order: Order; onClose: () => 
             </div>
           </div>
           <div className="confirm-order-num">{order.numero}</div>
-          <h2>Pedido en camino, {order.nombre.split(" ")[0]}</h2>
-          <p>{order.mode === "delivery" ? "Estamos amasando tu pizza. En breve sale para tu casa." : "Estamos amasando tu pizza. Pasá en 20 min por el local."}</p>
+          <h2>Pedido recibido, {order.nombre.split(" ")[0]}</h2>
+          <p>{order.mode === "delivery" ? "Ya tomamos tu pedido. En breve empezamos a prepararlo." : "Ya tomamos tu pedido. Podés pasar en aproximadamente 20 min."}</p>
         </div>
         <div className="confirm-eta">
           <div className="eta-bar">
@@ -38,7 +39,7 @@ export function Confirmation({ order, onClose }: { order: Order; onClose: () => 
           </div>
           <div className="eta-time">
             <div><small>Tiempo estimado</small><b>{order.mode === "delivery" ? "30-40 min" : "20 min"}</b></div>
-            <div style={{ textAlign: "right" }}><small>Total abonado</small><b>{fmt(order.total)}</b></div>
+            <div style={{ textAlign: "right" }}><small>Total del pedido</small><b>{fmt(order.total)}</b></div>
           </div>
         </div>
         <div className="confirm-details">
@@ -49,7 +50,7 @@ export function Confirmation({ order, onClose }: { order: Order; onClose: () => 
                 : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
               }
             </div>
-            <div><small>{order.mode === "delivery" ? "Entregamos en" : "Retirás en"}</small><b>{order.mode === "delivery" ? order.dir : "Av. Argentina 875"}</b></div>
+             <div><small>{order.mode === "delivery" ? "Entregamos en" : "Retirás en"}</small><b>{order.mode === "delivery" ? order.dir : business.address}</b></div>
           </div>
           <div className="cd-row">
             <div className="cd-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
@@ -62,7 +63,7 @@ export function Confirmation({ order, onClose }: { order: Order; onClose: () => 
         </div>
         <div className="confirm-actions">
           <button className="btn btn-light" onClick={onClose}>Seguir explorando</button>
-          <a className="btn btn-primary" href="https://wa.me/542995550184" target="_blank" rel="noreferrer">
+            <a className="btn btn-primary" href={`https://wa.me/${business.whatsappPhone}`} target="_blank" rel="noreferrer">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: 6 }}><path d="M12.04 2a10 10 0 0 0-8.56 15.1L2 22l5.05-1.32A10 10 0 1 0 12.04 2Z"/></svg>
             Abrir WhatsApp
           </a>

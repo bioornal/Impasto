@@ -4,13 +4,19 @@ import { useCart } from "@/components/providers/CartProvider";
 import { fmt } from "@/lib/utils";
 import type { Empanada } from "@/types";
 
-const tiers: Record<number, number> = { 6: 8400, 12: 15900, 24: 30500 };
-
-export function EmpanadasSection({ empanadas }: { empanadas: Empanada[] }) {
+export function EmpanadasSection({ empanadas, boxPrices }: { empanadas: Empanada[]; boxPrices: Record<6 | 12 | 24, number> }) {
   const { add } = useCart();
   const [selection, setSelection] = useState<Record<string, number>>({});
   const [tier, setTier] = useState(6);
   const totalSelected = Object.values(selection).reduce((a, b) => a + b, 0);
+  const hasUnitPrices = empanadas.some((empanada) => Number(empanada.precio) > 0);
+  const priceForSelection = (currentSelection: Record<string, number>, size: number) => {
+    if (!hasUnitPrices) return boxPrices[size as 6 | 12 | 24];
+    return Object.entries(currentSelection).reduce((sum, [id, amount]) => {
+      const empanada = empanadas.find((item) => item.id === id);
+      return sum + Number(empanada?.precio || 0) * amount;
+    }, 0);
+  };
 
   const pick = (id: string, delta: number) =>
     setSelection((prev) => {
@@ -28,7 +34,16 @@ export function EmpanadasSection({ empanadas }: { empanadas: Empanada[] }) {
       const e = empanadas.find((x) => x.id === id);
       return `${q}× ${e?.nombre}`;
     }).join(", ");
-    add({ key: `emp-${tier}-${Date.now()}`, unique: true, type: "empanadas", name: `Docena x${tier}`, detail: names, price: tiers[tier], qty: 1 });
+    add({
+      key: `emp-${tier}-${Object.keys(selection).sort().join("-")}`,
+      unique: true,
+      type: "empanadas",
+      name: `Caja x${tier}`,
+      detail: names,
+      price: priceForSelection(selection, tier),
+      qty: 1,
+      variant: { kind: "empanadas-box", size: tier as 6 | 12 | 24, selections: selection },
+    });
     setSelection({});
   };
 
@@ -51,7 +66,7 @@ export function EmpanadasSection({ empanadas }: { empanadas: Empanada[] }) {
           <div className="dozen-controls">
             {[6, 12, 24].map((t) => (
               <button key={t} className={`btn btn-sm ${tier === t ? "btn-primary" : "btn-light"}`} onClick={() => { setTier(t); setSelection({}); }}>
-                x{t} · {fmt(tiers[t])}
+                 x{t} · {hasUnitPrices ? "por variedad" : fmt(boxPrices[t as 6 | 12 | 24])}
               </button>
             ))}
           </div>
@@ -82,7 +97,7 @@ export function EmpanadasSection({ empanadas }: { empanadas: Empanada[] }) {
         <div className="dozen-bar">
           <div>
             <h4>Tu caja x{tier}</h4>
-            <small>{totalSelected} de {tier} seleccionadas — {fmt(tiers[tier])}</small>
+            <small>{totalSelected} de {tier} seleccionadas — {fmt(priceForSelection(selection, tier))}</small>
           </div>
           <button className="btn btn-primary" onClick={addDozen} disabled={totalSelected !== tier} style={{ opacity: totalSelected === tier ? 1 : 0.5 }}>
             Agregar al carrito

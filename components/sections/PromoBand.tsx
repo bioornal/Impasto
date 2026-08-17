@@ -1,6 +1,6 @@
 import type { Promo } from "@/types";
 
-const msg = ["Envío en 30 min aprox.", "Fermentación 48 hs", "Masa híbrida crocante", "Mozzarella abundante", "Martes y Miércoles 2x1"];
+const msg = ["Envío en 30 min aprox.", "Fermentación 48 hs", "Masa híbrida crocante", "Mozzarella abundante"];
 
 export function PromoBand() {
   return (
@@ -14,6 +14,7 @@ export function PromoBand() {
 }
 
 export function PromoCards({ promos }: { promos: Promo[] }) {
+  if (promos.length === 0) return null;
   return (
     <section className="promos">
       <div className="container">

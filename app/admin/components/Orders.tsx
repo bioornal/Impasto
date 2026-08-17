@@ -90,6 +90,7 @@ export function Orders() {
 }
 
 function OrderDetail({ order, onClose, onUpdate }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void }) {
+  const [now] = useState(() => Date.now());
   const steps = ["nuevo", "preparando", "en-camino", "entregado"];
   const currentIdx = steps.indexOf(order.estado);
 
@@ -107,7 +108,7 @@ function OrderDetail({ order, onClose, onUpdate }: { order: AdminOrder; onClose:
             {[["nuevo","Pedido recibido"],["preparando","En preparación"],["en-camino", order.mode === "delivery" ? "En camino" : "Listo para retirar"],["entregado","Entregado"]].map(([k, l], i) => (
               <div key={k} className={`tl-item ${i < currentIdx ? "done" : i === currentIdx ? "active" : ""}`}>
                 <b>{l}</b>
-                <small>{i <= currentIdx ? timeAgo(new Date(Date.now() - (currentIdx - i) * 600000).toISOString()) : "pendiente"}</small>
+                <small>{i <= currentIdx ? timeAgo(new Date(now - (currentIdx - i) * 600000).toISOString()) : "pendiente"}</small>
               </div>
             ))}
           </div>

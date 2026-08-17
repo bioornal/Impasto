@@ -19,7 +19,7 @@ export function HalfModal({ startPizza, pizzas, onClose }: HalfModalProps) {
   const price = Math.max(left.precio, right.precio);
 
   const confirm = () => {
-    add({ key: `half-${leftId}-${rightId}-${Date.now()}`, unique: true, type: "pizza-half", name: `Mitad ${left.nombre} / Mitad ${right.nombre}`, detail: "Pizza mitad y mitad", price, qty: 1, illus: leftId });
+    add({ key: `half-${leftId}-${rightId}`, unique: true, type: "pizza-half", name: `Mitad ${left.nombre} / Mitad ${right.nombre}`, detail: "Pizza mitad y mitad", price, qty: 1, illus: leftId, variant: { kind: "half", ids: [leftId, rightId] } });
     onClose();
   };
 

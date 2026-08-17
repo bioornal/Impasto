@@ -31,23 +31,8 @@ export const STATIC_DATA: CatalogData = {
     { id: "e05", nombre: "Pollo al Verdeo", desc: "Pollo desmenuzado, cebolla de verdeo y crema.", tags: [] },
     { id: "e06", nombre: "Dulce de Leche", desc: "Dulce de leche repostero con nuez, espolvoreada con azúcar.", tags: ["dulce"] },
   ],
-  bebidas: [
-    { id: "b01", nombre: "Coca-Cola 1.5L", precio: 3200 },
-    { id: "b02", nombre: "Coca-Cola Zero 1.5L", precio: 3200 },
-    { id: "b03", nombre: "Sprite 1.5L", precio: 3100 },
-    { id: "b04", nombre: "Agua Mineral 500ml", precio: 1800 },
-    { id: "b05", nombre: "Cerveza Artesanal IPA 500ml", precio: 4200 },
-    { id: "b06", nombre: "Vino Malbec Patagónico 750ml", precio: 8900 },
-  ],
-  promos: [
-    { id: "pr01", titulo: "2x1 Martes & Miércoles", desc: "En todas las pizzas clásicas. Solo delivery y take away.", badge: "Promo" },
-    { id: "pr02", titulo: "Combo Familiar", desc: "1 Pizza grande + 12 empanadas + bebida 1.5L a $24.900", badge: "Combo" },
-    { id: "pr03", titulo: "Docena + Bebida", desc: "12 empanadas saladas + gaseosa 1.5L a $15.900", badge: "Docena" },
-  ],
-  reviews: [
-    { nombre: "María L.", texto: "La mejor fugazzetta de Neuquén, masa perfecta y sabor único.", rating: 5 },
-    { nombre: "Joaquín P.", texto: "Las empanadas de carne cortada a cuchillo son de otro nivel. Recomendado 100%.", rating: 5 },
-    { nombre: "Carolina S.", texto: "Pedí la Patagónica y la Tartufo, las dos espectaculares. Llegó calentita.", rating: 5 },
-    { nombre: "Diego R.", texto: "Atención impecable y sabor artesanal real. Ya soy cliente fijo.", rating: 5 },
-  ],
+  bebidas: [],
+  empanadaBoxPrices: { 6: 8400, 12: 15900, 24: 30500 },
+  promos: [],
+  reviews: [],
 };

@@ -8,12 +8,13 @@ import { Hero } from "@/components/sections/Hero";
 import { PromoBand, PromoCards } from "@/components/sections/PromoBand";
 import { PizzaList } from "@/components/sections/PizzaList";
 import { EmpanadasSection } from "@/components/sections/EmpanadasSection";
-import { Bebidas } from "@/components/sections/Bebidas";
 import { Reviews } from "@/components/sections/Reviews";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { HalfModal } from "@/components/cart/HalfModal";
 import { Checkout } from "@/components/checkout/Checkout";
 import { Confirmation } from "@/components/checkout/Confirmation";
+import type { BusinessConfig } from "@/lib/business";
+import type { CheckoutOrder } from "@/components/checkout/Checkout";
 import type { CatalogData, Pizza, CartItem } from "@/types";
 
 interface ConfirmedOrder {
@@ -22,9 +23,9 @@ interface ConfirmedOrder {
   items: CartItem[]; subtotal: number; shipping: number; fecha: Date;
 }
 
-function WspFab() {
+function WspFab({ business }: { business: BusinessConfig }) {
   return (
-    <a className="wsp-fab" href="https://wa.me/542995550184" target="_blank" rel="noreferrer" title="Chateá con nosotros">
+    <a className="wsp-fab" href={`https://wa.me/${business.whatsappPhone}`} target="_blank" rel="noreferrer" title="Chateá con nosotros">
       <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a10 10 0 0 0-8.56 15.1L2 22l5.05-1.32A10 10 0 1 0 12.04 2Zm5.4 14.24c-.23.64-1.34 1.23-1.85 1.27-.47.04-1.08.23-3.62-.76-3.06-1.2-5-4.25-5.15-4.45-.15-.2-1.23-1.64-1.23-3.13 0-1.5.78-2.23 1.06-2.54.28-.3.6-.38.8-.38.2 0 .4 0 .57.01.18 0 .43-.07.67.51.23.58.82 2 .89 2.14.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.32.38-.46.51-.15.15-.31.32-.13.62.17.3.77 1.27 1.65 2.06 1.13 1 2.08 1.32 2.38 1.47.3.15.47.12.65-.07.17-.2.75-.88.95-1.18.2-.3.4-.25.67-.15.27.1 1.7.8 2 .95.28.15.47.22.54.35.07.12.07.72-.16 1.36Z"/></svg>
     </a>
   );
@@ -72,7 +73,7 @@ function TweaksPanel() {
   );
 }
 
-function SiteContent({ data }: { data: CatalogData }) {
+function SiteContent({ data, business }: { data: CatalogData; business: BusinessConfig }) {
   const { paletteClass, typeClass } = useTweaks();
   const { add, clear } = useCart();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -96,36 +97,50 @@ function SiteContent({ data }: { data: CatalogData }) {
 
   return (
     <div className={`app ${paletteClass} ${typeClass}`}>
-      <Header onCartClick={() => setDrawerOpen(true)} onNav={onNav} current={nav} />
+      <Header onCartClick={() => setDrawerOpen(true)} onNav={onNav} current={nav} business={business} />
       <PromoBand />
       <main>
         <Hero onCta={onNav} />
         <PromoCards promos={data.promos} />
         <PizzaList pizzas={data.pizzas} onPick={cartAdd} />
-        <EmpanadasSection empanadas={data.empanadas} />
-        <Bebidas bebidas={data.bebidas} />
+        <EmpanadasSection empanadas={data.empanadas} boxPrices={data.empanadaBoxPrices} />
         <Reviews reviews={data.reviews} />
       </main>
-      <Footer />
+      <Footer business={business} />
       <CartDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onCheckout={() => { setDrawerOpen(false); setScreen("checkout"); }} />
       {halfModal && <HalfModal startPizza={halfModal} pizzas={data.pizzas} onClose={() => setHalfModal(null)} />}
       {screen === "checkout" && (
-        <Checkout onClose={() => setScreen("home")} onConfirm={(o) => { setOrder(o as ConfirmedOrder); setScreen("confirm"); fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) }).catch(() => {}); }} />
+        <Checkout
+          onClose={() => setScreen("home")}
+          business={business}
+          onConfirm={async (o: CheckoutOrder) => {
+            const response = await fetch("/api/orders", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(o),
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw new Error(result.error || "No se pudo registrar el pedido");
+            clear();
+            setOrder({ ...o, numero: result.numero, subtotal: result.subtotal, shipping: result.shipping, total: result.total, fecha: new Date() });
+            setScreen("confirm");
+          }}
+        />
       )}
       {screen === "confirm" && order && (
-        <Confirmation order={order} onClose={() => { setScreen("home"); setOrder(null); clear(); }} />
+        <Confirmation order={order} business={business} onClose={() => { setScreen("home"); setOrder(null); clear(); }} />
       )}
-      <WspFab />
+      <WspFab business={business} />
       <TweaksPanel />
     </div>
   );
 }
 
-export function Shell({ data }: { data: CatalogData }) {
+export function Shell({ data, business }: { data: CatalogData; business: BusinessConfig }) {
   return (
     <TweakProvider>
       <CartProvider>
-        <SiteContent data={data} />
+        <SiteContent data={data} business={business} />
       </CartProvider>
     </TweakProvider>
   );

@@ -1,6 +1,7 @@
 import type { Review } from "@/types";
 
 export function Reviews({ reviews }: { reviews: Review[] }) {
+  if (reviews.length === 0) return null;
   return (
     <section className="reviews">
       <div className="container">
