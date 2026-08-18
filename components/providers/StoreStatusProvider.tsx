@@ -48,18 +48,3 @@ export function StoreStatusProvider({ inicial, children }: { inicial: EstadoTien
   return <StoreStatusContext.Provider value={estado}>{children}</StoreStatusContext.Provider>;
 }
 
-/** Franja fija arriba del sitio cuando no se está tomando pedidos. */
-export function ClosedBanner() {
-  const estado = useStoreStatus();
-  if (estado.abierto) return null;
-
-  return (
-    <div className="closed-banner" role="status">
-      <span className="closed-dot" />
-      <span>
-        <b>{estado.cierreManual ? "No estamos tomando pedidos" : "Local cerrado"}</b>
-        <small>{estado.motivo}</small>
-      </span>
-    </div>
-  );
-}

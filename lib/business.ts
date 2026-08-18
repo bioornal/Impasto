@@ -9,10 +9,15 @@ export interface BusinessConfig {
   address: string;
   instagram: string;
   facebook: string;
+  /** Texto que se muestra al cliente: el horario en que se trabaja. */
   hours: string;
   /** Días abiertos con numeración de JS: 0 = domingo … 6 = sábado. */
   diasApertura: number[];
   horaApertura: string;
+  /**
+   * Hora del último pedido, que no es la de cierre del local: se trabaja
+   * hasta las 00:00 pero se deja de tomar pedidos a las 23:45.
+   */
   horaCierre: string;
   zonaHoraria: string;
   /** Interruptor manual: manda por encima del horario. */
@@ -36,7 +41,7 @@ export const BUSINESS: BusinessConfig = {
   address: "Santa María esq. Obispo Angelelli",
   instagram: "@impasto.iguazu",
   facebook: "Impasto Iguazú",
-  hours: "Martes a Domingo · 19:30 — 23:45",
+  hours: "Martes a Domingo · 19:30 — 00:00",
   diasApertura: [2, 3, 4, 5, 6, 0],
   horaApertura: "19:30",
   horaCierre: "23:45",

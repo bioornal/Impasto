@@ -1,6 +1,6 @@
 "use client";
-import { useSyncExternalStore } from "react";
 import { useCart } from "@/components/providers/CartProvider";
+import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { fmt } from "@/lib/utils";
 import type { BusinessConfig } from "@/lib/business";
 
@@ -12,46 +12,15 @@ const NAV: [string, string][] = [
   ["nosotros", "Nosotros"],
 ];
 
-/** Extrae "19:30 — 00:00" del texto de horarios configurado en la sucursal. */
-function parseHours(hours: string) {
-  const match = hours.match(/(\d{1,2}):(\d{2})\s*[—–\-a]+\s*(\d{1,2}):(\d{2})/);
-  if (!match) return null;
-  return {
-    open: Number(match[1]) * 60 + Number(match[2]),
-    close: Number(match[3]) * 60 + Number(match[4]),
-    closeLabel: `${match[3].padStart(2, "0")}:${match[4]}`,
-  };
-}
-
-const noopSubscribe = () => () => {};
-
-/** El estado abierto/cerrado depende de la hora local: sólo se resuelve tras hidratar. */
-function useMounted() {
-  return useSyncExternalStore(noopSubscribe, () => true, () => false);
-}
-
-function openStatus(hours: string) {
-  const range = parseHours(hours);
-  if (!range) return null;
-  const now = new Date();
-  const minutes = now.getHours() * 60 + now.getMinutes();
-  // Un cierre después de medianoche envuelve el día.
-  const open = range.close <= range.open
-    ? minutes >= range.open || minutes < range.close
-    : minutes >= range.open && minutes < range.close;
-  return { open, label: open ? `Abierto · cierra ${range.closeLabel}` : "Cerrado ahora" };
-}
-
 function Topbar({ business }: { business: BusinessConfig }) {
-  const mounted = useMounted();
-  const status = mounted ? openStatus(business.hours) : null;
+  const tienda = useStoreStatus();
 
   return (
     <div className="topbar">
       <div className="container topbar-inner">
         <div className="topbar-status">
-          <span className={`dot ${status && !status.open ? "off" : ""}`} />
-          {status ? status.label : business.hours}
+          <span className={`dot ${tienda.abierto ? "" : "off"}`} />
+          {tienda.abierto ? business.hours : tienda.motivo}
         </div>
         <div className="topbar-links">
           <span>{business.address} · {business.city}</span>

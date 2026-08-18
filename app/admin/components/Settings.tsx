@@ -112,7 +112,9 @@ export function Settings() {
           <section>
             <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 4 }}>Horario de atención</h4>
             <div className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
-              Fuera de este horario el sitio no acepta pedidos.
+              El <b>último pedido</b> es la hora en que el sitio deja de aceptar pedidos, y no
+              tiene por qué coincidir con la de cierre del local: si se trabaja hasta las 00:00
+              pero el último pedido entra 23:45, poné 23:45 acá y 00:00 en el texto que se muestra.
             </div>
             <div className="flex gap-8" style={{ flexWrap: "wrap", marginBottom: 14 }}>
               {DIAS.map(([dia, etiqueta]) => (

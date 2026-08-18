@@ -126,7 +126,7 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   width:6px; height:6px; border-radius:999px; background:var(--green);
   animation:imp-blink 2.4s infinite;
 }
-.topbar-status .dot.off{ background:var(--muted); animation:none; }
+.topbar-status .dot.off{ background:#e5484d; animation:imp-blink 2.4s infinite; }
 .topbar-links{ display:flex; gap:26px; align-items:center; color:rgba(246,241,231,.62); }
 .topbar-links .gold{ color:var(--gold); }
 @media (max-width:980px){ .topbar-links span:nth-child(2){ display:none; } }
@@ -1360,38 +1360,7 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 .pago-rechazado { background: rgba(198, 40, 40, .14); color: #c62828; }
 .pago-reembolsado { background: rgba(84, 110, 122, .16); color: #455a64; }
 
-/* ---- Aviso de local cerrado ---- */
-.closed-banner {
-  position: sticky;
-  top: 0;
-  z-index: 90;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 9px 16px;
-  background: #7a2718;
-  color: #fdf6ec;
-  text-align: center;
-}
-
-.closed-banner b { display: block; font-size: .92rem; }
-.closed-banner small { opacity: .82; font-size: .82rem; }
-
-.closed-dot {
-  width: 9px;
-  height: 9px;
-  flex: none;
-  border-radius: 50%;
-  background: #ff8a6b;
-  animation: closed-pulse 2s ease-in-out infinite;
-}
-
-@keyframes closed-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .35; }
-}
-
+/* ---- Estado de venta ---- */
 .drawer-cta:disabled {
   opacity: .55;
   cursor: not-allowed;
