@@ -74,10 +74,28 @@ export function proximaApertura(config: HorarioConfig, referencia = new Date()) 
 
 export interface EstadoTienda {
   abierto: boolean;
-  /** Frase lista para mostrar cuando está cerrado. */
+  /** Frase completa, para el carrito y los mensajes de error. */
   motivo: string;
+  /** Versión corta para la barra superior, donde el espacio es escaso. */
+  etiqueta: string;
   /** true si lo cortó el interruptor manual y no el horario. */
   cierreManual: boolean;
+}
+
+/** "19:30" si abre hoy, "mañana 19:30" o "jue 19:30" si es otro día. */
+function aperturaCorta(config: HorarioConfig, referencia: Date) {
+  const { dia, minutos } = ahoraEnZona(config.zonaHoraria, referencia);
+  for (let salto = 0; salto <= 7; salto++) {
+    const candidato = (dia + salto) % 7;
+    if (!config.dias.includes(candidato)) continue;
+    if (salto === 0) {
+      if (minutos < aMinutos(config.apertura)) return config.apertura;
+      continue;
+    }
+    const prefijo = salto === 1 ? "mañana" : DIAS_NOMBRE[candidato].slice(0, 3);
+    return `${prefijo} ${config.apertura}`;
+  }
+  return config.apertura;
 }
 
 /**
@@ -89,16 +107,20 @@ export function estadoTienda(business: BusinessConfig, referencia = new Date()):
     return {
       abierto: false,
       motivo: business.mensajeCierre || "Estamos sin tomar pedidos por el momento.",
+      etiqueta: "Cerrado por ahora",
       cierreManual: true,
     };
   }
 
   const horario = horarioDe(business);
-  if (estaAbierto(horario, referencia)) return { abierto: true, motivo: "", cierreManual: false };
+  if (estaAbierto(horario, referencia)) {
+    return { abierto: true, motivo: "", etiqueta: business.hours, cierreManual: false };
+  }
 
   return {
     abierto: false,
     motivo: `Ahora estamos cerrados. Abrimos ${proximaApertura(horario, referencia)}.`,
+    etiqueta: `Cerrado · abre ${aperturaCorta(horario, referencia)}`,
     cierreManual: false,
   };
 }

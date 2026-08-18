@@ -20,7 +20,7 @@ function Topbar({ business }: { business: BusinessConfig }) {
       <div className="container topbar-inner">
         <div className="topbar-status">
           <span className={`dot ${tienda.abierto ? "" : "off"}`} />
-          {tienda.abierto ? business.hours : tienda.motivo}
+          {tienda.etiqueta || business.hours}
         </div>
         <div className="topbar-links">
           <span>{business.address} · {business.city}</span>

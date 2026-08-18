@@ -4,10 +4,11 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 export interface EstadoTiendaCliente {
   abierto: boolean;
   motivo: string;
+  etiqueta: string;
   cierreManual: boolean;
 }
 
-const StoreStatusContext = createContext<EstadoTiendaCliente>({ abierto: true, motivo: "", cierreManual: false });
+const StoreStatusContext = createContext<EstadoTiendaCliente>({ abierto: true, motivo: "", etiqueta: "", cierreManual: false });
 
 export const useStoreStatus = () => useContext(StoreStatusContext);
 
@@ -27,7 +28,7 @@ export function StoreStatusProvider({ inicial, children }: { inicial: EstadoTien
         const respuesta = await fetch("/api/store-status", { cache: "no-store" });
         const datos = await respuesta.json();
         if (activo && datos?.ok) {
-          setEstado({ abierto: datos.abierto, motivo: datos.motivo, cierreManual: datos.cierreManual });
+          setEstado({ abierto: datos.abierto, motivo: datos.motivo, etiqueta: datos.etiqueta, cierreManual: datos.cierreManual });
         }
       } catch { /* si falla la consulta se conserva el último estado conocido */ }
     };
