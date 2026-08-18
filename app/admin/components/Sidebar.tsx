@@ -56,7 +56,7 @@ export function Sidebar({ current, onNav, open, onClose }: SidebarProps) {
           <b>Mauro</b>
           <small>Dueño · admin</small>
         </div>
-        <button className="btn btn-icon btn-ghost" title="Cerrar sesión" onClick={async () => { await fetch("/api/auth/sign-out", { method: "POST" }); router.replace("/admin-login"); router.refresh(); }}>×</button>
+        <button className="sidebar-signout" title="Cerrar sesión" onClick={async () => { await fetch("/api/auth/sign-out", { method: "POST" }); router.replace("/admin-login"); router.refresh(); }}>Salir</button>
       </div>
     </aside>
   );
