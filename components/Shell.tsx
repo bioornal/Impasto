@@ -18,11 +18,12 @@ import { Checkout } from "@/components/checkout/Checkout";
 import { Confirmation } from "@/components/checkout/Confirmation";
 import type { BusinessConfig } from "@/lib/business";
 import type { CheckoutOrder } from "@/components/checkout/Checkout";
+import type { CardFormData } from "@/components/checkout/CardPayment";
 import type { CatalogData, Pizza, CartItem } from "@/types";
 
 interface ConfirmedOrder {
   numero: string; nombre: string; mode: string; dir?: string;
-  tel: string; total: number; pago: string;
+  tel: string; total: number; pago: string; estadoPago?: string;
   items: CartItem[]; subtotal: number; shipping: number; fecha: Date;
 }
 
@@ -179,6 +180,27 @@ function SiteContent({ data, business }: { data: CatalogData; business: Business
             setOrder({
               ...submitted,
               numero: result.numero,
+              subtotal: result.subtotal,
+              shipping: result.shipping,
+              total: result.total,
+              fecha: new Date(),
+            });
+            setScreen("confirm");
+          }}
+          onCardConfirm={async (submitted: CheckoutOrder, card: CardFormData) => {
+            const response = await fetch("/api/payments/card", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...submitted, ...card }),
+            });
+            const result = await response.json();
+            // 402 es rechazo de la tarjeta: el checkout queda abierto para reintentar.
+            if (!response.ok || !result.ok) throw new Error(result.error || "No se pudo procesar el pago");
+            clear();
+            setOrder({
+              ...submitted,
+              numero: result.numero,
+              estadoPago: result.estadoPago,
               subtotal: result.subtotal,
               shipping: result.shipping,
               total: result.total,

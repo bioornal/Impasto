@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@insforge/sdk": "^1.2.5",
+    "@mercadopago/sdk-js": "^0.0.3",
     "dotenv": "^17.4.2",
     "next": "16.2.4",
     "react": "19.2.4",

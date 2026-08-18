@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/providers/CartProvider";
 import { ItemMedia } from "@/components/ui/ItemMedia";
+import { CardPayment, type CardFormData } from "@/components/checkout/CardPayment";
 import { fmt } from "@/lib/utils";
 import type { BusinessConfig } from "@/lib/business";
 import type { CartItem } from "@/types";
@@ -11,6 +12,7 @@ export interface CheckoutData {
   when: string;
   nombre: string;
   tel: string;
+  email: string;
   dir: string;
   ref: string;
   pago: string;
@@ -25,6 +27,7 @@ export interface CheckoutOrder extends CheckoutData {
 interface CheckoutProps {
   onClose: () => void;
   onConfirm: (order: CheckoutOrder) => Promise<void>;
+  onCardConfirm: (order: CheckoutOrder, card: CardFormData) => Promise<void>;
   business: BusinessConfig;
 }
 
@@ -36,13 +39,14 @@ const WHEN_OPTIONS: [string, string][] = [
 
 const PAGOS: [string, string, string, string][] = [
   ["efectivo", "Efectivo", "Pagás al recibir el pedido", "Sin recargo"],
+  ["mercadopago", "Tarjeta", "Débito o crédito con Mercado Pago", "Pagás ahora"],
   ["transferencia", "Transferencia", "Te enviamos el CBU al confirmar", "Al confirmar"],
 ];
 
-export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
+export function Checkout({ onClose, onConfirm, onCardConfirm, business }: CheckoutProps) {
   const { items, subtotal: localSubtotal } = useCart();
   const [data, setData] = useState<CheckoutData>({
-    mode: "delivery", when: "asap", nombre: "", tel: "", dir: "", ref: "",
+    mode: "delivery", when: "asap", nombre: "", tel: "", email: "", dir: "", ref: "",
     pago: "efectivo", cambio: "", notas: "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutData, string>>>({});
@@ -50,6 +54,7 @@ export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
   const [quoteError, setQuoteError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [brickOpen, setBrickOpen] = useState(false);
   const quoteKey = JSON.stringify({ items, mode: data.mode });
 
   useEffect(() => {
@@ -88,6 +93,7 @@ export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
     const next: Partial<Record<keyof CheckoutData, string>> = {};
     if (!data.nombre.trim()) next.nombre = "Ingresá tu nombre";
     if (!/^\d{8,}/.test(data.tel.replace(/\D/g, ""))) next.tel = "Teléfono inválido";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) next.email = "Email inválido";
     if (isDelivery && !data.dir.trim()) next.dir = "Dirección requerida";
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -95,8 +101,15 @@ export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
 
   const confirm = async () => {
     if (!validate()) return;
-    setSubmitting(true);
     setSubmitError("");
+
+    // Con tarjeta primero se cobra: el Brick tokeniza y recién ahí se registra el pedido.
+    if (data.pago === "mercadopago") {
+      setBrickOpen(true);
+      return;
+    }
+
+    setSubmitting(true);
     try {
       await onConfirm({ ...data, items: [...items] });
     } catch (error) {
@@ -104,6 +117,10 @@ export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const payWithCard = async (card: CardFormData) => {
+    await onCardConfirm({ ...data, items: [...items] }, card);
   };
 
   return (
@@ -185,6 +202,11 @@ export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
                 <label htmlFor="co-tel">WhatsApp</label>
                 <input id="co-tel" placeholder="3757 55 1234" value={data.tel} onChange={(e) => set("tel", e.target.value)} />
                 {errors.tel && <span className="err">{errors.tel}</span>}
+              </div>
+              <div className={`field ${errors.email ? "error" : ""}`}>
+                <label htmlFor="co-email">Email</label>
+                <input id="co-email" type="email" placeholder="vos@email.com" autoComplete="email" value={data.email} onChange={(e) => set("email", e.target.value)} />
+                {errors.email ? <span className="err">{errors.email}</span> : <span className="hint">Te mandamos la confirmación del pedido acá.</span>}
               </div>
 
               {isDelivery && (
@@ -273,7 +295,13 @@ export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
             {submitError && <div className="co-error">{submitError}</div>}
 
             <button className="co-cta" onClick={confirm} disabled={submitting || quoteLoading || Boolean(quoteError)}>
-              {submitting ? "Registrando pedido…" : quoteLoading ? "Actualizando total…" : `Confirmar · ${fmt(total)}`}
+              {submitting
+                ? "Registrando pedido…"
+                : quoteLoading
+                  ? "Actualizando total…"
+                  : data.pago === "mercadopago"
+                    ? `Pagar con tarjeta · ${fmt(total)}`
+                    : `Confirmar · ${fmt(total)}`}
             </button>
 
             <small className="co-note">
@@ -295,6 +323,15 @@ export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
           </div>
         </aside>
       </div>
+
+      {brickOpen && (
+        <CardPayment
+          amount={total}
+          email={data.email.trim()}
+          onClose={() => setBrickOpen(false)}
+          onSubmit={payWithCard}
+        />
+      )}
     </div>
   );
 }

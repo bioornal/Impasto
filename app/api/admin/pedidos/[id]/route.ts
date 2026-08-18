@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { SUCURSAL_ID } from "@/lib/business";
 import { requireAdmin } from "@/lib/admin-auth";
+import { registrarEvento } from "@/lib/orders";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const unauthorized = await requireAdmin();
@@ -20,6 +21,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (Object.keys(updates).length === 0) return NextResponse.json({ ok: false, error: "actualización vacía" }, { status: 400 });
   const { error } = await db.database.from("pedidos").update(updates).eq("id", id).eq("sucursal_id", SUCURSAL_ID);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+  // Deja el timestamp de cada cambio hecho desde el panel.
+  if (updates.status) await registrarEvento({ pedidoId: id, tipo: "estado", valor: updates.status, origen: "panel" });
+  if (updates.estado_pago) await registrarEvento({ pedidoId: id, tipo: "pago", valor: updates.estado_pago, origen: "panel" });
+
   return NextResponse.json({ ok: true });
 }
 
