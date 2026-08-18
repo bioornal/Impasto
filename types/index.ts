@@ -55,6 +55,6 @@ export interface CartItem {
   illus?: string;
   unique?: boolean;
   variant?:
-    | { kind: "half"; ids: [string, string]; borde?: boolean }
+    | { kind: "half"; ids: [string, string] }
     | { kind: "empanadas-box"; size: 6 | 12 | 24; selections: Record<string, number> };
 }

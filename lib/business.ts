@@ -15,12 +15,13 @@ export interface BusinessConfig {
   horaApertura: string;
   horaCierre: string;
   zonaHoraria: string;
+  /** Interruptor manual: manda por encima del horario. */
+  ventasActivas: boolean;
+  /** Motivo mostrado al cliente cuando las ventas están cortadas a mano. */
+  mensajeCierre: string;
   deliveryFee: number;
   /** Monto de subtotal a partir del cual el envío es gratis. */
-  freeShippingFrom: number;
-  /** Recargo por borde relleno de muzzarella en pizzas mitad y mitad. */
-  bordeFee: number;
-}
+  freeShippingFrom: number;}
 
 export const SUCURSAL_ID = "iguazu";
 
@@ -35,16 +36,15 @@ export const BUSINESS: BusinessConfig = {
   address: "Santa María esq. Obispo Angelelli",
   instagram: "@impasto.iguazu",
   facebook: "Impasto Iguazú",
-  hours: "Martes a Domingo · 19:30 — 00:00",
+  hours: "Martes a Domingo · 19:30 — 23:45",
   diasApertura: [2, 3, 4, 5, 6, 0],
   horaApertura: "19:30",
-  horaCierre: "00:00",
+  horaCierre: "23:45",
   zonaHoraria: "America/Argentina/Buenos_Aires",
+  ventasActivas: true,
+  mensajeCierre: "",
   deliveryFee: 3000,
-  freeShippingFrom: 25000,
-  bordeFee: 1500,
-} as const;
+  freeShippingFrom: 25000,} as const;
 
 export const DELIVERY_FEE = BUSINESS.deliveryFee;
 export const FREE_SHIPPING_FROM = BUSINESS.freeShippingFrom;
-export const BORDE_FEE = BUSINESS.bordeFee;

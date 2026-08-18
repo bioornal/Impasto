@@ -22,14 +22,12 @@ export function HalfModal({ startPizza, pizzas, business, onClose }: HalfModalPr
     const fallback = pizzas.find((p) => p.id !== (startPizza?.id || pizzas[0]?.id));
     return fallback?.id || pizzas[0]?.id || "";
   });
-  const [side, setSide] = useState<"a" | "b">("a");
-  const [borde, setBorde] = useState(false);
-
+  const [side, setSide] = useState<"a" | "b">("a");
   const left = pizzas.find((p) => p.id === leftId) || pizzas[0];
   const right = pizzas.find((p) => p.id === rightId) || pizzas[1] || pizzas[0];
   if (!left || !right) return null;
 
-  const price = Math.max(left.precio, right.precio) + (borde ? business.bordeFee : 0);
+  const price = Math.max(left.precio, right.precio);
 
   const choose = (pizza: Pizza) => {
     if (side === "a") { setLeftId(pizza.id); setSide("b"); }
@@ -38,15 +36,15 @@ export function HalfModal({ startPizza, pizzas, business, onClose }: HalfModalPr
 
   const confirm = () => {
     add({
-      key: `half-${left.id}-${right.id}${borde ? "-borde" : ""}`,
+      key: `half-${left.id}-${right.id}`,
       unique: true,
       type: "pizza-half",
       name: `Mitad ${left.nombre} / Mitad ${right.nombre}`,
-      detail: borde ? "Mitad y mitad · borde relleno con muzzarella" : "Pizza mitad y mitad",
+      detail: "Pizza mitad y mitad",
       price,
       qty: 1,
       illus: left.id,
-      variant: { kind: "half", ids: [left.id, right.id], borde },
+      variant: { kind: "half", ids: [left.id, right.id] },
     });
     toast("Mitad y mitad agregada");
     onClose();
@@ -114,15 +112,6 @@ export function HalfModal({ startPizza, pizzas, business, onClose }: HalfModalPr
               );
             })}
           </div>
-
-          <button className={`borde-row ${borde ? "on" : ""}`} onClick={() => setBorde((b) => !b)} aria-pressed={borde}>
-            <span className="borde-box">✓</span>
-            <span style={{ flex: 1, textAlign: "left" }}>
-              <b>Borde relleno con muzzarella</b>
-              <small>Se rellena el cornicione entero</small>
-            </span>
-            <span className="price">+{fmt(business.bordeFee)}</span>
-          </button>
 
           <button className="half-cta" onClick={confirm}>Agregar al carrito · {fmt(price)}</button>
         </div>

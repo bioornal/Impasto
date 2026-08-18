@@ -3,6 +3,7 @@ import { useState } from "react";
 import { CartProvider, useCart } from "@/components/providers/CartProvider";
 import { TweakProvider, useTweaks } from "@/components/providers/TweakProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
+import { StoreStatusProvider, ClosedBanner, type EstadoTiendaCliente } from "@/components/providers/StoreStatusProvider";
 import { Header, Ticker } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Hero, Features } from "@/components/sections/Hero";
@@ -130,6 +131,7 @@ function SiteContent({ data, business }: { data: CatalogData; business: Business
 
   return (
     <div className={`app ${paletteClass} ${typeClass}`}>
+      <ClosedBanner />
       <Header onCartClick={() => setDrawerOpen(true)} onNav={onNav} current={nav} business={business} sections={sections} />
       <Ticker />
 
@@ -225,14 +227,16 @@ function SiteContent({ data, business }: { data: CatalogData; business: Business
   );
 }
 
-export function Shell({ data, business }: { data: CatalogData; business: BusinessConfig }) {
+export function Shell({ data, business, estadoInicial }: { data: CatalogData; business: BusinessConfig; estadoInicial: EstadoTiendaCliente }) {
   return (
     <TweakProvider>
-      <ToastProvider>
-        <CartProvider>
-          <SiteContent data={data} business={business} />
-        </CartProvider>
-      </ToastProvider>
+      <StoreStatusProvider inicial={estadoInicial}>
+        <ToastProvider>
+          <CartProvider>
+            <SiteContent data={data} business={business} />
+          </CartProvider>
+        </ToastProvider>
+      </StoreStatusProvider>
     </TweakProvider>
   );
 }

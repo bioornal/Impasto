@@ -72,6 +72,37 @@ export function proximaApertura(config: HorarioConfig, referencia = new Date()) 
   return `a las ${config.apertura}`;
 }
 
+export interface EstadoTienda {
+  abierto: boolean;
+  /** Frase lista para mostrar cuando está cerrado. */
+  motivo: string;
+  /** true si lo cortó el interruptor manual y no el horario. */
+  cierreManual: boolean;
+}
+
+/**
+ * Estado real de venta. El interruptor manual manda por encima del horario:
+ * si está apagado, no se vende aunque sea el horario de atención.
+ */
+export function estadoTienda(business: BusinessConfig, referencia = new Date()): EstadoTienda {
+  if (!business.ventasActivas) {
+    return {
+      abierto: false,
+      motivo: business.mensajeCierre || "Estamos sin tomar pedidos por el momento.",
+      cierreManual: true,
+    };
+  }
+
+  const horario = horarioDe(business);
+  if (estaAbierto(horario, referencia)) return { abierto: true, motivo: "", cierreManual: false };
+
+  return {
+    abierto: false,
+    motivo: `Ahora estamos cerrados. Abrimos ${proximaApertura(horario, referencia)}.`,
+    cierreManual: false,
+  };
+}
+
 export function horarioDe(business: BusinessConfig): HorarioConfig {
   return {
     dias: business.diasApertura,

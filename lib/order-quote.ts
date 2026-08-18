@@ -1,4 +1,4 @@
-import { BORDE_FEE, DELIVERY_FEE, FREE_SHIPPING_FROM } from "@/lib/business";
+import { DELIVERY_FEE, FREE_SHIPPING_FROM } from "@/lib/business";
 import { getCatalogData } from "@/lib/catalog";
 import type { CartItem, CatalogData } from "@/types";
 
@@ -12,15 +12,11 @@ interface QuoteResult {
 
 export interface QuoteRates {
   deliveryFee: number;
-  freeShippingFrom: number;
-  bordeFee: number;
-}
+  freeShippingFrom: number;}
 
 const DEFAULT_RATES: QuoteRates = {
   deliveryFee: DELIVERY_FEE,
-  freeShippingFrom: FREE_SHIPPING_FROM,
-  bordeFee: BORDE_FEE,
-};
+  freeShippingFrom: FREE_SHIPPING_FROM,};
 
 const integerQuantity = (value: unknown) => {
   const quantity = Number(value);
@@ -54,19 +50,17 @@ function quoteItem(rawItem: CartItem, data: CatalogData, rates: QuoteRates): Car
   if (rawItem.type === "pizza-half") {
     const ids = rawItem.variant?.kind === "half"
       ? rawItem.variant.ids
-      : rawItem.key.split("-").slice(1, 3) as [string, string];
-    const borde = rawItem.variant?.kind === "half" && rawItem.variant.borde === true;
-    const left = findPizza(data, ids[0] || "");
+      : rawItem.key.split("-").slice(1, 3) as [string, string];    const left = findPizza(data, ids[0] || "");
     const right = findPizza(data, ids[1] || "");
     if (!left || !right) throw new Error("Una variedad de la pizza mitad y mitad ya no está disponible");
     return {
       ...rawItem,
-      key: `half-${left.id}-${right.id}${borde ? "-borde" : ""}`,
+      key: `half-${left.id}-${right.id}`,
       name: `Mitad ${left.nombre} / Mitad ${right.nombre}`,
-      detail: borde ? "Mitad y mitad · borde relleno con muzzarella" : "Pizza mitad y mitad",
-      price: Math.max(left.precio, right.precio) + (borde ? rates.bordeFee : 0),
+      detail: "Pizza mitad y mitad",
+      price: Math.max(left.precio, right.precio),
       qty,
-      variant: { kind: "half", ids: [left.id, right.id], borde },
+      variant: { kind: "half", ids: [left.id, right.id] },
     };
   }
 
