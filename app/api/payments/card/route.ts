@@ -3,6 +3,7 @@ import { db } from "@/lib/insforge";
 import { createPedido, validateOrderPayload, registrarEvento, clearCartDraft } from "@/lib/orders";
 import { createCardOrder, mapOrderStatus, type EstadoPago, type MpOrder } from "@/lib/mercadopago";
 import { notificarPedido } from "@/lib/notifications";
+import { limitar, limpiarIntentosViejos } from "@/lib/rate-limit";
 
 const TIPOS_TARJETA = ["credit_card", "debit_card"];
 
@@ -26,6 +27,12 @@ function motivoRechazo(statusDetail: string) {
 }
 
 export async function POST(req: NextRequest) {
+  // El más estricto de todos: un atacante probando tarjetas robadas acá
+  // pone en riesgo la cuenta de Mercado Pago, no solo dinero.
+  const limitado = await limitar(req, "pago");
+  if (limitado) return limitado;
+  await limpiarIntentosViejos();
+
   let body: Record<string, unknown>;
   try {
     body = await req.json();

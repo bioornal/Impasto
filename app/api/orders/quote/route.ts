@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { quoteOrder } from "@/lib/order-quote";
 import { getBusinessConfig } from "@/lib/business-server";
+import { limitar } from "@/lib/rate-limit";
 import type { CartItem } from "@/types";
 
 export async function POST(req: NextRequest) {
+  // Holgado: el checkout recotiza en cada cambio del carrito.
+  const limitado = await limitar(req, "cotizacion");
+  if (limitado) return limitado;
+
   try {
     const body = await req.json();
     const business = await getBusinessConfig();

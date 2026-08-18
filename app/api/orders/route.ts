@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPedido, validateOrderPayload, clearCartDraft } from "@/lib/orders";
+import { limitar } from "@/lib/rate-limit";
 import { notificarPedido } from "@/lib/notifications";
 
 /** Métodos que se cobran al entregar: no pasan por Mercado Pago. */
 const METODOS_OFFLINE = ["efectivo", "transferencia"];
 
 export async function POST(req: NextRequest) {
+  const limitado = await limitar(req, "pedido");
+  if (limitado) return limitado;
+
   let body: Record<string, unknown>;
   try {
     body = await req.json();

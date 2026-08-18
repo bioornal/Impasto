@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAuthActions } from "@insforge/sdk/ssr";
+import { limitar, limpiarIntentosViejos } from "@/lib/rate-limit";
 
 const authConfig = {
   baseUrl: process.env.INSFORGE_API_BASE_URL,
@@ -7,6 +8,11 @@ const authConfig = {
 };
 
 export async function POST(request: NextRequest) {
+  // Frena la fuerza bruta contra el panel.
+  const limitado = await limitar(request, "login");
+  if (limitado) return limitado;
+  await limpiarIntentosViejos();
+
   const body = await request.json().catch(() => ({}));
   const response = NextResponse.json({ ok: true });
   const auth = createAuthActions({

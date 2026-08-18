@@ -2,6 +2,7 @@ import { db } from "@/lib/insforge";
 import { quoteOrder } from "@/lib/order-quote";
 import { getBusinessConfig } from "@/lib/business-server";
 import { getCartSessionId } from "@/lib/cart-session";
+import { estaAbierto, proximaApertura, horarioDe } from "@/lib/hours";
 import { SUCURSAL_ID } from "@/lib/business";
 import type { EstadoPago } from "@/lib/mercadopago";
 import type { CartItem } from "@/types";
@@ -95,6 +96,12 @@ export async function createPedido(
   payment: { metodoPago: string; estadoPago: EstadoPago; proveedorPago: string },
 ): Promise<CreatedOrder> {
   const business = await getBusinessConfig();
+
+  // Choke point: ninguna vía de pago puede saltearse el horario de atención.
+  if (!estaAbierto(horarioDe(business))) {
+    throw new Error(`Ahora estamos cerrados. Abrimos ${proximaApertura(horarioDe(business))}.`);
+  }
+
   const quote = await quoteOrder(order.items, order.mode, business);
 
   await upsertCliente(order);

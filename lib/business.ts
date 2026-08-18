@@ -10,6 +10,11 @@ export interface BusinessConfig {
   instagram: string;
   facebook: string;
   hours: string;
+  /** Días abiertos con numeración de JS: 0 = domingo … 6 = sábado. */
+  diasApertura: number[];
+  horaApertura: string;
+  horaCierre: string;
+  zonaHoraria: string;
   deliveryFee: number;
   /** Monto de subtotal a partir del cual el envío es gratis. */
   freeShippingFrom: number;
@@ -31,6 +36,10 @@ export const BUSINESS: BusinessConfig = {
   instagram: "@impasto.iguazu",
   facebook: "Impasto Iguazú",
   hours: "Martes a Domingo · 19:30 — 00:00",
+  diasApertura: [2, 3, 4, 5, 6, 0],
+  horaApertura: "19:30",
+  horaCierre: "00:00",
+  zonaHoraria: "America/Argentina/Buenos_Aires",
   deliveryFee: 3000,
   freeShippingFrom: 25000,
   bordeFee: 1500,

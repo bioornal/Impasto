@@ -1,6 +1,14 @@
 import { db } from "@/lib/insforge";
 import { BUSINESS, SUCURSAL_ID, type BusinessConfig } from "@/lib/business";
 
+function parseDias(valor: unknown): number[] | null {
+  const dias = String(valor || "")
+    .split(",")
+    .map((dia) => Number(dia.trim()))
+    .filter((dia) => Number.isInteger(dia) && dia >= 0 && dia <= 6);
+  return dias.length > 0 ? dias : null;
+}
+
 export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<BusinessConfig> {
   try {
     const { data, error } = await db.database
@@ -22,6 +30,12 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       instagram: BUSINESS.instagram,
       facebook: BUSINESS.facebook,
       hours: String(branch.horarios || BUSINESS.hours),
+      // Si el parseo diera vacío, el local quedaría cerrado para siempre:
+      // ante cualquier duda se usa la configuración del código.
+      diasApertura: parseDias(branch.dias_apertura) ?? BUSINESS.diasApertura,
+      horaApertura: String(branch.hora_apertura || BUSINESS.horaApertura),
+      horaCierre: String(branch.hora_cierre || BUSINESS.horaCierre),
+      zonaHoraria: String(branch.zona_horaria || BUSINESS.zonaHoraria),
       deliveryFee: Number(branch.delivery_fee || BUSINESS.deliveryFee),
       freeShippingFrom: Number(branch.envio_gratis_desde || BUSINESS.freeShippingFrom),
       bordeFee: Number(branch.borde_relleno || BUSINESS.bordeFee),
