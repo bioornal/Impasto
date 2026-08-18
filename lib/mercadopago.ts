@@ -109,6 +109,30 @@ export async function getOrder(orderId: string): Promise<MpOrder> {
   return mpFetch(`/v1/orders/${orderId}`);
 }
 
+/**
+ * Reembolsa una orden. Sin `amount` devuelve el total; con `amount` hace un
+ * parcial sobre la transacción indicada. Mercado Pago acepta reembolsos
+ * hasta 360 días después del pago.
+ */
+export async function refundOrder(
+  orderId: string,
+  partial?: { transactionId: string; amount: number },
+): Promise<MpOrder> {
+  return mpFetch(`/v1/orders/${orderId}/refund`, {
+    method: "POST",
+    // Distinta clave por monto: permite reintentar sin duplicar el reembolso,
+    // pero no bloquea un segundo parcial por otro importe.
+    idempotencyKey: `refund-${orderId}-${partial ? partial.amount : "total"}`,
+    ...(partial
+      ? {
+          body: JSON.stringify({
+            transactions: [{ id: partial.transactionId, amount: asAmount(partial.amount) }],
+          }),
+        }
+      : {}),
+  });
+}
+
 /** Las notificaciones de tipo `payment` traen el id del pago, no el de la orden. */
 export async function getPayment(paymentId: string) {
   return mpFetch(`/v1/payments/${paymentId}`);

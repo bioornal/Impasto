@@ -134,6 +134,8 @@ interface StoreCtx {
   deleteProduct: (id: string) => Promise<void>;
   updateOrderStatus: (id: string, estado: string) => Promise<void>;
   updateOrderPayment: (id: string, estado: string) => Promise<void>;
+  /** Sin `monto` devuelve el total; con `monto` hace una devolución parcial. */
+  refundOrder: (id: string, monto?: number) => Promise<void>;
   updateTestimonial: (id: string, estado: string) => Promise<void>;
   deleteTestimonial: (id: string) => Promise<void>;
   reset: () => Promise<void>;
@@ -245,6 +247,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const order = stateRef.current.orders.find(o => o.id === id);
       if (order) await fetch(`/api/admin/pedidos/${order._dbId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado_pago: estado }) });
       showToast(`Pago de ${id} → ${estado}`);
+    },
+
+    refundOrder: async (id, monto) => {
+      const order = stateRef.current.orders.find(o => o.id === id);
+      if (!order) return;
+      const response = await fetch(`/api/admin/pedidos/${order._dbId}/refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(monto === undefined ? {} : { amount: monto }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) {
+        // No tocamos el estado local: la plata no se movió.
+        showToast(result.error || "No se pudo procesar la devolución");
+        return;
+      }
+      setState(s => ({ ...s, orders: s.orders.map(o => o.id === id ? { ...o, pagoEstado: result.estadoPago } : o) }));
+      showToast(result.parcial ? `Devolución parcial de ${id} realizada` : `Pedido ${id} devuelto por completo`);
     },
 
     updateTestimonial: async (id, estado) => {

@@ -17,7 +17,7 @@ const fmtDateTime = (iso: string) => new Date(iso).toLocaleDateString("es-AR", {
 const FILTERS: [string, string][] = [["todos","Todos"],["nuevo","Nuevos"],["preparando","Preparando"],["en-camino","En camino"],["entregado","Entregados"],["cancelado","Cancelados"]];
 
 export function Orders() {
-  const { state, updateOrderStatus, updateOrderPayment } = useStore();
+  const { state, updateOrderStatus, updateOrderPayment, refundOrder } = useStore();
   const [filter, setFilter] = useState("todos");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<AdminOrder | null>(null);
@@ -84,13 +84,56 @@ export function Orders() {
           onClose={() => setSelected(null)}
           onUpdate={(estado) => { updateOrderStatus(selected.id, estado); setSelected({ ...selected, estado }); }}
           onPayment={(estado) => { updateOrderPayment(selected.id, estado); setSelected({ ...selected, pagoEstado: estado }); }}
+          onRefund={(monto) => { refundOrder(selected.id, monto); setSelected(null); }}
         />
       )}
     </>
   );
 }
 
-function OrderDetail({ order, onClose, onUpdate, onPayment }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void }) {
+/** Devoluciones de Mercado Pago. Pide confirmación porque mueve plata real. */
+function RefundBox({ total, onRefund }: { total: number; onRefund: (monto?: number) => void }) {
+  const [monto, setMonto] = useState("");
+  const [confirmando, setConfirmando] = useState(false);
+
+  const parcial = Number(monto) > 0 && Number(monto) < total;
+  const importe = parcial ? Number(monto) : total;
+  const invalido = monto !== "" && (!Number.isFinite(Number(monto)) || Number(monto) <= 0 || Number(monto) > total);
+
+  return (
+    <div style={{ padding: 14, background: "var(--a-bg)", borderRadius: 12, fontSize: 13.5, marginTop: 12 }}>
+      <b>Devolver dinero</b>
+      <div className="text-muted" style={{ fontSize: 12, marginBottom: 10 }}>
+        Dejá el monto vacío para devolver el total ({fmt(total)}).
+      </div>
+
+      {!confirmando ? (
+        <div className="flex gap-8" style={{ alignItems: "center", flexWrap: "wrap" }}>
+          <input
+            style={{ maxWidth: 140 }}
+            placeholder={`Parcial (máx ${total})`}
+            inputMode="decimal"
+            value={monto}
+            onChange={e => setMonto(e.target.value)}
+          />
+          <button className="btn btn-danger btn-sm" disabled={invalido} onClick={() => setConfirmando(true)}>
+            Devolver {invalido ? "" : fmt(importe)}
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-8" style={{ alignItems: "center", flexWrap: "wrap" }}>
+          <span>¿Confirmás devolver <b>{fmt(importe)}</b>? Esto no se puede deshacer.</span>
+          <button className="btn btn-danger btn-sm" onClick={() => { onRefund(parcial ? importe : undefined); setConfirmando(false); setMonto(""); }}>
+            Sí, devolver
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setConfirmando(false)}>Cancelar</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void; onRefund?: (monto?: number) => void }) {
   const [now] = useState(() => Date.now());
   const steps = ["nuevo", "preparando", "en-camino", "entregado"];
   const currentIdx = steps.indexOf(order.estado);
@@ -135,6 +178,10 @@ function OrderDetail({ order, onClose, onUpdate, onPayment }: { order: AdminOrde
             <div><b>Pago: </b><span style={{ textTransform: "capitalize" }}>{order.pago}</span><div className="text-muted" style={{ fontSize: 12 }}>Estado: {order.pagoEstado}</div></div>
             {order.pagoEstado === "pendiente" && <button className="btn btn-success btn-sm" onClick={() => onPayment("aprobado")}>Marcar pago recibido</button>}
           </div>
+
+          {order.pago === "mercadopago" && order.pagoEstado === "aprobado" && onRefund && (
+            <RefundBox total={order.total} onRefund={onRefund} />
+          )}
 
           <h4 style={{ fontFamily: "var(--a-font-mono)", fontSize: 11, letterSpacing: ".15em", textTransform: "uppercase", color: "var(--a-muted)", marginBottom: 12, marginTop: 20 }}>Detalle</h4>
           <div className="od-items">
