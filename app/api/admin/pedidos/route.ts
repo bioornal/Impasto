@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { SUCURSAL_ID } from "@/lib/business";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET() {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
   const { data, error } = await db.database
     .from("pedidos")
     .select("*")

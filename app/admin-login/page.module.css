@@ -1,0 +1,10 @@
+.page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #f6f1e7; color: #1f1a15; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+.card { width: min(100%, 420px); display: flex; flex-direction: column; gap: 14px; padding: 34px; border: 1px solid #e4d9c3; border-radius: 20px; background: #fffaf0; box-shadow: 0 20px 60px rgba(30, 20, 10, .12); }
+.card h1 { margin: 0; font-family: Georgia, serif; font-size: 32px; }
+.card p { margin: -6px 0 8px; color: #8a7b69; }
+.card label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: #8a7b69; }
+.card input { padding: 12px 14px; border: 1px solid #e4d9c3; border-radius: 8px; background: #f6f1e7; color: #1f1a15; font: inherit; text-transform: none; letter-spacing: normal; }
+.card button { margin-top: 8px; padding: 13px 16px; border: 0; border-radius: 10px; background: #b2472a; color: #fffaf0; font: inherit; font-weight: 700; cursor: pointer; }
+.card button:disabled { opacity: .6; cursor: wait; }
+.mark { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 14px; background: linear-gradient(135deg, #b2472a, #c69a4a); color: #fffaf0; font: 700 26px Georgia, serif; transform: rotate(-6deg); }
+.error { padding: 10px 12px; border-radius: 8px; background: #fde2d8; color: #8b2c12; font-size: 13px; }

@@ -1,6 +1,7 @@
 "use client";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
+import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   current: string;
@@ -10,6 +11,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ current, onNav, open, onClose }: SidebarProps) {
+  const router = useRouter();
   const { state } = useStore();
   const newOrders = state.orders.filter(o => o.estado === "nuevo").length;
   const pendingReviews = state.testimonials.filter(t => t.estado === "pendiente").length;
@@ -54,6 +56,7 @@ export function Sidebar({ current, onNav, open, onClose }: SidebarProps) {
           <b>Mauro</b>
           <small>Dueño · admin</small>
         </div>
+        <button className="btn btn-icon btn-ghost" title="Cerrar sesión" onClick={async () => { await fetch("/api/auth/sign-out", { method: "POST" }); router.replace("/admin-login"); router.refresh(); }}>×</button>
       </div>
     </aside>
   );

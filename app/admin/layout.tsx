@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getCurrentAdmin } from "@/lib/admin-auth";
 import "./admin.css";
 
 export const metadata: Metadata = {
   title: "Impasto Admin · Panel",
 };
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  if (!await getCurrentAdmin()) redirect("/admin-login");
   return (
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
