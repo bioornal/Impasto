@@ -1,35 +1,57 @@
 import type { BusinessConfig } from "@/lib/business";
 
 export function Footer({ business }: { business: BusinessConfig }) {
+  const [days, hours] = business.hours.split("·").map((part) => part.trim());
+
   return (
     <footer className="footer">
       <div className="container">
         <div className="footer-grid">
-          <div>
-            <div className="logo" style={{ color: "var(--bg)", marginBottom: 14 }}>
+          <div className="footer-about">
+            <div className="logo" style={{ marginBottom: 16 }}>
               <div className="logo-mark">I</div>
-              <div>Impasto<small style={{ color: "var(--gold)" }}>pizza híbrida · iguazú</small></div>
+              <div className="logo-word">{business.name}</div>
             </div>
-            <p style={{ fontSize: 13, opacity: 0.7, maxWidth: "34ch" }}>
-              Pizza híbrida argentina con fermentación lenta de 48 horas, base crocante y mozzarella abundante. Elaboradas cada día en Puerto Iguazú.
+            <p>
+              Pizza híbrida argentina con fermentación lenta de 48 horas.
+              Elaborada cada día en {business.locationLabel}.
             </p>
           </div>
+
           <div>
             <h5>Horarios</h5>
-            <ul><li>{business.hours}</li></ul>
+            <ul className="footer-list">
+              <li>{days || business.hours}</li>
+              {hours && <li>{hours}</li>}
+              <li>Lunes cerrado</li>
+            </ul>
           </div>
+
           <div>
             <h5>Contacto</h5>
-            <ul><li>{business.address}</li><li>{business.locationLabel}</li><li>{business.phone}</li><li>{business.email}</li></ul>
+            <ul className="footer-list">
+              <li>{business.address}</li>
+              <li>{business.locationLabel}</li>
+              <li>{business.phone}</li>
+              <li>{business.email}</li>
+            </ul>
           </div>
+
           <div>
-            <h5>Social</h5>
-            <ul><li>Instagram · {business.instagram}</li><li>Facebook · {business.facebook}</li><li>WhatsApp</li></ul>
+            <h5>Seguinos</h5>
+            <ul className="footer-list">
+              <li>{business.instagram}</li>
+              <li>{business.facebook}</li>
+              <li>
+                <a href={`https://wa.me/${business.whatsappPhone}`} target="_blank" rel="noreferrer">WhatsApp</a>
+              </li>
+            </ul>
           </div>
         </div>
+
         <div className="footer-bottom">
-          <div>© 2026 Impasto · {business.locationLabel}</div>
-          <div>Diseño con ♥ · Delivery tercerizado</div>
+          <span>© {new Date().getFullYear()} {business.name} · {business.city}</span>
+          <span>Delivery propio · Pagos con Mercado Pago · <a href="/admin-login" aria-label="Acceso administrativo" style={{ opacity: .55 }}>Acceso</a></span>
         </div>
       </div>
     </footer>

@@ -1,13 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/providers/CartProvider";
+import { ItemMedia } from "@/components/ui/ItemMedia";
 import { fmt } from "@/lib/utils";
 import type { BusinessConfig } from "@/lib/business";
 import type { CartItem } from "@/types";
 
 export interface CheckoutData {
-  mode: "delivery" | "takeaway"; nombre: string; tel: string; dir: string;
-  ref: string; pago: string; cambio: string; notas: string;
+  mode: "delivery" | "takeaway";
+  when: string;
+  nombre: string;
+  tel: string;
+  dir: string;
+  ref: string;
+  pago: string;
+  cambio: string;
+  notas: string;
 }
 
 export interface CheckoutOrder extends CheckoutData {
@@ -20,11 +28,24 @@ interface CheckoutProps {
   business: BusinessConfig;
 }
 
+const WHEN_OPTIONS: [string, string][] = [
+  ["asap", "Lo antes posible"],
+  ["21:00", "Programar 21:00"],
+  ["22:00", "Programar 22:00"],
+];
+
+const PAGOS: [string, string, string, string][] = [
+  ["efectivo", "Efectivo", "Pagás al recibir el pedido", "Sin recargo"],
+  ["transferencia", "Transferencia", "Te enviamos el CBU al confirmar", "Al confirmar"],
+];
+
 export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
   const { items, subtotal: localSubtotal } = useCart();
-  const [step, setStep] = useState(1);
-  const [data, setData] = useState<CheckoutData>({ mode: "delivery", nombre: "", tel: "", dir: "", ref: "", pago: "efectivo", cambio: "", notas: "" });
-  const [errors, setErrors] = useState<Partial<CheckoutData>>({});
+  const [data, setData] = useState<CheckoutData>({
+    mode: "delivery", when: "asap", nombre: "", tel: "", dir: "", ref: "",
+    pago: "efectivo", cambio: "", notas: "",
+  });
+  const [errors, setErrors] = useState<Partial<Record<keyof CheckoutData, string>>>({});
   const [quote, setQuote] = useState<{ key: string; items: CartItem[]; subtotal: number; shipping: number; total: number } | null>(null);
   const [quoteError, setQuoteError] = useState("");
   const [submitError, setSubmitError] = useState("");
@@ -52,22 +73,28 @@ export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
 
   const quoteLoading = quote?.key !== quoteKey;
   const subtotal = quoteLoading ? localSubtotal : (quote?.subtotal ?? localSubtotal);
-  const shipping = quoteLoading ? (data.mode === "delivery" ? business.deliveryFee : 0) : (quote?.shipping ?? 0);
+  const freeShipping = subtotal >= business.freeShippingFrom;
+  const shipping = quoteLoading
+    ? (data.mode === "delivery" && !freeShipping ? business.deliveryFee : 0)
+    : (quote?.shipping ?? 0);
   const total = quoteLoading ? subtotal + shipping : (quote?.total ?? subtotal + shipping);
   const lineItems = quoteLoading || !quote?.items.length ? items : quote.items;
-  const set = <K extends keyof CheckoutData>(k: K, v: CheckoutData[K]) => setData((d) => ({ ...d, [k]: v }));
+  const isDelivery = data.mode === "delivery";
 
-  const validateStep1 = () => {
-    const e: Partial<CheckoutData> = {};
-    if (!data.nombre.trim()) e.nombre = "Ingresá tu nombre";
-    if (!/^\d{8,}/.test(data.tel.replace(/\D/g, ""))) e.tel = "Teléfono inválido";
-    if (data.mode === "delivery" && !data.dir.trim()) e.dir = "Dirección requerida";
-    setErrors(e);
-    return Object.keys(e).length === 0;
+  const set = <K extends keyof CheckoutData>(key: K, value: CheckoutData[K]) =>
+    setData((prev) => ({ ...prev, [key]: value }));
+
+  const validate = () => {
+    const next: Partial<Record<keyof CheckoutData, string>> = {};
+    if (!data.nombre.trim()) next.nombre = "Ingresá tu nombre";
+    if (!/^\d{8,}/.test(data.tel.replace(/\D/g, ""))) next.tel = "Teléfono inválido";
+    if (isDelivery && !data.dir.trim()) next.dir = "Dirección requerida";
+    setErrors(next);
+    return Object.keys(next).length === 0;
   };
 
-  const next = () => { if (step === 1 && !validateStep1()) return; setStep(step + 1); };
-  const pay = async () => {
+  const confirm = async () => {
+    if (!validate()) return;
     setSubmitting(true);
     setSubmitError("");
     try {
@@ -81,116 +108,190 @@ export function Checkout({ onClose, onConfirm, business }: CheckoutProps) {
 
   return (
     <div className="checkout-screen">
-      <div className="container">
-        <div className="checkout-head">
-          <button className="logo" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}>
+      <div className="checkout-bar">
+        <div className="checkout-bar-inner">
+          <button className="logo" onClick={onClose}>
             <div className="logo-mark">I</div>
-            <div>Impasto<small>checkout</small></div>
+            <div className="logo-word">
+              {business.name}
+              <small>checkout seguro</small>
+            </div>
           </button>
-          <button className="btn btn-light btn-sm" onClick={onClose}>← Volver</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <div className="checkout-secure">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+              Datos protegidos
+            </div>
+            <button className="btn btn-light btn-sm" onClick={onClose}>← Seguir comprando</button>
+          </div>
         </div>
       </div>
+
       <div className="checkout-inner">
-        <div>
-          <div className="steps">
-            <div className={`step ${step >= 1 ? (step > 1 ? "done" : "active") : ""}`}>1 · Entrega</div>
-            <div className={`step ${step >= 2 ? "active" : ""}`}>2 · Pago</div>
+        <div className="checkout-main">
+          <div className="checkout-title">
+            <h1>Finalizá tu pedido</h1>
+            <p>Todo en una pantalla. Sin registro, sin pasos de más.</p>
           </div>
 
-          {step === 1 && (
-            <>
-              <div className="form-section">
-                <h4>Modalidad</h4>
-                <div className="radio-row">
-                  <div className={`radio-card ${data.mode === "delivery" ? "active" : ""}`} onClick={() => set("mode", "delivery")}><b>Delivery</b><small>Te lo llevamos a domicilio · 30 min aprox.</small></div>
-                  <div className={`radio-card ${data.mode === "takeaway" ? "active" : ""}`} onClick={() => set("mode", "takeaway")}><b>Retiro en local</b><small>Pasás a buscarlo · 20 min</small></div>
-                </div>
-              </div>
-              <div className="form-section">
-                <h4>Datos de contacto</h4>
-                <div className="form-row">
-                  <div className={`field ${errors.nombre ? "error" : ""}`}>
-                    <label>Nombre y apellido</label>
-                    <input value={data.nombre} onChange={(e) => set("nombre", e.target.value)} placeholder="Juan Pérez" />
-                    {errors.nombre && <span className="err">{errors.nombre}</span>}
-                  </div>
-                  <div className={`field ${errors.tel ? "error" : ""}`}>
-                      <label>Teléfono</label>
-                      <input value={data.tel} onChange={(e) => set("tel", e.target.value)} placeholder="3757 555 1234" />
-                    {errors.tel && <span className="err">{errors.tel}</span>}
-                  </div>
-                </div>
-              </div>
-              {data.mode === "delivery" && (
-                <div className="form-section">
-                  <h4>Dirección de entrega</h4>
-                  <div className="form-row">
-                    <div className={`field ${errors.dir ? "error" : ""}`} style={{ gridColumn: "1 / -1" }}>
-                      <label>Calle y altura</label>
-                      <input value={data.dir} onChange={(e) => set("dir", e.target.value)} placeholder="Calle, altura y referencias" />
-                      {errors.dir && <span className="err">{errors.dir}</span>}
-                    </div>
-                  </div>
-                  <div className="form-row">
-                    <div className="field">
-                      <label>Envío</label>
-                      <input value={`Tarifa única · ${fmt(business.deliveryFee)}`} readOnly />
-                    </div>
-                    <div className="field">
-                      <label>Referencia (opcional)</label>
-                      <input value={data.ref} onChange={(e) => set("ref", e.target.value)} placeholder="Casa color verde, timbre 2B" />
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div className="form-section">
-                <h4>Notas del pedido</h4>
-                <div className="field">
-                  <label>Observaciones (opcional)</label>
-                  <textarea rows={3} value={data.notas} onChange={(e) => set("notas", e.target.value)} placeholder="Sin cebolla, porfa" />
-                </div>
-              </div>
-              <button className="btn btn-primary btn-lg btn-block" onClick={next}>Continuar al pago</button>
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <div className="form-section">
-                <h4>Método de pago</h4>
-                <div className="radio-row" style={{ flexDirection: "column" }}>
-                  {([ ["tarjeta", "Tarjeta de débito/crédito", "Al momento de la entrega con POS"], ["efectivo", "Efectivo", "Pagás al recibir el pedido"], ["transferencia", "Transferencia bancaria", "Te enviamos CBU al confirmar"] ] as [string,string,string][]).map(([k, t, s]) => (
-                    <div key={k} className={`radio-card ${data.pago === k ? "active" : ""}`} onClick={() => set("pago", k)}><b>{t}</b><small>{s}</small></div>
-                  ))}
-                </div>
-                {data.pago === "efectivo" && (
-                  <div className="form-row" style={{ marginTop: 12 }}>
-                    <div className="field"><label>¿Con cuánto abonás?</label><input value={data.cambio} onChange={(e) => set("cambio", e.target.value)} placeholder="Ej: $20.000" /></div>
-                  </div>
-                )}
-              </div>
-              <div style={{ display: "flex", gap: 10 }}>
-                <button className="btn btn-light" onClick={() => setStep(1)}>← Atrás</button>
-                <button className="btn btn-primary btn-lg" style={{ flex: 1 }} onClick={pay} disabled={submitting || quoteLoading || Boolean(quoteError)}>
-                  {submitting ? "Registrando pedido…" : quoteLoading ? "Actualizando total…" : `Confirmar pedido · ${fmt(total)}`}
+          <section className="co-card">
+            <div className="co-card-head">
+              <span className="co-num">1</span>
+              <h4>¿Cómo lo querés recibir?</h4>
+            </div>
+            <div className="co-modes">
+              <button className={`radio-card ${isDelivery ? "on" : ""}`} onClick={() => set("mode", "delivery")}>
+                <span className="radio-card-top">
+                  <b>Delivery</b>
+                  <span className={`dot ${isDelivery ? "on" : ""}`} />
+                </span>
+                <small>
+                  A domicilio en 30-40 min · {fmt(business.deliveryFee)}<br />
+                  Gratis desde {fmt(business.freeShippingFrom)}
+                </small>
+              </button>
+              <button className={`radio-card ${!isDelivery ? "on" : ""}`} onClick={() => set("mode", "takeaway")}>
+                <span className="radio-card-top">
+                  <b>Retiro en el local</b>
+                  <span className={`dot ${!isDelivery ? "on" : ""}`} />
+                </span>
+                <small>
+                  Listo en 20 min · sin cargo<br />
+                  {business.address}
+                </small>
+              </button>
+            </div>
+            <div className="when-row">
+              {WHEN_OPTIONS.map(([key, label]) => (
+                <button key={key} className={`when ${data.when === key ? "on" : ""}`} onClick={() => set("when", key)}>
+                  {label}
                 </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="co-card">
+            <div className="co-card-head">
+              <span className="co-num">2</span>
+              <h4>Tus datos</h4>
+            </div>
+            <div className="form-grid">
+              <div className={`field ${errors.nombre ? "error" : ""}`}>
+                <label htmlFor="co-nombre">Nombre y apellido</label>
+                <input id="co-nombre" placeholder="Juan Pérez" value={data.nombre} onChange={(e) => set("nombre", e.target.value)} />
+                {errors.nombre && <span className="err">{errors.nombre}</span>}
               </div>
-              {quoteError && <div className="field err" style={{ marginTop: 12 }}>{quoteError}</div>}
-              {submitError && <div className="field err" style={{ marginTop: 12 }}>{submitError}</div>}
-            </>
-          )}
+              <div className={`field ${errors.tel ? "error" : ""}`}>
+                <label htmlFor="co-tel">WhatsApp</label>
+                <input id="co-tel" placeholder="3757 55 1234" value={data.tel} onChange={(e) => set("tel", e.target.value)} />
+                {errors.tel && <span className="err">{errors.tel}</span>}
+              </div>
+
+              {isDelivery && (
+                <>
+                  <div className={`field full ${errors.dir ? "error" : ""}`}>
+                    <label htmlFor="co-dir">Dirección</label>
+                    <input id="co-dir" placeholder="Calle y altura" value={data.dir} onChange={(e) => set("dir", e.target.value)} />
+                    {errors.dir && <span className="err">{errors.dir}</span>}
+                  </div>
+                  <div className="field full">
+                    <label htmlFor="co-ref">Referencia para el repartidor (opcional)</label>
+                    <input id="co-ref" placeholder="Casa verde, timbre 2B" value={data.ref} onChange={(e) => set("ref", e.target.value)} />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="field form-note">
+              <label htmlFor="co-notas">Notas del pedido (opcional)</label>
+              <textarea id="co-notas" rows={2} placeholder="Sin cebolla, cortada en 12 porciones…" value={data.notas} onChange={(e) => set("notas", e.target.value)} />
+            </div>
+          </section>
+
+          <section className="co-card">
+            <div className="co-card-head">
+              <span className="co-num">3</span>
+              <h4>Pago</h4>
+            </div>
+            <div className="pay-list">
+              {PAGOS.map(([key, title, sub, tag]) => (
+                <button key={key} className={`pay-row ${data.pago === key ? "on" : ""}`} onClick={() => set("pago", key)}>
+                  <span className={`dot ${data.pago === key ? "on" : ""}`} />
+                  <span style={{ flex: 1, textAlign: "left" }}>
+                    <b>{title}</b>
+                    <small>{sub}</small>
+                  </span>
+                  <span className="tag">{tag}</span>
+                </button>
+              ))}
+            </div>
+            {data.pago === "efectivo" && (
+              <div className="field form-note">
+                <label htmlFor="co-cambio">¿Con cuánto abonás?</label>
+                <input id="co-cambio" placeholder="Ej: $20.000" value={data.cambio} onChange={(e) => set("cambio", e.target.value)} />
+              </div>
+            )}
+          </section>
         </div>
 
-        <aside className="summary">
-          <h4>Resumen</h4>
-           {lineItems.map((i) => (
-            <div className="line" key={i.cartId}><span>{i.qty}× {i.name}</span><span>{fmt(i.price * i.qty)}</span></div>
-          ))}
-          <div className="line"><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
-          <div className="line"><span>Envío {data.mode === "takeaway" ? "(take away)" : ""}</span><span>{shipping === 0 ? "—" : fmt(shipping)}</span></div>
-          <div className="tot-row big"><span>Total</span><span>{fmt(total)}</span></div>
-          <div style={{ marginTop: 16, padding: 12, background: "var(--bg-2)", borderRadius: 8, fontSize: 12, color: "var(--muted)" }}>
-             {data.mode === "delivery" ? `Envío con tarifa única de ${fmt(business.deliveryFee)}. Tiempo estimado: 30-40 min.` : `Retiro en ${business.address}, ${business.city}. Listo en 20 min.`}
+        <aside className="co-aside">
+          <div className="co-sum">
+            <div className="co-sum-head">
+              <h4>Tu pedido</h4>
+              <span className="eta">{isDelivery ? "Llega en 30-40 min" : "Listo en 20 min"}</span>
+            </div>
+
+            <div className="co-sum-items">
+              {lineItems.map((item) => (
+                <div className="co-sum-item" key={item.cartId}>
+                  <div className="co-sum-media"><ItemMedia item={item} /></div>
+                  <div style={{ minWidth: 0 }}>
+                    <b>{item.name}</b>
+                    <small>×{item.qty}</small>
+                  </div>
+                  <span className="line">{fmt(item.price * item.qty)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="co-lines" style={{ paddingTop: 14, borderTop: "1px solid rgba(246,241,231,.16)" }}>
+              <div><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
+              <div>
+                <span>{isDelivery ? (shipping === 0 ? "Envío (gratis)" : "Envío") : "Retiro en local"}</span>
+                <span className={shipping === 0 && isDelivery ? "free" : ""}>
+                  {shipping === 0 ? (isDelivery ? "Gratis" : "—") : fmt(shipping)}
+                </span>
+              </div>
+            </div>
+
+            <div className="co-total">
+              <span className="mono">Total</span>
+              <b>{fmt(total)}</b>
+            </div>
+
+            {quoteError && <div className="co-error">{quoteError}</div>}
+            {submitError && <div className="co-error">{submitError}</div>}
+
+            <button className="co-cta" onClick={confirm} disabled={submitting || quoteLoading || Boolean(quoteError)}>
+              {submitting ? "Registrando pedido…" : quoteLoading ? "Actualizando total…" : `Confirmar · ${fmt(total)}`}
+            </button>
+
+            <small className="co-note">
+              {isDelivery
+                ? `Tarifa única de ${fmt(business.deliveryFee)} en ${business.city} centro. Gratis desde ${fmt(business.freeShippingFrom)}.`
+                : `Retirás en ${business.address}. Te avisamos cuando esté listo.`}
+            </small>
+          </div>
+
+          <div className="co-trust">
+            {["Te avisamos por WhatsApp cuando la pizza entra al horno.", "Si algo no llega bien, lo reponemos sin vueltas."].map((text) => (
+              <div className="co-trust-row" key={text}>
+                <span className="check">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6 9 17l-5-5" /></svg>
+                </span>
+                <small>{text}</small>
+              </div>
+            ))}
           </div>
         </aside>
       </div>

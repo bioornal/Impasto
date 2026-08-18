@@ -1,4 +1,5 @@
 {
+  "$schema": "https://opencode.ai/config.json",
   "mcp": {
     "insforge": {
       "type": "local",
@@ -7,10 +8,24 @@
         "-y",
         "@insforge/mcp@latest"
       ],
-        "environment": {
-          "API_KEY": "{env:INSFORGE_API_KEY}",
-          "API_BASE_URL": "{env:INSFORGE_API_BASE_URL}"
-        }
+      "environment": {
+        "API_KEY": "{env:INSFORGE_API_KEY}",
+        "API_BASE_URL": "{env:INSFORGE_API_BASE_URL}"
+      }
+    },
+    "mercadopago": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "mcp-remote",
+        "https://mcp.mercadopago.com/mcp",
+        "--header",
+        "Authorization:${AUTH_HEADER}"
+      ],
+      "environment": {
+        "AUTH_HEADER": "{env:MERCADOPAGO_AUTH_HEADER}"
+      }
     }
   }
 }

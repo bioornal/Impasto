@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const business = await getBusinessConfig();
-    const quote = await quoteOrder(body.items as CartItem[], body.mode, business.deliveryFee);
+    const quote = await quoteOrder(body.items as CartItem[], body.mode, business);
     return NextResponse.json({ ok: true, ...quote });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "No se pudo calcular el pedido";

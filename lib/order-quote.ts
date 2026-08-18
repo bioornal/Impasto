@@ -1,4 +1,4 @@
-import { DELIVERY_FEE } from "@/lib/business";
+import { BORDE_FEE, DELIVERY_FEE, FREE_SHIPPING_FROM } from "@/lib/business";
 import { getCatalogData } from "@/lib/catalog";
 import type { CartItem, CatalogData } from "@/types";
 
@@ -7,7 +7,20 @@ interface QuoteResult {
   subtotal: number;
   shipping: number;
   total: number;
+  freeShipping: boolean;
 }
+
+export interface QuoteRates {
+  deliveryFee: number;
+  freeShippingFrom: number;
+  bordeFee: number;
+}
+
+const DEFAULT_RATES: QuoteRates = {
+  deliveryFee: DELIVERY_FEE,
+  freeShippingFrom: FREE_SHIPPING_FROM,
+  bordeFee: BORDE_FEE,
+};
 
 const integerQuantity = (value: unknown) => {
   const quantity = Number(value);
@@ -22,7 +35,7 @@ function findEmpanada(data: CatalogData, id: string) {
   return data.empanadas.find((product) => product.id === id);
 }
 
-function quoteItem(rawItem: CartItem, data: CatalogData): CartItem {
+function quoteItem(rawItem: CartItem, data: CatalogData, rates: QuoteRates): CartItem {
   const qty = integerQuantity(rawItem.qty);
   if (!qty) throw new Error("Cantidad de producto inválida");
 
@@ -42,17 +55,18 @@ function quoteItem(rawItem: CartItem, data: CatalogData): CartItem {
     const ids = rawItem.variant?.kind === "half"
       ? rawItem.variant.ids
       : rawItem.key.split("-").slice(1, 3) as [string, string];
+    const borde = rawItem.variant?.kind === "half" && rawItem.variant.borde === true;
     const left = findPizza(data, ids[0] || "");
     const right = findPizza(data, ids[1] || "");
     if (!left || !right) throw new Error("Una variedad de la pizza mitad y mitad ya no está disponible");
     return {
       ...rawItem,
-      key: `half-${left.id}-${right.id}`,
+      key: `half-${left.id}-${right.id}${borde ? "-borde" : ""}`,
       name: `Mitad ${left.nombre} / Mitad ${right.nombre}`,
-      detail: "Pizza mitad y mitad",
-      price: Math.max(left.precio, right.precio),
+      detail: borde ? "Mitad y mitad · borde relleno con muzzarella" : "Pizza mitad y mitad",
+      price: Math.max(left.precio, right.precio) + (borde ? rates.bordeFee : 0),
       qty,
-      variant: { kind: "half", ids: [left.id, right.id] },
+      variant: { kind: "half", ids: [left.id, right.id], borde },
     };
   }
 
@@ -92,16 +106,22 @@ function quoteItem(rawItem: CartItem, data: CatalogData): CartItem {
   throw new Error("Tipo de producto inválido");
 }
 
-export async function quoteOrder(rawItems: CartItem[], mode: string, deliveryFee = DELIVERY_FEE): Promise<QuoteResult> {
+export async function quoteOrder(
+  rawItems: CartItem[],
+  mode: string,
+  rates: Partial<QuoteRates> = {},
+): Promise<QuoteResult> {
   if (!Array.isArray(rawItems) || rawItems.length === 0 || rawItems.length > 50) {
     throw new Error("El carrito está vacío o es demasiado grande");
   }
   if (mode !== "delivery" && mode !== "takeaway") throw new Error("Modalidad de entrega inválida");
 
+  const applied: QuoteRates = { ...DEFAULT_RATES, ...rates };
   const data = await getCatalogData();
-  const items = rawItems.map((item) => quoteItem(item, data));
+  const items = rawItems.map((item) => quoteItem(item, data, applied));
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const shipping = mode === "delivery" ? deliveryFee : 0;
+  const freeShipping = subtotal >= applied.freeShippingFrom;
+  const shipping = mode === "delivery" && !freeShipping ? applied.deliveryFee : 0;
 
-  return { items, subtotal, shipping, total: subtotal + shipping };
+  return { items, subtotal, shipping, total: subtotal + shipping, freeShipping };
 }

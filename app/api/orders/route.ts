@@ -17,12 +17,16 @@ export async function POST(req: NextRequest) {
   if (typeof order.nombre !== "string" || typeof order.tel !== "string" || !order.nombre.trim() || !order.tel.trim()) {
     return NextResponse.json({ ok: false, error: "Datos de pedido incompletos" }, { status: 400 });
   }
+  const paymentMethod = String(order.pago || "efectivo");
+  if (!["efectivo", "transferencia"].includes(paymentMethod)) {
+    return NextResponse.json({ ok: false, error: "Método de pago no disponible todavía" }, { status: 400 });
+  }
 
   const today = new Date().toISOString().slice(0, 10);
 
   try {
     const business = await getBusinessConfig();
-    const quote = await quoteOrder(order.items as CartItem[], String(order.mode || ""), business.deliveryFee);
+    const quote = await quoteOrder(order.items as CartItem[], String(order.mode || ""), business);
 
     const { data: clienteExistente } = await db.database
       .from("clientes")
@@ -60,6 +64,17 @@ export async function POST(req: NextRequest) {
       total_con_descuento: quote.total,
       status: "normal",
       sucursal_id: SUCURSAL_ID,
+      modalidad: order.mode === "takeaway" ? "takeaway" : "delivery",
+      cuando: typeof order.when === "string" ? order.when : "asap",
+      metodo_pago: paymentMethod,
+      cambio: typeof order.cambio === "string" ? order.cambio.trim() : "",
+      referencia: typeof order.ref === "string" ? order.ref.trim() : "",
+      notas: typeof order.notas === "string" ? order.notas.trim() : "",
+      subtotal: quote.subtotal,
+      envio: quote.shipping,
+      estado_pago: "pendiente",
+      proveedor_pago: "manual",
+      id_pago: "",
       fecha: today,
     });
 

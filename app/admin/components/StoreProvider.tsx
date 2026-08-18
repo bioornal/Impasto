@@ -48,9 +48,10 @@ function adaptProduct(p: Record<string, unknown>): AdminProduct {
 }
 
 function adaptOrder(p: Record<string, unknown>) {
-  const isDelivery = p.direccion && p.direccion !== "Retiro en local";
+  const mode = p.modalidad === "takeaway" ? "takeaway" : p.modalidad === "delivery" ? "delivery" : p.direccion && p.direccion !== "Retiro en local" ? "delivery" : "takeaway";
+  const isDelivery = mode === "delivery";
   const total = Number(p.total || 0);
-  const shipping = isDelivery ? DELIVERY_FEE : 0;
+  const shipping = Number(p.envio ?? (isDelivery ? DELIVERY_FEE : 0));
   const items = Array.isArray(p.productos)
     ? p.productos.map((i: Record<string, unknown>) => ({ name: String(i.name || i.nombre || "?"), qty: Number(i.qty || i.cantidad || 1), price: Number(i.price || i.precio || 0) }))
     : [];
@@ -60,17 +61,21 @@ function adaptOrder(p: Record<string, unknown>) {
     id: "IM-" + num,
     cliente: String(p.nombre_cliente || "—"),
     tel: String(p.telefono_cliente || "—"),
-    mode: isDelivery ? "delivery" : "takeaway" as "delivery" | "takeaway",
+    mode: mode as "delivery" | "takeaway",
     dir: isDelivery ? String(p.direccion || "") : "",
     zona: "",
     items,
-    subtotal: Math.max(0, Number(p.total_con_descuento || total) - shipping),
+    subtotal: Number(p.subtotal ?? Math.max(0, Number(p.total_con_descuento || total) - shipping)),
     shipping,
     total,
-    pago: "n/d",
+    pago: String(p.metodo_pago || "n/d"),
+    pagoEstado: String(p.estado_pago || "pendiente"),
+    cambio: String(p.cambio || ""),
+    referencia: String(p.referencia || ""),
+    cuando: String(p.cuando || "asap"),
     estado: String(p.status || "nuevo") === "normal" ? "nuevo" : String(p.status || "nuevo"),
     fecha: String(p.created_at || new Date().toISOString()),
-    notas: "",
+    notas: String(p.notas || ""),
   };
 }
 
@@ -128,6 +133,7 @@ interface StoreCtx {
   createProduct: (p: Partial<AdminProduct>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   updateOrderStatus: (id: string, estado: string) => Promise<void>;
+  updateOrderPayment: (id: string, estado: string) => Promise<void>;
   updateTestimonial: (id: string, estado: string) => Promise<void>;
   deleteTestimonial: (id: string) => Promise<void>;
   reset: () => Promise<void>;
@@ -232,6 +238,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const order = stateRef.current.orders.find(o => o.id === id);
       if (order) await fetch(`/api/admin/pedidos/${order._dbId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: estado }) });
       showToast(`Pedido ${id} → ${estado}`);
+    },
+
+    updateOrderPayment: async (id, estado) => {
+      setState(s => ({ ...s, orders: s.orders.map(o => o.id === id ? { ...o, pagoEstado: estado } : o) }));
+      const order = stateRef.current.orders.find(o => o.id === id);
+      if (order) await fetch(`/api/admin/pedidos/${order._dbId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado_pago: estado }) });
+      showToast(`Pago de ${id} → ${estado}`);
     },
 
     updateTestimonial: async (id, estado) => {

@@ -8,6 +8,8 @@ interface CartCtx {
   add: (item: Omit<CartItem, "cartId">) => void;
   inc: (cartId: string) => void;
   dec: (cartId: string) => void;
+  incKey: (key: string) => void;
+  decKey: (key: string) => void;
   remove: (cartId: string) => void;
   clear: () => void;
   subtotal: number;
@@ -72,13 +74,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((p) => p.map((i) => i.cartId === cartId ? { ...i, qty: i.qty + 1 } : i));
   const dec = (cartId: string) =>
     setItems((p) => p.flatMap((i) => i.cartId === cartId ? (i.qty > 1 ? [{ ...i, qty: i.qty - 1 }] : []) : [i]));
+  const incKey = (key: string) =>
+    setItems((p) => p.map((i) => i.key === key ? { ...i, qty: i.qty + 1 } : i));
+  const decKey = (key: string) =>
+    setItems((p) => p.flatMap((i) => i.key === key ? (i.qty > 1 ? [{ ...i, qty: i.qty - 1 }] : []) : [i]));
   const remove = (cartId: string) => setItems((p) => p.filter((i) => i.cartId !== cartId));
   const clear = () => setItems([]);
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const count = items.reduce((s, i) => s + i.qty, 0);
 
   return (
-    <CartCtx.Provider value={{ items, add, inc, dec, remove, clear, subtotal, count }}>
+    <CartCtx.Provider value={{ items, add, inc, dec, incKey, decKey, remove, clear, subtotal, count }}>
       {children}
     </CartCtx.Provider>
   );

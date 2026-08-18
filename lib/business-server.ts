@@ -23,6 +23,8 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       facebook: BUSINESS.facebook,
       hours: String(branch.horarios || BUSINESS.hours),
       deliveryFee: Number(branch.delivery_fee || BUSINESS.deliveryFee),
+      freeShippingFrom: Number(branch.envio_gratis_desde || BUSINESS.freeShippingFrom),
+      bordeFee: Number(branch.borde_relleno || BUSINESS.bordeFee),
     };
   } catch {
     return BUSINESS;

@@ -19,7 +19,7 @@ interface TweakCtx {
 }
 
 const DEFAULTS: Tweaks = {
-  palette: "trattoria",
+  palette: "impasto",
   typography: "classic",
   cardStyle: "photo",
   heroLayout: "split",
@@ -33,7 +33,7 @@ export function TweakProvider({ children }: { children: React.ReactNode }) {
   const [tweaks, setTweaks] = useState<Tweaks>(() => {
     if (typeof window === "undefined") return DEFAULTS;
     try {
-      return JSON.parse(localStorage.getItem("impasto_tweaks") || "null") || DEFAULTS;
+      return JSON.parse(localStorage.getItem("impasto_tweaks_v2") || "null") || DEFAULTS;
     } catch { return DEFAULTS; }
   });
   const [tweaksOn, setTweaksOn] = useState(false);
@@ -52,7 +52,7 @@ export function TweakProvider({ children }: { children: React.ReactNode }) {
   const setKey = (key: keyof Tweaks, value: string | boolean) => {
     setTweaks((prev) => {
       const next = { ...prev, [key]: value };
-      localStorage.setItem("impasto_tweaks", JSON.stringify(next));
+      localStorage.setItem("impasto_tweaks_v2", JSON.stringify(next));
       try { window.parent.postMessage({ type: "__edit_mode_set_keys", edits: { [key]: value } }, "*"); } catch {}
       return next;
     });

@@ -11,6 +11,10 @@ export interface BusinessConfig {
   facebook: string;
   hours: string;
   deliveryFee: number;
+  /** Monto de subtotal a partir del cual el envío es gratis. */
+  freeShippingFrom: number;
+  /** Recargo por borde relleno de muzzarella en pizzas mitad y mitad. */
+  bordeFee: number;
 }
 
 export const SUCURSAL_ID = "iguazu";
@@ -28,6 +32,10 @@ export const BUSINESS: BusinessConfig = {
   facebook: "Impasto Iguazú",
   hours: "Martes a Domingo · 19:30 — 00:00",
   deliveryFee: 3000,
+  freeShippingFrom: 25000,
+  bordeFee: 1500,
 } as const;
 
 export const DELIVERY_FEE = BUSINESS.deliveryFee;
+export const FREE_SHIPPING_FROM = BUSINESS.freeShippingFrom;
+export const BORDE_FEE = BUSINESS.bordeFee;

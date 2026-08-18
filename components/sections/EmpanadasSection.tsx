@@ -1,107 +1,154 @@
 "use client";
 import { useState } from "react";
+import { EmpanadaIllus } from "@/components/ui/Illus";
 import { useCart } from "@/components/providers/CartProvider";
+import { useToast } from "@/components/providers/ToastProvider";
 import { fmt } from "@/lib/utils";
 import type { Empanada } from "@/types";
 
-export function EmpanadasSection({ empanadas, boxPrices }: { empanadas: Empanada[]; boxPrices: Record<6 | 12 | 24, number> }) {
+const TIERS: (6 | 12 | 24)[] = [6, 12, 24];
+
+interface EmpanadasSectionProps {
+  empanadas: Empanada[];
+  boxPrices: Record<6 | 12 | 24, number>;
+}
+
+export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps) {
   const { add } = useCart();
+  const toast = useToast();
   const [selection, setSelection] = useState<Record<string, number>>({});
-  const [tier, setTier] = useState(6);
-  const totalSelected = Object.values(selection).reduce((a, b) => a + b, 0);
-  const hasUnitPrices = empanadas.some((empanada) => Number(empanada.precio) > 0);
-  const priceForSelection = (currentSelection: Record<string, number>, size: number) => {
-    if (!hasUnitPrices) return boxPrices[size as 6 | 12 | 24];
-    return Object.entries(currentSelection).reduce((sum, [id, amount]) => {
-      const empanada = empanadas.find((item) => item.id === id);
+  const [tier, setTier] = useState<6 | 12 | 24>(12);
+
+  if (empanadas.length === 0) return null;
+
+  const selected = Object.values(selection).reduce((a, b) => a + b, 0);
+  const complete = selected === tier;
+  const hasUnitPrices = empanadas.some((e) => Number(e.precio) > 0);
+
+  const priceFor = (size: 6 | 12 | 24, current: Record<string, number>) => {
+    if (!hasUnitPrices) return boxPrices[size];
+    return Object.entries(current).reduce((sum, [id, amount]) => {
+      const empanada = empanadas.find((e) => e.id === id);
       return sum + Number(empanada?.precio || 0) * amount;
     }, 0);
   };
 
   const pick = (id: string, delta: number) =>
     setSelection((prev) => {
+      if (delta > 0 && Object.values(prev).reduce((a, b) => a + b, 0) >= tier) return prev;
       const next = { ...prev, [id]: Math.max(0, (prev[id] || 0) + delta) };
       if (next[id] === 0) delete next[id];
       return next;
     });
 
-  const addDozen = () => {
-    if (totalSelected !== tier) {
-      alert(`Seleccioná exactamente ${tier} empanadas. Tenés ${totalSelected}.`);
-      return;
-    }
-    const names = Object.entries(selection).map(([id, q]) => {
-      const e = empanadas.find((x) => x.id === id);
-      return `${q}× ${e?.nombre}`;
-    }).join(", ");
+  const changeTier = (next: 6 | 12 | 24) => { setTier(next); setSelection({}); };
+
+  const addBox = () => {
+    if (!complete) return;
+    const detail = Object.entries(selection)
+      .map(([id, amount]) => `${amount}× ${empanadas.find((e) => e.id === id)?.nombre}`)
+      .join(", ");
     add({
       key: `emp-${tier}-${Object.keys(selection).sort().join("-")}`,
       unique: true,
       type: "empanadas",
-      name: `Caja x${tier}`,
-      detail: names,
-      price: priceForSelection(selection, tier),
+      name: `Caja de ${tier} empanadas`,
+      detail,
+      price: priceFor(tier, selection),
       qty: 1,
-      variant: { kind: "empanadas-box", size: tier as 6 | 12 | 24, selections: selection },
+      variant: { kind: "empanadas-box", size: tier, selections: selection },
     });
     setSelection({});
+    toast(`Caja de ${tier} agregada`);
   };
 
+  const lines = Object.entries(selection).filter(([, amount]) => amount > 0);
+
   return (
-    <section className="section" id="empanadas" style={{ background: "var(--bg-2)" }}>
+    <section className="emp-section" id="empanadas">
       <div className="container">
         <div className="section-head">
           <div>
-            <div className="eyebrow">Recién hechas</div>
-            <h2>Empanadas artesanales</h2>
+            <div className="sec-index">02 — Recién hechas</div>
+            <h2>Armá tu caja</h2>
           </div>
-          <p>Armá tu caja por 6, 12 o 24. Repulgue a mano y cocción al horno.</p>
+          <p>Repulgue a mano, cocción al horno. Elegí el tamaño y combiná los gustos que quieras.</p>
         </div>
 
-        <div className="dozen-bar" style={{ marginTop: 0, marginBottom: 24 }}>
-          <div>
-            <h4>Armá tu caja</h4>
-            <small>Elegí cuántas y combiná gustos</small>
+        <div className="emp-layout">
+          <div className="emp-grid">
+            {empanadas.map((empanada) => {
+              const count = selection[empanada.id] || 0;
+              return (
+                <article className={`emp-card ${count > 0 ? "on" : ""}`} key={empanada.id}>
+                  <div className="emp-media"><EmpanadaIllus id={empanada.id} /></div>
+                  <div className="emp-head">
+                    <h4>{empanada.nombre}</h4>
+                    {empanada.tags.includes("picante") && <span className="emp-flag hot">picante</span>}
+                    {empanada.tags.includes("vegetariana") && <span className="emp-flag veg">veggie</span>}
+                    {empanada.tags.includes("dulce") && <span className="emp-flag sweet">dulce</span>}
+                  </div>
+                  <p>{empanada.desc}</p>
+                  <div className="emp-foot">
+                    <span className="emp-unit">
+                      {count > 0 ? "en la caja" : hasUnitPrices && empanada.precio ? fmt(empanada.precio) : "sumar"}
+                    </span>
+                    <div className="stepper">
+                      <button onClick={() => pick(empanada.id, -1)} disabled={count === 0} aria-label={`Quitar ${empanada.nombre}`}>−</button>
+                      <span>{count}</span>
+                      <button onClick={() => pick(empanada.id, 1)} disabled={selected >= tier} aria-label={`Sumar ${empanada.nombre}`}>+</button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
-          <div className="dozen-controls">
-            {[6, 12, 24].map((t) => (
-              <button key={t} className={`btn btn-sm ${tier === t ? "btn-primary" : "btn-light"}`} onClick={() => { setTier(t); setSelection({}); }}>
-                 x{t} · {hasUnitPrices ? "por variedad" : fmt(boxPrices[t as 6 | 12 | 24])}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        <div className="emp-grid">
-          {empanadas.map((e) => (
-            <div className="emp-card" key={e.id}>
-              <div className="emp-media">
-                <div className="emp-illus" style={{ position: "absolute", inset: 0 }} />
+          <aside className="box-aside">
+            <div>
+              <h4>Tu caja</h4>
+              <small className="box-sub">Elegí el tamaño</small>
+            </div>
+
+            <div className="box-tiers">
+              {TIERS.map((size) => (
+                <button key={size} className={`tier ${tier === size ? "on" : ""}`} onClick={() => changeTier(size)}>
+                  <b>×{size}</b>
+                  <small>{hasUnitPrices ? "por variedad" : fmt(boxPrices[size])}</small>
+                </button>
+              ))}
+            </div>
+
+            <div>
+              <div className="box-progress-top">
+                <span>{selected} de {tier} elegidas</span>
+                <span className="remain">{complete ? "Caja completa" : `Faltan ${tier - selected}`}</span>
               </div>
-              <h4>{e.nombre}</h4>
-              <p>{e.desc}</p>
-              <div className="card-tags">
-                {e.tags.includes("picante") && <span className="tag hot">Picante</span>}
-                {e.tags.includes("vegetariana") && <span className="tag veg">Vegetariana</span>}
-                {e.tags.includes("dulce") && <span className="tag sweet">Dulce</span>}
-              </div>
-              <div className="qty" style={{ alignSelf: "flex-start", marginTop: 6 }}>
-                <button onClick={() => pick(e.id, -1)}>−</button>
-                <span>{selection[e.id] || 0}</span>
-                <button onClick={() => pick(e.id, +1)}>+</button>
+              <div className="box-track">
+                <div className={`box-bar ${complete ? "done" : ""}`} style={{ width: `${Math.min(100, (selected / tier) * 100)}%` }} />
               </div>
             </div>
-          ))}
-        </div>
 
-        <div className="dozen-bar">
-          <div>
-            <h4>Tu caja x{tier}</h4>
-            <small>{totalSelected} de {tier} seleccionadas — {fmt(priceForSelection(selection, tier))}</small>
-          </div>
-          <button className="btn btn-primary" onClick={addDozen} disabled={totalSelected !== tier} style={{ opacity: totalSelected === tier ? 1 : 0.5 }}>
-            Agregar al carrito
-          </button>
+            <div className="box-lines">
+              {lines.length === 0 ? (
+                <small className="hint">Todavía no elegiste gustos. Sumá desde la izquierda y se van listando acá.</small>
+              ) : lines.map(([id, amount]) => (
+                <div className="box-line" key={id}>
+                  <span>{empanadas.find((e) => e.id === id)?.nombre}</span>
+                  <span>×{amount}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="box-total">
+              <span className="mono">Total caja</span>
+              <b>{fmt(priceFor(tier, selection))}</b>
+            </div>
+
+            <button className={`box-cta ${complete ? "ready" : ""}`} onClick={addBox} disabled={!complete}>
+              {complete ? "Agregar caja al carrito" : `Elegí ${tier - selected} más`}
+            </button>
+          </aside>
         </div>
       </div>
     </section>

@@ -15,7 +15,7 @@ interface Order {
 export function Confirmation({ order, onClose, business }: { order: Order; onClose: () => void; business: BusinessConfig }) {
   return (
     <div className="confirm-screen">
-      <div className="confirm-card modern">
+      <div className="confirm-card">
         <div className="confirm-header">
           <div className="confirm-pulse">
             <div className="pulse-ring" />
@@ -26,7 +26,7 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
           </div>
           <div className="confirm-order-num">{order.numero}</div>
           <h2>Pedido recibido, {order.nombre.split(" ")[0]}</h2>
-          <p>{order.mode === "delivery" ? "Ya tomamos tu pedido. En breve empezamos a prepararlo." : "Ya tomamos tu pedido. Podés pasar en aproximadamente 20 min."}</p>
+          <p className="confirm-lede">{order.mode === "delivery" ? "Ya tomamos tu pedido. En breve empezamos a prepararlo." : "Ya tomamos tu pedido. Podés pasar en aproximadamente 20 min."}</p>
         </div>
         <div className="confirm-eta">
           <div className="eta-bar">

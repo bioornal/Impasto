@@ -17,7 +17,7 @@ const fmtDateTime = (iso: string) => new Date(iso).toLocaleDateString("es-AR", {
 const FILTERS: [string, string][] = [["todos","Todos"],["nuevo","Nuevos"],["preparando","Preparando"],["en-camino","En camino"],["entregado","Entregados"],["cancelado","Cancelados"]];
 
 export function Orders() {
-  const { state, updateOrderStatus } = useStore();
+  const { state, updateOrderStatus, updateOrderPayment } = useStore();
   const [filter, setFilter] = useState("todos");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<AdminOrder | null>(null);
@@ -83,13 +83,14 @@ export function Orders() {
           order={selected}
           onClose={() => setSelected(null)}
           onUpdate={(estado) => { updateOrderStatus(selected.id, estado); setSelected({ ...selected, estado }); }}
+          onPayment={(estado) => { updateOrderPayment(selected.id, estado); setSelected({ ...selected, pagoEstado: estado }); }}
         />
       )}
     </>
   );
 }
 
-function OrderDetail({ order, onClose, onUpdate }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void }) {
+function OrderDetail({ order, onClose, onUpdate, onPayment }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void }) {
   const [now] = useState(() => Date.now());
   const steps = ["nuevo", "preparando", "en-camino", "entregado"];
   const currentIdx = steps.indexOf(order.estado);
@@ -130,6 +131,11 @@ function OrderDetail({ order, onClose, onUpdate }: { order: AdminOrder; onClose:
             <a className="btn btn-ghost btn-sm" href={`https://wa.me/54${order.tel.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">WhatsApp</a>
           </div>
 
+          <div style={{ padding: 14, background: "var(--a-bg)", borderRadius: 12, fontSize: 13.5, marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <div><b>Pago: </b><span style={{ textTransform: "capitalize" }}>{order.pago}</span><div className="text-muted" style={{ fontSize: 12 }}>Estado: {order.pagoEstado}</div></div>
+            {order.pagoEstado === "pendiente" && <button className="btn btn-success btn-sm" onClick={() => onPayment("aprobado")}>Marcar pago recibido</button>}
+          </div>
+
           <h4 style={{ fontFamily: "var(--a-font-mono)", fontSize: 11, letterSpacing: ".15em", textTransform: "uppercase", color: "var(--a-muted)", marginBottom: 12, marginTop: 20 }}>Detalle</h4>
           <div className="od-items">
             {order.items.map((i, idx) => <div className="od-row" key={idx}><span>{i.qty}× {i.name}</span><span className="tbl-price">{fmt(i.price * i.qty)}</span></div>)}
@@ -145,6 +151,9 @@ function OrderDetail({ order, onClose, onUpdate }: { order: AdminOrder; onClose:
           )}
           {order.notas && (
             <div style={{ padding: 14, background: "var(--a-warn-soft)", borderRadius: 12, fontSize: 13.5, color: "var(--a-warn)", marginTop: 12 }}>{order.notas}</div>
+          )}
+          {order.referencia && (
+            <div style={{ padding: 14, background: "var(--a-bg)", borderRadius: 12, fontSize: 13.5, marginTop: 12 }}><b>Referencia:</b> {order.referencia}</div>
           )}
         </div>
         <div className="modal-foot">

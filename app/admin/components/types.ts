@@ -31,6 +31,10 @@ export interface AdminOrder {
   shipping: number;
   total: number;
   pago: string;
+  pagoEstado: string;
+  cambio: string;
+  referencia: string;
+  cuando: string;
   estado: string;
   fecha: string;
   notas: string;
