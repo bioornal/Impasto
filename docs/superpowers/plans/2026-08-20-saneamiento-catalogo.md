@@ -43,7 +43,8 @@ El defecto 2 se arregla **en la escritura, no en la lectura**: la validación de
 | Archivo | Responsabilidad | Acción |
 |---|---|---|
 | `lib/categorias.ts` | Allowlist de categorías, su tipo y el guard. Sin dependencias, para que los tests y las rutas lo importen sin arrastrar el SDK. | Crear |
-| `lib/catalog.ts` | I/O contra InsForge (`getCatalogData`) + armado puro del catálogo (`buildCatalog`) y los mapeadores. | Modificar |
+| `lib/catalog-build.ts` | Armado puro del catálogo: `buildCatalog`, `productType` y los mapeadores. **Sin ningún import del SDK**, para que los tests lo puedan importar. | Crear |
+| `lib/catalog.ts` | Solo I/O contra InsForge (`getCatalogData`). Delega el armado en `catalog-build.ts`. | Modificar |
 | `lib/data.ts` | Solo `empanadaBoxPrices`. Se podan los catálogos ficticios. | Modificar |
 | `app/api/productos/route.ts` | Importa la allowlist en vez del array literal. | Modificar |
 | `app/api/admin/productos/route.ts` | Íd. + valida `categoria` en `POST`. | Modificar |
@@ -60,13 +61,14 @@ Extrae el armado del catálogo a una función pura, sin tocar todavía la lógic
 
 **Files:**
 - Create: `lib/categorias.ts`
+- Create: `lib/catalog-build.ts`
 - Create: `tests/catalog.test.ts`
 - Modify: `lib/catalog.ts`
 - Modify: `package.json`
 
 **Interfaces:**
 - Produces: `CATEGORIAS_IMPASTO: readonly ["pizzas", "empanadas", "bebidas"]`, `type CategoriaImpasto`, `esCategoriaImpasto(valor: unknown): valor is CategoriaImpasto` desde `lib/categorias.ts`.
-- Produces: `buildCatalog(products: DatabaseProduct[], promosRaw: unknown, reviewsRaw: unknown): CatalogData` y `export interface DatabaseProduct` desde `lib/catalog.ts`.
+- Produces: `buildCatalog(products: DatabaseProduct[], promosRaw: unknown, reviewsRaw: unknown): CatalogData` y `export interface DatabaseProduct` desde **`lib/catalog-build.ts`** (no desde `catalog.ts`).
 - Consumes: `CatalogData`, `Pizza`, `Empanada`, `Bebida`, `Promo`, `Review` de `@/types`.
 
 - [ ] **Step 1: Crear `lib/categorias.ts` (LF)**
@@ -91,7 +93,7 @@ export const esCategoriaImpasto = (valor: unknown): valor is CategoriaImpasto =>
 - [ ] **Step 2: Escribir el test que falla (`tests/catalog.test.ts`, LF)**
 
 ```ts
-import { buildCatalog, type DatabaseProduct } from "../lib/catalog";
+import { buildCatalog, type DatabaseProduct } from "../lib/catalog-build";
 
 // Réplica reducida de lo que hay en la base: 3 productos de Impasto y 3 del
 // proyecto paralelo, con los mismos valores de `tipo` y `categoria` reales.
@@ -138,11 +140,43 @@ Run:
 ```bash
 pnpm test
 ```
-Expected: FALLA al importar — `buildCatalog` no está exportado por `lib/catalog.ts`.
+Expected: FALLA al importar — `lib/catalog-build.ts` todavía no existe.
 
-- [ ] **Step 5: Extraer `buildCatalog` en `lib/catalog.ts` (LF)**
+- [ ] **Step 5: Mover la lógica pura a `lib/catalog-build.ts` (LF)**
 
-Exportar la interfaz `DatabaseProduct` (hoy es privada) y reemplazar el cuerpo de `getCatalogData` por una llamada a la función nueva. **La lógica de `productType` y los mapeadores no se toca en este task.** Reemplazar el bloque que va desde `export async function getCatalogData` hasta el final del archivo por:
+**Por qué un archivo aparte y no `lib/catalog.ts`.** `lib/catalog.ts` importa `db` de
+`@/lib/insforge`, que arrastra `@insforge/sdk` → `@insforge/shared-schemas`. Ese paquete no
+declara la condición `"require"` en sus `exports`, así que **cualquier test que importe
+`lib/catalog.ts` revienta** bajo `tsx` en modo CJS con `ERR_PACKAGE_PATH_NOT_EXPORTED`. Que
+`buildCatalog` sea una función pura no sirve de nada si vive en un módulo que importa el SDK.
+
+`lib/catalog-build.ts` no puede importar `@/lib/insforge` **ni ningún módulo que lo importe**.
+Sus únicos imports permitidos son `@/types` (solo tipos), `@/lib/data` y `@/lib/categorias`.
+
+**5a.** Crear `lib/catalog-build.ts` con este encabezado, y mover a él —sin modificarlos— la
+interfaz `DatabaseProduct` (ahora exportada), `asTags`, `productType`, `mapPizza`, `mapEmpanada`,
+`mapBebida`, `mapPromos` y `mapReviews`, tal como están hoy en `lib/catalog.ts`:
+
+```ts
+import { STATIC_DATA } from "@/lib/data";
+import type { Bebida, CatalogData, Empanada, Pizza, Promo, Review } from "@/types";
+
+export interface DatabaseProduct {
+  id?: string | number;
+  nombre?: string;
+  tipo?: string;
+  type?: string;
+  categoria?: string;
+  precio?: number;
+  disponible?: boolean;
+  desc?: string;
+  descripcion?: string;
+  tags?: unknown;
+  popular?: boolean;
+}
+```
+
+**5b.** Agregar al final de `lib/catalog-build.ts`:
 
 ```ts
 export function buildCatalog(
@@ -177,6 +211,19 @@ export function buildCatalog(
   };
 }
 
+```
+
+**5c.** Reemplazar el contenido **completo** de `lib/catalog.ts` por esto. El archivo queda solo
+con la I/O: se va todo lo que se movió a `catalog-build.ts`.
+
+```ts
+import { db } from "@/lib/insforge";
+import type { CatalogData } from "@/types";
+import { SUCURSAL_ID } from "@/lib/business";
+import { buildCatalog, type DatabaseProduct } from "@/lib/catalog-build";
+
+export { buildCatalog, type DatabaseProduct };
+
 export async function getCatalogData(): Promise<CatalogData> {
   try {
     const safeQuery = (query: PromiseLike<{ data?: unknown }>) => Promise.resolve(query).catch(() => ({ data: null }));
@@ -193,11 +240,14 @@ export async function getCatalogData(): Promise<CatalogData> {
 }
 ```
 
-También cambiar la declaración de la interfaz, de `interface DatabaseProduct {` a:
+El re-export mantiene compatible a cualquier import existente de `lib/catalog.ts`.
 
-```ts
-export interface DatabaseProduct {
+**5d.** Verificar que el módulo puro no arrastra el SDK:
+
+```bash
+grep -n "insforge\|business" lib/catalog-build.ts
 ```
+Expected: sin resultados. Si aparece alguno, el test va a volver a reventar.
 
 - [ ] **Step 6: Correr los tests**
 
@@ -220,7 +270,7 @@ Expected: compila sin errores.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add lib/categorias.ts lib/catalog.ts tests/catalog.test.ts package.json
+git add lib/categorias.ts lib/catalog-build.ts lib/catalog.ts tests/catalog.test.ts package.json
 git commit -m "Extraer buildCatalog y centralizar las categorias de Impasto"
 ```
 
@@ -229,12 +279,12 @@ git commit -m "Extraer buildCatalog y centralizar las categorias de Impasto"
 ### Task 2: `productType()` deja de adivinar y se poda `STATIC_DATA`
 
 **Files:**
-- Modify: `lib/catalog.ts`
+- Modify: `lib/catalog-build.ts`
 - Modify: `lib/data.ts`
 - Test: `tests/catalog.test.ts`
 
 **Interfaces:**
-- Consumes: `CATEGORIAS_IMPASTO`, `esCategoriaImpasto` de `lib/categorias.ts` (Task 1); `buildCatalog`, `DatabaseProduct` de `lib/catalog.ts` (Task 1).
+- Consumes: `CATEGORIAS_IMPASTO`, `esCategoriaImpasto` de `lib/categorias.ts` (Task 1); `buildCatalog`, `DatabaseProduct` de `lib/catalog-build.ts` (Task 1).
 - Produces: `STATIC_DATA: Pick<CatalogData, "empanadaBoxPrices">` desde `lib/data.ts`.
 
 - [ ] **Step 1: Agregar los tests que fallan**
@@ -278,7 +328,7 @@ Los tests son de **caracterización**: fijan el comportamiento actual para que e
 
 El único test genuinamente rojo de este plan es el del Task 3, donde sí hay un arreglo funcional.
 
-- [ ] **Step 3: Reescribir `productType` y los mapeadores en `lib/catalog.ts` (LF)**
+- [ ] **Step 3: Reescribir `productType` y los mapeadores en `lib/catalog-build.ts` (LF)**
 
 Reemplazar todo el bloque que va desde `const asTags` hasta el final de `mapBebida` por:
 
@@ -387,12 +437,12 @@ Run:
 ```bash
 pnpm build
 ```
-Expected: compila sin errores. Si `tsc` se queja de `STATIC_DATA.pizzas` o `STATIC_DATA.empanadas`, quedó una referencia sin borrar en `lib/catalog.ts`.
+Expected: compila sin errores. Si `tsc` se queja de `STATIC_DATA.pizzas` o `STATIC_DATA.empanadas`, quedó una referencia sin borrar en `lib/catalog-build.ts`.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add lib/catalog.ts lib/data.ts tests/catalog.test.ts
+git add lib/catalog-build.ts lib/data.ts tests/catalog.test.ts
 git commit -m "Clasificar productos por categoria y podar el catalogo estatico"
 ```
 
@@ -403,11 +453,11 @@ git commit -m "Clasificar productos por categoria y podar el catalogo estatico"
 Arregla la pestaña Gourmet, que hoy no muestra ninguna pizza.
 
 **Files:**
-- Modify: `lib/catalog.ts`
+- Modify: `lib/catalog-build.ts`
 - Test: `tests/catalog.test.ts`
 
 **Interfaces:**
-- Consumes: `mapPizza` de `lib/catalog.ts` (Task 2), vía `buildCatalog`.
+- Consumes: `mapPizza` de `lib/catalog-build.ts` (Task 2), vía `buildCatalog`.
 - Produces: `Pizza.categoria` derivado de `tags`, que consume `components/sections/PizzaList.tsx:33` (sin cambios en ese archivo).
 
 - [ ] **Step 1: Agregar el test que falla**
@@ -437,7 +487,7 @@ Expected: FALLA en `una pizza con tag gourmet es gourmet`: esperado `"gourmet"`,
 
 - [ ] **Step 3: Derivar el estilo desde `tags` en `mapPizza`**
 
-En `lib/catalog.ts`, dentro de `mapPizza`, reemplazar la línea:
+En `lib/catalog-build.ts`, dentro de `mapPizza`, reemplazar la línea:
 
 ```ts
     categoria: "clasica",
@@ -460,7 +510,7 @@ Expected: PASA. 9 casos de catálogo y 13 de horarios.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add lib/catalog.ts tests/catalog.test.ts
+git add lib/catalog-build.ts tests/catalog.test.ts
 git commit -m "Derivar el estilo de pizza desde tags para reactivar la pestana Gourmet"
 ```
 
