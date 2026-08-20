@@ -14,20 +14,19 @@ Spec: [`docs/superpowers/specs/2026-08-20-saneamiento-catalogo-design.md`](../sp
 
 - **Gestor de paquetes: `pnpm`, nunca `npm`.** Un `package-lock.json` fija `@insforge/sdk@1.2.5`, que no expone el subpath `/ssr`, y rompe la auth del panel. No crear lockfiles de npm.
 - **Este plan no incluye ninguna migración.** No se modifica el esquema de `productos`. Si algún paso parece necesitar DDL, es señal de que se desvió del spec: parar y preguntar.
-- **Finales de línea.** Cada archivo se edita respetando el suyo. `CLAUDE.md` advierte que reemplazos por script ya fallaron por CRLF y que TypeScript no lo detecta.
+- **Finales de línea: el problema es matchear, no escribir.** `CLAUDE.md` advierte que
+  varios reemplazos por script fallaron por CRLF y que TypeScript no lo detecta. La causa
+  real, verificada el 20/08/2026:
 
-  | Archivo | Finales |
-  |---|---|
-  | `lib/catalog.ts` | LF |
-  | `lib/categorias.ts` (nuevo) | LF |
-  | `tests/catalog.test.ts` (nuevo) | LF |
-  | `tests/hours.test.ts` | LF |
-  | `package.json` | LF |
-  | `CLAUDE.md` | LF |
-  | `lib/data.ts` | **CRLF + LF mezclados** |
-  | `app/api/productos/route.ts` | **CRLF + LF mezclados** |
-  | `app/api/admin/productos/route.ts` | **CRLF + LF mezclados** |
-  | `app/api/admin/productos/[id]/route.ts` | **CRLF + LF mezclados** |
+  - `core.autocrlf = true`, y **los archivos están en LF en el index de git**. El CRLF del
+    working tree lo produce git al hacer checkout, y lo normaliza de vuelta a LF al commitear.
+  - Por lo tanto **no hay que preservar CRLF**: es imposible, git lo revierte igual. Cualquier
+    paso que diga "conservar CRLF" está equivocado.
+  - Lo que sí importa: **un reemplazo literal contra un archivo del working tree con `\r\n`
+    falla si el patrón usa `\n`.** Al editar, verificar el contenido real en disco antes de
+    matchear, y confirmar que el reemplazo se aplicó — no darlo por hecho.
+  - `git commit` puede emitir `warning: LF will be replaced by CRLF`. Es esperado y correcto.
+  - **La verificación que vale es en el navegador, no `tsc`**: una prop sin usar compila igual.
 
 - **`productos` es una tabla global compartida** con otro proyecto (hamburguesas, lomos, calzones, esfihas). **No borrar, no editar ni marcar `disponible = false` ninguna fila.** Todo el saneamiento es del lado del código de Impasto.
 - **Mercado Pago está en producción y cobra plata real.** Cualquier cambio que altere qué productos o qué precios se muestran tiene que verificarse en el navegador antes de pushear.
@@ -231,7 +230,7 @@ git commit -m "Extraer buildCatalog y centralizar las categorias de Impasto"
 
 **Files:**
 - Modify: `lib/catalog.ts`
-- Modify: `lib/data.ts` (**CRLF**)
+- Modify: `lib/data.ts`
 - Test: `tests/catalog.test.ts`
 
 **Interfaces:**
@@ -344,7 +343,10 @@ En la interfaz `DatabaseProduct`, borrar las líneas `type?: string;` y `descrip
 
 - [ ] **Step 4: Podar `lib/data.ts`**
 
-**Este archivo tiene finales de línea CRLF mezclados.** Reemplazar su contenido completo respetando CRLF:
+**Este archivo tiene CRLF en el working tree.** No hay que preservarlo (git normaliza a LF al
+commitear), pero si se edita por reemplazo literal en vez de reescribir el archivo entero, el
+patrón tiene que contemplar los `\r\n` o no va a matchear. Acá se reescribe entero, así que da
+igual. Contenido completo:
 
 ```ts
 import type { CatalogData } from "@/types";
@@ -360,13 +362,16 @@ export const STATIC_DATA: Pick<CatalogData, "empanadaBoxPrices"> = {
 };
 ```
 
-- [ ] **Step 5: Verificar los finales de línea de `lib/data.ts`**
+- [ ] **Step 5: Verificar que la poda se aplicó de verdad**
 
-Run:
+No verificar finales de línea: son irrelevantes (ver Global Constraints). Verificar que el
+contenido quedó como corresponde:
+
 ```bash
-file lib/data.ts
+grep -c "Margherita\|Tartufo\|Bresaola\|Salmón" lib/data.ts; grep -c "empanadaBoxPrices" lib/data.ts
 ```
-Expected: la salida menciona `CRLF`. Si dice solo `LF`, el archivo se reescribió mal: rehacer el step 4 conservando CRLF.
+Expected: `0` y luego `1`. Si el primero no es `0`, el reemplazo no se aplicó —el caso que
+`CLAUDE.md` advierte— y hay que rehacer el step 4.
 
 - [ ] **Step 6: Correr los tests**
 
@@ -544,9 +549,9 @@ git commit -m "Filtrar el catalogo por categoria en la query del sitio publico"
 Es el arreglo real del defecto 2: impedir que se escriba una categoría que después haga desaparecer el producto.
 
 **Files:**
-- Modify: `app/api/admin/productos/route.ts` (**CRLF**)
-- Modify: `app/api/admin/productos/[id]/route.ts` (**CRLF**)
-- Modify: `app/api/productos/route.ts` (**CRLF**)
+- Modify: `app/api/admin/productos/route.ts`
+- Modify: `app/api/admin/productos/[id]/route.ts`
+- Modify: `app/api/productos/route.ts`
 
 **Interfaces:**
 - Consumes: `CATEGORIAS_IMPASTO`, `esCategoriaImpasto` de `lib/categorias.ts` (Task 1).
@@ -554,7 +559,7 @@ Es el arreglo real del defecto 2: impedir que se escriba una categoría que desp
 
 - [ ] **Step 1: Validar en el `POST` de `app/api/admin/productos/route.ts`**
 
-**Archivo con CRLF: respetar los finales de línea existentes.**
+**Nota:** este archivo tiene CRLF en el working tree; al hacer reemplazo literal, el patrón debe contemplarlo o no matchea. No hay que preservarlo.
 
 Agregar el import bajo los que ya están:
 
@@ -588,7 +593,7 @@ Y en el `insert`, reemplazar la línea `categoria: categoria || "pizzas",` por:
 
 - [ ] **Step 2: Validar en el `PUT` de `app/api/admin/productos/[id]/route.ts`**
 
-**Archivo con CRLF.** Agregar el import:
+**Nota:** este archivo tiene CRLF en el working tree; al hacer reemplazo literal, el patrón debe contemplarlo o no matchea. Agregar el import:
 
 ```ts
 import { CATEGORIAS_IMPASTO, esCategoriaImpasto } from "@/lib/categorias";
@@ -610,7 +615,7 @@ Reemplazar la línea `if (body.categoria !== undefined) fields.categoria = body.
 
 - [ ] **Step 3: Usar la constante en `app/api/productos/route.ts`**
 
-**Archivo con CRLF.** Esta ruta no la consume nadie en el repo; se conserva por decisión del spec. Agregar el import:
+**Nota:** este archivo tiene CRLF en el working tree; al hacer reemplazo literal, el patrón debe contemplarlo o no matchea. Esta ruta no la consume nadie en el repo; se conserva por decisión del spec. Agregar el import:
 
 ```ts
 import { CATEGORIAS_IMPASTO } from "@/lib/categorias";
@@ -622,13 +627,16 @@ Y reemplazar `.in("categoria", ["pizzas", "empanadas", "bebidas"]);` por:
     .in("categoria", [...CATEGORIAS_IMPASTO]);
 ```
 
-- [ ] **Step 4: Verificar los finales de línea de los tres archivos**
+- [ ] **Step 4: Verificar que los tres reemplazos se aplicaron**
 
-Run:
+No verificar finales de línea: son irrelevantes (ver Global Constraints). Verificar que ya no
+queda ningún array literal de categorías y que los tres archivos importan la constante:
+
 ```bash
-file app/api/productos/route.ts app/api/admin/productos/route.ts "app/api/admin/productos/[id]/route.ts"
+grep -rn '"pizzas", "empanadas", "bebidas"' app/ lib/ --include=*.ts | grep -v categorias.ts; echo "--- imports ---"; grep -rln "@/lib/categorias" app/api/
 ```
-Expected: los tres mencionan `CRLF`. Si alguno pasó a solo `LF`, rehacer ese archivo conservando CRLF.
+Expected: la primera búsqueda no devuelve nada (el único lugar con el literal es
+`lib/categorias.ts`). La segunda lista los tres archivos de ruta.
 
 - [ ] **Step 5: Verificar que compila y que los tests siguen pasando**
 
@@ -640,11 +648,33 @@ Expected: compila sin errores, 9 casos de catálogo y 13 de horarios pasan.
 
 - [ ] **Step 6: Verificar el rechazo contra el panel corriendo**
 
-Levantar `pnpm dev`, entrar al panel, iniciar sesión, e intentar crear un producto con categoría `hamburguesas` desde la interfaz de productos.
+**No crear ningún producto de prueba.** La base es compartida y de producción; el camino del
+`400` rechaza antes de escribir, así que la validación se verifica sin insertar nada.
 
-Expected: la petición devuelve `400` y el producto **no** se crea. Confirmar en la pestaña de red del navegador que el cuerpo de la respuesta trae el mensaje `categoria inválida: "hamburguesas"`.
+Levantar `pnpm dev`, entrar al panel e iniciar sesión. Desde la consola del navegador, ya
+autenticado, disparar el rechazo:
 
-Después, crear un producto normal con categoría `pizzas`, confirmar que se crea, y **borrarlo desde el panel** para no dejar datos de prueba en la base compartida.
+```js
+await (await fetch("/api/admin/productos", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ nombre: "PRUEBA-NO-CREAR", precio: 1, categoria: "hamburguesas" }),
+})).json()
+```
+
+Expected: `{ ok: false, error: 'categoria inválida: "hamburguesas". Solo se admiten pizzas, empanadas, bebidas.' }`
+con status `400`.
+
+Repetir cambiando `categoria` por `"pizzas "` (con un espacio al final), que es el caso real que
+motivó la validación — una categoría mal escrita que haría desaparecer el producto. Expected: el
+mismo `400`.
+
+Confirmar después que no se creó nada:
+
+```bash
+curl -s "$INSFORGE_API_BASE_URL/api/database/records/productos?select=nombre&nombre=eq.PRUEBA-NO-CREAR" -H "Authorization: Bearer $INSFORGE_API_KEY"
+```
+Expected: `[]`.
 
 - [ ] **Step 7: Commit**
 
@@ -722,13 +752,13 @@ Reemplazar `Última actualización: 18 de agosto de 2026.` por:
 Última actualización: 20 de agosto de 2026.
 ```
 
-- [ ] **Step 6: Verificar los finales de línea**
+- [ ] **Step 6: Verificar que los cinco reemplazos se aplicaron**
 
 Run:
 ```bash
-file CLAUDE.md
+grep -c "57 filas, no 41" CLAUDE.md; grep -c "tabla global compartida" CLAUDE.md; grep -c "20 de agosto de 2026" CLAUDE.md
 ```
-Expected: sin mención de `CRLF`. Si aparece, rehacer conservando LF.
+Expected: `1`, `1` y `1`. Un `0` en cualquiera significa que ese reemplazo no matcheó.
 
 - [ ] **Step 7: Commit**
 
