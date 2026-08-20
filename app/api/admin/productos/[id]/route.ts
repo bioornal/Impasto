@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
+import { CATEGORIAS_IMPASTO, esCategoriaImpasto } from "@/lib/categorias";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const unauthorized = await requireAdmin();
@@ -12,7 +13,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (body.precio !== undefined) fields.precio = parseInt(body.precio);
   if (body.disponible !== undefined) fields.disponible = !!body.disponible;
   if (body.tipo !== undefined) fields.tipo = body.tipo;
-  if (body.categoria !== undefined) fields.categoria = body.categoria;
+  if (body.categoria !== undefined) {
+    if (!esCategoriaImpasto(body.categoria)) {
+      return NextResponse.json(
+        { ok: false, error: `categoria inválida: "${body.categoria}". Solo se admiten ${CATEGORIAS_IMPASTO.join(", ")}.` },
+        { status: 400 },
+      );
+    }
+    fields.categoria = body.categoria;
+  }
   if (body.desc !== undefined) fields.desc = body.desc;
   if (body.tags !== undefined) fields.tags = Array.isArray(body.tags) ? body.tags : [];
   if (body.popular !== undefined) fields.popular = !!body.popular;
