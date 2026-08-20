@@ -1,69 +1,65 @@
 import { STATIC_DATA } from "@/lib/data";
+import { esCategoriaImpasto } from "@/lib/categorias";
 import type { Bebida, CatalogData, Empanada, Pizza, Promo, Review } from "@/types";
 
 export interface DatabaseProduct {
   id?: string | number;
   nombre?: string;
   tipo?: string;
-  type?: string;
   categoria?: string;
   precio?: number;
   disponible?: boolean;
   desc?: string;
-  descripcion?: string;
   tags?: unknown;
   popular?: boolean;
 }
 
 const asTags = (value: unknown): string[] => Array.isArray(value) ? value.map(String) : [];
 
-const productType = (product: DatabaseProduct) => {
-  const type = String(product.tipo || product.type || "").toLowerCase();
-  const category = String(product.categoria || "").toLowerCase();
-  if (type.includes("empan")) return "empanada";
-  if (type.includes("bebida") || type.includes("drink")) return "bebida";
-  if (type.includes("combo") || type.includes("caja")) return "combo";
-  if (/caja\s*(x|×)\s*(6|12|24)\b/i.test(String(product.nombre || ""))) return "combo";
-  if (category.includes("empan")) return "empanada";
-  if (category.includes("bebida") || category.includes("drink")) return "bebida";
-  if (category.includes("pizza")) return "pizza";
-  if (STATIC_DATA.bebidas.some((item) => item.nombre === product.nombre)) return "bebida";
-  if (STATIC_DATA.pizzas.some((item) => item.nombre === product.nombre)) return "pizza";
-  return "otro";
+type ProductType = "pizza" | "empanada" | "bebida" | "combo" | "otro";
+
+/**
+ * La categorización sale solo de `categoria`. La columna `tipo` vale 'pizza'
+ * en las 57 filas —la migración 002 la creó con `default 'pizza'`— así que no
+ * informa nada.
+ */
+const productType = (product: DatabaseProduct): ProductType => {
+  const categoria = String(product.categoria || "").toLowerCase();
+  if (!esCategoriaImpasto(categoria)) return "otro";
+  if (/caja\s*(?:x|×)\s*(?:6|12|24)\b/i.test(String(product.nombre || ""))) return "combo";
+  if (categoria === "pizzas") return "pizza";
+  if (categoria === "empanadas") return "empanada";
+  return "bebida";
 };
 
 function mapPizza(product: DatabaseProduct): Pizza {
-  const fallback = STATIC_DATA.pizzas.find((item) => item.nombre === product.nombre);
   const tags = asTags(product.tags);
   return {
-    id: String(product.id ?? fallback?.id ?? product.nombre),
-    nombre: String(product.nombre || fallback?.nombre || "Producto"),
-    categoria: product.categoria === "gourmet" ? "gourmet" : fallback?.categoria || "clasica",
-    precio: Number(product.precio ?? fallback?.precio ?? 0),
-    desc: String(product.desc ?? product.descripcion ?? fallback?.desc ?? ""),
-    tags: tags.length ? tags : fallback?.tags || [],
-    popular: product.popular ?? fallback?.popular,
+    id: String(product.id ?? product.nombre),
+    nombre: String(product.nombre || "Producto"),
+    categoria: "clasica",
+    precio: Number(product.precio ?? 0),
+    desc: String(product.desc ?? ""),
+    tags,
+    popular: product.popular,
   };
 }
 
 function mapEmpanada(product: DatabaseProduct): Empanada {
-  const fallback = STATIC_DATA.empanadas.find((item) => item.nombre === product.nombre);
-  const tags = asTags(product.tags);
   return {
-    id: String(product.id ?? fallback?.id ?? product.nombre),
-    nombre: String(product.nombre || fallback?.nombre || "Empanada"),
-    precio: product.precio == null ? fallback?.precio : Number(product.precio),
-    desc: String(product.desc ?? product.descripcion ?? fallback?.desc ?? ""),
-    tags: tags.length ? tags : fallback?.tags || [],
+    id: String(product.id ?? product.nombre),
+    nombre: String(product.nombre || "Empanada"),
+    precio: product.precio == null ? undefined : Number(product.precio),
+    desc: String(product.desc ?? ""),
+    tags: asTags(product.tags),
   };
 }
 
 function mapBebida(product: DatabaseProduct): Bebida {
-  const fallback = STATIC_DATA.bebidas.find((item) => item.nombre === product.nombre);
   return {
-    id: String(product.id ?? fallback?.id ?? product.nombre),
-    nombre: String(product.nombre || fallback?.nombre || "Bebida"),
-    precio: Number(product.precio ?? fallback?.precio ?? 0),
+    id: String(product.id ?? product.nombre),
+    nombre: String(product.nombre || "Bebida"),
+    precio: Number(product.precio ?? 0),
   };
 }
 
