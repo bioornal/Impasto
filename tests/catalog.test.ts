@@ -48,5 +48,18 @@ const disponibilidad: DatabaseProduct[] = [
 ];
 check("disponible=false se descarta y disponible ausente se conserva", buildCatalog(disponibilidad, null, null).pizzas.map((p) => p.nombre), ["Pizza Sin Dato"]);
 
+// Divergencia deliberada respecto del código viejo: antes la detección de
+// combo por nombre (/caja x 6|12|24/) se evaluaba ANTES de mirar categoria,
+// así que un producto de OTRO proyecto con un nombre tipo "Caja x 6" podía
+// clasificarse como combo y pisar el precio de caja x6 de Impasto. Ahora la
+// allowlist corta primero: un producto fuera de CATEGORIAS_IMPASTO nunca
+// llega a "combo", sin importar el nombre. Este test fija esa divergencia a
+// propósito para que nadie la revierta creyendo que restaura la equivalencia.
+const cajasEnConflicto: DatabaseProduct[] = [
+  { id: "12", nombre: "Caja x 6", tipo: "pizza", categoria: "empanadas",    precio: 9100, disponible: true, desc: "", tags: [] },
+  { id: "13", nombre: "Caja x 6", tipo: "pizza", categoria: "hamburguesas", precio: 5000, disponible: true, desc: "", tags: [] },
+];
+check("el precio de caja x6 sale del producto de Impasto, no del proyecto paralelo", buildCatalog(cajasEnConflicto, null, null).empanadaBoxPrices[6], 9100);
+
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
 process.exit(fallos === 0 ? 0 : 1);
