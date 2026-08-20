@@ -5,7 +5,7 @@
 Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Mercado Pago.
 Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
 
-Última actualización: 18 de agosto de 2026.
+Última actualización: 20 de agosto de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -20,6 +20,8 @@ Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
   navegador, no solo con `tsc`.
 - El deploy de Netlify se dispara solo al pushear a `main`. **Cambiar una variable de entorno
   no afecta a los deploys ya publicados**: hay que reconstruir aunque la variable se lea en runtime.
+- `app/api/productos/route.ts` no lo consume nadie en el repo. Se conservó por si algún
+  cliente externo lo llama. Si se confirma que no, borrarlo es un cambio de un archivo.
 
 ## Lo que está terminado y verificado en producción
 
@@ -40,6 +42,15 @@ Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
 `hours` es el horario de trabajo que ve el cliente (**hasta las 00:00**).
 `horaCierre` es la hora del **último pedido** (**23:45**). No son lo mismo y se editan por separado.
 
+`categoria` también tiene dos sentidos. En la base es la **línea de producto** (`pizzas`,
+`hamburguesas`); en TypeScript, `Pizza.categoria` es el **estilo** (`clasica` | `gourmet`).
+El estilo se resuelve por `tags`: etiquetar una pizza como `"gourmet"` la hace aparecer en
+esa pestaña y le pone el badge. Mientras ninguna esté etiquetada, la pestaña está vacía.
+Lo mismo pasa con `Veggie` y `Picantes`: son pestañas de filtro por `tags`, no por `categoria`,
+y hoy están igual de vacías. Con las 57 filas sin ningún tag cargado, las tres pestañas
+(`Gourmet`, `Veggie`, `Picantes`) muestran 0 productos; solo `Todas` (32) y `Clásicas` (32)
+tienen contenido, porque `Clásicas` es el default cuando no hay tags.
+
 ## Pendientes, en orden sugerido
 
 ### 1. Proveedor de email
@@ -50,7 +61,9 @@ necesita verificar el dominio por DNS. Variables a completar en `.env.local` y N
 Hoy los avisos se registran en la tabla `notificaciones` con estado `omitido`.
 
 ### 2. Catálogo (el punto más flojo)
-**41 de 41 pizzas y empanadas no tienen descripción.** Tampoco fotos reales (se usan
+**41 de 41 pizzas y empanadas no tienen descripción.** Ojo: la tabla tiene 57 filas, no 41
+— las otras 16 (hamburguesas, lomos, calzones, esfihas) son del proyecto paralelo y el
+código de Impasto las filtra. Tampoco hay fotos reales (se usan
 ilustraciones generadas), ni tags, alérgenos, ingredientes, tamaños ni stock.
 Es lo que más impacta en la conversión.
 
@@ -86,6 +99,13 @@ limpieza automática de carritos abandonados, consentimiento de privacidad, SEO 
 
 ## Cosas que hay que recordar hacer
 
+- **`productos` es una tabla global compartida** con el proyecto paralelo, y no tiene ninguna
+  columna de pertenencia. El único criterio es `categoria` contra `CATEGORIAS_IMPASTO`
+  (`lib/categorias.ts`): `pizzas`, `empanadas` y `bebidas` son de Impasto; `hamburguesas`,
+  `lomos`, `calzones` y `otros` son del otro proyecto. **No borrar ni editar esas filas.**
+  Es el mismo problema que `info_empresa_impasto`, pero con Mercado Pago en producción del
+  otro lado: si el proyecto paralelo carga algo con `categoria = 'pizzas'`, aparece en el
+  sitio y es cobrable.
 - **Al comprar el dominio:** cambiar la URL del webhook en Mercado Pago (se hace por MCP) y
   actualizar la variable en Netlify. Conviene además separar la URL de sandbox de la de
   producción, hoy apuntan al mismo endpoint.
