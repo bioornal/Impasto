@@ -62,8 +62,9 @@ Hoy los avisos se registran en la tabla `notificaciones` con estado `omitido`.
 
 ### 2. Catálogo (el punto más flojo)
 **41 de 41 pizzas y empanadas no tienen descripción.** Ojo: la tabla tiene 57 filas, no 41
-— las otras 16 (hamburguesas, lomos, calzones, esfihas) son del proyecto paralelo y el
-código de Impasto las filtra. Tampoco hay fotos reales (se usan
+— las otras 16 son `hamburguesas`, `lomos`, `calzones` y `otros` (esta última, una sola
+fila: "Esfiha de Carne") del proyecto paralelo, y el código de Impasto las filtra. Tampoco
+hay fotos reales (se usan
 ilustraciones generadas), ni tags, alérgenos, ingredientes, tamaños ni stock.
 Es lo que más impacta en la conversión.
 
