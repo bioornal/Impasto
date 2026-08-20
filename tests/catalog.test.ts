@@ -61,5 +61,16 @@ const cajasEnConflicto: DatabaseProduct[] = [
 ];
 check("el precio de caja x6 sale del producto de Impasto, no del proyecto paralelo", buildCatalog(cajasEnConflicto, null, null).empanadaBoxPrices[6], 9100);
 
+// `categoria` significa dos cosas distintas: en la base es la línea de
+// producto ('pizzas'), en TypeScript es el estilo ('clasica' | 'gourmet').
+// El estilo se resuelve por tags, que es contra lo que PizzaList ya filtra.
+const estilos: DatabaseProduct[] = [
+  { id: "12", nombre: "Pizza Muzzarela",          tipo: "pizza", categoria: "pizzas", precio: 15000, disponible: true, desc: "", tags: [] },
+  { id: "13", nombre: "Pizza Rucula y Jamon Crudo", tipo: "pizza", categoria: "pizzas", precio: 25000, disponible: true, desc: "", tags: ["gourmet"] },
+];
+const conEstilos = buildCatalog(estilos, null, null);
+check("una pizza sin tags es clasica",        conEstilos.pizzas.find((p) => p.nombre === "Pizza Muzzarela")?.categoria,          "clasica");
+check("una pizza con tag gourmet es gourmet", conEstilos.pizzas.find((p) => p.nombre === "Pizza Rucula y Jamon Crudo")?.categoria, "gourmet");
+
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
 process.exit(fallos === 0 ? 0 : 1);

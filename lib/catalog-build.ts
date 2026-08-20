@@ -37,7 +37,7 @@ function mapPizza(product: DatabaseProduct): Pizza {
   return {
     id: String(product.id ?? product.nombre),
     nombre: String(product.nombre || "Producto"),
-    categoria: "clasica",
+    categoria: tags.includes("gourmet") ? "gourmet" : "clasica",
     precio: Number(product.precio ?? 0),
     desc: String(product.desc ?? ""),
     tags,
