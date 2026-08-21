@@ -22,6 +22,9 @@ Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
   no afecta a los deploys ya publicados**: hay que reconstruir aunque la variable se lea en runtime.
 - `app/api/productos/route.ts` no lo consume nadie en el repo. Se conservó por si algún
   cliente externo lo llama. Si se confirma que no, borrarlo es un cambio de un archivo.
+- **Al verificar con `grep` que no quedan literales duplicados, incluí `.tsx`.** Un grep con
+  solo `--include=*.ts` dio un falso negativo y dejó pasar una cuarta copia de la allowlist
+  de categorías en `StoreProvider.tsx`.
 
 ## Lo que está terminado y verificado en producción
 
@@ -49,14 +52,10 @@ esa pestaña y le pone el badge. `Veggie` y `Picantes` funcionan igual — son f
 `tags`, no por `categoria`. Los valores exactos que espera el filtro son `gourmet`,
 `vegetariana` y `picante`; en empanadas, `picante`, `vegetariana` y `dulce`.
 
-Las cuatro pestañas están cargadas desde el 20/08/2026: `Todas` 32, `Clásicas` 23,
-`Gourmet` 9, `Veggie` 15, `Picantes` 1. `Clásicas` es el default: una pizza cae ahí
-mientras no tenga el tag `gourmet`, así que los dos números son complementarios.
-
-Los tags de `vegetariana` y `picante` **se dedujeron de las recetas reales** (ver abajo),
-no a ojo. `gourmet` es una decisión de posicionamiento, no un hecho: hoy son la línea
-Napoletana completa más las de ingrediente distinguido (Di Mare, 4 Fratelli, Rúcula y
-Jamón Crudo, Anchoas, Pizzeta Provolone Rellena).
+Las pestañas del sitio (`Todas`, `Clásicas`, `Gourmet`, `Veggie`, `Picantes`) están
+**hardcodeadas** en `PizzaList.tsx` y filtran por `tags`. Los cartelitos, en cambio, salen
+de la tabla `etiquetas` y se administran desde el panel. Son dos cosas distintas: una
+etiqueta puede alimentar una pestaña, mostrar un cartelito, las dos o ninguna.
 
 La columna `tipo` no influye en nada de lo que ve el cliente: la clasificación (pizza,
 empanada, bebida, y con eso lo que pisa el catálogo del sitio) sale toda de `categoria`.
@@ -154,6 +153,29 @@ No los corregí porque son del sistema de costos del otro proyecto, pero **infla
 
 Las descripciones dicen lo que el producto **realmente** lleva, así que en esos dos casos
 la descripción contradice al nombre. Hay que corregir el nombre o la receta.
+
+## Cómo funcionan las etiquetas
+
+Se administran desde la sección **Etiquetas** del panel y viven en la tabla `etiquetas`.
+
+- **`slug` es inmutable** y es lo que se guarda en `productos.tags`. **`label`** es lo que
+  ve el cliente y se puede renombrar sin tocar ningún producto. Esa separación es
+  deliberada: renombrar el slug huerfanaría las marcas de todos los productos.
+- **`orden` define la prioridad.** Cada tarjeta muestra **un solo cartelito**: el de menor
+  orden entre los que el producto tenga. Es decisión de diseño, no una limitación técnica.
+- **`mostrar_badge`** (`ambos` / `pizzas` / `empanadas` / `ninguno`) decide **dónde se ve**
+  el cartelito, no dónde se puede marcar. Por eso `vegetariana` está en `empanadas`: filtra
+  15 pizzas en la pestaña Veggie sin ensuciarles la tarjeta.
+- **`sistema`** marca las que alimentan pestañas hardcodeadas (`gourmet`, `vegetariana`,
+  `picante`). **No impide borrarlas**: el panel avisa qué pestaña queda vacía y cuántos
+  productos pierden la marca, y el dueño decide.
+- Al borrar una etiqueta, **el slug se quita de los productos** en la misma operación.
+  Dejarlo huérfano lo volvería invisible desde el panel.
+- La resolución del cartelito vive en `resolverBadge()`, en `lib/catalog-build.ts`, y está
+  cubierta por tests. Los componentes reciben el badge ya resuelto.
+- La paleta de colores es fija y las variables CSS **tienen que existir en
+  `app/impasto.css`**. `--a-sidebar` solo existe en `admin.css`: un badge con ese color se
+  vería bien en el panel y roto en el sitio.
 
 ## Cosas que hay que recordar hacer
 
