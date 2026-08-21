@@ -24,7 +24,7 @@ type ProductType = "pizza" | "empanada" | "bebida" | "combo" | "otro";
  * informa nada.
  */
 const productType = (product: DatabaseProduct): ProductType => {
-  const categoria = String(product.categoria || "").toLowerCase();
+  const categoria = String(product.categoria || "");
   if (!esCategoriaImpasto(categoria)) return "otro";
   if (/caja\s*(?:x|×)\s*(?:6|12|24)\b/i.test(String(product.nombre || ""))) return "combo";
   if (categoria === "pizzas") return "pizza";
