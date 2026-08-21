@@ -57,7 +57,17 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const fila = p as { id: string; tags?: unknown };
     const tags = Array.isArray(fila.tags) ? fila.tags.map(String) : [];
     if (!tags.includes(slug)) continue;
-    await db.database.from("productos").update({ tags: tags.filter((t) => t !== slug) }).eq("id", fila.id);
+    const { error: errorLimpieza } = await db.database
+      .from("productos").update({ tags: tags.filter((t) => t !== slug) }).eq("id", fila.id);
+    if (errorLimpieza) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `No se pudo limpiar el producto ${fila.id}: ${errorLimpieza.message}. La etiqueta NO se borró; se limpiaron ${limpiados} producto(s) antes de la falla, el resto todavía tiene el slug "${slug}" en tags. Reintentá el borrado: la limpieza ya hecha es idempotente.`,
+        },
+        { status: 500 },
+      );
+    }
     limpiados++;
   }
 
