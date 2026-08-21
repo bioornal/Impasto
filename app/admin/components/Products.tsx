@@ -93,9 +93,19 @@ export function Products() {
   );
 }
 
+// El panel solo ofrece estos tres tipos, y coinciden 1 a 1 con CATEGORIAS_IMPASTO:
+// `categoria` (la que decide dónde aparece el producto en el sitio) se deriva
+// siempre del Tipo elegido, para que nunca queden desincronizados.
+const TYPE_TO_CATEGORIA: Record<AdminProduct["type"], string> = {
+  pizza: "pizzas",
+  empanada: "empanadas",
+  bebida: "bebidas",
+};
+
 function ProductEdit({ product, onClose, onSave, isNew }: { product?: AdminProduct; onClose: () => void; onSave: (p: Partial<AdminProduct>) => void; isNew?: boolean }) {
   const [data, setData] = useState<Partial<AdminProduct>>(product || { type: "pizza", nombre: "", desc: "", precio: 0, categoria: "pizzas", stock: 0, tags: [], active: true, popular: false });
   const set = <K extends keyof AdminProduct>(k: K, v: AdminProduct[K]) => setData(d => ({ ...d, [k]: v }));
+  const setType = (t: AdminProduct["type"]) => setData(d => ({ ...d, type: t, categoria: TYPE_TO_CATEGORIA[t] }));
   const toggleTag = (t: string) => set("tags", (data.tags || []).includes(t) ? (data.tags || []).filter(x => x !== t) : [...(data.tags || []), t]);
 
   return (
@@ -113,18 +123,10 @@ function ProductEdit({ product, onClose, onSave, isNew }: { product?: AdminProdu
             <div className="field full"><label>Nombre</label><input value={data.nombre || ""} onChange={e => set("nombre", e.target.value)} placeholder="Ej: Margherita" /></div>
             <div className="field">
               <label>Tipo</label>
-              <select value={data.type || "pizza"} onChange={e => set("type", e.target.value as AdminProduct["type"])}>
+              <select value={data.type || "pizza"} onChange={e => setType(e.target.value as AdminProduct["type"])}>
                 <option value="pizza">Pizza</option><option value="empanada">Empanada</option><option value="bebida">Bebida</option>
               </select>
             </div>
-            {data.type === "pizza" && (
-              <div className="field">
-                <label>Categoría</label>
-               <select value={data.categoria || "pizzas"} onChange={e => set("categoria", e.target.value)}>
-                 <option value="pizzas">Pizzas</option><option value="empanadas">Empanadas</option><option value="bebidas">Bebidas</option>
-                </select>
-              </div>
-            )}
             <div className="field full"><label>Descripción</label><textarea rows={3} value={data.desc || ""} onChange={e => set("desc", e.target.value)} placeholder="Ingredientes, detalles…" /></div>
             <div className="field"><label>Precio (ARS)</label><input type="number" value={data.precio || 0} onChange={e => set("precio", +e.target.value)} /></div>
             <div className="field"><label>Stock</label><input type="number" value={data.stock || 0} onChange={e => set("stock", +e.target.value)} /></div>
