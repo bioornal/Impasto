@@ -84,9 +84,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
                   <div className="emp-media"><EmpanadaIllus id={empanada.id} /></div>
                   <div className="emp-head">
                     <h4>{empanada.nombre}</h4>
-                    {empanada.tags.includes("picante") && <span className="emp-flag hot">picante</span>}
-                    {empanada.tags.includes("vegetariana") && <span className="emp-flag veg">veggie</span>}
-                    {empanada.tags.includes("dulce") && <span className="emp-flag sweet">dulce</span>}
+                    {empanada.badge && <span className={`p-badge-tag c-${empanada.badge.color}`}>{empanada.badge.label}</span>}
                   </div>
                   <p>{empanada.desc}</p>
                   <div className="emp-foot">

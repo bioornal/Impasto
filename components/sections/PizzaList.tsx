@@ -106,7 +106,7 @@ export function PizzaList({ pizzas, onHalf }: PizzaListProps) {
                   <div className="p-body">
                     <div className="p-title">
                       <h3>{pizza.nombre}</h3>
-                      {pizza.tags.includes("gourmet") && <span className="p-gourmet">Gourmet</span>}
+                      {pizza.badge && <span className={`p-badge-tag c-${pizza.badge.color}`}>{pizza.badge.label}</span>}
                     </div>
                     <p className="p-desc">{pizza.desc}</p>
                     <div className="p-actions">
