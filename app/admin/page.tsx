@@ -5,16 +5,18 @@ import { Sidebar } from "./components/Sidebar";
 import { Topbar, Dashboard } from "./components/Dashboard";
 import { Orders } from "./components/Orders";
 import { Products } from "./components/Products";
+import { Etiquetas } from "./components/Etiquetas";
 import { Customers } from "./components/Customers";
 import { Testimonials } from "./components/Testimonials";
 import { Settings } from "./components/Settings";
 
-type Page = "dashboard" | "orders" | "products" | "customers" | "testimonials" | "settings";
+type Page = "dashboard" | "orders" | "products" | "etiquetas" | "customers" | "testimonials" | "settings";
 
 const TITLES: Record<Page, [string, string]> = {
   dashboard:    ["Dashboard",      "Un vistazo general de tu negocio"],
   orders:       ["Pedidos",        "Administrá los pedidos entrantes"],
   products:     ["Productos",      "Tu carta de pizzas, empanadas y bebidas"],
+  etiquetas:    ["Etiquetas",      "Los cartelitos que aparecen en las tarjetas del sitio"],
   customers:    ["Clientes",       "Base de clientes y su historial"],
   testimonials: ["Testimonios",    "Moderá las reseñas que aparecen en el sitio"],
   settings:     ["Configuración",  "Datos del local y zonas de envío"],
@@ -44,6 +46,7 @@ function AdminApp() {
           {page === "dashboard"    && <Dashboard />}
           {page === "orders"       && <Orders />}
           {page === "products"     && <Products />}
+          {page === "etiquetas"    && <Etiquetas />}
           {page === "customers"    && <Customers />}
           {page === "testimonials" && <Testimonials />}
           {page === "settings"     && <Settings />}

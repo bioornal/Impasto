@@ -1,7 +1,8 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useRef } from "react";
-import type { AdminState, AdminProduct, Testimonial } from "./types";
+import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial } from "./types";
 import { DELIVERY_FEE } from "@/lib/business";
+import { esCategoriaImpasto } from "@/lib/categorias";
 
 const TESTI_KEY = "impasto_testimonials_v2";
 
@@ -107,20 +108,35 @@ function adaptTestimonial(t: Record<string, unknown>): Testimonial {
   };
 }
 
+function adaptEtiqueta(e: Record<string, unknown>): AdminEtiqueta {
+  return {
+    _dbId: String(e.id),
+    slug: String(e.slug || ""),
+    label: String(e.label || e.slug || ""),
+    color: String(e.color || "gris"),
+    orden: Number(e.orden ?? 100),
+    mostrar_badge: String(e.mostrar_badge || "ambos"),
+    sistema: Boolean(e.sistema),
+    usos: Number(e.usos ?? 0),
+  };
+}
+
 async function loadAll() {
-  const [prodRes, pedRes, cliRes] = await Promise.all([
+  const [prodRes, pedRes, cliRes, etiRes] = await Promise.all([
     fetch("/api/admin/productos").then(r => r.json()).catch(() => ({ data: [] })),
     fetch("/api/admin/pedidos").then(r => r.json()).catch(() => ({ data: [] })),
     fetch("/api/admin/clientes").then(r => r.json()).catch(() => ({ data: [] })),
+    fetch("/api/admin/etiquetas").then(r => r.json()).catch(() => ({ data: [] })),
   ]);
   const testiRes = await fetch("/api/admin/testimonios").then(r => r.json()).catch(() => ({ data: [] }));
   return {
-    products: (prodRes.data || []).filter((p: Record<string, unknown>) => ["pizzas", "empanadas", "bebidas"].includes(String(p.categoria || "").toLowerCase())).map(adaptProduct),
+    products: (prodRes.data || []).filter((p: Record<string, unknown>) => esCategoriaImpasto(String(p.categoria || ""))).map(adaptProduct),
     orders: (pedRes.data || []).map(adaptOrder),
     customers: (cliRes.data || []).map(adaptCustomer),
     testimonials: Array.isArray(testiRes.data) && testiRes.data.length > 0
       ? testiRes.data.map(adaptTestimonial)
       : loadTestimonials(),
+    etiquetas: (etiRes.data || []).map(adaptEtiqueta),
   };
 }
 
@@ -132,6 +148,9 @@ interface StoreCtx {
   updateProduct: (id: string, patch: Partial<AdminProduct>) => Promise<void>;
   createProduct: (p: Partial<AdminProduct>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+  createEtiqueta: (label: string, color: string, mostrar_badge: string) => Promise<void>;
+  updateEtiqueta: (id: string, patch: Partial<AdminEtiqueta>) => Promise<void>;
+  deleteEtiqueta: (id: string) => Promise<void>;
   updateOrderStatus: (id: string, estado: string) => Promise<void>;
   updateOrderPayment: (id: string, estado: string) => Promise<void>;
   /** Sin `monto` devuelve el total; con `monto` hace una devolución parcial. */
@@ -164,7 +183,7 @@ function LoadingScreen({ error }: { error: string | null }) {
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AdminState>({ loading: true, error: null, products: [], orders: [], customers: [], testimonials: [] });
+  const [state, setState] = useState<AdminState>({ loading: true, error: null, products: [], orders: [], customers: [], testimonials: [], etiquetas: [] });
   const [toast, setToast] = useState<string | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -233,6 +252,48 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setState(s => ({ ...s, products: s.products.filter(p => p.id !== id) }));
       if (prod) await fetch(`/api/admin/productos/${prod._dbId}`, { method: "DELETE" });
       showToast("Producto eliminado");
+    },
+
+    // Las tres miran el status de la respuesta, a diferencia de updateProduct,
+    // que toastea exito siempre: un 400 de la validacion tiene que verse.
+    createEtiqueta: async (label, color, mostrar_badge) => {
+      const orden = Math.max(0, ...stateRef.current.etiquetas.map(e => e.orden)) + 1;
+      const r = await fetch("/api/admin/etiquetas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label, color, mostrar_badge, orden }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { showToast(j.error || "No se pudo crear la etiqueta"); return; }
+      await load();
+      showToast("Etiqueta creada");
+    },
+
+    updateEtiqueta: async (id, patch) => {
+      const eti = stateRef.current.etiquetas.find(e => e._dbId === id);
+      if (!eti) return;
+      const body: Record<string, unknown> = {};
+      if (patch.label !== undefined) body.label = patch.label;
+      if (patch.color !== undefined) body.color = patch.color;
+      if (patch.orden !== undefined) body.orden = patch.orden;
+      if (patch.mostrar_badge !== undefined) body.mostrar_badge = patch.mostrar_badge;
+      const r = await fetch(`/api/admin/etiquetas/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { showToast(j.error || "No se pudo actualizar"); return; }
+      await load();
+      showToast("Etiqueta actualizada");
+    },
+
+    deleteEtiqueta: async (id) => {
+      const r = await fetch(`/api/admin/etiquetas/${id}`, { method: "DELETE" });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { showToast(j.error || "No se pudo borrar"); return; }
+      await load();
+      showToast(j.limpiados > 0 ? `Etiqueta borrada y quitada de ${j.limpiados} producto(s)` : "Etiqueta borrada");
     },
 
     updateOrderStatus: async (id, estado) => {

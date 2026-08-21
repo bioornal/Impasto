@@ -63,6 +63,17 @@ export interface Testimonial {
   fecha: string;
 }
 
+export interface AdminEtiqueta {
+  _dbId: string;
+  slug: string;
+  label: string;
+  color: string;
+  orden: number;
+  mostrar_badge: string;
+  sistema: boolean;
+  usos: number;
+}
+
 export interface AdminState {
   loading: boolean;
   error: string | null;
@@ -70,4 +81,5 @@ export interface AdminState {
   orders: AdminOrder[];
   customers: AdminCustomer[];
   testimonials: Testimonial[];
+  etiquetas: AdminEtiqueta[];
 }

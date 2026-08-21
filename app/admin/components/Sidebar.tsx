@@ -20,6 +20,7 @@ export function Sidebar({ current, onNav, open, onClose }: SidebarProps) {
     { key: "dashboard", label: "Dashboard", icon: <Icon.Dashboard /> },
     { key: "orders", label: "Pedidos", icon: <Icon.Orders />, badge: newOrders },
     { key: "products", label: "Productos", icon: <Icon.Pizza /> },
+    { key: "etiquetas", label: "Etiquetas", icon: <Icon.Pizza /> },
     { key: "customers", label: "Clientes", icon: <Icon.Users /> },
     { key: "testimonials", label: "Testimonios", icon: <Icon.Star />, badge: pendingReviews },
   ];
