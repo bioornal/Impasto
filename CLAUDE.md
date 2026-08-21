@@ -26,6 +26,49 @@ Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
   solo `--include=*.ts` dio un falso negativo y dejó pasar una cuarta copia de la allowlist
   de categorías en `StoreProvider.tsx`.
 
+## Los tres proyectos que comparten esta base
+
+La base InsForge `3agqcygs.us-east.insforge.app` la usan **tres aplicaciones distintas**, sin
+separación por esquema ni columna de pertenencia. Las tres apuntan al mismo backend.
+
+| Proyecto | Qué es | Stack | Producción |
+|---|---|---|---|
+| **Impasto** (este repo) | E-commerce de la pizzería de Iguazú | Next.js 16 | `vocal-naiad-861a2c.netlify.app` |
+| **El Fogón — Dashboard** (`recetario-napolitano`) | Costeo: ingredientes, recetas, costos, márgenes y precios de venta. Más la calculadora de masa napolitana | Astro + Netlify | `recetarionapolitano.netlify.app` |
+| **Carro Fogón** (`carroFogon/next-app`) | Punto de venta del carro: toma pedidos, imprime comanda | Next.js 15 + Vercel | `carro-fogon.vercel.app` |
+
+### Quién escribe qué
+
+- `recetas`, `ingredientes`, `receta_ingredientes`, `precios_venta`, `costos_fijos`,
+  `costos_variables`, `config_negocio`, `gastos`, `ventas_mes` → **las escribe el recetario**.
+  Impasto **solo las lee**: de ahí salieron las descripciones y los tags, y desde el
+  21/08/2026 también los precios efectivos. Escribirlas rompe el costeo del recetario.
+- `productos`, `pedidos`, `clientes` → **compartidas entre Impasto y Carro Fogón**. Las tres
+  las escriben los dos.
+- `etiquetas`, `carritos`, `pedido_eventos`, `notificaciones`, `promociones`, `testimonios`,
+  `info_empresa_impasto` → hoy las usa solo Impasto, pero **viven en la misma base**, sin
+  prefijo ni esquema propio.
+- El recetario **lee `pedidos`** en `ganancias.astro` para calcular la ganancia del mes. Los
+  pedidos de Impasto y los del carro entran **juntos** en ese cálculo.
+
+### La fuga que hay que conocer
+
+`GET /api/productos` de Carro Fogón hace `.select("*").eq("disponible", true)` **sin filtrar
+por categoría**. Al 21/08/2026 su menú lista **65 productos, de los cuales 49 son de Impasto**
+(32 pizzas, 9 empanadas, 8 bebidas) y solo 16 son suyos (hamburguesas, lomos, calzones, otros).
+**Activar un producto acá lo agrega al menú del carro.** Pasó con las 8 bebidas.
+
+En el sentido inverso Impasto **sí** está protegido: filtra por `CATEGORIAS_IMPASTO`
+(`lib/categorias.ts`), y el `POST` de Carro Fogón inserta sin `categoria`, así que sus
+productos quedan con categoría nula y no llegan al catálogo de Impasto.
+
+Además Carro Fogón recalcula los precios del pedido cruzando **por `nombre`** contra
+`productos` (`app/api/pedidos/route.ts`), no por `id`: dos filas con el mismo nombre se pisan
+entre proyectos.
+
+**Nada de esto se arregla desde este repo.** El arreglo natural es el filtro de categoría del
+lado del carro, pero es su código y su decisión.
+
 ## Lo que está terminado y verificado en producción
 
 - **Auth del panel** — las 10 rutas admin protegidas + rate limiting en el login.
@@ -124,7 +167,7 @@ limpieza automática de carritos abandonados, consentimiento de privacidad, SEO 
 ## El catálogo tiene recetas (hallazgo del 20/08/2026)
 
 La base tiene **los ingredientes reales de cada producto**, y no estaba documentado. Son
-tres tablas globales, compartidas con el proyecto paralelo:
+tres tablas globales, que **escribe el recetario** (`recetario-napolitano`):
 
 - `recetas` (81 filas) — una por producto, se cruza con `productos` **por `nombre`**.
 - `ingredientes` (79) — con `precio_kg`, `tipo` y `multiplo_rendimiento`.
@@ -134,7 +177,7 @@ tres tablas globales, compartidas con el proyecto paralelo:
 descripciones y los tags de `vegetariana` y `picante`. Antes de inventar cualquier dato
 de producto, mirar acá primero.
 
-Solo se leen: escribirlas afectaría el costeo del proyecto paralelo.
+Solo se leen: escribirlas afectaría el costeo del recetario.
 
 ### Errores de carga detectados en esas recetas
 
@@ -179,7 +222,7 @@ Se administran desde la sección **Etiquetas** del panel y viven en la tabla `et
 
 ## Cosas que hay que recordar hacer
 
-- **`productos` es una tabla global compartida** con el proyecto paralelo, y no tiene ninguna
+- **`productos` es una tabla global compartida** con **Carro Fogón**, y no tiene ninguna
   columna de pertenencia. El único criterio es `categoria` contra `CATEGORIAS_IMPASTO`
   (`lib/categorias.ts`): `pizzas`, `empanadas` y `bebidas` son de Impasto; `hamburguesas`,
   `lomos`, `calzones` y `otros` son del otro proyecto. **No borrar ni editar esas filas.**
@@ -189,7 +232,7 @@ Se administran desde la sección **Etiquetas** del panel y viven en la tabla `et
 - **Al comprar el dominio:** cambiar la URL del webhook en Mercado Pago (se hace por MCP) y
   actualizar la variable en Netlify. Conviene además separar la URL de sandbox de la de
   producción, hoy apuntan al mismo endpoint.
-- **`info_empresa_impasto`** sigue siendo una tabla global con datos de Iguazú. Si el proyecto
-  paralelo la consulta directamente, va a mostrar estos datos.
+- **`info_empresa_impasto`** sigue siendo una tabla global con datos de Iguazú. Si otro de los
+  dos proyectos la consulta directamente, va a mostrar estos datos.
 - Si se rota el secreto del webhook en el panel de MP, actualizar `MERCADOPAGO_WEBHOOK_SECRET`
   **y reconstruir**, o el webhook rechaza todo con 401.
