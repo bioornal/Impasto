@@ -111,7 +111,7 @@ export function buildEffectivePrices(
       }
     }
 
-    const costoOpUnit = subcategoria === 'Empanadas' ? Math.round(costoOpPorPizza / 12) : costoOpPorPizza;
+    const costoOpUnit = subcategoria === 'Empanadas' ? Math.round(costoOpPorPizza / 12) : subcategoria === 'Bebidas' ? 0 : costoOpPorPizza;
     const costoReal = costoUnit + costoOpUnit;
     prices.set(rule.nombre, Math.ceil((costoReal * markup) / 1000) * 1000);
   }
