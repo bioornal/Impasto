@@ -156,6 +156,7 @@ export async function POST(req: NextRequest) {
           referencia: created.referencia,
           nombre: order.nombre,
           email: order.email,
+          tel: order.tel,
           mode: order.mode,
           dir: order.dir,
           items: created.items,

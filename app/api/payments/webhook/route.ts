@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { registrarEvento } from "@/lib/orders";
+import { notificarPedido, avisoDesdePedido } from "@/lib/notifications";
 import {
   getOrder,
   getPayment,
@@ -60,9 +61,12 @@ export async function POST(req: NextRequest) {
     const resuelto = await resolverNotificacion(tipo, id);
     if (!resuelto.externalReference) return NextResponse.json({ ok: true, ignored: true });
 
+    // Se traen los datos completos porque un pago que se aprueba acá puede ser
+    // la primera noticia que tenga el local de ese pedido: si la tarjeta quedó
+    // pendiente en el checkout, nunca se avisó.
     const { data } = await db.database
       .from("pedidos")
-      .select("id,estado_pago")
+      .select("id,estado_pago,numero_pedido,external_reference,nombre_cliente,telefono_cliente,email_cliente,direccion,modalidad,productos,subtotal,envio,total,metodo_pago")
       .eq("external_reference", resuelto.externalReference)
       .limit(1);
 
@@ -90,6 +94,14 @@ export async function POST(req: NextRequest) {
       origen: "webhook",
       detalle: { ...resuelto.detalle, notificacion: tipo, recurso: id },
     });
+
+    if (estado === "aprobado") {
+      // Un fallo de aviso no puede devolver 500: Mercado Pago reintentaría la
+      // notificación de un pago que ya quedó bien registrado.
+      try {
+        await notificarPedido(avisoDesdePedido(pedido as Record<string, unknown>), "pago_aprobado");
+      } catch { /* queda registrado como fallido en `notificaciones` */ }
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err: unknown) {

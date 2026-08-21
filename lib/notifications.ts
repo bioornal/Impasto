@@ -1,25 +1,17 @@
 import { db } from "@/lib/insforge";
 import { sendEmail } from "@/lib/email";
+import { sendTelegram } from "@/lib/telegram";
 import { getBusinessConfig } from "@/lib/business-server";
 import { fmt } from "@/lib/utils";
+import { plantillaLocal } from "@/lib/aviso-local";
 import type { BusinessConfig } from "@/lib/business";
 import type { CartItem } from "@/types";
 
-export type TipoAviso = "pedido_recibido" | "pago_aprobado";
-
-export interface AvisoPedido {
-  pedidoId: string;
-  referencia: string;
-  nombre: string;
-  email: string;
-  mode: string;
-  dir?: string;
-  items: CartItem[];
-  subtotal: number;
-  shipping: number;
-  total: number;
-  metodoPago: string;
-}
+// El tipo y la plantilla del aviso al local viven en `lib/aviso-local.ts`, que
+// no importa el SDK y por eso se puede testear bajo `tsx`. Se reexportan para
+// no romper a quien ya los importaba desde acá.
+export type { TipoAviso, AvisoPedido } from "@/lib/aviso-local";
+import type { TipoAviso, AvisoPedido } from "@/lib/aviso-local";
 
 const escape = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -84,7 +76,7 @@ function plantilla(aviso: AvisoPedido, business: BusinessConfig, tipo: TipoAviso
  * Envía un aviso y lo deja registrado. El índice único de `notificaciones`
  * garantiza que un mismo aviso no salga dos veces aunque se reintente.
  */
-export async function notificarPedido(aviso: AvisoPedido, tipo: TipoAviso) {
+async function notificarCliente(aviso: AvisoPedido, tipo: TipoAviso) {
   if (!aviso.email) return;
 
   // Reservar el aviso primero: si ya existe, otra ejecución lo mandó.
@@ -110,4 +102,63 @@ export async function notificarPedido(aviso: AvisoPedido, tipo: TipoAviso) {
     .eq("pedido_id", aviso.pedidoId)
     .eq("tipo", tipo)
     .eq("canal", "email");
+}
+
+/**
+ * El aviso que hace sonar el celular del local. No depende del email del
+ * comprador: un pedido sin email igual hay que producirlo.
+ */
+async function avisarAlLocal(aviso: AvisoPedido, tipo: TipoAviso) {
+  const destino = process.env.TELEGRAM_CHAT_IDS || "";
+
+  const { error: yaExiste } = await db.database.from("notificaciones").insert({
+    pedido_id: aviso.pedidoId,
+    canal: "telegram",
+    tipo,
+    destino,
+    estado: "pendiente",
+  });
+  if (yaExiste) return;
+
+  const resultado = await sendTelegram(plantillaLocal(aviso, tipo));
+
+  await db.database
+    .from("notificaciones")
+    .update({
+      estado: resultado.estado,
+      detalle: resultado.estado === "enviado" ? { ids: resultado.ids } : { motivo: resultado.motivo },
+    })
+    .eq("pedido_id", aviso.pedidoId)
+    .eq("tipo", tipo)
+    .eq("canal", "telegram");
+}
+
+/**
+ * Fachada: avisa al cliente y al local. Cada canal va aislado — que falle el
+ * mail no puede dejar al local sin enterarse del pedido, ni al revés.
+ */
+export async function notificarPedido(aviso: AvisoPedido, tipo: TipoAviso) {
+  await Promise.allSettled([
+    notificarCliente(aviso, tipo),
+    avisarAlLocal(aviso, tipo),
+  ]);
+}
+
+/** Traduce una fila de `pedidos` al aviso, para avisar desde el webhook. */
+export function avisoDesdePedido(fila: Record<string, unknown>): AvisoPedido {
+  const productos = Array.isArray(fila.productos) ? (fila.productos as CartItem[]) : [];
+  return {
+    pedidoId: String(fila.id),
+    referencia: String(fila.external_reference || `IM-${fila.numero_pedido ?? ""}`),
+    nombre: String(fila.nombre_cliente || ""),
+    email: String(fila.email_cliente || ""),
+    tel: String(fila.telefono_cliente || ""),
+    mode: String(fila.modalidad || "delivery"),
+    dir: String(fila.direccion || ""),
+    items: productos,
+    subtotal: Number(fila.subtotal || 0),
+    shipping: Number(fila.envio || 0),
+    total: Number(fila.total || 0),
+    metodoPago: String(fila.metodo_pago || ""),
+  };
 }

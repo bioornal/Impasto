@@ -142,8 +142,9 @@ Tabla `promociones` vacía. Falta interfaz, reglas de aplicación, vigencias, l�
 descuentos reales en la cotización y validación server-side.
 
 ### 5. Notificaciones que faltan
-Aviso al local cuando entra un pedido, seguimiento en tiempo real y actualización automática
-del estado. **WhatsApp automático quedó descartado**: la API oficial de Meta exige un número
+**El aviso al local ya está hecho** (Telegram, 21/08/2026) — falta que el dueño cree el bot y
+cargue las variables. Sigue faltando el seguimiento en tiempo real y que el panel se actualice
+solo. **WhatsApp automático quedó descartado**: la API oficial de Meta exige un número
 que no esté en WhatsApp Business App, verificación con CUIT y plantillas aprobadas.
 Las librerías no oficiales arriesgan el baneo permanente del número del local.
 
@@ -219,6 +220,33 @@ Se administran desde la sección **Etiquetas** del panel y viven en la tabla `et
 - La paleta de colores es fija y las variables CSS **tienen que existir en
   `app/impasto.css`**. `--a-sidebar` solo existe en `admin.css`: un badge con ese color se
   vería bien en el panel y roto en el sitio.
+
+## Cómo se entera el local de que entró un pedido
+
+Por **Telegram**, desde el 21/08/2026. Antes no había ningún aviso al local: el único que el
+sistema mandaba era un mail **al cliente**, y encima sin proveedor configurado.
+
+- `lib/telegram.ts` es el punto único de envío, espejo de `lib/email.ts`. Sin
+  `TELEGRAM_BOT_TOKEN` o `TELEGRAM_CHAT_IDS` devuelve `omitido` y no rompe nada.
+- **Nunca agregarle `parse_mode`.** El mensaje lleva nombre y dirección escritos por el
+  cliente; con Markdown activo un nombre podría inyectar formato o un link. `lib/aviso-local.ts`
+  además aplana los saltos de línea, para que nadie falsifique una línea del aviso.
+- `lib/aviso-local.ts` arma el texto y **no importa el SDK**, por eso se puede testear bajo
+  `tsx` (`tests/aviso-local.test.ts`). Si alguna vez necesita `db`, el test deja de correr.
+- La segunda línea del mensaje dice qué hacer con la plata: `COBRAR AL ENTREGAR $X` en
+  efectivo, `PAGADO CON TARJETA` cuando MP aprobó, `PAGO SIN CONFIRMAR — revisar` en
+  transferencia. No hay un "pago OK" genérico: en efectivo tampoco está cobrado.
+
+Avisa en tres momentos: el checkout de efectivo y transferencia, la tarjeta cuando MP la
+aprueba (rechazada no avisa), y **el webhook cuando un pago pendiente pasa a aprobado** — sin
+ese tercero, una tarjeta que se acredita más tarde no le llega a nadie.
+
+No se duplica: el índice único de `notificaciones` es `(pedido_id, tipo, canal)`, así que el
+aviso de Telegram convive con el del mail y un reintento no manda dos veces.
+
+**Lo que todavía falta:** el panel **no se refresca solo** (`StoreProvider.tsx`, `useEffect`
+con dependencias vacías). Aunque quede abierto en una pantalla del local, un pedido nuevo no
+aparece hasta recargar a mano.
 
 ## Cosas que hay que recordar hacer
 
