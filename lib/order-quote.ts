@@ -83,9 +83,13 @@ function quoteItem(rawItem: CartItem, data: CatalogData, rates: QuoteRates): Car
       .map(([id, amount]) => `${amount}× ${findEmpanada(data, id)?.nombre}`)
       .join(", ");
     const hasUnitPrices = Object.keys(selections).every((id) => Number(findEmpanada(data, id)?.precio) > 0);
+    const comboPrice = data.empanadaBoxPrices[variant.size];
+    if (!hasUnitPrices && comboPrice <= 0) {
+      throw new Error("La caja de empanadas no tiene un precio configurado");
+    }
     const price = hasUnitPrices
       ? Object.entries(selections).reduce((sum, [id, amount]) => sum + Number(findEmpanada(data, id)?.precio || 0) * amount, 0)
-      : data.empanadaBoxPrices[variant.size];
+      : comboPrice;
 
     return {
       ...rawItem,

@@ -1,5 +1,6 @@
 import { buildCatalog, type DatabaseProduct } from "../lib/catalog-build";
 import { slugificar, type Etiqueta } from "../lib/etiquetas";
+import { buildEffectivePrices } from "../lib/effective-prices";
 
 // Réplica reducida de lo que hay en la base: 3 productos de Impasto y 3 del
 // proyecto paralelo, con los mismos valores de `tipo` y `categoria` reales.
@@ -24,6 +25,26 @@ const catalogo = buildCatalog(fixture, null, null);
 check("solo la pizza de Impasto llega a pizzas",     catalogo.pizzas.map((p) => p.nombre),    ["Pizza Muzzarela"]);
 check("solo la empanada de Impasto llega a empanadas", catalogo.empanadas.map((e) => e.nombre), ["Empanadas de Pollo"]);
 check("solo la bebida de Impasto llega a bebidas",   catalogo.bebidas.map((b) => b.nombre),   ["Coca-Cola 1.5L"]);
+check("el precio de la pizza se conserva desde la base", catalogo.pizzas[0]?.precio, 15000);
+check("sin combos no se inventan precios de caja", catalogo.empanadaBoxPrices, { 6: 0, 12: 0, 24: 0 });
+
+const preciosEfectivos = buildEffectivePrices(
+  [{ id: "r1", nombre: "Pizza Muzzarela", precio_prepizza: 485, precio_salsa: 236 }],
+  [
+    { receta_id: "r1", ingrediente_id: "i1", cantidad_kg: 0.045 },
+    { receta_id: "r1", ingrediente_id: "i2", cantidad_kg: 0.35 },
+    { receta_id: "r1", ingrediente_id: "i3", cantidad_kg: 0.01 },
+  ],
+  [
+    { id: "i1", precio_kg: 7500, multiplo_rendimiento: 1 },
+    { id: "i2", precio_kg: 10500, multiplo_rendimiento: 1 },
+    { id: "i3", precio_kg: 35000, multiplo_rendimiento: 1 },
+  ],
+  [{ receta_id: "r1", nombre: "Pizza Muzzarela", markup: 1.6666666666666667, subcategoria: "Pizzas" }],
+  { pizzas_objetivo_mes: 470, precio_prepizza_default: 485, precio_salsa_default: 236 },
+  3121000,
+);
+check("el precio efectivo replica el gestor de costos", preciosEfectivos.get("Pizza Muzzarela"), 19540);
 
 const todos = [...catalogo.pizzas, ...catalogo.empanadas, ...catalogo.bebidas].map((p) => p.nombre);
 check("ningún producto del proyecto paralelo se filtra", todos.filter((n) => ["Hamburguesa Simple", "Lomo Completo", "Calzone Napolitano"].includes(n)), []);

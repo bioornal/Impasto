@@ -1,4 +1,3 @@
-import { STATIC_DATA } from "@/lib/data";
 import { esCategoriaImpasto } from "@/lib/categorias";
 import type { Etiqueta } from "@/lib/etiquetas";
 import type { Bebida, CatalogData, Empanada, EtiquetaBadge, Pizza, Promo, Review } from "@/types";
@@ -119,7 +118,9 @@ export function buildCatalog(
 
   const deTipo = (type: string) => clasificados.filter((item) => item.type === type).map((item) => item.product);
 
-  const boxPrices = { ...STATIC_DATA.empanadaBoxPrices };
+  // Los combos también son productos de la base. Si no existen, queda 0 y no
+  // se muestra un precio inventado como fallback.
+  const boxPrices = { 6: 0, 12: 0, 24: 0 };
   for (const box of deTipo("combo")) {
     const match = String(box.nombre || "").match(/(?:x|×)\s*(6|12|24)\b/i);
     if (match && Number(box.precio) > 0) boxPrices[Number(match[1]) as 6 | 12 | 24] = Number(box.precio);

@@ -16,7 +16,8 @@
 
   function adaptProduct(p) {
     const meta = buildMetaMap()[p.nombre] || {};
-    const type = meta.type || (p.precio === 0 ? 'empanada' : 'pizza');
+    const typeByCategoria = { pizzas: 'pizza', empanadas: 'empanada', bebidas: 'bebida' };
+    const type = typeByCategoria[p.categoria] || meta.type || 'pizza';
     return {
       _dbId: p.id,
       id: p.id,
@@ -24,10 +25,10 @@
       precio: p.precio,
       active: p.disponible !== false,
       type,
-      categoria: meta.categoria || 'clasica',
-      desc: meta.desc || '',
-      tags: meta.tags || [],
-      popular: meta.popular || false,
+      categoria: p.categoria || meta.categoria || 'clasica',
+      desc: p.desc || meta.desc || '',
+      tags: Array.isArray(p.tags) ? p.tags : (meta.tags || []),
+      popular: p.popular ?? meta.popular ?? false,
       stock: 24,
     };
   }

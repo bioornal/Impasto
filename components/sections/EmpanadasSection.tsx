@@ -89,7 +89,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
                   <p>{empanada.desc}</p>
                   <div className="emp-foot">
                     <span className="emp-unit">
-                      {count > 0 ? "en la caja" : hasUnitPrices && empanada.precio ? fmt(empanada.precio) : "sumar"}
+                      {count > 0 ? "en la caja" : empanada.precio ? fmt(empanada.precio) : "sumar"}
                     </span>
                     <div className="stepper">
                       <button onClick={() => pick(empanada.id, -1)} disabled={count === 0} aria-label={`Quitar ${empanada.nombre}`}>−</button>

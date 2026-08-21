@@ -31,7 +31,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Database
 
-Apply the SQL files in `database/` to the InsForge PostgreSQL database before using DB-backed draft carts and content tables. The app keeps the static catalog only as a temporary fallback while existing records are migrated.
+Apply the SQL files in `database/` to the InsForge PostgreSQL database before using DB-backed draft carts and content tables. The storefront calculates effective selling prices from the shared recipes, ingredient costs, margins, and business defaults.
 
 ## Admin access
 
