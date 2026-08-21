@@ -1,6 +1,7 @@
 import { STATIC_DATA } from "@/lib/data";
 import { esCategoriaImpasto } from "@/lib/categorias";
-import type { Bebida, CatalogData, Empanada, Pizza, Promo, Review } from "@/types";
+import type { Etiqueta } from "@/lib/etiquetas";
+import type { Bebida, CatalogData, Empanada, EtiquetaBadge, Pizza, Promo, Review } from "@/types";
 
 export interface DatabaseProduct {
   id?: string | number;
@@ -32,7 +33,23 @@ const productType = (product: DatabaseProduct): ProductType => {
   return "bebida";
 };
 
-function mapPizza(product: DatabaseProduct): Pizza {
+type DestinoBadge = "pizzas" | "empanadas";
+
+/**
+ * Devuelve el cartelito ganador para un producto: la etiqueta de menor `orden`
+ * entre las que tiene y que se muestran en ese destino. Un solo badge por
+ * tarjeta es decisión de diseño: cuando todo se destaca, nada se destaca.
+ */
+function resolverBadge(tags: string[], etiquetas: Etiqueta[], destino: DestinoBadge): EtiquetaBadge | undefined {
+  const aplicables = etiquetas.filter((e) =>
+    tags.includes(e.slug) &&
+    (e.mostrar_badge === "ambos" || e.mostrar_badge === destino));
+  if (aplicables.length === 0) return undefined;
+  const gana = aplicables.reduce((a, b) => (b.orden < a.orden ? b : a));
+  return { label: gana.label, color: gana.color };
+}
+
+function mapPizza(product: DatabaseProduct, etiquetas: Etiqueta[]): Pizza {
   const tags = asTags(product.tags);
   return {
     id: String(product.id ?? product.nombre),
@@ -42,16 +59,19 @@ function mapPizza(product: DatabaseProduct): Pizza {
     desc: String(product.desc ?? ""),
     tags,
     popular: product.popular,
+    badge: resolverBadge(tags, etiquetas, "pizzas"),
   };
 }
 
-function mapEmpanada(product: DatabaseProduct): Empanada {
+function mapEmpanada(product: DatabaseProduct, etiquetas: Etiqueta[]): Empanada {
+  const tags = asTags(product.tags);
   return {
     id: String(product.id ?? product.nombre),
     nombre: String(product.nombre || "Empanada"),
     precio: product.precio == null ? undefined : Number(product.precio),
     desc: String(product.desc ?? ""),
-    tags: asTags(product.tags),
+    tags,
+    badge: resolverBadge(tags, etiquetas, "empanadas"),
   };
 }
 
@@ -86,6 +106,7 @@ export function buildCatalog(
   products: DatabaseProduct[],
   promosRaw: unknown,
   reviewsRaw: unknown,
+  etiquetas: Etiqueta[] = [],
 ): CatalogData {
   const disponibles = products.filter((product) => product.disponible !== false);
   const clasificados = disponibles.map((product) => ({ product, type: productType(product) }));
@@ -105,8 +126,8 @@ export function buildCatalog(
   }
 
   return {
-    pizzas: deTipo("pizza").map(mapPizza),
-    empanadas: deTipo("empanada").map(mapEmpanada),
+    pizzas: deTipo("pizza").map((p) => mapPizza(p, etiquetas)),
+    empanadas: deTipo("empanada").map((p) => mapEmpanada(p, etiquetas)),
     bebidas: deTipo("bebida").map(mapBebida),
     empanadaBoxPrices: boxPrices,
     promos: mapPromos(promosRaw),

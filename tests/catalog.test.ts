@@ -1,4 +1,5 @@
 import { buildCatalog, type DatabaseProduct } from "../lib/catalog-build";
+import { slugificar, type Etiqueta } from "../lib/etiquetas";
 
 // Réplica reducida de lo que hay en la base: 3 productos de Impasto y 3 del
 // proyecto paralelo, con los mismos valores de `tipo` y `categoria` reales.
@@ -71,6 +72,56 @@ const estilos: DatabaseProduct[] = [
 const conEstilos = buildCatalog(estilos, null, null);
 check("una pizza sin tags es clasica",        conEstilos.pizzas.find((p) => p.nombre === "Pizza Muzzarela")?.categoria,          "clasica");
 check("una pizza con tag gourmet es gourmet", conEstilos.pizzas.find((p) => p.nombre === "Pizza Rucula y Jamon Crudo")?.categoria, "gourmet");
+
+// ── resolución del badge ──────────────────────────────────────────────
+// Gana la etiqueta de menor `orden` entre las que el producto tiene y que
+// aplican a su tipo. `mostrar_badge` decide dónde se ve, no dónde se marca.
+const etiquetas: Etiqueta[] = [
+  { slug: "mas-pedida",  label: "Más pedida",  color: "rojo",   orden: 1, mostrar_badge: "ambos" },
+  { slug: "gourmet",     label: "Gourmet",     color: "dorado", orden: 4, mostrar_badge: "ambos" },
+  { slug: "vegetariana", label: "Vegetariana", color: "verde",  orden: 6, mostrar_badge: "empanadas" },
+  { slug: "interna",     label: "Interna",     color: "gris",   orden: 2, mostrar_badge: "ninguno" },
+];
+
+const conTags = (nombre: string, categoria: string, tags: string[]): DatabaseProduct =>
+  ({ id: nombre, nombre, tipo: "pizza", categoria, precio: 1000, disponible: true, desc: "", tags });
+
+const bc = (p: DatabaseProduct[]) => buildCatalog(p, null, null, etiquetas);
+
+check("gana la etiqueta de menor orden",
+  bc([conTags("A", "pizzas", ["gourmet", "mas-pedida"])]).pizzas[0].badge?.label, "Más pedida");
+
+check("una etiqueta de empanadas no aparece en una pizza",
+  bc([conTags("B", "pizzas", ["vegetariana"])]).pizzas[0].badge, undefined);
+
+check("la misma etiqueta sí aparece en una empanada",
+  bc([conTags("C", "empanadas", ["vegetariana"])]).empanadas[0].badge?.label, "Vegetariana");
+
+check("mostrar_badge=ninguno nunca genera badge, aunque gane por orden",
+  bc([conTags("D", "pizzas", ["interna", "gourmet"])]).pizzas[0].badge?.label, "Gourmet");
+
+check("un producto sin etiquetas no tiene badge",
+  bc([conTags("E", "pizzas", [])]).pizzas[0].badge, undefined);
+
+check("un slug que no existe en etiquetas se ignora sin romper",
+  bc([conTags("F", "pizzas", ["fantasma", "gourmet"])]).pizzas[0].badge?.label, "Gourmet");
+
+check("el badge trae el color de la etiqueta",
+  bc([conTags("G", "pizzas", ["gourmet"])]).pizzas[0].badge?.color, "dorado");
+
+// El badge es independiente de Pizza.categoria, que alimenta la pestaña Clásicas.
+check("categoria sigue derivandose de tags, no del badge",
+  bc([conTags("H", "pizzas", ["gourmet"])]).pizzas[0].categoria, "gourmet");
+
+check("sin etiquetas cargadas, buildCatalog sigue funcionando",
+  buildCatalog([conTags("I", "pizzas", ["gourmet"])], null, null).pizzas[0].badge, undefined);
+
+// El slug se genera del label y tiene que sacar los acentos. Si el regex de
+// diacríticos se rompe, "Más pedida" da "m-s-pedida" y nada lo delata.
+check("slugificar saca acentos",   slugificar("Más pedida"),          "mas-pedida");
+check("slugificar saca la eñe",    slugificar("Con Ñoquis"),          "con-noquis");
+check("slugificar limpia bordes",  slugificar("  ¡Nueva!  "),         "nueva");
+check("slugificar junta espacios", slugificar("Clásica de la casa"),  "clasica-de-la-casa");
 
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
 process.exit(fallos === 0 ? 0 : 1);

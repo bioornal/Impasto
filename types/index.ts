@@ -1,3 +1,8 @@
+export interface EtiquetaBadge {
+  label: string;
+  color: string;
+}
+
 export interface Pizza {
   id: string;
   nombre: string;
@@ -6,6 +11,7 @@ export interface Pizza {
   desc: string;
   tags: string[];
   popular?: boolean;
+  badge?: EtiquetaBadge;
 }
 
 export interface Empanada {
@@ -14,6 +20,7 @@ export interface Empanada {
   precio?: number;
   desc: string;
   tags: string[];
+  badge?: EtiquetaBadge;
 }
 
 export interface Bebida {
