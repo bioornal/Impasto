@@ -107,6 +107,8 @@ function ProductEdit({ product, onClose, onSave, isNew }: { product?: AdminProdu
   const set = <K extends keyof AdminProduct>(k: K, v: AdminProduct[K]) => setData(d => ({ ...d, [k]: v }));
   const setType = (t: AdminProduct["type"]) => setData(d => ({ ...d, type: t, categoria: TYPE_TO_CATEGORIA[t] }));
   const toggleTag = (t: string) => set("tags", (data.tags || []).includes(t) ? (data.tags || []).filter(x => x !== t) : [...(data.tags || []), t]);
+  const { state } = useStore();
+  const etiquetasOrdenadas = [...state.etiquetas].sort((a, b) => a.orden - b.orden);
 
   return (
     <div className="modal-bg" onClick={onClose}>
@@ -133,9 +135,14 @@ function ProductEdit({ product, onClose, onSave, isNew }: { product?: AdminProdu
             <div className="field full">
               <label>Etiquetas</label>
               <div className="flex gap-8" style={{ flexWrap: "wrap" }}>
-                {["vegetariana","picante","gourmet","dulce"].map(t => (
-                  <button key={t} className={`btn btn-sm ${(data.tags || []).includes(t) ? "btn-primary" : "btn-ghost"}`} onClick={() => toggleTag(t)}>
-                    {(data.tags || []).includes(t) && <Icon.Check />} {t}
+                {etiquetasOrdenadas.length === 0 && (
+                  <span className="text-muted" style={{ fontSize: 12.5 }}>
+                    No hay etiquetas todavía. Creá una en la sección Etiquetas.
+                  </span>
+                )}
+                {etiquetasOrdenadas.map(e => (
+                  <button key={e.slug} className={`btn btn-sm ${(data.tags || []).includes(e.slug) ? "btn-primary" : "btn-ghost"}`} onClick={() => toggleTag(e.slug)}>
+                    {(data.tags || []).includes(e.slug) && <Icon.Check />} {e.label}
                   </button>
                 ))}
               </div>
