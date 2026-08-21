@@ -44,7 +44,7 @@ const preciosEfectivos = buildEffectivePrices(
   { pizzas_objetivo_mes: 470, precio_prepizza_default: 485, precio_salsa_default: 236 },
   3121000,
 );
-check("el precio efectivo replica el gestor de costos", preciosEfectivos.get("Pizza Muzzarela"), 19540);
+check("el precio efectivo replica el gestor de costos", preciosEfectivos.get("Pizza Muzzarela"), 20000);
 
 const todos = [...catalogo.pizzas, ...catalogo.empanadas, ...catalogo.bebidas].map((p) => p.nombre);
 check("ningún producto del proyecto paralelo se filtra", todos.filter((n) => ["Hamburguesa Simple", "Lomo Completo", "Calzone Napolitano"].includes(n)), []);
