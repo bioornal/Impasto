@@ -939,12 +939,15 @@ export function Etiquetas() {
 
   const ordenadas = [...state.etiquetas].sort((a, b) => a.orden - b.orden);
 
-  const mover = (eti: AdminEtiqueta, dir: -1 | 1) => {
+  // Las dos actualizaciones van secuenciales y esperadas: `updateEtiqueta`
+  // recarga el store al terminar, así que dispararlas en paralelo hace que la
+  // segunda respuesta pise a la primera y la tabla muestre el orden viejo.
+  const mover = async (eti: AdminEtiqueta, dir: -1 | 1) => {
     const i = ordenadas.findIndex(e => e._dbId === eti._dbId);
     const otro = ordenadas[i + dir];
     if (!otro) return;
-    updateEtiqueta(eti._dbId, { orden: otro.orden });
-    updateEtiqueta(otro._dbId, { orden: eti.orden });
+    await updateEtiqueta(eti._dbId, { orden: otro.orden });
+    await updateEtiqueta(otro._dbId, { orden: eti.orden });
   };
 
   const borrar = (eti: AdminEtiqueta) => {
