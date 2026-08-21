@@ -51,6 +51,14 @@ y hoy están igual de vacías. Con las 57 filas sin ningún tag cargado, las tre
 (`Gourmet`, `Veggie`, `Picantes`) muestran 0 productos; solo `Todas` (32) y `Clásicas` (32)
 tienen contenido, porque `Clásicas` es el default cuando no hay tags.
 
+La columna `tipo` no influye en nada de lo que ve el cliente: la clasificación (pizza,
+empanada, bebida, y con eso lo que pisa el catálogo del sitio) sale toda de `categoria`.
+En el panel, el selector "Tipo" del formulario de productos ahora es quien manda: al
+crear o editar un producto, cambiar el Tipo deriva `categoria` automáticamente
+(`pizza→pizzas`, `empanada→empanadas`, `bebida→bebidas`), así no puede quedar un producto
+con un Tipo que no se corresponda con su `categoria`. Ya no hay un selector de Categoría
+aparte en el panel.
+
 ## Pendientes, en orden sugerido
 
 ### 1. Proveedor de email
