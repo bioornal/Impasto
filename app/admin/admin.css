@@ -299,6 +299,43 @@ a{ color:inherit; text-decoration:none; }
 .tag-veg{ background:var(--a-success-soft); color:var(--a-success); }
 .tag-gourmet{ background:var(--a-sidebar); color:white; }
 
+/* Paleta de las etiquetas administrables. Existe igual en impasto.css para el
+   sitio, pero el panel solo carga esta hoja: sin estas reglas, toda etiqueta
+   nueva se veria gris por mas color que se le elija. */
+.tag.c-dorado{ background:var(--a-warn-soft);    color:var(--a-warn); }
+.tag.c-rojo{   background:var(--a-danger-soft);  color:var(--a-danger); }
+.tag.c-verde{  background:var(--a-success-soft); color:var(--a-success); }
+.tag.c-oliva{  background:#eaf0e2;               color:#4a6b28; }
+.tag.c-gris{   background:var(--a-bg-2);         color:var(--a-ink-2); }
+.tag.c-negro{  background:var(--a-sidebar);      color:white; }
+
+/* ============ CELDA DE ETIQUETAS ============ */
+.eti-celda{ cursor:pointer; min-height:24px; display:flex; flex-wrap:wrap; align-items:center; gap:2px; }
+.eti-celda:hover .eti-mas{ background:var(--a-accent-soft); color:var(--a-accent); border-color:var(--a-accent); }
+.eti-mas{
+  display:inline-grid; place-items:center;
+  width:20px; height:20px; border-radius:6px;
+  border:1px dashed var(--a-line-strong); background:transparent;
+  color:var(--a-muted); font-size:13px; line-height:1;
+  cursor:pointer; padding:0;
+}
+.eti-vacia{ color:var(--a-muted); font-size:12px; font-style:italic; margin-right:4px; }
+.eti-pop{
+  position:fixed; z-index:70; width:230px;
+  background:var(--a-surface); border:1px solid var(--a-line);
+  border-radius:var(--a-radius-sm); box-shadow:var(--a-shadow);
+  padding:6px; max-height:280px; overflow-y:auto;
+}
+.eti-pop-vacio{ padding:10px 8px; font-size:12.5px; color:var(--a-muted); line-height:1.45; }
+.eti-op{
+  display:flex; align-items:center; gap:8px;
+  padding:6px 8px; border-radius:8px; cursor:pointer;
+  font-size:13px; color:var(--a-ink-2);
+}
+.eti-op:hover{ background:var(--a-bg); }
+.eti-op input{ width:15px; height:15px; accent-color:var(--a-accent); cursor:pointer; margin:0; }
+.eti-op-slug{ margin-left:auto; font-family:var(--a-font-mono); font-size:10px; color:var(--a-muted); }
+
 /* ============ BUTTONS ============ */
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:6px;

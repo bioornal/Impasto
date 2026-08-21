@@ -1,11 +1,110 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 import { ProductThumb } from "./ProductThumb";
 import type { AdminProduct } from "./types";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
+
+/**
+ * Etiquetado desde la propia fila, sin abrir el editor.
+ *
+ * Guarda al cerrar y no en cada casilla: marcar tres serian tres PUT y tres
+ * avisos encimados. Si al cerrar el conjunto no cambio, no manda nada.
+ *
+ * El panelito va en position:fixed porque .tbl-wrap tiene overflow-x:auto, y eso
+ * computa el overflow-y a auto: un absolute quedaria recortado por la tabla.
+ */
+function CeldaEtiquetas({ producto }: { producto: AdminProduct }) {
+  const { state, setProductTags } = useStore();
+  const [abierto, setAbierto] = useState(false);
+  const [sel, setSel] = useState<string[]>([]);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const ancla = useRef<HTMLDivElement>(null);
+
+  const etiquetas = useMemo(() => [...state.etiquetas].sort((a, b) => a.orden - b.orden), [state.etiquetas]);
+  // Un slug sin fila en `etiquetas` (huerfano) se muestra igual, en gris y con el
+  // slug crudo: esconderlo lo volveria imposible de rastrear desde el panel.
+  const deSlug = (slug: string) => state.etiquetas.find(e => e.slug === slug);
+
+  const tags = producto.tags || [];
+
+  const abrir = () => {
+    const r = ancla.current?.getBoundingClientRect();
+    if (r) setPos({ top: r.bottom + 4, left: Math.max(8, Math.min(r.left, window.innerWidth - 246)) });
+    setSel(tags);
+    setAbierto(true);
+  };
+
+  // Depende de `sel`, asi que los listeners se re-registran en cada casilla que
+  // se toca. Son tres listeners: sale mas barato que un ref escrito en el render.
+  const cerrarYGuardar = useCallback(() => {
+    setAbierto(false);
+    const antes = producto.tags || [];
+    const igual = sel.length === antes.length
+      && [...sel].sort().join("|") === [...antes].sort().join("|");
+    if (!igual) setProductTags(producto.id, sel);
+  }, [sel, producto, setProductTags]);
+
+  useEffect(() => {
+    if (!abierto) return;
+    const alClic = (ev: MouseEvent) => {
+      const t = ev.target as HTMLElement;
+      if (ancla.current?.contains(t)) return;
+      if (t.closest?.(".eti-pop")) return;
+      cerrarYGuardar();
+    };
+    const alTeclado = (ev: KeyboardEvent) => { if (ev.key === "Escape") cerrarYGuardar(); };
+    // El panelito scrollea solo si no entran todas las etiquetas. Sin este filtro,
+    // scrollear DENTRO del panelito lo cerraria: el listener va en captura y ve
+    // tambien el scroll de sus propios hijos.
+    const alScroll = (ev: Event) => {
+      const t = ev.target as HTMLElement | null;
+      if (t?.closest?.(".eti-pop")) return;
+      cerrarYGuardar();
+    };
+    document.addEventListener("mousedown", alClic);
+    document.addEventListener("keydown", alTeclado);
+    window.addEventListener("scroll", alScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", alClic);
+      document.removeEventListener("keydown", alTeclado);
+      window.removeEventListener("scroll", alScroll, true);
+    };
+  }, [abierto, cerrarYGuardar]);
+
+  const alternar = (slug: string) =>
+    setSel(s => s.includes(slug) ? s.filter(x => x !== slug) : [...s, slug]);
+
+  return (
+    <>
+      <div className="eti-celda" ref={ancla} onClick={() => (abierto ? cerrarYGuardar() : abrir())}>
+        {tags.length === 0 && !producto.popular && <span className="eti-vacia">sin etiquetas</span>}
+        {tags.map(t => (
+          <span key={t} className={`tag c-${deSlug(t)?.color || "gris"}`}>{deSlug(t)?.label || t}</span>
+        ))}
+        {producto.popular && <span className="tag tag-hot">★ popular</span>}
+        <button type="button" className="eti-mas" title="Editar etiquetas">+</button>
+      </div>
+
+      {abierto && (
+        <div className="eti-pop" style={{ top: pos.top, left: pos.left }}>
+          {etiquetas.length === 0 && (
+            <div className="eti-pop-vacio">No hay etiquetas todavía. Creá una en la sección Etiquetas.</div>
+          )}
+          {etiquetas.map(e => (
+            <label key={e.slug} className="eti-op">
+              <input type="checkbox" checked={sel.includes(e.slug)} onChange={() => alternar(e.slug)} />
+              <span className={`tag c-${e.color}`}>{e.label}</span>
+              <span className="eti-op-slug">{e.slug}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
 
 export function Products() {
   const { state, updateProduct, createProduct, deleteProduct } = useStore();
@@ -64,12 +163,7 @@ export function Products() {
                       </span>
                     </td>
                     <td style={{ textTransform: "capitalize" }}>{p.type}</td>
-                    <td>
-                      {(p.tags || []).map(t => (
-                        <span key={t} className={`tag ${t === "picante" ? "tag-hot" : t === "vegetariana" ? "tag-veg" : t === "gourmet" ? "tag-gourmet" : ""}`}>{t}</span>
-                      ))}
-                      {p.popular && <span className="tag tag-hot">★ popular</span>}
-                    </td>
+                    <td><CeldaEtiquetas producto={p} /></td>
                     <td className="right tbl-price">{fmt(p.precio || 0)}</td>
                     <td className="right tbl-mono">{p.stock}</td>
                     <td><div className={`switch ${p.active ? "on" : ""}`} onClick={() => updateProduct(p.id, { active: !p.active })} /></td>

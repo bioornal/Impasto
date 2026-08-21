@@ -148,6 +148,8 @@ interface StoreCtx {
   updateProduct: (id: string, patch: Partial<AdminProduct>) => Promise<void>;
   createProduct: (p: Partial<AdminProduct>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+  /** Guarda las etiquetas de un producto y revierte si el PUT falla. */
+  setProductTags: (id: string, tags: string[]) => Promise<void>;
   createEtiqueta: (label: string, color: string, mostrar_badge: string) => Promise<void>;
   updateEtiqueta: (id: string, patch: Partial<AdminEtiqueta>) => Promise<void>;
   deleteEtiqueta: (id: string) => Promise<void>;
@@ -294,6 +296,28 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (!r.ok) { showToast(j.error || "No se pudo borrar"); return; }
       await load();
       showToast(j.limpiados > 0 ? `Etiqueta borrada y quitada de ${j.limpiados} producto(s)` : "Etiqueta borrada");
+    },
+
+    setProductTags: async (id, tags) => {
+      const prod = stateRef.current.products.find(p => p.id === id);
+      if (!prod) return;
+      const previos = prod.tags || [];
+      setState(s => ({ ...s, products: s.products.map(p => p.id === id ? { ...p, tags } : p) }));
+      const r = await fetch(`/api/admin/productos/${prod._dbId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags }),
+      }).catch(() => null);
+      if (!r || !r.ok) {
+        // Revertir: la celda no puede quedar mostrando algo que no se guardo.
+        // updateProduct toastea exito siempre; aca no, porque el sentido de la
+        // pantalla es etiquetar en tanda y un fallo silencioso se arrastra.
+        setState(s => ({ ...s, products: s.products.map(p => p.id === id ? { ...p, tags: previos } : p) }));
+        const j = r ? await r.json().catch(() => ({})) : {};
+        showToast(j.error || "No se pudieron guardar las etiquetas");
+        return;
+      }
+      showToast("Etiquetas actualizadas");
     },
 
     updateOrderStatus: async (id, estado) => {
