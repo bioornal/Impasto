@@ -25,7 +25,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (body.desc !== undefined) fields.desc = body.desc;
   if (body.tags !== undefined) fields.tags = Array.isArray(body.tags) ? body.tags : [];
   if (body.popular !== undefined) fields.popular = !!body.popular;
-  const { data, error } = await db.database.from("productos").update(fields).eq("id", id);
+  const { data, error } = await db.database.from("productos").update(fields).eq("id", id).in("categoria", [...CATEGORIAS_IMPASTO]);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, data });
 }
@@ -34,7 +34,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
   const { id } = await params;
-  const { error } = await db.database.from("productos").delete().eq("id", id);
+  const { error } = await db.database.from("productos").delete().eq("id", id).in("categoria", [...CATEGORIAS_IMPASTO]);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
