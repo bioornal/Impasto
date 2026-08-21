@@ -45,11 +45,18 @@ Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
 `categoria` también tiene dos sentidos. En la base es la **línea de producto** (`pizzas`,
 `hamburguesas`); en TypeScript, `Pizza.categoria` es el **estilo** (`clasica` | `gourmet`).
 El estilo se resuelve por `tags`: etiquetar una pizza como `"gourmet"` la hace aparecer en
-esa pestaña y le pone el badge. Mientras ninguna esté etiquetada, la pestaña está vacía.
-Lo mismo pasa con `Veggie` y `Picantes`: son pestañas de filtro por `tags`, no por `categoria`,
-y hoy están igual de vacías. Con las 57 filas sin ningún tag cargado, las tres pestañas
-(`Gourmet`, `Veggie`, `Picantes`) muestran 0 productos; solo `Todas` (32) y `Clásicas` (32)
-tienen contenido, porque `Clásicas` es el default cuando no hay tags.
+esa pestaña y le pone el badge. `Veggie` y `Picantes` funcionan igual — son filtros por
+`tags`, no por `categoria`. Los valores exactos que espera el filtro son `gourmet`,
+`vegetariana` y `picante`; en empanadas, `picante`, `vegetariana` y `dulce`.
+
+Las cuatro pestañas están cargadas desde el 20/08/2026: `Todas` 32, `Clásicas` 23,
+`Gourmet` 9, `Veggie` 15, `Picantes` 1. `Clásicas` es el default: una pizza cae ahí
+mientras no tenga el tag `gourmet`, así que los dos números son complementarios.
+
+Los tags de `vegetariana` y `picante` **se dedujeron de las recetas reales** (ver abajo),
+no a ojo. `gourmet` es una decisión de posicionamiento, no un hecho: hoy son la línea
+Napoletana completa más las de ingrediente distinguido (Di Mare, 4 Fratelli, Rúcula y
+Jamón Crudo, Anchoas, Pizzeta Provolone Rellena).
 
 La columna `tipo` no influye en nada de lo que ve el cliente: la clasificación (pizza,
 empanada, bebida, y con eso lo que pisa el catálogo del sitio) sale toda de `categoria`.
@@ -68,13 +75,22 @@ necesita verificar el dominio por DNS. Variables a completar en `.env.local` y N
 `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM`.
 Hoy los avisos se registran en la tabla `notificaciones` con estado `omitido`.
 
-### 2. Catálogo (el punto más flojo)
-**41 de 41 pizzas y empanadas no tienen descripción.** Ojo: la tabla tiene 57 filas, no 41
-— las otras 16 son `hamburguesas`, `lomos`, `calzones` y `otros` (esta última, una sola
-fila: "Esfiha de Carne") del proyecto paralelo, y el código de Impasto las filtra. Tampoco
-hay fotos reales (se usan
-ilustraciones generadas), ni tags, alérgenos, ingredientes, tamaños ni stock.
-Es lo que más impacta en la conversión.
+### 2. Catálogo
+**Descripciones y tags: hechos el 20/08/2026.** Las 41 pizzas y empanadas tienen
+descripción, y los tags están cargados. Falta todavía: **fotos reales** (hoy son
+ilustraciones generadas), alérgenos, tamaños y stock.
+
+Ojo con el conteo: la tabla tiene 65 filas, no 41 — 41 de Impasto, 16 del proyecto
+paralelo (`hamburguesas`, `lomos`, `calzones` y `otros`, esta última una sola fila:
+"Esfiha de Carne"), y 8 bebidas cargadas en borrador.
+
+**Las descripciones no se inventaron: salen de las recetas reales.** Ver "El catálogo
+tiene recetas" más abajo — es el hallazgo que más rinde de todo el proyecto.
+
+Efecto secundario que conviene no romper: el buscador filtra por `nombre + desc`
+(`PizzaList.tsx:36`), así que **los ingredientes nombrados en la descripción son
+buscables**. Buscar "panceta" devuelve cinco pizzas, cuatro de las cuales no la tienen
+en el nombre. Si se reescriben las descripciones sacando ingredientes, se pierde eso.
 
 ### 3. Bebidas
 0 productos con `categoria = 'bebidas'`. La app las soporta y oculta la sección si no hay.
@@ -105,6 +121,39 @@ limpieza automática de carritos abandonados, consentimiento de privacidad, SEO 
 - **Sin pedidos anticipados.** Con el local cerrado no se toman pedidos, ni siquiera programados.
   Si se quiere habilitar, aceptarlos siempre que el horario elegido caiga dentro de la atención.
 - **Email como canal de avisos**, no WhatsApp.
+
+## El catálogo tiene recetas (hallazgo del 20/08/2026)
+
+La base tiene **los ingredientes reales de cada producto**, y no estaba documentado. Son
+tres tablas globales, compartidas con el proyecto paralelo:
+
+- `recetas` (81 filas) — una por producto, se cruza con `productos` **por `nombre`**.
+- `ingredientes` (79) — con `precio_kg`, `tipo` y `multiplo_rendimiento`.
+- `receta_ingredientes` (441) — la tabla puente, con `cantidad_kg` y `merma_factor`.
+
+**El cruce cubre las 41 de Impasto sin un solo faltante.** De ahí salieron las
+descripciones y los tags de `vegetariana` y `picante`. Antes de inventar cualquier dato
+de producto, mirar acá primero.
+
+Solo se leen: escribirlas afectaría el costeo del proyecto paralelo.
+
+### Errores de carga detectados en esas recetas
+
+No los corregí porque son del sistema de costos del otro proyecto, pero **inflan costos**:
+
+- `Pizza Anchoas` y `Napoletana Marinara`: **8.000 g de anchoas** cada una. Ocho kilos.
+- `Empanadas Espinaca y Muzza`: cada ingrediente cargado **dos veces**.
+- `Napoletana Margarita Especial`: `Pesto 0g`.
+- Varias: `Huevo Duro 2g`, que parece ser "2 unidades" y no 2 gramos.
+
+### Dos nombres que no coinciden con su receta
+
+- `Pizza 5 Quesos` lleva **seis**: muzzarella, cheddar, roquefort, sardo, dambo y parmesano.
+- `Pizza Rellena Provolone` **no lleva provolone**, lleva sardo. La que sí lo lleva es
+  `Pizzeta Provolone Rellena`.
+
+Las descripciones dicen lo que el producto **realmente** lleva, así que en esos dos casos
+la descripción contradice al nombre. Hay que corregir el nombre o la receta.
 
 ## Cosas que hay que recordar hacer
 
