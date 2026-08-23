@@ -1,4 +1,4 @@
-import { sanearHistorial, MAX_MENSAJES, MAX_CARACTERES } from "../lib/chat-mensajes";
+import { sanearHistorial, MAX_MENSAJES, MAX_CARACTERES, MAX_CARACTERES_ASSISTANT } from "../lib/chat-mensajes";
 
 let fallos = 0;
 
@@ -30,7 +30,17 @@ chequear("acepta user y assistant", sanearHistorial([
 
 /* ── tamaño ── */
 const largo = sanearHistorial([{ role: "user", content: "x".repeat(2000) }]);
-chequear("corta el mensaje a MAX_CARACTERES", largo[0].content.length === MAX_CARACTERES);
+chequear("corta el mensaje de user a MAX_CARACTERES", largo[0].content.length === MAX_CARACTERES);
+
+// El tope de `assistant` es distinto: `max_tokens: 400` en lib/deepseek.ts
+// puede generar hasta ~1.400 caracteres en español, así que MAX_CARACTERES
+// (500) le quedaría corto y le devolvería al modelo su propia respuesta
+// truncada en el turno siguiente.
+chequear("MAX_CARACTERES_ASSISTANT da holgura sobre una respuesta de 400 tokens", MAX_CARACTERES_ASSISTANT > 1400);
+const largoAssistant = sanearHistorial([{ role: "assistant", content: "x".repeat(3000) }]);
+chequear("corta el mensaje de assistant a MAX_CARACTERES_ASSISTANT, no al de user", largoAssistant[0].content.length === MAX_CARACTERES_ASSISTANT);
+const respuestaTipica = sanearHistorial([{ role: "assistant", content: "x".repeat(1400) }]);
+chequear("una respuesta típica de 400 tokens no queda truncada", respuestaTipica[0].content.length === 1400);
 
 const muchos = sanearHistorial(
   Array.from({ length: 40 }, (_, i) => ({ role: "user", content: `m${i}` })),
