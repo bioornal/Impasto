@@ -1,5 +1,6 @@
 "use client";
 import { PizzaIllus } from "@/components/ui/PizzaIllus";
+import { STOCK_IMAGES } from "@/lib/stock-images";
 import { fmt } from "@/lib/utils";
 import type { Pizza } from "@/types";
 
@@ -15,13 +16,12 @@ export function Hero({ onCta, onHalf, featured, varieties }: HeroProps) {
     <section className="hero">
       <div className="container hero-grid">
         <div>
-          <div className="hero-eyebrow">Pizzería artesanal · desde 2018</div>
+          <div className="hero-eyebrow">Pizzería artesanal · Delivery & Take away</div>
           <h1>
-            La masa que<br />tarda <em>48 horas</em><br />en estar lista.
+            Pizza híbrida:<br />técnica napolitana,<br /><em>alma argentina.</em>
           </h1>
           <p className="hero-lede">
-            Pizza híbrida: borde aireado de napoletana, base crocante y queso al gusto argentino.
-            Amasada cada día en Puerto Iguazú.
+            Hacemos una pizza que no existe en otro lado: borde alto y liviano al estilo napolitano, base crocante y muzzarella abundante como nos gusta acá. Pedí online y recibila en tu casa, o pasá a retirar por el local.
           </p>
           <div className="hero-ctas">
             <button className="btn btn-primary btn-lg" onClick={() => onCta("pizzas")}>
@@ -32,16 +32,16 @@ export function Hero({ onCta, onHalf, featured, varieties }: HeroProps) {
           </div>
           <div className="hero-stats">
             <div>
-              <b>4,9<span> ★</span></b>
-              <small>+1.200 reseñas</small>
+              <b>48 hs</b>
+              <small>Fermentación en frío</small>
             </div>
             <div>
-              <b>30 min</b>
-              <small>delivery promedio</small>
+              <b>400 °C</b>
+              <small>Horno a la piedra</small>
             </div>
             <div>
-              <b>{varieties || 20}</b>
-              <small>variedades</small>
+              <b>160 g</b>
+              <small>Empanadas al horno</small>
             </div>
           </div>
         </div>
@@ -49,11 +49,18 @@ export function Hero({ onCta, onHalf, featured, varieties }: HeroProps) {
         <div className="hero-visual">
           <div className="hero-frame" />
           <div className="hero-media">
-            <PizzaIllus id={featured?.id || "p08"} />
+            <PizzaIllus
+              id={featured?.id || "hero-main"}
+              name={featured?.nombre}
+              tags={featured?.tags}
+              src={STOCK_IMAGES.hero.main}
+            />
           </div>
           {featured && (
             <div className="hero-chip">
-              <div className="hero-chip-media"><PizzaIllus id={featured.id} /></div>
+              <div className="hero-chip-media">
+                <PizzaIllus id={featured.id} name={featured.nombre} tags={featured.tags} />
+              </div>
               <div>
                 <b>{featured.nombre}</b>
                 <small>La más pedida · {fmt(featured.precio)}</small>
@@ -72,20 +79,20 @@ export function Hero({ onCta, onHalf, featured, varieties }: HeroProps) {
   );
 }
 
-const FEATURES: [string, string][] = [
-  ["Fermentación 48 hs", "Masa liviana, borde aireado"],
-  ["Horno a 400°", "Cocción en 4 minutos"],
-  ["Envío gratis", "En Puerto Iguazú centro"],
-  ["Seguimiento real", "Estado del pedido por WhatsApp"],
-];
+export function Features({ freeShippingFrom }: { freeShippingFrom?: number }) {
+  const features: [string, string][] = [
+    ["Pizza Híbrida", "Técnica napolitana y alma argentina"],
+    ["Delivery propio", "Envíos en Puerto Iguazú"],
+    ["Take away", "Retiro en el local sin esperas"],
+    ["Materia prima premium", "Muzzarella y primeras marcas"],
+  ];
 
-export function Features({ freeShippingFrom }: { freeShippingFrom: number }) {
   return (
     <section className="features">
       <div className="container features-grid">
-        {FEATURES.map(([title, sub], index) => (
+        {features.map(([title, sub]) => (
           <div className="feature" key={title}>
-            <b>{index === 2 ? `${title} ${fmt(freeShippingFrom)}` : title}</b>
+            <b>{title}</b>
             <small>{sub}</small>
           </div>
         ))}

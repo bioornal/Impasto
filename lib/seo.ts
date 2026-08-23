@@ -129,8 +129,8 @@ function carta(data: CatalogData) {
 
 /** Descripción del local, reusada en el `<meta name="description">` y en el JSON-LD. */
 export function descripcionSitio(business: BusinessConfig): string {
-  return `Pizza híbrida argentina con fermentación lenta de 48 horas, empanadas y bebidas en ${business.locationLabel}. `
-    + `Pedí online con delivery o take away: ${business.hours}.`;
+  return `Pizza híbrida en ${business.locationLabel}: técnica napolitana y alma argentina. Fermentación en frío de 48 hs, empanadas de 160 g al horno y bebidas. `
+    + `Pedí online con delivery propio o take away: ${business.hours}.`;
 }
 
 export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {

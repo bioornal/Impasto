@@ -18,8 +18,7 @@ export function Footer({ business }: { business: BusinessConfig }) {
               className="footer-logo"
             />
             <p>
-              Pizza híbrida argentina con fermentación lenta de 48 horas.
-              Elaborada cada día en {business.locationLabel}.
+              Pizza híbrida: técnica napolitana y alma argentina. Delivery y Take away en {business.locationLabel}.
             </p>
           </div>
 
@@ -56,7 +55,7 @@ export function Footer({ business }: { business: BusinessConfig }) {
 
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} {business.name} · {business.city}</span>
-          <span>Delivery propio · Pagos con Mercado Pago · <a href="/admin-login" aria-label="Acceso administrativo" style={{ opacity: .55 }}>Acceso</a></span>
+          <span>Delivery propio & Take away · Pagos con Mercado Pago · <a href="/admin-login" aria-label="Acceso administrativo" style={{ opacity: .55 }}>Acceso</a></span>
         </div>
       </div>
     </footer>

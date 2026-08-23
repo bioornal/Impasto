@@ -35,11 +35,13 @@ function Topbar({ business }: { business: BusinessConfig }) {
 }
 
 const TICKER = [
-  "Fermentación 48 hs",
-  "Masa híbrida crocante",
-  "Martes y miércoles 2×1",
-  "Delivery 30 min",
-  "Mozzarella abundante",
+  "Pizza Híbrida: técnica napolitana y alma argentina",
+  "Delivery propio & Take away en Puerto Iguazú",
+  "Fermentación en frío 48 hs",
+  "Horno de piedra a 400 °C",
+  "Muzzarella abundante y primeras marcas",
+  "Último pedido 23:45",
+  "Empanadas de 160 g al horno",
 ];
 
 export function Ticker() {

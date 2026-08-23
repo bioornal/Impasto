@@ -1,6 +1,38 @@
 "use client";
+import { useState } from "react";
+import { getPizzaImage } from "@/lib/stock-images";
 
-export function PizzaIllus({ id = "p01" }: { id?: string }) {
+interface PizzaIllusProps {
+  id?: string;
+  name?: string;
+  tags?: string[];
+  src?: string;
+}
+
+export function PizzaIllus({ id = "p01", name = "", tags = [], src }: PizzaIllusProps) {
+  const [hasError, setHasError] = useState(false);
+  const imageUrl = src || getPizzaImage(name, id, tags);
+
+  if (!hasError && imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={name || "Pizza"}
+        loading="lazy"
+        decoding="async"
+        onError={() => setHasError(true)}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
+        }}
+      />
+    );
+  }
+
   const seed = [...id].reduce((a, c) => a + c.charCodeAt(0), 0);
   const r4 = (v: number) => Math.round(v * 1e4) / 1e4;
   const rand = (n: number) => {

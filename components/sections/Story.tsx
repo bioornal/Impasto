@@ -1,24 +1,26 @@
 "use client";
 import { SceneIllus } from "@/components/ui/Illus";
+import { STOCK_IMAGES } from "@/lib/stock-images";
 
 const STATS: [string, string][] = [
-  ["Masa madre", "Viva desde 2018"],
-  ["Fiordilatte", "De tambo local"],
-  ["Horno a piedra", "400° constantes"],
+  ["Fermentación en frío", "48 hs con harina de fuerza"],
+  ["Estirado a mano", "En el momento, sin moldes"],
+  ["Horno a la piedra", "400 °C en 2 a 5 minutos"],
 ];
 
 export function Story() {
   return (
     <section className="story" id="nosotros">
       <div className="container story-grid">
-        <div className="story-media"><SceneIllus id="story" tone="dark" /></div>
+        <div className="story-media"><SceneIllus id="story" tone="dark" src={STOCK_IMAGES.story.dough} /></div>
         <div>
-          <div className="sec-index gold">04 — Nuestra masa</div>
-          <h2>Tres días de trabajo<br />para cuatro minutos<br />de horno.</h2>
+          <div className="sec-index gold">04 — Nosotros</div>
+          <h2>Impasto significa masa.<br />Y acá todo empieza ahí.</h2>
           <p>
-            Fermentamos en frío durante 48 horas con masa madre y harina de fuerza. El resultado es un borde
-            alveolado, liviano, que no cae — y una base que se sostiene aunque le pongamos queso de más.
-            Que siempre le ponemos.
+            En italiano, <em>impasto</em> significa &ldquo;masa&rdquo;: el origen y corazón de toda buena pizza. Le pusimos así a nuestro proyecto en Puerto Iguazú porque creemos en el tiempo y el oficio: 48 horas de fermentación en frío, estirado a mano en el momento y fuego de piedra a 400 °C.
+          </p>
+          <p style={{ marginTop: 14 }}>
+            Una pizzería artesanal pensada para quienes buscan una experiencia auténtica y memorable: borde aireado, base crocante y abundante muzzarella, perfecta para coronar un día de Cataratas o una gran noche en casa.
           </p>
           <div className="story-stats">
             {STATS.map(([title, sub]) => (

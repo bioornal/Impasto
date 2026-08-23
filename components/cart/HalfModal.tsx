@@ -69,14 +69,14 @@ export function HalfModal({ startPizza, pizzas, business, onClose }: HalfModalPr
 
           <div className="half-wheel">
             <button className={`half-side ${side === "a" ? "on" : ""}`} onClick={() => setSide("a")}>
-              <PizzaIllus id={left.id} />
+              <PizzaIllus id={left.id} name={left.nombre} tags={left.tags} />
               <span className="half-side-label">
                 <small>Mitad A</small>
                 <b>{left.nombre}</b>
               </span>
             </button>
             <button className={`half-side ${side === "b" ? "on" : ""}`} onClick={() => setSide("b")}>
-              <PizzaIllus id={right.id} />
+              <PizzaIllus id={right.id} name={right.nombre} tags={right.tags} />
               <span className="half-side-label">
                 <small>Mitad B</small>
                 <b>{right.nombre}</b>

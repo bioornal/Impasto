@@ -29,7 +29,7 @@ export function Bebidas({ bebidas }: { bebidas: Bebida[] }) {
             return (
               <article className={`drink-card ${agotado ? "is-agotado" : ""}`} key={bebida.id}>
                 <div className="drink-media">
-                  <DrinkIllus id={bebida.id} label={bebida.nombre} />
+                  <DrinkIllus id={bebida.id} label={bebida.nombre} name={bebida.nombre} />
                   {agotado && <div className="media-agotado-bar">Agotado</div>}
                 </div>
                 <div style={{ flex: 1 }}>

@@ -69,10 +69,10 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
       <div className="container">
         <div className="section-head">
           <div>
-            <div className="sec-index">02 — Recién hechas</div>
+            <div className="sec-index">02 — Rellenas y al horno</div>
             <h2>Armá tu caja</h2>
           </div>
-          <p>Repulgue a mano, cocción al horno. Elegí el tamaño y combiná los gustos que quieras.</p>
+          <p>Grandes y abundantes de 160 g, con repulgue a mano y cocción al horno. Rellenos generosos con materia prima de primera calidad. Elegí la cantidad para tu caja y combiná los sabores que quieras.</p>
         </div>
 
         <div className="emp-layout">
@@ -83,7 +83,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
               return (
                 <article className={`emp-card ${count > 0 ? "on" : ""} ${agotado ? "is-agotado" : ""}`} key={empanada.id}>
                   <div className="emp-media">
-                    <EmpanadaIllus id={empanada.id} />
+                    <EmpanadaIllus id={empanada.id} name={empanada.nombre} />
                     {agotado && <div className="media-agotado-bar">Agotado</div>}
                   </div>
                   <div className="emp-head">
@@ -93,7 +93,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
                   <p>{empanada.desc}</p>
                   <div className="emp-foot">
                     <span className="emp-unit">
-                      {agotado ? "Agotado" : count > 0 ? "en la caja" : empanada.precio ? fmt(empanada.precio) : "sumar"}
+                      {agotado ? "Agotado" : count > 0 ? "en la caja" : empanada.precio ? fmt(empanada.precio) : "160 g"}
                     </span>
                     <div className="stepper">
                       <button onClick={() => pick(empanada.id, -1)} disabled={count === 0} aria-label={`Quitar ${empanada.nombre}`}>−</button>
@@ -109,7 +109,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
           <aside className="box-aside">
             <div>
               <h4>Tu caja</h4>
-              <small className="box-sub">Elegí el tamaño</small>
+              <small className="box-sub">Elegí la cantidad (160 g c/u)</small>
             </div>
 
             <div className="box-tiers">

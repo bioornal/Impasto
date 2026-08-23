@@ -11,9 +11,9 @@ export function Reviews({ reviews, business }: { reviews: Review[]; business: Bu
         <div className="section-head">
           <div>
             <div className="sec-index">05 — Opiniones</div>
-            <h2>{average.toFixed(1).replace(".", ",")} de 5 según nuestros clientes</h2>
+            <h2>Lo que dicen los que ya probaron</h2>
           </div>
-          <div className="side-note">Google · Instagram<br />Pedidos verificados</div>
+          <div className="side-note">Opiniones de<br />clientes de Impasto</div>
         </div>
 
         <div className="reviews-grid">
@@ -25,7 +25,7 @@ export function Reviews({ reviews, business }: { reviews: Review[]; business: Bu
                 <div className="review-avatar">{review.nombre.trim().charAt(0).toUpperCase()}</div>
                 <div>
                   <b>{review.nombre}</b>
-                  <small>Cliente verificado</small>
+                  <small>Cliente de Impasto</small>
                 </div>
               </div>
             </article>

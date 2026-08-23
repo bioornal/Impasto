@@ -1,6 +1,27 @@
+import { useState } from "react";
 import type { AdminProduct } from "./types";
+import { getPizzaImage, getEmpanadaImage, getDrinkImage } from "@/lib/stock-images";
 
 export function ProductThumb({ item }: { item: AdminProduct }) {
+  const [error, setError] = useState(false);
+
+  let imgSrc = "";
+  if (item.type === "pizza") imgSrc = getPizzaImage(item.nombre, item.id, item.tags);
+  else if (item.type === "empanada") imgSrc = getEmpanadaImage(item.nombre, item.id);
+  else imgSrc = getDrinkImage(item.nombre, item.id);
+
+  if (!error && imgSrc) {
+    return (
+      <img
+        src={imgSrc}
+        alt={item.nombre}
+        loading="lazy"
+        onError={() => setError(true)}
+        style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", display: "block" }}
+      />
+    );
+  }
+
   if (item.type === "pizza") {
     const seed = [...(item.id || "x")].reduce((a, c) => a + c.charCodeAt(0), 0);
     const colors = [

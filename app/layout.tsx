@@ -11,7 +11,7 @@ import { SITE_URL } from "@/lib/site";
  * horario y el teléfono son los del JSON-LD de `app/page.tsx`, que sí lee la
  * configuración viva del panel.
  */
-const TITULO = `${BUSINESS.name} · Pizzería en ${BUSINESS.city} · Delivery y take away`;
+const TITULO = `${BUSINESS.name} · Pizza híbrida: técnica napolitana, alma argentina · ${BUSINESS.locationLabel}`;
 const DESCRIPCION = descripcionSitio(BUSINESS);
 
 export const metadata: Metadata = {

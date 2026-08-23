@@ -55,9 +55,9 @@ export function PizzaList({ pizzas, onHalf }: PizzaListProps) {
         <div className="section-head" style={{ marginBottom: 26 }}>
           <div style={{ maxWidth: "56%" }}>
             <div className="sec-index">01 — La carta</div>
-            <h2>Pizzas híbridas</h2>
+            <h2>Pizzas</h2>
           </div>
-          <p>Todas en molde de 32 cm, ocho porciones. Podés pedir cualquiera mitad y mitad sin costo extra.</p>
+          <p>Estiradas a mano en el momento y cocidas a 400 °C en 2 a 5 minutos. Ocho porciones, base crocante y abundante muzzarella de primera calidad. Podés pedir cualquiera mitad y mitad sin costo extra.</p>
         </div>
       </div>
 
@@ -96,7 +96,7 @@ export function PizzaList({ pizzas, onHalf }: PizzaListProps) {
               return (
                 <article className={`p-card ${wide ? "wide" : ""} ${agotado ? "is-agotado" : ""}`} key={pizza.id}>
                   <div className="p-media">
-                    <PizzaIllus id={pizza.id} />
+                    <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
                     {agotado && <div className="media-agotado-bar">Agotado</div>}
                     <div className="p-badges">
                       {pizza.popular && !agotado && <span className="p-badge top">★ Más pedida</span>}
@@ -146,7 +146,7 @@ export function PizzaList({ pizzas, onHalf }: PizzaListProps) {
               return (
                 <div className={`lrow ${agotado ? "is-agotado" : ""}`} key={pizza.id}>
                   <div className="lrow-media">
-                    <PizzaIllus id={pizza.id} />
+                    <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
                     {agotado && <div className="media-agotado-bar">Agotado</div>}
                   </div>
                   <div className="lrow-main">

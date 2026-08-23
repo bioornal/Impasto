@@ -93,7 +93,7 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
                   <h5>Completá el pedido</h5>
                   {upsells.map((bebida) => (
                     <div className="upsell" key={bebida.id}>
-                      <div className="upsell-media"><DrinkIllus id={bebida.id} label={bebida.nombre} /></div>
+                      <div className="upsell-media"><DrinkIllus id={bebida.id} label={bebida.nombre} name={bebida.nombre} /></div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <b>{bebida.nombre}</b>
                         <small>{fmt(bebida.precio)}</small>

@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     // productos que sube el dueño desde el panel.
     remotePatterns: [
       { protocol: "https", hostname: "3agqcygs.us-east.insforge.app", pathname: "/api/storage/**" },
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
     ],
   },
   async rewrites() {

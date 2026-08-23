@@ -1,5 +1,6 @@
 "use client";
 import { SceneIllus } from "@/components/ui/Illus";
+import { STOCK_IMAGES } from "@/lib/stock-images";
 import type { Promo } from "@/types";
 
 interface PromosProps {
@@ -17,7 +18,7 @@ export function Promos({ promos, onNav }: PromosProps) {
       <div className="container">
         <div className={`promos-grid ${stack.length === 0 ? "single" : ""}`}>
           <article className="promo-hero">
-            <div className="promo-hero-media"><SceneIllus id={hero.id} tone="ember" /></div>
+            <div className="promo-hero-media"><SceneIllus id={hero.id} tone="ember" src={STOCK_IMAGES.promo.hero} /></div>
             <div className="promo-hero-body">
               <span className="promo-badge">{hero.badge}</span>
               <h3>{hero.titulo}</h3>

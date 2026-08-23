@@ -1,6 +1,8 @@
 "use client";
+import { useState } from "react";
+import { getEmpanadaImage, getDrinkImage, STOCK_IMAGES } from "@/lib/stock-images";
 
-/* Ilustraciones generativas — reemplazan las fotos del rediseño mientras no haya imágenes reales. */
+/* Ilustraciones generativas con soporte de imágenes fotográficas reales de banco de imágenes */
 
 const r4 = (v: number) => Math.round(v * 1e4) / 1e4;
 
@@ -17,7 +19,30 @@ function randomizer(seed: number) {
 
 const fill: React.CSSProperties = { position: "absolute", inset: 0, width: "100%", height: "100%" };
 
-export function EmpanadaIllus({ id = "e01" }: { id?: string }) {
+export function EmpanadaIllus({ id = "e01", name = "", src }: { id?: string; name?: string; src?: string }) {
+  const [hasError, setHasError] = useState(false);
+  const imageUrl = src || getEmpanadaImage(name, id);
+
+  if (!hasError && imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={name || "Empanada"}
+        loading="lazy"
+        decoding="async"
+        onError={() => setHasError(true)}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
+        }}
+      />
+    );
+  }
+
   const seed = seedOf(id);
   const rand = randomizer(seed);
   const doughs = [
@@ -59,7 +84,31 @@ export function EmpanadaIllus({ id = "e01" }: { id?: string }) {
   );
 }
 
-export function DrinkIllus({ id = "b01", label = "" }: { id?: string; label?: string }) {
+export function DrinkIllus({ id = "b01", label = "", name = "", src }: { id?: string; label?: string; name?: string; src?: string }) {
+  const [hasError, setHasError] = useState(false);
+  const drinkName = name || label;
+  const imageUrl = src || getDrinkImage(drinkName, id);
+
+  if (!hasError && imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={drinkName || "Bebida"}
+        loading="lazy"
+        decoding="async"
+        onError={() => setHasError(true)}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
+        }}
+      />
+    );
+  }
+
   const seed = seedOf(id + label);
   const palettes = [
     { body: "#7c1e1e", cap: "#2c1810", bg1: "#f7e6d3", bg2: "#e3c39a" },
@@ -104,8 +153,32 @@ export function DrinkIllus({ id = "b01", label = "" }: { id?: string; label?: st
   );
 }
 
-/** Escena cálida abstracta para los espacios que en el diseño llevan foto. */
-export function SceneIllus({ id = "scene", tone = "warm" }: { id?: string; tone?: "warm" | "dark" | "ember" }) {
+/** Escena fotográfica o cálida abstracta para los espacios que en el diseño llevan foto. */
+export function SceneIllus({ id = "scene", tone = "warm", src }: { id?: string; tone?: "warm" | "dark" | "ember"; src?: string }) {
+  const [hasError, setHasError] = useState(false);
+  const defaultSrc = tone === "dark" ? STOCK_IMAGES.story.dough : STOCK_IMAGES.promo.hero;
+  const imageUrl = src || defaultSrc;
+
+  if (!hasError && imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt="Escena Impasto"
+        loading="lazy"
+        decoding="async"
+        onError={() => setHasError(true)}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
+        }}
+      />
+    );
+  }
+
   const seed = seedOf(id);
   const rand = randomizer(seed);
   const tones = {
