@@ -2,6 +2,7 @@ import { getCatalogData } from "@/lib/catalog";
 import { getBusinessConfig } from "@/lib/business-server";
 import { estadoTienda } from "@/lib/hours";
 import { jsonLdSitio } from "@/lib/seo";
+import { hayChat } from "@/lib/deepseek";
 import { Shell } from "@/components/Shell";
 import { JsonLd } from "@/components/JsonLd";
 
@@ -15,7 +16,7 @@ export default async function Page() {
     <>
       {/* Horario, teléfono, dirección y carta con precios, para Google. */}
       <JsonLd data={jsonLdSitio(business, data)} />
-      <Shell data={data} business={business} estadoInicial={estado} />
+      <Shell data={data} business={business} estadoInicial={estado} chatDisponible={hayChat()} />
     </>
   );
 }

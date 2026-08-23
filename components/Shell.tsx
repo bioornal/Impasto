@@ -17,6 +17,7 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 import { HalfModal } from "@/components/cart/HalfModal";
 import { Checkout } from "@/components/checkout/Checkout";
 import { Confirmation } from "@/components/checkout/Confirmation";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import type { BusinessConfig } from "@/lib/business";
 import type { CheckoutOrder } from "@/components/checkout/Checkout";
 import type { CardFormData } from "@/components/checkout/CardPayment";
@@ -26,20 +27,6 @@ interface ConfirmedOrder {
   numero: string; nombre: string; mode: string; dir?: string;
   tel: string; total: number; pago: string; estadoPago?: string;
   items: CartItem[]; subtotal: number; shipping: number; fecha: Date;
-}
-
-function WspFab({ business }: { business: BusinessConfig }) {
-  return (
-    <a
-      className="wsp-fab"
-      href={`https://wa.me/${business.whatsappPhone}`}
-      target="_blank"
-      rel="noreferrer"
-      title="Chateá con nosotros"
-    >
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a10 10 0 0 0-8.56 15.1L2 22l5.05-1.32A10 10 0 1 0 12.04 2Zm5.4 14.24c-.23.64-1.34 1.23-1.85 1.27-.47.04-1.08.23-3.62-.76-3.06-1.2-5-4.25-5.15-4.45-.15-.2-1.23-1.64-1.23-3.13 0-1.5.78-2.23 1.06-2.54.28-.3.6-.38.8-.38.2 0 .4 0 .57.01.18 0 .43-.07.67.51.23.58.82 2 .89 2.14.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.32.38-.46.51-.15.15-.31.32-.13.62.17.3.77 1.27 1.65 2.06 1.13 1 2.08 1.32 2.38 1.47.3.15.47.12.65-.07.17-.2.75-.88.95-1.18.2-.3.4-.25.67-.15.27.1 1.7.8 2 .95.28.15.47.22.54.35.07.12.07.72-.16 1.36Z" /></svg>
-    </a>
-  );
 }
 
 function TweaksPanel() {
@@ -90,7 +77,7 @@ function TweaksPanel() {
   );
 }
 
-function SiteContent({ data, business }: { data: CatalogData; business: BusinessConfig }) {
+function SiteContent({ data, business, chatDisponible }: { data: CatalogData; business: BusinessConfig; chatDisponible: boolean }) {
   const { paletteClass, typeClass } = useTweaks();
   const { clear } = useCart();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -221,19 +208,19 @@ function SiteContent({ data, business }: { data: CatalogData; business: Business
         />
       )}
 
-      <WspFab business={business} />
+      <ChatWidget business={business} disponible={chatDisponible} />
       <TweaksPanel />
     </div>
   );
 }
 
-export function Shell({ data, business, estadoInicial }: { data: CatalogData; business: BusinessConfig; estadoInicial: EstadoTiendaCliente }) {
+export function Shell({ data, business, estadoInicial, chatDisponible }: { data: CatalogData; business: BusinessConfig; estadoInicial: EstadoTiendaCliente; chatDisponible: boolean }) {
   return (
     <TweakProvider>
       <StoreStatusProvider inicial={estadoInicial}>
         <ToastProvider>
           <CartProvider>
-            <SiteContent data={data} business={business} />
+            <SiteContent data={data} business={business} chatDisponible={chatDisponible} />
           </CartProvider>
         </ToastProvider>
       </StoreStatusProvider>
