@@ -61,6 +61,17 @@ export async function POST(req: NextRequest) {
   if (historial.length === 0) {
     return NextResponse.json({ ok: false, error: "No hay ningún mensaje para responder." }, { status: 400 });
   }
+  // `sanearHistorial` garantiza roles válidos y largo, no el orden. El widget
+  // puede arrancar con un saludo del bot ya escrito ([system, assistant,
+  // user] es un primer request válido), pero un historial que TERMINE en
+  // `assistant` no tiene nada para responder: llegaría a DeepSeek así y
+  // volvería como un 502 opaco.
+  if (historial[historial.length - 1].role !== "user") {
+    return NextResponse.json(
+      { ok: false, error: "El último mensaje del historial tiene que ser del cliente." },
+      { status: 400 },
+    );
+  }
 
   // Chequeo barato antes de tocar la base: sin key, `chatStream` va a devolver
   // "omitido" igual, pero recién después de pagar hasta doce consultas por nada.
