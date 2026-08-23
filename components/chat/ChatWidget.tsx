@@ -94,12 +94,33 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
     setEsperando(true);
     setFallo(null);
 
+    // Vigía de inactividad: `lib/deepseek.ts` documenta que su AbortController
+    // de 20s cubre solo la conexión, no el cuerpo del stream. Si DeepSeek abre
+    // la respuesta y se cuelga a mitad de camino -sin cerrar y sin mandar más
+    // datos- `lector.read()` de más abajo no resuelve nunca, y sin esto el
+    // cliente queda con "Escribiendo…" para siempre y sin ninguna vía de
+    // contacto: esta task le sacó el botón flotante de WhatsApp, así que el
+    // chat es la única puerta. El timer se reinicia con cada fragmento que
+    // llega, así que no corta una respuesta larga y legítima: solo corta el
+    // silencio total. 15s es bastante más que la pausa entre fragmentos de
+    // cualquier stream que ya arrancó a responder, y bastante menos que la
+    // paciencia de alguien mirando un "Escribiendo…" que no avanza.
+    const TIMEOUT_INACTIVIDAD_MS = 15_000;
+    const controlador = new AbortController();
+    let inactividad: ReturnType<typeof setTimeout> | undefined;
+    const reiniciarInactividad = () => {
+      if (inactividad) clearTimeout(inactividad);
+      inactividad = setTimeout(() => controlador.abort(), TIMEOUT_INACTIVIDAD_MS);
+    };
+
     try {
+      reiniciarInactividad();
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Se manda el saludo también: es parte del hilo que ve el modelo.
         body: JSON.stringify({ mensajes: historial }),
+        signal: controlador.signal,
       });
 
       if (!response.ok) {
@@ -128,6 +149,8 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
       for (;;) {
         const { done, value } = await lector.read();
         if (done) break;
+        // Llegó un fragmento: la conexión sigue viva, se reinicia la cuenta.
+        reiniciarInactividad();
         acumulado += decoder.decode(value, { stream: true });
         setMensajes((previos) => {
           const copia = [...previos];
@@ -143,8 +166,16 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
         setFallo(SIN_CHAT);
       }
     } catch (error) {
+      // Un cuelgue cae acá como AbortError, igual que cualquier otra falla de
+      // red: no es un ErrorServidor, así que muestra el genérico con el link
+      // de WhatsApp. Lo que ya se acumuló en `mensajes` (si el cuelgue llegó
+      // después de texto parcial) queda como está: no se pisa ni se borra, se
+      // le agrega el aviso debajo.
       setFallo(error instanceof ErrorServidor ? error.message : SIN_CHAT);
     } finally {
+      // Pase lo que pase -éxito, error del servidor o timeout propio- el timer
+      // no puede quedar vivo, y el cliente tiene que poder volver a escribir.
+      if (inactividad) clearTimeout(inactividad);
       setEsperando(false);
     }
   }
@@ -170,7 +201,7 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
       </button>
 
       {abierto && (
-        <div className="chat-panel" role="dialog" aria-label="Asistente de Impasto" ref={panelRef}>
+        <div className="chat-panel" role="dialog" aria-modal="true" aria-label="Asistente de Impasto" ref={panelRef}>
           <div className="chat-head">
             <div>
               {/* Nada de promesas acá: "respondo al toque" o "24 hs" son
