@@ -99,9 +99,12 @@ export async function chatStream(mensajes: ChatMensaje[]): Promise<DeepSeekResul
       signal: AbortSignal.timeout(20_000),
     });
 
-    if (!response.ok || !response.body) {
+    if (!response.ok) {
       const detalle = await response.text().catch(() => "");
       return { estado: "fallido", motivo: `HTTP ${response.status} ${detalle.slice(0, 200)}` };
+    }
+    if (!response.body) {
+      return { estado: "fallido", motivo: "DeepSeek respondió sin body" };
     }
 
     return { estado: "ok", stream: streamDeTexto(response.body) };

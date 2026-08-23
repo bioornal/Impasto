@@ -21,6 +21,7 @@ chequear("ignora las líneas en blanco", textoDeLineaSSE("") === null);
 chequear("ignora lo que no es data", textoDeLineaSSE(": keep-alive") === null);
 chequear("no explota con JSON roto", textoDeLineaSSE("data: {no es json") === null);
 chequear("ignora un delta sin contenido", textoDeLineaSSE(`data: ${JSON.stringify({ choices: [{ delta: {} }] })}`) === null);
+chequear("ignora choices vacío", textoDeLineaSSE(`data: ${JSON.stringify({ choices: [] })}`) === null);
 
 /* ── el stream completo ── */
 async function textoDe(trozos: string[]): Promise<string> {
@@ -53,6 +54,15 @@ async function main() {
 
   const soloRuido = await textoDe([": keep-alive\n\n", "\n"]);
   chequear("un stream sin texto devuelve vacío", soloRuido === "");
+
+  // Sin salto de línea final, la data queda entera en el buffer `resto` y
+  // solo el flush() del TransformStream la puede recuperar.
+  const sinNewlineFinal = await textoDe([delta("Fin")]);
+  chequear("el flush recupera lo que quedó pendiente en el buffer", sinNewlineFinal === "Fin");
+
+  // Algunos servidores separan con \r\n en vez de \n.
+  const conCRLF = await textoDe([`${delta("Hola")}\r\n\r\n`, `${delta(" mundo")}\r\n\r\n`, "data: [DONE]\r\n\r\n"]);
+  chequear("tolera separadores \\r\\n", conCRLF === "Hola mundo");
 
   /* ── la key ── */
   delete process.env.DEEPSEEK_API_KEY;
