@@ -1,4 +1,4 @@
-import { textoDeLineaSSE, streamDeTexto, hayChat } from "../lib/deepseek";
+import { textoDeLineaSSE, streamDeTexto, hayChat, chatStream } from "../lib/deepseek";
 
 let fallos = 0;
 
@@ -63,6 +63,61 @@ async function main() {
   // Algunos servidores separan con \r\n en vez de \n.
   const conCRLF = await textoDe([`${delta("Hola")}\r\n\r\n`, `${delta(" mundo")}\r\n\r\n`, "data: [DONE]\r\n\r\n"]);
   chequear("tolera separadores \\r\\n", conCRLF === "Hola mundo");
+
+  /* ── el timeout de conexión no se puede quedar pegado al stream ── */
+  // Antes se le pasaba `AbortSignal.timeout(20_000)` directo a `fetch`, que ata
+  // la señal también al cuerpo de la respuesta: un stream que viene andando
+  // bien se cortaría igual a los 20s, ya después de que la ruta mandó el 200 y
+  // sin forma de avisar del error. La implementación actual arma su propio
+  // `AbortController` y cancela el timer apenas llegan los headers. Se
+  // verifica eso simulando un `fetch` instantáneo: el `clearTimeout` tiene que
+  // dispararse con el mismo id que devolvió el `setTimeout` de la conexión, es
+  // decir, el timer de 20s no debe seguir vivo mientras el stream corre.
+  {
+    const timersProgramados: ReturnType<typeof setTimeout>[] = [];
+    const timersCancelados: ReturnType<typeof setTimeout>[] = [];
+    const setTimeoutOriginal = global.setTimeout;
+    const clearTimeoutOriginal = global.clearTimeout;
+    global.setTimeout = ((fn: (...args: unknown[]) => void, ms?: number, ...resto: unknown[]) => {
+      const id = setTimeoutOriginal(fn as never, ms, ...resto);
+      timersProgramados.push(id);
+      return id;
+    }) as typeof setTimeout;
+    global.clearTimeout = ((id?: Parameters<typeof clearTimeout>[0]) => {
+      if (id !== undefined) timersCancelados.push(id as ReturnType<typeof setTimeout>);
+      return clearTimeoutOriginal(id);
+    }) as typeof clearTimeout;
+
+    const fetchOriginal = global.fetch;
+    global.fetch = (async () => {
+      const encoder = new TextEncoder();
+      const cuerpo = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode(`${delta("hola")}\n\n`));
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        },
+      });
+      return new Response(cuerpo, { status: 200 });
+    }) as typeof fetch;
+
+    const keyPrevia = process.env.DEEPSEEK_API_KEY;
+    process.env.DEEPSEEK_API_KEY = "sk-loquesea";
+
+    const resultado = await chatStream([{ role: "user", content: "hola" }]);
+
+    global.fetch = fetchOriginal;
+    global.setTimeout = setTimeoutOriginal;
+    global.clearTimeout = clearTimeoutOriginal;
+    if (keyPrevia === undefined) delete process.env.DEEPSEEK_API_KEY;
+    else process.env.DEEPSEEK_API_KEY = keyPrevia;
+
+    chequear("con fetch simulado e instantáneo, la conexión resulta ok", resultado.estado === "ok");
+    chequear(
+      "el timer de conexión se cancela apenas llegan los headers, no queda pegado al stream",
+      timersProgramados.length === 1 && timersCancelados.includes(timersProgramados[0]),
+    );
+  }
 
   /* ── la key ── */
   delete process.env.DEEPSEEK_API_KEY;

@@ -83,6 +83,15 @@ export async function chatStream(mensajes: ChatMensaje[]): Promise<DeepSeekResul
   const base = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
   const modelo = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
 
+  // `AbortSignal.timeout()` no es un timeout de conexión: queda atado también
+  // al cuerpo de la respuesta, así que a los 20s cortaría un stream que venía
+  // bien. Para entonces la ruta ya mandó el 200 y no hay forma de avisar del
+  // error: el cliente vería la frase cortada a la mitad sin explicación.
+  // Un `AbortController` propio, cancelado apenas llegan los headers, cubre
+  // solo la conexión y deja correr el stream sin techo de tiempo.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20_000);
+
   try {
     const response = await fetch(`${base}/chat/completions`, {
       method: "POST",
@@ -95,9 +104,9 @@ export async function chatStream(mensajes: ChatMensaje[]): Promise<DeepSeekResul
         max_tokens: 400,
         temperature: 0.7,
       }),
-      // Si tarda más que esto, el cliente ya se fue.
-      signal: AbortSignal.timeout(20_000),
+      signal: controller.signal,
     });
+    clearTimeout(timer);
 
     if (!response.ok) {
       const detalle = await response.text().catch(() => "");
@@ -109,6 +118,9 @@ export async function chatStream(mensajes: ChatMensaje[]): Promise<DeepSeekResul
 
     return { estado: "ok", stream: streamDeTexto(response.body) };
   } catch (error) {
+    // Si el error vino de otra cosa que no sea el propio abort, el timer
+    // sigue vivo: cancelarlo evita dejarlo pendiente de más.
+    clearTimeout(timer);
     return {
       estado: "fallido",
       motivo: error instanceof Error ? error.message : "no se pudo conectar con DeepSeek",
