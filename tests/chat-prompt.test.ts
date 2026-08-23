@@ -84,6 +84,15 @@ chequear("prohíbe prometer tiempos de entrega", /tiempos de entrega/i.test(prom
 chequear("pide responder en el idioma del cliente", /portugu[ée]s/i.test(prompt));
 chequear("pide respuestas cortas", prompt.includes("2 a 4 líneas"));
 
+/* ── el contacto de respaldo tiene que ser real, no una promesa vacía ── */
+// Si el prompt le pide al bot ofrecer el WhatsApp del local, el número tiene
+// que estar ahí adentro. Si no, el modelo se queda con una instrucción que
+// no puede cumplir con datos reales, y ahí es donde empieza a inventar.
+chequear(
+  "si ofrece el WhatsApp, el número real viaja con la instrucción",
+  !/whatsapp/i.test(prompt) || prompt.includes(business.whatsappPhone),
+);
+
 /* ── lo que no puede filtrarse ── */
 chequear("no menciona pedidos de otros clientes", !/pedido_eventos|clientes\b/i.test(prompt));
 chequear("no filtra costos ni márgenes", !/markup|precio_kg|costo/i.test(prompt));
