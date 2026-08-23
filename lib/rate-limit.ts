@@ -16,7 +16,11 @@ export const LIMITES = {
   login: { max: 5, ventana: 900 },
   cotizacion: { max: 120, ventana: 60 },
   // Cada mensaje cuesta tokens: sin límite, un curioso funde el saldo de DeepSeek.
-  chat: { max: 20, ventana: 600 },
+  // Puerto Iguazú es una ciudad turística: muchos clientes entran desde el
+  // wifi de un hotel u hostel, compartiendo una sola IP. 20 mensajes cada 10
+  // minutos repartidos entre un hotel entero se agotan rápido, y el costo por
+  // conversación es de menos de un décimo de centavo de dólar.
+  chat: { max: 40, ventana: 600 },
 } satisfies Record<string, LimiteConfig>;
 
 /** Netlify expone la IP real acá; el resto son respaldos. */
