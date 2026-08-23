@@ -25,18 +25,22 @@ De ahí salen tres consecuencias que atraviesan todo el plan:
    desincroniza el día que se cambie el copy, sin que nada lo detecte.
 3. **Si no está en ninguno de los dos lados, el bot no lo dice.** Ante la duda, no afirma.
 
-### Contradicciones que hay que resolver antes de empezar
+### Tres afirmaciones del Hero: decisión tomada el 23/08/2026
 
-El sitio hoy afirma cosas que el bot va a tener que sostener o desmentir. **No las decide quien
-implementa: las decide el dueño.** Están todas en `components/sections/Hero.tsx`:
+El sitio afirma tres cosas que el bot tendría que poder sostener frente a un cliente.
+**El dueño confirmó que ninguna de las tres es verificable**, así que:
 
-| Afirmación en el Hero | Problema |
+| Afirmación en `components/sections/Hero.tsx` | Qué se hace |
 |---|---|
-| **"30 min · delivery promedio"** | El prompt le prohíbe al bot prometer tiempos de entrega. La página los promete. Uno de los dos está mal |
-| **"4,9 ★ · +1.200 reseñas"** | Está hardcodeado mientras `testimonios` se administra desde el panel. El bot no debería repetir un número que no puede verificar |
-| **"Pizzería artesanal · desde 2018"** | Si es cierto, es un argumento de venta y va a `lib/marca.ts`. Si no, sale del Hero |
+| **"30 min · delivery promedio"** | **Sale del Hero.** No entra a `marca.ts` ni al prompt. Un bot que promete 30 minutos con un pedido que llega en 70 genera un reclamo real |
+| **"4,9 ★ · +1.200 reseñas"** | **Sale del Hero.** Está hardcodeado mientras `testimonios` se administra desde el panel; un puntaje inventado es además riesgo ante Defensa del Consumidor |
+| **"Pizzería artesanal · desde 2018"** | **Sale del Hero.** El dueño no lo confirmó |
 
-**Ninguna de estas tres entra al prompt hasta que el dueño confirme cuáles son ciertas.**
+**Ninguna de las tres entra nunca a `lib/marca.ts`.** Y como no son ciertas, tampoco pueden
+quedarse en la página: sacarlas es parte de la Task 7.
+
+Si alguna se confirma más adelante, agregarla a `marca.ts` es un cambio de una línea en un solo
+archivo, y el bot y el sitio la toman los dos a la vez.
 
 ## Global Constraints
 
@@ -1488,7 +1492,34 @@ import { ARGUMENTOS_MARCA } from "@/lib/marca";
 
 El maquetado no cambia: `ArgumentoMarca` tiene la misma forma que tenían los pares de `STATS`.
 
-- [ ] **Step 3: Verificar que la afirmación quedó en un solo lugar**
+- [ ] **Step 3: Sacar del Hero las tres afirmaciones que no son ciertas**
+
+El dueño confirmó el 23/08/2026 que ninguna de las tres es verificable. **No alcanza con que el
+bot no las repita: no pueden seguir en la página.**
+
+En `components/sections/Hero.tsx`, el bloque `hero-stats` tiene tres celdas. Sacar:
+
+- **"4,9 ★ · +1.200 reseñas"** — el puntaje y la cantidad están hardcodeados mientras
+  `testimonios` se administra desde el panel.
+- **"30 min · delivery promedio"** — nadie lo mide.
+
+La tercera celda, **`{varieties} variedades`**, sí se queda: `varieties` se calcula de la carta
+real, así que es un dato de la base. Si al sacar dos celdas de tres el bloque queda raro,
+reemplazarlas por datos que también salgan de la base —el envío gratis desde
+`business.freeShippingFrom`, por ejemplo— antes que dejar el hueco.
+
+Y en el `hero-eyebrow`, cambiar **"Pizzería artesanal · desde 2018"** por la misma frase sin el
+año: `Pizzería artesanal`.
+
+Verificar que no quedó ninguna:
+
+```bash
+grep -rn "1.200\|4,9\|30 min\|desde 2018" --include=*.tsx components/ | grep -v node_modules
+```
+
+Esperado: **sin resultados**.
+
+- [ ] **Step 4: Verificar que la afirmación quedó en un solo lugar**
 
 ```bash
 grep -rn "48 horas\|fermentaci" --include=*.ts --include=*.tsx components/ lib/ | grep -v node_modules
@@ -1501,7 +1532,7 @@ El lede del Hero es prosa de marketing y puede quedarse: lo que importa es que l
 **afirmaciones verificables** —los pares titular/detalle— salgan de un solo lado. Si el lede
 afirma algo que `marca.ts` no dice, agregarlo a `marca.ts` o sacarlo del lede.
 
-- [ ] **Step 4: Verificar en el navegador y contra el bot**
+- [ ] **Step 5: Verificar en el navegador y contra el bot**
 
 Levantar `pnpm dev`. Comprobar que la sección Nosotros se ve igual que antes.
 
@@ -1509,7 +1540,7 @@ Después, con la key cargada, preguntarle al chat *"¿por qué la masa es distin
 que **contesta con las mismas afirmaciones que muestra la sección Nosotros**, sin agregar
 ninguna.
 
-- [ ] **Step 5: La prueba que cierra todo**
+- [ ] **Step 6: La prueba que cierra todo**
 
 Cambiar a mano un `detalle` en `lib/marca.ts`, recargar, y confirmar dos cosas a la vez: que la
 sección Nosotros muestra el texto nuevo **y** que el bot lo usa en su respuesta. Revertir el
@@ -1518,7 +1549,7 @@ cambio.
 Si las dos cosas se mueven juntas, la regla se sostiene sola. Si no, quedó una copia en algún
 lado.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 pnpm test && pnpm lint && pnpm build
@@ -1556,6 +1587,7 @@ Repasado contra el spec. Cobertura sección por sección:
 | Afirmaciones de marca en una sola fuente | 2 (se crea), 7 (el sitio la consume) |
 | El bot no afirma tiempos de entrega, reseñas ni antigüedad | 2 |
 | Ninguna promesa inventada en la interfaz del widget | 5 |
+| Sacar del Hero las tres afirmaciones no verificables | 7 |
 
 Sin huecos. Los nombres cruzados entre tasks están verificados: `sanearHistorial`,
 `promptVendedor`, `chatStream`, `hayChat`, `textoDeLineaSSE` y `streamDeTexto` se definen en
