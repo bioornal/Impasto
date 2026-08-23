@@ -993,6 +993,26 @@ git commit -m "feat: ruta /api/chat con rate limit y foto del catalogo"
 
 ### Task 5: El widget, y afuera el FAB de WhatsApp
 
+> **Lo que dejó dicho la revisión final de conjunto (23/08/2026).** Cinco cosas que son baratas
+> ahora y caras una vez que el widget exista:
+>
+> - **El formato de respuesta no es uno solo.** La ruta devuelve JSON `{ok:false,error}` en
+>   400/429/502/503 y `text/plain` cuando sale bien. El widget de este plan descarta el cuerpo
+>   entero con `if (!response.ok) throw`, y con eso tira el único mensaje sobre el que el
+>   cliente puede actuar: el del 429, que le dice cuántos minutos esperar. **Leé `error` del
+>   JSON cuando la respuesta no sea OK** y mostralo.
+> - **No hay señal de fin.** El widget solo detecta un stream *completamente* vacío, así que no
+>   distingue una respuesta terminada de una cortada. Si se quiere distinguirlas, el momento de
+>   decidir el formato es antes de escribir el widget, no después.
+> - **`MAX_MENSAJES = 12` cuenta el saludo inicial**, así que la ventana real son 11 turnos, y
+>   el servidor descarta los más viejos sin avisar. No es un bug: es algo que quien escriba el
+>   widget tiene que saber en vez de descubrir.
+> - **El saludo no puede decir "Impasto" a mano.** Todo el resto del sistema lee
+>   `business.name`; escribirlo fijo es la misma deriva que `marca.ts` vino a resolver.
+> - **`hayChat()` nunca puede volverse `NEXT_PUBLIC_`.** `lib/deepseek.ts` lo advierte en un
+>   comentario, pero nada lo impide: al calcular `chatDisponible` en `app/page.tsx`, confirmá
+>   que la key se lee solo del lado del servidor.
+
 **Files:**
 - Create: `components/chat/ChatWidget.tsx`
 - Modify: `components/Shell.tsx` (borrar `WspFab` en las líneas 31-44 y su uso en la 224; montar `ChatWidget`; pasar la prop nueva)
@@ -1376,6 +1396,19 @@ En este repo la documentación es parte del entregable: `CLAUDE.md` es lo que ev
 - Consumes: todo lo anterior
 - Produces: nada de código
 
+- [ ] **Step 0: Los dos residuos que dejó la revisión final**
+
+Ninguno es bloqueante y los dos son de una línea:
+
+1. **`app/api/chat/route.ts:45`** — el comentario todavía dice *"Lo acota el rate limit de
+   `chat` (20 mensajes cada 10 minutos por IP)"*, y el límite ya es **40**. Corregí el número.
+2. **El chequeo de orden del historial vive inline en `route.ts` y por eso no tiene test.**
+   `route.ts` no corre bajo `tsx` —importa `@/lib/insforge` de forma indirecta— pero el
+   predicado sí es extraíble: llevalo a `lib/chat-mensajes.ts` como
+   `terminaEnCliente(historial: MensajeCliente[]): boolean`, usalo desde la ruta, y cubrilo en
+   `tests/chat-mensajes.test.ts`. Verificá que el caso del widget —`[assistant, user]`, que es
+   el primer request normal porque el saludo está pre-escrito— siga siendo válido.
+
 - [ ] **Step 1: Correr todo**
 
 ```bash
@@ -1460,7 +1493,8 @@ de sincronizar nada.
 
 **Files:**
 - Modify: `components/sections/Story.tsx` (el array `STATS`)
-- Modify: `components/sections/Hero.tsx` (solo si el lede repite alguna afirmación de `marca.ts`)
+- Modify: `components/sections/Hero.tsx` (el bloque `hero-stats`)
+- Modify: `components/sections/PizzaList.tsx:60`, `components/sections/EmpanadasSection.tsx:74`, `components/layout/Header.tsx:44` — las otras tres copias que encontró la revisión final
 
 **Interfaces:**
 - Consumes: `ARGUMENTOS_MARCA` y `ArgumentoMarca` de `@/lib/marca` (Task 2)
@@ -1496,32 +1530,34 @@ import { ARGUMENTOS_MARCA } from "@/lib/marca";
 
 El maquetado no cambia: `ArgumentoMarca` tiene la misma forma que tenían los pares de `STATS`.
 
-- [ ] **Step 3: Sacar del Hero las tres afirmaciones que no son ciertas**
+- [ ] **Step 3: Las otras cuatro copias de `marca.ts`**
 
-El dueño confirmó el 23/08/2026 que ninguna de las tres es verificable. **No alcanza con que el
-bot no las repita: no pueden seguir en la página.**
-
-En `components/sections/Hero.tsx`, el bloque `hero-stats` tiene tres celdas. Sacar:
-
-- **"4,9 ★ · +1.200 reseñas"** — el puntaje y la cantidad están hardcodeados mientras
-  `testimonios` se administra desde el panel.
-- **"30 min · delivery promedio"** — nadie lo mide.
-
-La tercera celda, **`{varieties} variedades`**, sí se queda: `varieties` se calcula de la carta
-real, así que es un dato de la base. Si al sacar dos celdas de tres el bloque queda raro,
-reemplazarlas por datos que también salgan de la base —el envío gratis desde
-`business.freeShippingFrom`, por ejemplo— antes que dejar el hueco.
-
-Y en el `hero-eyebrow`, cambiar **"Pizzería artesanal · desde 2018"** por la misma frase sin el
-año: `Pizzería artesanal`.
-
-Verificar que no quedó ninguna:
+**Este paso cambió.** Cuando se escribió el plan, el Hero tenía tres afirmaciones no
+verificables; el commit `868dfda` de la sesión de copy **ya las sacó**. No las busques: no
+están. Confirmalo y seguí:
 
 ```bash
-grep -rn "1.200\|4,9\|30 min\|desde 2018" --include=*.tsx components/ | grep -v node_modules
+grep -rn "1.200|4,9|desde 2018" --include=*.tsx components/ | grep -v node_modules
 ```
 
-Esperado: **sin resultados**.
+Lo que sí quedó, y que la revisión final encontró, es que **`marca.ts` no es la fuente: es una
+copia más entre cinco.** Además de `Story.tsx`:
+
+| Archivo | Qué duplica o agrega |
+|---|---|
+| `components/sections/Hero.tsx:33-45` | Repite "48 hs" y "400 °C", y suma **"160 g"**, que no está en `marca.ts` |
+| `components/sections/PizzaList.tsx:60` | Repite "400 °C en 2 a 5 minutos" y suma **"Ocho porciones"**, **"abundante muzzarella de primera calidad"** y **"mitad y mitad sin costo extra"** |
+| `components/sections/EmpanadasSection.tsx:74` | **"160 g"**, **"repulgue a mano"** |
+| `components/layout/Header.tsx:44` | Ídem |
+
+El efecto es el que `marca.ts` existía para evitar: **el cliente lee una afirmación en la
+página, se la pregunta al bot, y el bot contesta que no la tiene.** Las cuatro claims que el
+bot no conoce —ocho porciones, muzzarella de primera calidad, 160 g, repulgue a mano— son
+argumentos de venta perfectamente buenos que hoy no está usando.
+
+Llevá a `ARGUMENTOS_MARCA` las que sean ciertas, y hacé que estos archivos lean de ahí. Si
+alguna no se puede sostener, no la agregues: sacala de la página, como se hizo con las otras
+tres.
 
 - [ ] **Step 4: Verificar que la afirmación quedó en un solo lugar**
 
