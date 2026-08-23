@@ -4,6 +4,7 @@ import { PizzaIllus } from "@/components/ui/PizzaIllus";
 import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { fmt } from "@/lib/utils";
+import { precioMitadYMitad } from "@/lib/reglas-carta";
 import type { BusinessConfig } from "@/lib/business";
 import type { Pizza } from "@/types";
 
@@ -29,7 +30,7 @@ export function HalfModal({ startPizza, pizzas, business, onClose }: HalfModalPr
   const right = pizzas.find((p) => p.id === rightId) || defaultLeft;
   if (!left || !right) return null;
 
-  const price = Math.max(left.precio, right.precio);
+  const price = precioMitadYMitad(left.precio, right.precio);
 
   const choose = (pizza: Pizza) => {
     if (pizza.disponible === false) return;

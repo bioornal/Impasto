@@ -48,8 +48,40 @@ chequear("trae las tres secciones", prompt.includes("PIZZAS") && prompt.includes
 /* ── los datos que la base tiene y el bot no debe deducir ── */
 chequear("usa los tags y no obliga a deducir del texto", /Muzzarella.*vegetariana/.test(prompt));
 chequear("marca la empanada picante", /Carne suave.*picante/.test(prompt));
-chequear("incluye el precio de las cajas de empanadas", prompt.includes("$22.000"));
 chequear("incluye las promos activas de la base", prompt.includes("Martes 2x1"));
+
+/* ── mitad y mitad: la regla de precio tiene que estar, no solo el permiso ── */
+chequear("dice que se puede pedir mitad y mitad", /mitad y mitad/i.test(prompt));
+chequear("dice cómo se cobra: la más cara, sin recargo", /más cara.*sin recargo|precio de la más cara/i.test(prompt));
+
+/* ── empanadas: la regla del prompt tiene que calzar con lo que cobra el
+ * carrito (`priceFor()` en components/sections/EmpanadasSection.tsx), no con
+ * una tabla de precios de caja que puede no ser la que se usa. ── */
+// El fixture de arriba tiene precio unitario cargado (caso real de Impasto
+// hoy): ahí `priceFor()` IGNORA `empanadaBoxPrices` por completo y cobra la
+// suma de lo elegido. Citar "$22.000" acá sería prometer un precio de caja
+// fijo que el carrito nunca usaría con estos datos.
+chequear("con precio unitario cargado, no cita el precio de caja fijo", !prompt.includes("$22.000"));
+chequear("dice que las empanadas se piden en cajas de 6, 12 o 24", /cajas? de 6, 12 o 24/i.test(prompt));
+chequear(
+  "explica que el precio sale de sumar cada empanada elegida",
+  /suma del precio de cada empanada elegida/i.test(prompt),
+);
+
+// Con NINGUNA empanada con precio unitario cargado, `priceFor()` sí usa la
+// tabla de cajas fija: ahí el prompt tiene que citarla.
+const catalogoSinPrecioUnitario: CatalogData = {
+  ...catalogo,
+  empanadas: [
+    { id: "3", nombre: "Carne suave", desc: "Cortada a cuchillo.", tags: ["picante"], disponible: true },
+    { id: "5", nombre: "Jamón y queso", desc: "Clásica.", tags: [], disponible: true },
+  ],
+};
+const promptSinPrecioUnitario = promptVendedor(catalogoSinPrecioUnitario, business, abierto);
+chequear(
+  "sin precio unitario cargado, usa el precio de caja de la tabla",
+  promptSinPrecioUnitario.includes("$22.000"),
+);
 
 const sinPromos = promptVendedor({ ...catalogo, promos: [] }, business, abierto);
 chequear("sin promos cargadas no anuncia ninguna", !sinPromos.includes("PROMOCIONES VIGENTES"));
@@ -66,6 +98,19 @@ const marcaMenciona = ARGUMENTOS_MARCA.some(
   (argumento) => /fermentaci[óo]n/i.test(`${argumento.titulo} ${argumento.detalle}`),
 );
 chequear("ninguna afirmación de marca está escrita a mano en el prompt", promptMenciona === marcaMenciona);
+
+/* ── SOBRE EL PRODUCTO es condicional: si no hay argumentos de marca, no hay
+ * que mandarle al bot a usar una sección que no existe (`sobreElProducto()`
+ * devuelve "" con ARGUMENTOS_MARCA vacío). ── */
+chequear("con argumentos de marca cargados, sí le dice al bot que use SOBRE EL PRODUCTO", prompt.includes("SOBRE EL PRODUCTO"));
+const marcaOriginal = [...ARGUMENTOS_MARCA];
+ARGUMENTOS_MARCA.length = 0;
+const promptSinMarca = promptVendedor(catalogo, business, abierto);
+chequear(
+  "sin argumentos de marca, ninguna referencia a SOBRE EL PRODUCTO queda colgada",
+  !promptSinMarca.includes("SOBRE EL PRODUCTO"),
+);
+ARGUMENTOS_MARCA.push(...marcaOriginal);
 
 /* ── el envío, que es la palanca de venta ── */
 chequear("dice cuánto sale el envío", prompt.includes("$3.000"));

@@ -1,4 +1,10 @@
 import { ARGUMENTOS_MARCA } from "@/lib/marca";
+import {
+  REGLA_MITAD_Y_MITAD,
+  TAMANIOS_CAJA_EMPANADAS,
+  seCobraPorUnidad,
+  listaConO,
+} from "@/lib/reglas-carta";
 import type { BusinessConfig } from "@/lib/business";
 import type { EstadoTienda } from "@/lib/hours";
 import type { CatalogData } from "@/types";
@@ -48,12 +54,29 @@ function seccion(titulo: string, items: ItemCarta[]): string {
   return `\n${titulo}\n${items.map(linea).join("\n")}\n`;
 }
 
-/** Las cajas de empanadas: de lo que más se pregunta, y sale de la base. */
+/**
+ * Las cajas de empanadas: de lo que más se pregunta, y la regla tiene que
+ * calzar con lo que de verdad cobra el carrito. Ver `seCobraPorUnidad()` en
+ * `lib/reglas-carta.ts`: apenas hay UNA empanada con precio unitario cargado
+ * (el caso real de Impasto hoy), el carrito ignora la tabla de cajas fija y
+ * suma el precio de cada empanada elegida. Solo si NINGUNA tiene precio
+ * unitario se usa esa tabla.
+ */
 function cajas(data: CatalogData): string {
-  const tamanios = ([6, 12, 24] as const).filter((n) => data.empanadaBoxPrices[n] > 0);
-  if (tamanios.length === 0 || data.empanadas.length === 0) return "";
-  const lista = tamanios.map((n) => `caja x${n} ${pesos(data.empanadaBoxPrices[n])}`).join(" · ");
-  return `\nCAJAS DE EMPANADAS\n- ${lista}\n`;
+  if (data.empanadas.length === 0) return "";
+  const tamanios = listaConO(TAMANIOS_CAJA_EMPANADAS);
+
+  if (seCobraPorUnidad(data.empanadas)) {
+    return `\nCAJAS DE EMPANADAS\n- Se piden en cajas de ${tamanios} unidades, combinando los sabores que` +
+      ` se quiera: no se venden sueltas. El precio de la caja es la suma del precio de cada empanada` +
+      ` elegida (los precios están arriba, en EMPANADAS).\n`;
+  }
+
+  const conPrecio = TAMANIOS_CAJA_EMPANADAS.filter((n) => data.empanadaBoxPrices[n] > 0);
+  if (conPrecio.length === 0) return "";
+  const lista = conPrecio.map((n) => `caja x${n} ${pesos(data.empanadaBoxPrices[n])}`).join(" · ");
+  return `\nCAJAS DE EMPANADAS\n- Se piden en cajas de ${tamanios} unidades, combinando los sabores que` +
+    ` se quiera: no se venden sueltas.\n- ${lista}\n`;
 }
 
 /**
@@ -92,6 +115,28 @@ export function promptVendedor(
     ? `El local está ABIERTO ahora. Horario: ${business.hours}.`
     : `El local está CERRADO ahora. ${estado.motivo} Invitá igual a mirar la carta y a volver cuando abra.`;
 
+  // La sección SOBRE EL PRODUCTO no siempre existe (ver `sobreElProducto()`):
+  // si ARGUMENTOS_MARCA está vacío, no hay que mandarle al modelo a usar algo
+  // que no está.
+  const haySobreElProducto = ARGUMENTOS_MARCA.length > 0;
+
+  const comoVendes = [
+    "- Si no te lo dijeron, preguntá para cuántos son o qué tienen ganas de comer.",
+    "- Recomendá por nombre y precio, y contá qué lleva cuando ayude a decidir.",
+    "- Lo que va entre corchetes en cada producto son sus etiquetas. Usalas para filtrar cuando te\n  pidan algo vegetariano, picante o gourmet: son el dato, no lo deduzcas de la descripción.",
+    haySobreElProducto
+      ? "- Cuando duden por el precio, usá lo que dice SOBRE EL PRODUCTO. Nada más que eso."
+      : null,
+    `- ${REGLA_MITAD_Y_MITAD}`,
+    "- Si algo está [AGOTADO], decilo de una y ofrecé la alternativa más parecida.",
+  ]
+    .filter((linea): linea is string => linea !== null)
+    .join("\n");
+
+  const fuentesPermitidas = haySobreElProducto
+    ? "LA CARTA, en EL ENVÍO y en SOBRE EL PRODUCTO"
+    : "LA CARTA y en EL ENVÍO";
+
   return `Sos el asistente de ${business.name}, una pizzería de ${business.locationLabel}.
 Tu único trabajo es ayudar a la persona a elegir qué pedir y entusiasmarla para que lo pida.
 
@@ -104,18 +149,12 @@ CÓMO HABLÁS
 - Sugerís un acompañamiento una sola vez. Si no enganchan, no insistís: insistir espanta.
 
 CÓMO VENDÉS
-- Si no te lo dijeron, preguntá para cuántos son o qué tienen ganas de comer.
-- Recomendá por nombre y precio, y contá qué lleva cuando ayude a decidir.
-- Lo que va entre corchetes en cada producto son sus etiquetas. Usalas para filtrar cuando te
-  pidan algo vegetariano, picante o gourmet: son el dato, no lo deduzcas de la descripción.
-- Cuando duden por el precio, usá lo que dice SOBRE EL PRODUCTO. Nada más que eso.
-- Se puede pedir una pizza mitad y mitad de dos gustos.
-- Si algo está [AGOTADO], decilo de una y ofrecé la alternativa más parecida.
+${comoVendes}
 
 LO QUE NO HACÉS NUNCA
 - No tomás pedidos, no armás el carrito y no confirmás nada. El cliente agrega solo, con su
   propio click. Si te piden que confirmes un pedido, explicá con amabilidad cómo hacerlo en la página.
-- No inventás nada. Solo existe lo que está en LA CARTA, en EL ENVÍO y en SOBRE EL PRODUCTO.
+- No inventás nada. Solo existe lo que está en ${fuentesPermitidas}.
   Si te preguntan algo que no figura ahí, decí que no lo tenés y pasales el WhatsApp del local:
   ${business.whatsappPhone}.
 - No afirmás nada sobre cantidad de reseñas, puntajes ni años de trayectoria, aunque los veas
