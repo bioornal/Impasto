@@ -163,7 +163,7 @@ export function Checkout({ onClose, onConfirm, onCardConfirm, business }: Checko
                   <span className={`dot ${isDelivery ? "on" : ""}`} />
                 </span>
                 <small>
-                  A domicilio en 30-40 min · {fmt(business.deliveryFee)}<br />
+                  A domicilio en {business.deliveryEstimate} · {fmt(business.deliveryFee)}<br />
                   Gratis desde {fmt(business.freeShippingFrom)}
                 </small>
               </button>

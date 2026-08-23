@@ -34,7 +34,11 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
           </div>
           <div className="confirm-order-num">{order.numero}</div>
           <h2>Pedido recibido, {order.nombre.split(" ")[0]}</h2>
-          <p className="confirm-lede">{order.mode === "delivery" ? "Ya tomamos tu pedido. En breve empezamos a prepararlo." : "Ya tomamos tu pedido. Podés pasar en aproximadamente 20 min."}</p>
+          <p className="confirm-lede">
+            Ya tomamos tu pedido. {order.mode === "delivery"
+              ? `Lo estamos preparando y te llega en ${business.deliveryEstimate} aproximadamente.`
+              : `Lo estamos preparando: podés pasar a retirarlo en ${business.deliveryEstimate} aproximadamente.`}
+          </p>
         </div>
         <div className="confirm-eta">
           <div className="eta-bar">
@@ -46,7 +50,7 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
             ))}
           </div>
           <div className="eta-time">
-            <div><small>Tiempo estimado</small><b>{order.mode === "delivery" ? "30-40 min" : "20 min"}</b></div>
+            <div><small>Tiempo estimado</small><b>{business.deliveryEstimate}</b></div>
             <div style={{ textAlign: "right" }}><small>Total del pedido</small><b>{fmt(order.total)}</b></div>
           </div>
         </div>
