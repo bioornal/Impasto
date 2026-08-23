@@ -63,12 +63,17 @@ const categoriaRara: DatabaseProduct[] = [
 ];
 check("una categoría desconocida no rompe el resto", buildCatalog(categoriaRara, null, null).pizzas.map((p) => p.nombre), ["Pizza Napolitana"]);
 
-// El filtrado de disponibles conserva la semántica actual (`!== false`).
+// Los productos con disponible=false se conservan en el catálogo marcados como disponible=false (para mostrarse como Agotados).
 const disponibilidad: DatabaseProduct[] = [
-  { id: "10", nombre: "Pizza Oculta",  tipo: "pizza", categoria: "pizzas", precio: 15000, disponible: false, desc: "", tags: [] },
+  { id: "10", nombre: "Pizza Agotada",  tipo: "pizza", categoria: "pizzas", precio: 15000, disponible: false, desc: "", tags: [] },
   { id: "11", nombre: "Pizza Sin Dato", tipo: "pizza", categoria: "pizzas", precio: 15000, desc: "", tags: [] },
+  { id: "12", nombre: "Pizza Activa",   tipo: "pizza", categoria: "pizzas", precio: 15000, disponible: true, desc: "", tags: [] },
 ];
-check("disponible=false se descarta y disponible ausente se conserva", buildCatalog(disponibilidad, null, null).pizzas.map((p) => p.nombre), ["Pizza Sin Dato"]);
+const catDisp = buildCatalog(disponibilidad, null, null);
+check("todos los productos válidos se conservan en el catálogo", catDisp.pizzas.map((p) => p.nombre), ["Pizza Agotada", "Pizza Sin Dato", "Pizza Activa"]);
+check("disponible=false asigna disponible: false", catDisp.pizzas.find((p) => p.nombre === "Pizza Agotada")?.disponible, false);
+check("disponible ausente asigna disponible: true", catDisp.pizzas.find((p) => p.nombre === "Pizza Sin Dato")?.disponible, true);
+check("disponible=true asigna disponible: true", catDisp.pizzas.find((p) => p.nombre === "Pizza Activa")?.disponible, true);
 
 // Divergencia deliberada respecto del código viejo: antes la detección de
 // combo por nombre (/caja x 6|12|24/) se evaluaba ANTES de mirar categoria,

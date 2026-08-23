@@ -150,7 +150,7 @@ export function Products() {
           <div className="tbl-wrap">
             <table className="tbl">
               <thead>
-                <tr><th>Producto</th><th>Tipo</th><th>Etiquetas</th><th className="right">Precio</th><th className="right">Stock</th><th>Estado</th><th></th></tr>
+                <tr><th>Producto</th><th>Tipo</th><th>Etiquetas</th><th className="right">Precio</th><th className="right">Stock</th><th>Disponibilidad</th><th></th></tr>
               </thead>
               <tbody>
                 {filtered.map(p => (
@@ -166,7 +166,18 @@ export function Products() {
                     <td><CeldaEtiquetas producto={p} /></td>
                     <td className="right tbl-price">{fmt(p.precio || 0)}</td>
                     <td className="right tbl-mono">{p.stock}</td>
-                    <td><div className={`switch ${p.active ? "on" : ""}`} onClick={() => updateProduct(p.id, { active: !p.active })} /></td>
+                    <td>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        <div
+                          className={`switch ${p.active ? "on" : ""}`}
+                          onClick={() => updateProduct(p.id, { active: !p.active })}
+                          title={p.active ? "Disponible (clic para marcar como Agotado)" : "Agotado (clic para marcar como Disponible)"}
+                        />
+                        <span style={{ fontSize: 11.5, fontWeight: 500, color: p.active ? "var(--a-accent)" : "var(--a-muted)" }}>
+                          {p.active ? "Disponible" : "Agotado"}
+                        </span>
+                      </div>
+                    </td>
                     <td>
                       <div className="tbl-actions">
                         <button className="btn btn-icon btn-ghost" onClick={() => setEdit(p)}><Icon.Edit /></button>
@@ -242,8 +253,8 @@ function ProductEdit({ product, onClose, onSave, isNew }: { product?: AdminProdu
               </div>
             </div>
             <div className="field">
-              <label>Activo</label>
-              <div className="field-row"><div className={`switch ${data.active ? "on" : ""}`} onClick={() => set("active", !data.active)} /><span className="text-muted" style={{ fontSize: 12.5 }}>Visible en el sitio</span></div>
+              <label>Disponibilidad</label>
+              <div className="field-row"><div className={`switch ${data.active ? "on" : ""}`} onClick={() => set("active", !data.active)} /><span className="text-muted" style={{ fontSize: 12.5 }}>{data.active ? "Disponible para venta" : "Agotado (se muestra con aviso en carta)"}</span></div>
             </div>
             <div className="field">
               <label>Destacado</label>

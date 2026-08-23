@@ -25,22 +25,32 @@ export function Bebidas({ bebidas }: { bebidas: Bebida[] }) {
         <div className="drinks-grid">
           {bebidas.map((bebida) => {
             const qty = qtyOf(bebida.id);
+            const agotado = bebida.disponible === false;
             return (
-              <article className="drink-card" key={bebida.id}>
-                <div className="drink-media"><DrinkIllus id={bebida.id} label={bebida.nombre} /></div>
+              <article className={`drink-card ${agotado ? "is-agotado" : ""}`} key={bebida.id}>
+                <div className="drink-media">
+                  <DrinkIllus id={bebida.id} label={bebida.nombre} />
+                  {agotado && <div className="media-agotado-bar">Agotado</div>}
+                </div>
                 <div style={{ flex: 1 }}>
                   <h4>{bebida.nombre}</h4>
                   <small>{fmt(bebida.precio)}</small>
                 </div>
-                <button
-                  className="drink-add"
-                  onClick={() => {
-                    add({ key: bebida.id, type: "bebida", name: bebida.nombre, price: bebida.precio, qty: 1 });
-                    toast(`${bebida.nombre} agregada`);
-                  }}
-                >
-                  {qty > 0 ? `En el carrito · ${qty}` : "Agregar"}
-                </button>
+                {agotado ? (
+                  <button className="drink-add drink-add-agotado" disabled aria-disabled="true">
+                    Agotado
+                  </button>
+                ) : (
+                  <button
+                    className="drink-add"
+                    onClick={() => {
+                      add({ key: bebida.id, type: "bebida", name: bebida.nombre, price: bebida.precio, qty: 1 });
+                      toast(`${bebida.nombre} agregada`);
+                    }}
+                  >
+                    {qty > 0 ? `En el carrito · ${qty}` : "Agregar"}
+                  </button>
+                )}
               </article>
             );
           })}

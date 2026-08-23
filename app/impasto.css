@@ -477,6 +477,21 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 .p-badge.top{ background:var(--gold); color:var(--ink); }
 .p-badge.veg{ background:color-mix(in srgb, var(--accent-2) 92%, transparent); color:var(--accent-ink); }
 .p-badge.hot{ background:color-mix(in srgb, var(--accent) 95%, transparent); color:var(--accent-ink); }
+/* Barra inferior recta minimalista para productos agotados */
+.media-agotado-bar{
+  position:absolute; bottom:0; left:0; right:0;
+  background:var(--ink); color:var(--bg);
+  font-family:var(--font-mono); font-size:10.5px; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase; text-align:center;
+  padding:6px 0; z-index:3; pointer-events:none;
+}
+.lrow-media .media-agotado-bar{
+  font-size:9px; letter-spacing:.15em; padding:4px 0;
+}
+.p-card.is-agotado .p-price{ bottom:36px; }
+.p-card.is-agotado:hover,
+.drink-card.is-agotado:hover,
+.emp-card.is-agotado:hover{ transform:none; box-shadow:var(--shadow); }
 .p-price{
   position:absolute; right:12px; bottom:12px; z-index:2;
   font-family:var(--font-display); font-size:17px; font-weight:600;
@@ -512,6 +527,10 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   transition:background .15s;
 }
 .p-add:hover{ background:var(--accent-hover); }
+.p-add.p-add-agotado{
+  background:var(--bg-2); color:var(--muted); border:1px solid var(--line); cursor:not-allowed;
+}
+.p-add.p-add-agotado:hover{ background:var(--bg-2); }
 .p-half{
   width:52px; height:44px; border-radius:var(--radius-sm); flex:none;
   border:1px solid var(--line); background:var(--surface); color:var(--ink);
@@ -567,6 +586,11 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 .lrow-main p{ margin:0; font-size:13.5px; color:var(--muted); line-height:1.5; max-width:70ch; }
 .lrow-actions{ display:flex; gap:8px; align-items:center; }
 .lrow-actions .btn{ height:42px; }
+.btn.btn-disabled{
+  background:var(--bg-2) !important; color:var(--muted) !important;
+  border:1px solid var(--line) !important; cursor:not-allowed !important;
+}
+.btn.btn-disabled:hover{ background:var(--bg-2) !important; color:var(--muted) !important; }
 @media (max-width:760px){
   .lrow{ grid-template-columns:72px 1fr; gap:14px; padding:16px; }
   .lrow-media{ width:72px; height:72px; }
@@ -694,6 +718,10 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   transition:background .15s, border-color .15s;
 }
 .drink-add:hover{ background:var(--bg-2); border-color:var(--gold); }
+.drink-add.drink-add-agotado{
+  background:var(--bg-2); color:var(--muted); border-color:var(--line); cursor:not-allowed;
+}
+.drink-add.drink-add-agotado:hover{ background:var(--bg-2); border-color:var(--line); }
 @media (max-width:1180px){ .drinks-grid{ grid-template-columns:repeat(4,1fr); } }
 @media (max-width:760px){ .drinks-grid{ grid-template-columns:repeat(3,1fr); } }
 @media (max-width:480px){ .drinks-grid{ grid-template-columns:repeat(2,1fr); } }
@@ -991,8 +1019,11 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   width:100%; padding:12px 15px; border:0; border-bottom:1px solid var(--bg-2);
   background:none; text-align:left;
 }
-.half-opt:hover{ background:var(--bg); }
+.half-opt:hover:not(:disabled){ background:var(--bg); }
 .half-opt.on{ background:var(--accent-soft); }
+.half-opt.is-agotado{ opacity:.55; cursor:not-allowed; background:var(--bg-2); }
+.half-opt.is-agotado:hover{ background:var(--bg-2); }
+.half-opt-agotado{ color:#c93b16; font-size:11px; font-weight:700; margin-left:6px; }
 .half-opt b{ display:block; font-size:14px; font-weight:600; line-height:1.25; }
 .half-opt small{ color:var(--muted); font-size:11.5px; }
 .half-opt .price{ font-family:var(--font-display); font-size:15px; font-weight:600; flex:none; }

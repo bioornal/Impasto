@@ -57,6 +57,7 @@ function mapPizza(product: DatabaseProduct, etiquetas: Etiqueta[]): Pizza {
     precio: Number(product.precio ?? 0),
     desc: String(product.desc ?? ""),
     tags,
+    disponible: product.disponible !== false,
     popular: product.popular,
     badge: resolverBadge(tags, etiquetas, "pizzas"),
   };
@@ -70,6 +71,7 @@ function mapEmpanada(product: DatabaseProduct, etiquetas: Etiqueta[]): Empanada 
     precio: product.precio == null ? undefined : Number(product.precio),
     desc: String(product.desc ?? ""),
     tags,
+    disponible: product.disponible !== false,
     badge: resolverBadge(tags, etiquetas, "empanadas"),
   };
 }
@@ -79,6 +81,7 @@ function mapBebida(product: DatabaseProduct): Bebida {
     id: String(product.id ?? product.nombre),
     nombre: String(product.nombre || "Bebida"),
     precio: Number(product.precio ?? 0),
+    disponible: product.disponible !== false,
   };
 }
 
@@ -107,8 +110,7 @@ export function buildCatalog(
   reviewsRaw: unknown,
   etiquetas: Etiqueta[] = [],
 ): CatalogData {
-  const disponibles = products.filter((product) => product.disponible !== false);
-  const clasificados = disponibles.map((product) => ({ product, type: productType(product) }));
+  const clasificados = products.map((product) => ({ product, type: productType(product) }));
 
   const descartados = clasificados.filter((item) => item.type === "otro");
   if (descartados.length > 0) {

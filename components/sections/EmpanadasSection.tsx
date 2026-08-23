@@ -79,9 +79,13 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
           <div className="emp-grid">
             {empanadas.map((empanada) => {
               const count = selection[empanada.id] || 0;
+              const agotado = empanada.disponible === false;
               return (
-                <article className={`emp-card ${count > 0 ? "on" : ""}`} key={empanada.id}>
-                  <div className="emp-media"><EmpanadaIllus id={empanada.id} /></div>
+                <article className={`emp-card ${count > 0 ? "on" : ""} ${agotado ? "is-agotado" : ""}`} key={empanada.id}>
+                  <div className="emp-media">
+                    <EmpanadaIllus id={empanada.id} />
+                    {agotado && <div className="media-agotado-bar">Agotado</div>}
+                  </div>
                   <div className="emp-head">
                     <h4>{empanada.nombre}</h4>
                     {empanada.badge && <span className={`p-badge-tag c-${empanada.badge.color}`}>{empanada.badge.label}</span>}
@@ -89,12 +93,12 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
                   <p>{empanada.desc}</p>
                   <div className="emp-foot">
                     <span className="emp-unit">
-                      {count > 0 ? "en la caja" : empanada.precio ? fmt(empanada.precio) : "sumar"}
+                      {agotado ? "Agotado" : count > 0 ? "en la caja" : empanada.precio ? fmt(empanada.precio) : "sumar"}
                     </span>
                     <div className="stepper">
                       <button onClick={() => pick(empanada.id, -1)} disabled={count === 0} aria-label={`Quitar ${empanada.nombre}`}>−</button>
                       <span>{count}</span>
-                      <button onClick={() => pick(empanada.id, 1)} disabled={selected >= tier} aria-label={`Sumar ${empanada.nombre}`}>+</button>
+                      <button onClick={() => pick(empanada.id, 1)} disabled={agotado || selected >= tier} aria-label={`Sumar ${empanada.nombre}`} title={agotado ? "Variedad agotada" : undefined}>+</button>
                     </div>
                   </div>
                 </article>

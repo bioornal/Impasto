@@ -17,24 +17,31 @@ interface HalfModalProps {
 export function HalfModal({ startPizza, pizzas, business, onClose }: HalfModalProps) {
   const { add } = useCart();
   const toast = useToast();
-  const [leftId, setLeftId] = useState(startPizza?.id || pizzas[0]?.id || "");
+  const availablePizzas = pizzas.filter((p) => p.disponible !== false);
+  const defaultLeft = (startPizza && startPizza.disponible !== false ? startPizza : availablePizzas[0]) || pizzas[0];
+  const [leftId, setLeftId] = useState(defaultLeft?.id || "");
   const [rightId, setRightId] = useState(() => {
-    const fallback = pizzas.find((p) => p.id !== (startPizza?.id || pizzas[0]?.id));
-    return fallback?.id || pizzas[0]?.id || "";
+    const fallback = availablePizzas.find((p) => p.id !== defaultLeft?.id);
+    return fallback?.id || defaultLeft?.id || "";
   });
-  const [side, setSide] = useState<"a" | "b">("a");
-  const left = pizzas.find((p) => p.id === leftId) || pizzas[0];
-  const right = pizzas.find((p) => p.id === rightId) || pizzas[1] || pizzas[0];
+  const [side, setSide] = useState<"a" | "b">("a");
+  const left = pizzas.find((p) => p.id === leftId) || defaultLeft;
+  const right = pizzas.find((p) => p.id === rightId) || defaultLeft;
   if (!left || !right) return null;
 
   const price = Math.max(left.precio, right.precio);
 
   const choose = (pizza: Pizza) => {
+    if (pizza.disponible === false) return;
     if (side === "a") { setLeftId(pizza.id); setSide("b"); }
     else setRightId(pizza.id);
   };
 
   const confirm = () => {
+    if (left.disponible === false || right.disponible === false) {
+      toast("Una de las variedades elegidas está agotada");
+      return;
+    }
     add({
       key: `half-${left.id}-${right.id}`,
       unique: true,
@@ -101,10 +108,17 @@ export function HalfModal({ startPizza, pizzas, business, onClose }: HalfModalPr
           <div className="half-options">
             {pizzas.map((pizza) => {
               const active = side === "a" ? leftId === pizza.id : rightId === pizza.id;
+              const agotado = pizza.disponible === false;
               return (
-                <button className={`half-opt ${active ? "on" : ""}`} key={pizza.id} onClick={() => choose(pizza)}>
+                <button
+                  className={`half-opt ${active ? "on" : ""} ${agotado ? "is-agotado" : ""}`}
+                  key={pizza.id}
+                  disabled={agotado}
+                  onClick={() => !agotado && choose(pizza)}
+                  title={agotado ? "Variedad agotada" : undefined}
+                >
                   <span style={{ minWidth: 0 }}>
-                    <b>{pizza.nombre}</b>
+                    <b>{pizza.nombre} {agotado && <span className="half-opt-agotado">(Agotado)</span>}</b>
                     <small>{pizza.desc.split(",").slice(0, 2).join(", ")}</small>
                   </span>
                   <span className="price">{fmt(pizza.precio)}</span>

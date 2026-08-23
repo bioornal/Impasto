@@ -12,11 +12,13 @@ interface QuoteResult {
 
 export interface QuoteRates {
   deliveryFee: number;
-  freeShippingFrom: number;}
+  freeShippingFrom: number;
+}
 
 const DEFAULT_RATES: QuoteRates = {
   deliveryFee: DELIVERY_FEE,
-  freeShippingFrom: FREE_SHIPPING_FROM,};
+  freeShippingFrom: FREE_SHIPPING_FROM,
+};
 
 const integerQuantity = (value: unknown) => {
   const quantity = Number(value);
@@ -37,22 +39,25 @@ function quoteItem(rawItem: CartItem, data: CatalogData, rates: QuoteRates): Car
 
   if (rawItem.type === "pizza") {
     const product = findPizza(data, rawItem.key);
-    if (!product) throw new Error("Una pizza del carrito ya no está disponible");
+    if (!product || !product.disponible) throw new Error(`La pizza "${product?.nombre || "seleccionada"}" está agotada`);
     return { ...rawItem, key: product.id, name: product.nombre, price: product.precio, qty };
   }
 
   if (rawItem.type === "bebida") {
     const product = data.bebidas.find((item) => item.id === rawItem.key);
-    if (!product) throw new Error("Una bebida del carrito ya no está disponible");
+    if (!product || !product.disponible) throw new Error(`La bebida "${product?.nombre || "seleccionada"}" está agotada`);
     return { ...rawItem, key: product.id, name: product.nombre, price: product.precio, qty };
   }
 
   if (rawItem.type === "pizza-half") {
     const ids = rawItem.variant?.kind === "half"
       ? rawItem.variant.ids
-      : rawItem.key.split("-").slice(1, 3) as [string, string];    const left = findPizza(data, ids[0] || "");
+      : rawItem.key.split("-").slice(1, 3) as [string, string];
+    const left = findPizza(data, ids[0] || "");
     const right = findPizza(data, ids[1] || "");
-    if (!left || !right) throw new Error("Una variedad de la pizza mitad y mitad ya no está disponible");
+    if (!left || !right || !left.disponible || !right.disponible) {
+      throw new Error("Una variedad de la pizza mitad y mitad está agotada");
+    }
     return {
       ...rawItem,
       key: `half-${left.id}-${right.id}`,
@@ -72,8 +77,9 @@ function quoteItem(rawItem: CartItem, data: CatalogData, rates: QuoteRates): Car
 
     const selections = variant.selections;
     const selected = Object.entries(selections).reduce((sum, [id, amount]) => {
-      if (!findEmpanada(data, id) || !Number.isInteger(amount) || amount < 1) {
-        throw new Error("Una variedad de empanada ya no está disponible");
+      const emp = findEmpanada(data, id);
+      if (!emp || !emp.disponible || !Number.isInteger(amount) || amount < 1) {
+        throw new Error(`Una variedad de empanada (${emp?.nombre || "seleccionada"}) está agotada`);
       }
       return sum + amount;
     }, 0);

@@ -100,8 +100,9 @@ function SiteContent({ data, business }: { data: CatalogData; business: Business
   const [nav, setNav] = useState("home");
   const [order, setOrder] = useState<ConfirmedOrder | null>(null);
 
-  const featured = data.pizzas.find((p) => p.popular && p.categoria === "gourmet")
-    || data.pizzas.find((p) => p.popular)
+  const featured = data.pizzas.find((p) => p.disponible !== false && p.popular && p.categoria === "gourmet")
+    || data.pizzas.find((p) => p.disponible !== false && p.popular)
+    || data.pizzas.find((p) => p.disponible !== false)
     || data.pizzas[0];
 
   const onNav = (section: string) => {

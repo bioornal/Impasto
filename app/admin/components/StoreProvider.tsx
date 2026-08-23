@@ -227,7 +227,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (patch.popular !== undefined) body.popular = patch.popular;
         await fetch(`/api/admin/productos/${prod._dbId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       }
-      showToast("Producto actualizado");
+      if (patch.active !== undefined && Object.keys(patch).length === 1) {
+        showToast(patch.active ? "Producto marcado como Disponible" : "Producto marcado como Agotado");
+      } else {
+        showToast("Producto actualizado");
+      }
     },
 
     createProduct: async (p) => {

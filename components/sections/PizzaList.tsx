@@ -92,12 +92,14 @@ export function PizzaList({ pizzas, onHalf }: PizzaListProps) {
             {list.map((pizza, index) => {
               const qty = qtyOf(pizza.id);
               const wide = index === 0 && cat === "todas" && !q.trim();
+              const agotado = pizza.disponible === false;
               return (
-                <article className={`p-card ${wide ? "wide" : ""}`} key={pizza.id}>
+                <article className={`p-card ${wide ? "wide" : ""} ${agotado ? "is-agotado" : ""}`} key={pizza.id}>
                   <div className="p-media">
                     <PizzaIllus id={pizza.id} />
+                    {agotado && <div className="media-agotado-bar">Agotado</div>}
                     <div className="p-badges">
-                      {pizza.popular && <span className="p-badge top">★ Más pedida</span>}
+                      {pizza.popular && !agotado && <span className="p-badge top">★ Más pedida</span>}
                       {pizza.tags.includes("vegetariana") && <span className="p-badge veg">Veggie</span>}
                       {pizza.tags.includes("picante") && <span className="p-badge hot">Picante</span>}
                     </div>
@@ -110,16 +112,26 @@ export function PizzaList({ pizzas, onHalf }: PizzaListProps) {
                     </div>
                     <p className="p-desc">{pizza.desc}</p>
                     <div className="p-actions">
-                      {qty > 0 ? (
-                        <div className="p-stepper">
-                          <button onClick={() => decKey(pizza.id)} aria-label={`Quitar una ${pizza.nombre}`}>−</button>
-                          <span>{qty} en el carrito</span>
-                          <button onClick={() => incKey(pizza.id)} aria-label={`Sumar una ${pizza.nombre}`}>+</button>
-                        </div>
+                      {agotado ? (
+                        <>
+                          <button className="p-add p-add-agotado" disabled aria-disabled="true">Agotado</button>
+                          <button className="p-half" disabled title="No disponible actualmente" aria-disabled="true">½½</button>
+                        </>
+                      ) : qty > 0 ? (
+                        <>
+                          <div className="p-stepper">
+                            <button onClick={() => decKey(pizza.id)} aria-label={`Quitar una ${pizza.nombre}`}>−</button>
+                            <span>{qty} en el carrito</span>
+                            <button onClick={() => incKey(pizza.id)} aria-label={`Sumar una ${pizza.nombre}`}>+</button>
+                          </div>
+                          <button className="p-half" title="Mitad y mitad" onClick={() => onHalf(pizza)}>½½</button>
+                        </>
                       ) : (
-                        <button className="p-add" onClick={() => addPizza(pizza)}>Agregar</button>
+                        <>
+                          <button className="p-add" onClick={() => addPizza(pizza)}>Agregar</button>
+                          <button className="p-half" title="Mitad y mitad" onClick={() => onHalf(pizza)}>½½</button>
+                        </>
                       )}
-                      <button className="p-half" title="Mitad y mitad" onClick={() => onHalf(pizza)}>½½</button>
                     </div>
                   </div>
                 </article>
@@ -130,22 +142,26 @@ export function PizzaList({ pizzas, onHalf }: PizzaListProps) {
           <div className="menu-list">
             {list.map((pizza) => {
               const qty = qtyOf(pizza.id);
+              const agotado = pizza.disponible === false;
               return (
-                <div className="lrow" key={pizza.id}>
-                  <div className="lrow-media"><PizzaIllus id={pizza.id} /></div>
+                <div className={`lrow ${agotado ? "is-agotado" : ""}`} key={pizza.id}>
+                  <div className="lrow-media">
+                    <PizzaIllus id={pizza.id} />
+                    {agotado && <div className="media-agotado-bar">Agotado</div>}
+                  </div>
                   <div className="lrow-main">
                     <div className="lrow-title">
                       <h3>{pizza.nombre}</h3>
-                      {pizza.popular && <span className="lrow-flag">Más pedida</span>}
+                      {pizza.popular && !agotado && <span className="lrow-flag">Más pedida</span>}
                       <span className="leader" />
                       <b className="lrow-price">{fmt(pizza.precio)}</b>
                     </div>
                     <p>{pizza.desc}</p>
                   </div>
                   <div className="lrow-actions">
-                    <button className="btn btn-light btn-sm" onClick={() => onHalf(pizza)}>½½</button>
-                    <button className="btn btn-primary btn-sm" onClick={() => addPizza(pizza)}>
-                      {qty > 0 ? `Agregada · ${qty}` : "Agregar"}
+                    <button className="btn btn-light btn-sm" disabled={agotado} onClick={() => !agotado && onHalf(pizza)} title={agotado ? "No disponible" : "Mitad y mitad"}>½½</button>
+                    <button className={`btn btn-sm ${agotado ? "btn-disabled" : "btn-primary"}`} disabled={agotado} onClick={() => !agotado && addPizza(pizza)}>
+                      {agotado ? "Agotado" : qty > 0 ? `Agregada · ${qty}` : "Agregar"}
                     </button>
                   </div>
                 </div>

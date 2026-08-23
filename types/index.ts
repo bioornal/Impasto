@@ -10,6 +10,7 @@ export interface Pizza {
   precio: number;
   desc: string;
   tags: string[];
+  disponible: boolean;
   popular?: boolean;
   badge?: EtiquetaBadge;
 }
@@ -20,6 +21,7 @@ export interface Empanada {
   precio?: number;
   desc: string;
   tags: string[];
+  disponible: boolean;
   badge?: EtiquetaBadge;
 }
 
@@ -27,6 +29,7 @@ export interface Bebida {
   id: string;
   nombre: string;
   precio: number;
+  disponible: boolean;
 }
 
 export interface Promo {

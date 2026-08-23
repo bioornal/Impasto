@@ -25,7 +25,6 @@ export async function getCatalogData(): Promise<CatalogData> {
       gastosResult,
     ] = await Promise.all([
       safeQuery(db.database.from("productos").select("id,nombre,tipo,categoria,precio,disponible,desc,tags,popular")
-        .not("disponible", "is", false)
         .in("categoria", [...CATEGORIAS_IMPASTO])),
       safeQuery(db.database.from("promociones").select("*").eq("activo", true).eq("sucursal_id", SUCURSAL_ID)),
       safeQuery(db.database.from("testimonios").select("*").eq("estado", "aprobado").eq("sucursal_id", SUCURSAL_ID)),

@@ -28,7 +28,7 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
   const shipping = freeShipping ? 0 : business.deliveryFee;
 
   const inCart = new Set(items.map((i) => i.key));
-  const upsells = bebidas.filter((b) => !inCart.has(b.id)).slice(0, 2);
+  const upsells = bebidas.filter((b) => b.disponible !== false && !inCart.has(b.id)).slice(0, 2);
 
   return (
     <div className="drawer-bg" onClick={onClose}>
