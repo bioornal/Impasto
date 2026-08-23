@@ -805,7 +805,7 @@ export async function chatStream(mensajes: ChatMensaje[]): Promise<DeepSeekResul
 npx tsx tests/deepseek.test.ts
 ```
 
-Esperado: los 12 chequeos en PASA.
+Esperado: los 11 chequeos en PASA.
 
 - [ ] **Step 5: Documentar las variables**
 
