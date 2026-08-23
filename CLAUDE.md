@@ -153,8 +153,8 @@ Sin empezar. La base está lista: catálogo en DB, cotización server-side, carr
 y pedidos asociados a sucursal.
 
 ### 7. Calidad y operación
-Solo hay tests de horarios. Falta: tests de cotización y pedidos, logs estructurados, monitoreo,
-limpieza automática de carritos abandonados, consentimiento de privacidad, SEO local y analítica.
+Hay tests de horarios, catálogo, aviso al local y SEO. Falta: tests de cotización y pedidos, logs estructurados, monitoreo,
+limpieza automática de carritos abandonados, consentimiento de privacidad y analítica.
 
 ## Decisiones tomadas, para no rediscutirlas
 
@@ -279,6 +279,42 @@ Dos cosas más, para no repetir el diagnóstico:
   `public/` con `next/image`. Se sirven desde el dominio propio, entran en el build y no
   gastan el egress de InsForge. El storage es para lo que sube el dueño desde el panel —
   las fotos reales de productos, que siguen pendientes.
+
+## SEO (hecho el 23/08/2026)
+
+Antes el sitio tenía solo `title` y `description`: sin `robots.txt`, sin sitemap y sin
+datos estructurados. Para Google era una página cualquiera, no una pizzería de Iguazú.
+
+- **`lib/site.ts` define la URL canónica** y la usan todos: canonical, `og:url`, sitemap,
+  robots y el JSON-LD. Sale de `NEXT_PUBLIC_SITE_URL`, si no de `URL` (que Netlify inyecta
+  sola en el build), si no del subdominio actual. **Se lee en build**: al comprar el dominio
+  hay que cargarla *y reconstruir*, igual que la public key de Mercado Pago.
+- **Los metadatos del `layout` son estáticos** y salen de `BUSINESS`, no de la base: así el
+  layout no depende de una consulta. Lo que Google realmente usa para horario, teléfono y
+  precios es el **JSON-LD de `app/page.tsx`**, que sí lee la configuración viva del panel.
+- **`lib/seo.ts` arma el JSON-LD y no importa `db`**, igual que `lib/aviso-local.ts`, por eso
+  se puede testear con `tsx` (`tests/seo.test.ts`).
+- **`serializarJsonLd()` escapa el `<`.** Las descripciones las escribe el dueño desde el
+  panel: una que contenga `</script>` cortaría la etiqueta. Nunca sacar ese escape.
+- **Sin `aggregateRating`.** Google no acepta como rich result las reseñas que el propio
+  negocio recolecta y publica sobre sí mismo; declararlas es arriesgar un aviso en Search
+  Console a cambio de nada. (Aparte: el hero muestra “4,9★ +1.200 reseñas” hardcodeado
+  mientras `testimonios` se administra desde el panel. Conviene mostrar el número real.)
+- **`ciudad` en la base guarda “Puerto Iguazú, Misiones”**, ciudad y provincia juntas, porque
+  el sitio la muestra así. schema.org las quiere separadas: `partesUbicacion()` las parte.
+  Se descubrió mirando el JSON-LD renderizado contra la base, no con los tests.
+- **El horario del JSON-LD cierra a las 23:45**, la hora del último pedido, no a las 00:00 en
+  que cierra el local. Para un sitio de delivery es el dato útil. Ver la distinción de
+  `hours` vs `horaCierre` más arriba.
+- **La miniatura para compartir la genera `app/opengraph-image.tsx`** con `next/og`, en el
+  build. No es un archivo en `public/`: si se cambia el texto, se regenera sola.
+- El panel y la API quedan fuera del índice por `robots.ts` **y** por `robots: noindex` en
+  `app/admin/layout.tsx` y `app/admin-login/layout.tsx`. Lo segundo cubre el caso de que
+  alguien enlace la URL desde afuera: sin él, Google indexa la URL aunque no la rastree.
+
+Lo que falta del lado de SEO: **Google Business Profile** (es lo que más mueve en búsqueda
+local y no se hace desde el código), fotos reales, y rutas propias por producto — hoy la
+carta entera vive en `/` y el sitemap tiene una sola entrada.
 
 ## Cosas que hay que recordar hacer
 

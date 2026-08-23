@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx tests/hours.test.ts && tsx tests/catalog.test.ts && tsx tests/aviso-local.test.ts"
+    "test": "tsx tests/hours.test.ts && tsx tests/catalog.test.ts && tsx tests/aviso-local.test.ts && tsx tests/seo.test.ts"
   },
   "dependencies": {
     "@insforge/sdk": "^1.2.5",

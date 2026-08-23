@@ -5,6 +5,8 @@ import "./admin.css";
 
 export const metadata: Metadata = {
   title: "Impasto Admin · Panel",
+  // El panel nunca se indexa, aunque alguien enlace la URL desde afuera.
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
