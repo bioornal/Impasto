@@ -10,8 +10,40 @@
 
 Spec: [`docs/superpowers/specs/2026-08-23-chatbot-vendedor-design.md`](../specs/2026-08-23-chatbot-vendedor-design.md)
 
+## La regla que manda sobre todo lo demás
+
+**Todo lo que dice el bot tiene que salir de la base o de un módulo que el sitio también lea.
+Nada inventado, y nada escrito dos veces.**
+
+De ahí salen tres consecuencias que atraviesan todo el plan:
+
+1. **Si el dato está en la base, va al prompt.** No alcanza con que el bot pueda deducirlo. Que
+   una pizza es vegetariana lo dice `tags`, no la descripción: hacer que lo infiera del texto es
+   pedirle que adivine algo que ya sabemos con certeza.
+2. **Si es una afirmación de marca —fermentación, horno, materia prima— vive en `lib/marca.ts`**,
+   y de ahí la leen el prompt *y* las secciones del sitio. Copiar la frase al prompt la
+   desincroniza el día que se cambie el copy, sin que nada lo detecte.
+3. **Si no está en ninguno de los dos lados, el bot no lo dice.** Ante la duda, no afirma.
+
+### Contradicciones que hay que resolver antes de empezar
+
+El sitio hoy afirma cosas que el bot va a tener que sostener o desmentir. **No las decide quien
+implementa: las decide el dueño.** Están todas en `components/sections/Hero.tsx`:
+
+| Afirmación en el Hero | Problema |
+|---|---|
+| **"30 min · delivery promedio"** | El prompt le prohíbe al bot prometer tiempos de entrega. La página los promete. Uno de los dos está mal |
+| **"4,9 ★ · +1.200 reseñas"** | Está hardcodeado mientras `testimonios` se administra desde el panel. El bot no debería repetir un número que no puede verificar |
+| **"Pizzería artesanal · desde 2018"** | Si es cierto, es un argumento de venta y va a `lib/marca.ts`. Si no, sale del Hero |
+
+**Ninguna de estas tres entra al prompt hasta que el dueño confirme cuáles son ciertas.**
+
 ## Global Constraints
 
+- **Este plan no se ejecuta mientras haya copy sin commitear.** Al 23/08/2026 hay una sesión
+  paralela con 17 archivos modificados —`Hero.tsx`, `Story.tsx`, `Promos.tsx`, `impasto.css`,
+  `lib/seo.ts`— y las tasks 2, 5 y 7 tocan exactamente esos archivos. **Primero se mergea el
+  copy; después arranca esto.** Verificar con `git status --short` antes del primer commit.
 - **Gestor de paquetes: `pnpm`, nunca `npm`.** Un `package-lock.json` fija `@insforge/sdk@1.2.5`, que no expone el subpath `/ssr`, y rompe la auth del panel.
 - **Nada de top-level `await` en los tests.** `tsx` compila a CJS en este repo y esbuild lo rechaza con *"Top-level await is currently not supported with the cjs output format"*. Todo lo asincrónico va dentro de una `async function main()` que se llama al final. Se verificó el 23/08/2026.
 - **Los módulos que se testean con `tsx` no pueden importar `@/lib/insforge`** ni nada que lo importe (`@/lib/catalog`, `@/lib/business-server`, `@/lib/orders`): revienta con `ERR_PACKAGE_PATH_NOT_EXPORTED`. Sí se puede importar `@/lib/business`, `@/lib/hours`, `@/lib/categorias` y `@/types` — `tests/seo.test.ts` lo hace hoy y pasa. Esto aplica a `lib/chat-mensajes.ts`, `lib/chat-prompt.ts` y `lib/deepseek.ts`.
@@ -29,6 +61,7 @@ Spec: [`docs/superpowers/specs/2026-08-23-chatbot-vendedor-design.md`](../specs/
 | Archivo | Responsabilidad |
 |---|---|
 | `lib/chat-mensajes.ts` (nuevo) | Sanear el historial que manda el cliente. Puro, sin dependencias |
+| `lib/marca.ts` (nuevo) | **Fuente única de los argumentos de marca.** Lo leen el prompt y las secciones del sitio |
 | `lib/chat-prompt.ts` (nuevo) | Armar el prompt de sistema del vendedor. Puro |
 | `lib/deepseek.ts` (nuevo) | Punto único de llamada a DeepSeek + traducción de SSE a texto plano |
 | `app/api/chat/route.ts` (nuevo) | Rate limit, validación, foto del catálogo, streaming |
@@ -197,13 +230,57 @@ git commit -m "feat: sanear el historial que manda el cliente al chat"
 Es el corazón del producto: acá se define qué sabe el bot y cómo vende. Todo lo que no esté en este texto, el bot no lo sabe.
 
 **Files:**
+- Create: `lib/marca.ts`
 - Create: `lib/chat-prompt.ts`
 - Test: `tests/chat-prompt.test.ts`
 - Modify: `package.json`
 
 **Interfaces:**
 - Consumes: `CatalogData` de `@/types`, `BusinessConfig` de `@/lib/business`, `EstadoTienda` de `@/lib/hours`
-- Produces: `promptVendedor(data: CatalogData, business: BusinessConfig, estado: EstadoTienda): string`
+- Produces: `ARGUMENTOS_MARCA: string[]`, `promptVendedor(data: CatalogData, business: BusinessConfig, estado: EstadoTienda): string`
+
+- [ ] **Step 0: Crear `lib/marca.ts` leyendo el copy real del sitio**
+
+**No copiar el texto de este plan.** Abrir `components/sections/Story.tsx` y
+`components/sections/Hero.tsx` **en el momento de implementar** y transcribir las afirmaciones
+que estén ahí en ese momento. El copy se está reescribiendo en otra sesión: lo que este plan
+vio el 23/08/2026 puede ya no ser lo que dice el sitio.
+
+Crear `lib/marca.ts`:
+
+```ts
+/**
+ * Los argumentos de venta de la marca, en un solo lugar.
+ *
+ * Existe para que **la misma afirmación no esté escrita dos veces**. Lo leen el
+ * prompt del chatbot (`lib/chat-prompt.ts`) y las secciones del sitio: si se
+ * cambia el copy acá, el bot cambia con él. Copiar la frase al prompt lo
+ * desincronizaría el día que se edite el sitio, sin que nada lo detecte.
+ *
+ * **Solo va acá lo que es verificablemente cierto del negocio.** Un tiempo de
+ * entrega promedio, una cantidad de reseñas o un año de fundación son
+ * afirmaciones que el bot va a sostener frente a un cliente: no entran hasta
+ * que el dueño las confirme.
+ */
+export interface ArgumentoMarca {
+  /** Titular corto. Es lo que muestra la sección Nosotros del sitio. */
+  titulo: string;
+  /** La explicación. */
+  detalle: string;
+}
+
+export const ARGUMENTOS_MARCA: ArgumentoMarca[] = [
+  // Transcribir desde components/sections/Story.tsx y Hero.tsx al implementar.
+];
+```
+
+La forma `{ titulo, detalle }` no es caprichosa: es exactamente la del array `STATS` que hoy
+tiene `Story.tsx` hardcodeado, así que en la Task 7 esa sección pasa a leer de acá sin
+reescribir su maquetado.
+
+Llenar el array con el copy vigente. Si al leerlo aparece alguna de las tres afirmaciones
+dudosas de la tabla de arriba (los 30 minutos, las 1.200 reseñas, el año 2018), **dejarla
+afuera y preguntar al dueño**.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -211,6 +288,7 @@ Crear `tests/chat-prompt.test.ts`:
 
 ```ts
 import { promptVendedor } from "../lib/chat-prompt";
+import { ARGUMENTOS_MARCA } from "../lib/marca";
 import { BUSINESS, type BusinessConfig } from "../lib/business";
 import { estadoTienda } from "../lib/hours";
 import type { CatalogData } from "../types";
@@ -234,11 +312,11 @@ const catalogo: CatalogData = {
     { id: "2", nombre: "Fugazzeta", categoria: "clasica", precio: 18000, desc: "Mucha cebolla.", tags: [], disponible: false },
   ],
   empanadas: [
-    { id: "3", nombre: "Carne suave", precio: 2500, desc: "Cortada a cuchillo.", tags: [], disponible: true },
+    { id: "3", nombre: "Carne suave", precio: 2500, desc: "Cortada a cuchillo.", tags: ["picante"], disponible: true },
   ],
   bebidas: [{ id: "4", nombre: "Agua sin gas", precio: 1500, disponible: true }],
   empanadaBoxPrices: { 6: 12000, 12: 22000, 24: 40000 },
-  promos: [],
+  promos: [{ id: "p1", titulo: "Martes 2x1", desc: "Dos pizzas clásicas al precio de una.", badge: "2x1" }],
   reviews: [],
 };
 
@@ -255,6 +333,28 @@ chequear("incluye la descripción, que es con lo que vende", prompt.includes("Sa
 chequear("marca lo que está agotado", /Fugazzeta.*AGOTADO/.test(prompt));
 chequear("no marca como agotado lo que hay", !/Muzzarella.*AGOTADO/.test(prompt));
 chequear("trae las tres secciones", prompt.includes("PIZZAS") && prompt.includes("EMPANADAS") && prompt.includes("BEBIDAS"));
+
+/* ── los datos que la base tiene y el bot no debe deducir ── */
+chequear("usa los tags y no obliga a deducir del texto", /Muzzarella.*vegetariana/.test(prompt));
+chequear("marca la empanada picante", /Carne suave.*picante/.test(prompt));
+chequear("incluye el precio de las cajas de empanadas", prompt.includes("$22.000"));
+chequear("incluye las promos activas de la base", prompt.includes("Martes 2x1"));
+
+const sinPromos = promptVendedor({ ...catalogo, promos: [] }, business, abierto);
+chequear("sin promos cargadas no anuncia ninguna", !sinPromos.includes("PROMOCIONES VIGENTES"));
+
+/* ── los argumentos de marca salen de lib/marca.ts, no del prompt ── */
+chequear(
+  "los argumentos de marca vienen del módulo compartido",
+  ARGUMENTOS_MARCA.every((argumento) => prompt.includes(argumento.titulo) && prompt.includes(argumento.detalle)),
+);
+// El invariante que importa: si el prompt menciona la fermentación, es porque
+// está en ARGUMENTOS_MARCA. Nunca porque alguien la escribió a mano acá.
+const promptMenciona = /fermentaci[óo]n/i.test(prompt);
+const marcaMenciona = ARGUMENTOS_MARCA.some(
+  (argumento) => /fermentaci[óo]n/i.test(`${argumento.titulo} ${argumento.detalle}`),
+);
+chequear("ninguna afirmación de marca está escrita a mano en el prompt", promptMenciona === marcaMenciona);
 
 /* ── el envío, que es la palanca de venta ── */
 chequear("dice cuánto sale el envío", prompt.includes("$3.000"));
@@ -303,6 +403,7 @@ Esperado: falla con `Cannot find module '../lib/chat-prompt'`.
 Crear `lib/chat-prompt.ts`:
 
 ```ts
+import { ARGUMENTOS_MARCA } from "@/lib/marca";
 import type { BusinessConfig } from "@/lib/business";
 import type { EstadoTienda } from "@/lib/hours";
 import type { CatalogData } from "@/types";
@@ -325,14 +426,25 @@ interface ItemCarta {
   nombre: string;
   precio?: number;
   desc?: string;
+  tags: string[];
   disponible: boolean;
 }
 
+/**
+ * Los tags van tal cual salen de la base. No se traducen ni se interpretan: el
+ * `slug` es el dato. Cualquier mapeo a mano sería una copia que se
+ * desincroniza el día que el dueño crea una etiqueta nueva desde el panel.
+ *
+ * Van al prompt aunque la descripción "ya se entienda": que una pizza sea
+ * vegetariana lo dice `tags`, y hacer que el modelo lo deduzca del texto es
+ * pedirle que adivine algo que ya sabemos con certeza.
+ */
 function linea(item: ItemCarta): string {
   const precio = item.precio ? ` — ${pesos(item.precio)}` : "";
   const agotado = item.disponible ? "" : " [AGOTADO]";
+  const tags = item.tags.length > 0 ? ` [${item.tags.join(", ")}]` : "";
   const desc = item.desc ? `: ${item.desc}` : "";
-  return `- ${item.nombre}${precio}${agotado}${desc}`;
+  return `- ${item.nombre}${precio}${agotado}${tags}${desc}`;
 }
 
 /** Una sección vacía no se anuncia: anunciarla invita al bot a inventar. */
@@ -341,12 +453,39 @@ function seccion(titulo: string, items: ItemCarta[]): string {
   return `\n${titulo}\n${items.map(linea).join("\n")}\n`;
 }
 
+/** Las cajas de empanadas: de lo que más se pregunta, y sale de la base. */
+function cajas(data: CatalogData): string {
+  const tamanios = ([6, 12, 24] as const).filter((n) => data.empanadaBoxPrices[n] > 0);
+  if (tamanios.length === 0 || data.empanadas.length === 0) return "";
+  const lista = tamanios.map((n) => `caja x${n} ${pesos(data.empanadaBoxPrices[n])}`).join(" · ");
+  return `\nCAJAS DE EMPANADAS\n- ${lista}\n`;
+}
+
+/**
+ * Las promos activas, las mismas que el sitio está anunciando en el ticker.
+ * Sin esto, el bot diría "no tenemos promos" mientras la página anuncia una.
+ */
+function promociones(data: CatalogData): string {
+  if (data.promos.length === 0) return "";
+  const lista = data.promos.map((promo) => `- ${promo.titulo}: ${promo.desc}`).join("\n");
+  return `\nPROMOCIONES VIGENTES\n${lista}\n`;
+}
+
 function carta(data: CatalogData): string {
   return [
     seccion("PIZZAS", data.pizzas),
     seccion("EMPANADAS", data.empanadas),
-    seccion("BEBIDAS", data.bebidas.map((bebida) => ({ ...bebida, desc: "" }))),
+    cajas(data),
+    seccion("BEBIDAS", data.bebidas.map((bebida) => ({ ...bebida, desc: "", tags: [] }))),
+    promociones(data),
   ].join("");
+}
+
+/** Los argumentos de marca, si los hay. Nunca escritos a mano acá. */
+function sobreElProducto(): string {
+  if (ARGUMENTOS_MARCA.length === 0) return "";
+  const lista = ARGUMENTOS_MARCA.map((a) => `- ${a.titulo}: ${a.detalle}`).join("\n");
+  return `\nSOBRE EL PRODUCTO\n${lista}\n`;
 }
 
 export function promptVendedor(
@@ -372,14 +511,19 @@ CÓMO HABLÁS
 CÓMO VENDÉS
 - Si no te lo dijeron, preguntá para cuántos son o qué tienen ganas de comer.
 - Recomendá por nombre y precio, y contá qué lleva cuando ayude a decidir.
-- ${business.name} hace fermentación lenta de 48 horas. Es el argumento cuando dudan por el precio.
+- Lo que va entre corchetes en cada producto son sus etiquetas. Usalas para filtrar cuando te
+  pidan algo vegetariano, picante o gourmet: son el dato, no lo deduzcas de la descripción.
+- Cuando duden por el precio, usá lo que dice SOBRE EL PRODUCTO. Nada más que eso.
 - Se puede pedir una pizza mitad y mitad de dos gustos.
 - Si algo está [AGOTADO], decilo de una y ofrecé la alternativa más parecida.
 
 LO QUE NO HACÉS NUNCA
 - No tomás pedidos, no armás el carrito y no confirmás nada. El cliente agrega solo, con su
   propio click. Si te piden que confirmes un pedido, explicá con amabilidad cómo hacerlo en la página.
-- No inventás productos, precios, promociones ni descuentos. Solo existe lo que está en LA CARTA.
+- No inventás nada. Solo existe lo que está en LA CARTA, en EL ENVÍO y en SOBRE EL PRODUCTO.
+  Si te preguntan algo que no figura ahí, decí que no lo tenés y ofrecé el WhatsApp del local.
+- No afirmás nada sobre tiempos de entrega, cantidad de reseñas, puntajes ni años de trayectoria,
+  aunque los veas en algún lado.
 - Si te piden un descuento, decí con simpatía que los precios son los de la carta.
 - No prometés tiempos de entrega: no los sabemos.
 - No hablás de otra cosa que no sea ${business.name} y su carta. Si te preguntan otra cosa,
@@ -393,7 +537,7 @@ EL ENVÍO
 - Envío GRATIS a partir de ${pesos(business.freeShippingFrom)} de subtotal. Si la persona está
   cerca de ese monto, decíselo: es el argumento que más cierra.
 - También se puede retirar por el local: ${business.address}.
-
+${sobreElProducto()}
 LA CARTA
 ${carta(data)}`;
 }
@@ -1004,8 +1148,10 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
         <div className="chat-panel" role="dialog" aria-label="Asistente de Impasto" ref={panelRef}>
           <div className="chat-head">
             <div>
+              {/* Nada de promesas acá: "respondo al toque" o "24 hs" son
+                  afirmaciones que nadie verificó. */}
               <strong>Te ayudo a elegir</strong>
-              <span>Respondo al toque</span>
+              <span>{business.name} · {business.city}</span>
             </div>
             <button onClick={cerrar} aria-label="Cerrar">
               <IconoCerrar />
@@ -1297,6 +1443,89 @@ Esto **no se puede hacer antes de pushear**. Una vez que Netlify publique:
    espera, que ya está implementado y quedaría como único indicador).
 3. Confirmar en el panel de DeepSeek que el consumo por conversación es el esperado.
 
+### Task 7: Que el sitio lea de la misma fuente que el bot
+
+Hasta acá `lib/marca.ts` existe pero la afirmación sigue escrita dos veces: una en el módulo y
+otra en el JSX. Esta task cierra el círculo. **Es la que hace que la regla se sostenga sola:**
+después de esto, cambiar el copy del sitio cambia lo que dice el bot, sin que nadie se acuerde
+de sincronizar nada.
+
+**Files:**
+- Modify: `components/sections/Story.tsx` (el array `STATS`)
+- Modify: `components/sections/Hero.tsx` (solo si el lede repite alguna afirmación de `marca.ts`)
+
+**Interfaces:**
+- Consumes: `ARGUMENTOS_MARCA` y `ArgumentoMarca` de `@/lib/marca` (Task 2)
+- Produces: nada nuevo
+
+- [ ] **Step 1: Confirmar que no hay copy sin commitear**
+
+```bash
+git status --short components/sections/
+```
+
+Esperado: **vacío**. Si aparece algo, la sesión de copy sigue abierta: parar acá y esperar. Esta
+task reescribe exactamente esos archivos.
+
+- [ ] **Step 2: Story lee de `marca.ts`**
+
+En `components/sections/Story.tsx`, borrar el array `STATS` hardcodeado y reemplazarlo:
+
+```tsx
+import { ARGUMENTOS_MARCA } from "@/lib/marca";
+```
+
+```tsx
+          <div className="story-stats">
+            {ARGUMENTOS_MARCA.map((argumento) => (
+              <div key={argumento.titulo}>
+                <b>{argumento.titulo}</b>
+                <small>{argumento.detalle}</small>
+              </div>
+            ))}
+          </div>
+```
+
+El maquetado no cambia: `ArgumentoMarca` tiene la misma forma que tenían los pares de `STATS`.
+
+- [ ] **Step 3: Verificar que la afirmación quedó en un solo lugar**
+
+```bash
+grep -rn "48 horas\|fermentaci" --include=*.ts --include=*.tsx components/ lib/ | grep -v node_modules
+```
+
+Esperado: los resultados de `lib/marca.ts` y, si el Hero tiene su propio lede narrativo, los del
+Hero. **Lo que no puede aparecer es la misma frase repetida en `Story.tsx` y en `marca.ts`.**
+
+El lede del Hero es prosa de marketing y puede quedarse: lo que importa es que las
+**afirmaciones verificables** —los pares titular/detalle— salgan de un solo lado. Si el lede
+afirma algo que `marca.ts` no dice, agregarlo a `marca.ts` o sacarlo del lede.
+
+- [ ] **Step 4: Verificar en el navegador y contra el bot**
+
+Levantar `pnpm dev`. Comprobar que la sección Nosotros se ve igual que antes.
+
+Después, con la key cargada, preguntarle al chat *"¿por qué la masa es distinta?"* y confirmar
+que **contesta con las mismas afirmaciones que muestra la sección Nosotros**, sin agregar
+ninguna.
+
+- [ ] **Step 5: La prueba que cierra todo**
+
+Cambiar a mano un `detalle` en `lib/marca.ts`, recargar, y confirmar dos cosas a la vez: que la
+sección Nosotros muestra el texto nuevo **y** que el bot lo usa en su respuesta. Revertir el
+cambio.
+
+Si las dos cosas se mueven juntas, la regla se sostiene sola. Si no, quedó una copia en algún
+lado.
+
+- [ ] **Step 6: Commit**
+
+```bash
+pnpm test && pnpm lint && pnpm build
+git add components/sections/Story.tsx components/sections/Hero.tsx lib/marca.ts
+git commit -m "refactor: los argumentos de marca salen de un solo lugar"
+```
+
 ## Self-review
 
 Repasado contra el spec. Cobertura sección por sección:
@@ -1321,6 +1550,12 @@ Repasado contra el spec. Cobertura sección por sección:
 | Tests del prompt | 2 |
 | Variables de entorno documentadas | 3 |
 | Riesgo del streaming en Netlify | 6 |
+| Los `tags` de la base van al prompt, no se deducen | 2 |
+| Precios de las cajas de empanadas | 2 |
+| Promos vigentes, para no contradecir al ticker | 2 |
+| Afirmaciones de marca en una sola fuente | 2 (se crea), 7 (el sitio la consume) |
+| El bot no afirma tiempos de entrega, reseñas ni antigüedad | 2 |
+| Ninguna promesa inventada en la interfaz del widget | 5 |
 
 Sin huecos. Los nombres cruzados entre tasks están verificados: `sanearHistorial`,
 `promptVendedor`, `chatStream`, `hayChat`, `textoDeLineaSSE` y `streamDeTexto` se definen en
