@@ -30,5 +30,11 @@ export const LOGO_DEGRADE: VarianteLogo = { src: `${BASE}/3.png`, ancho: 2172, a
  */
 export const LOGO_CLARO: VarianteLogo = { src: `${BASE}/2-claro.png`, ancho: 2000, alto: 639 };
 
-/** El del header. Cambiar acá entre LOGO_PLANO y LOGO_DEGRADE. */
-export const LOGO: VarianteLogo = LOGO_DEGRADE;
+/**
+ * El del header. Cambiar acá entre LOGO_PLANO y LOGO_DEGRADE.
+ *
+ * Va el plano: el degradé se probó en producción el 23/08/2026 y se descartó.
+ * Además es el que le corresponde a LOGO_CLARO, así que el header y el footer
+ * muestran el mismo dibujo.
+ */
+export const LOGO: VarianteLogo = LOGO_PLANO;
