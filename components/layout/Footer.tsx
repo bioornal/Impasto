@@ -1,3 +1,5 @@
+import Image from "next/image";
+import { LOGO_CLARO } from "@/lib/logo";
 import type { BusinessConfig } from "@/lib/business";
 
 export function Footer({ business }: { business: BusinessConfig }) {
@@ -8,10 +10,13 @@ export function Footer({ business }: { business: BusinessConfig }) {
       <div className="container">
         <div className="footer-grid">
           <div className="footer-about">
-            <div className="logo" style={{ marginBottom: 16 }}>
-              <div className="logo-mark">I</div>
-              <div className="logo-word">{business.name}</div>
-            </div>
+            <Image
+              src={LOGO_CLARO.src}
+              alt={business.name}
+              width={LOGO_CLARO.ancho}
+              height={LOGO_CLARO.alto}
+              className="footer-logo"
+            />
             <p>
               Pizza híbrida argentina con fermentación lenta de 48 horas.
               Elaborada cada día en {business.locationLabel}.

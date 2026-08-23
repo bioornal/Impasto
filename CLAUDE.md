@@ -248,6 +248,38 @@ aviso de Telegram convive con el del mail y un reintento no manda dos veces.
 con dependencias vacías). Aunque quede abierto en una pantalla del local, un pedido nuevo no
 aparece hasta recargar a mano.
 
+## El storage (arreglado el 23/08/2026)
+
+Ninguna subida funcionaba, por ninguna vía — panel, SDK o CLI. El error visible era
+`DATABASE_VALIDATION_ERROR`, que no dice nada; **el motivo real solo aparece en los logs del
+backend** (`npx -y @insforge/cli logs insforge.logs --limit 40`):
+
+    column "uploaded_via" of relation "objects" does not exist
+
+El backend corre InsForge **2.1.1** e inserta `storage.objects.uploaded_via` en cada PUT, pero
+la tabla de este proyecto seguía en el esquema anterior: **la migración de plataforma nunca
+corrió acá**. Se arregló agregando la columna (`text`, nullable; el backend le escribe `rest`
+o `s3`).
+
+**No se puede hacer por migración.** El backend rechaza el DDL con *"Write operations on storage
+schema are not allowed"*, así que `db migrations up` falla y dejar el archivo en `migrations/`
+trabaría todas las migraciones siguientes. Se aplicó por **conexión directa a Postgres**
+(`npx -y @insforge/cli db connection-string` + `pg`), que no pasa por ese guardia. Es la única
+vía para tocar los esquemas de plataforma, y por eso este arreglo **no figura en
+`db migrations list`**.
+
+Si InsForge vuelve a actualizar el backend y el storage se rompe otra vez, mirar primero si
+falta otra columna nueva: es el mismo síntoma.
+
+Dos cosas más, para no repetir el diagnóstico:
+
+- **El nombre del bucket no era el problema.** `DB` en mayúsculas funciona igual que
+  `client-assets`. Los dos buckets fallaban idéntico, que fue lo que descartó al bucket.
+- **Para assets fijos del sitio (el logo del navbar, íconos) no uses storage**: van en
+  `public/` con `next/image`. Se sirven desde el dominio propio, entran en el build y no
+  gastan el egress de InsForge. El storage es para lo que sube el dueño desde el panel —
+  las fotos reales de productos, que siguen pendientes.
+
 ## Cosas que hay que recordar hacer
 
 - **`productos` es una tabla global compartida** con **Carro Fogón**, y no tiene ninguna

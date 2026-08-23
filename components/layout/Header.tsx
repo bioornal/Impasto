@@ -1,7 +1,9 @@
 "use client";
+import Image from "next/image";
 import { useCart } from "@/components/providers/CartProvider";
 import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { fmt } from "@/lib/utils";
+import { LOGO } from "@/lib/logo";
 import type { BusinessConfig } from "@/lib/business";
 
 const NAV: [string, string][] = [
@@ -75,11 +77,14 @@ export function Header({ onCartClick, onNav, current, business, sections }: Head
       <header className="header">
         <div className="container header-inner">
           <button className="logo" onClick={() => onNav("home")} aria-label="Ir al inicio">
-            <div className="logo-mark">I</div>
-            <div className="logo-word">
-              {business.name}
-              <small>pizza híbrida · iguazú</small>
-            </div>
+            <Image
+              src={LOGO.src}
+              alt={business.name}
+              width={LOGO.ancho}
+              height={LOGO.alto}
+              className="logo-img"
+              priority
+            />
           </button>
 
           <nav className="nav">

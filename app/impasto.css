@@ -152,11 +152,27 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   backdrop-filter:saturate(1.5) blur(18px);
   border-bottom:1px solid var(--line);
 }
-.header-inner{ display:flex; align-items:center; gap:32px; padding-block:16px; }
+.header-inner{ display:flex; align-items:center; gap:32px; padding-block:10px; }
 .logo{
   display:flex; align-items:center; gap:11px; cursor:pointer;
   background:none; border:0; padding:0; text-align:left; color:inherit;
+  /* El botón es el que se comprimía y achataba al logo: la imagen ya tenía
+     flex:none, pero heredaba el ancho recortado de su contenedor. */
+  flex:none;
 }
+/* El logo es un lockup horizontal que ya trae la llama, el nombre y la
+   bajada "pizza híbrida · puerto iguazú": por eso reemplaza a .logo-mark y
+   .logo-word juntos, y no se repite la bajada en texto.
+   Al ser 3.13:1, la altura manda: 72px de alto son ~225px de ancho. */
+.logo-img{
+  height:72px; width:auto; display:block;
+  /* Sin esto el flex del header lo comprime en pantallas angostas y el logo
+     sale achatado: a 320px quedaba 125x56 en vez de 175x56. */
+  flex:none;
+}
+/* El nav se oculta a los 980px, así que recién abajo de 560 —donde el carrito
+   además pierde su etiqueta— hace falta achicarlo para que no lo choque. */
+@media (max-width:560px){ .logo-img{ height:56px; } }
 .logo-mark{
   width:38px; height:38px; border-radius:11px; flex:none;
   background:var(--accent); color:var(--accent-ink);
@@ -760,6 +776,9 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:40px;
   padding-bottom:44px; border-bottom:1px solid rgba(246,241,231,.12);
 }
+/* Variante clara del lockup: el original tiene la tinta casi negra y sobre
+   --ink-deep no se vería. Ver lib/logo.ts. */
+.footer-logo{ height:72px; width:auto; display:block; margin-bottom:16px; }
 .footer-about p{ font-size:13.5px; color:rgba(246,241,231,.6); max-width:36ch; margin:0; line-height:1.6; }
 .footer h5{
   font-family:var(--font-mono); font-size:10px; letter-spacing:.24em;
