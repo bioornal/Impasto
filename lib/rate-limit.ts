@@ -15,6 +15,8 @@ export const LIMITES = {
   pedido: { max: 10, ventana: 600 },
   login: { max: 5, ventana: 900 },
   cotizacion: { max: 120, ventana: 60 },
+  // Cada mensaje cuesta tokens: sin límite, un curioso funde el saldo de DeepSeek.
+  chat: { max: 20, ventana: 600 },
 } satisfies Record<string, LimiteConfig>;
 
 /** Netlify expone la IP real acá; el resto son respaldos. */
