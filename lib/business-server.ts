@@ -39,7 +39,8 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       ventasActivas: branch.ventas_activas !== false,
       mensajeCierre: String(branch.mensaje_cierre || ""),
       deliveryFee: Number(branch.delivery_fee || BUSINESS.deliveryFee),
-      freeShippingFrom: Number(branch.envio_gratis_desde || BUSINESS.freeShippingFrom),    };
+      freeShippingFrom: Number(branch.envio_gratis_desde || BUSINESS.freeShippingFrom),
+      deliveryEstimate: String(branch.tiempo_entrega || BUSINESS.deliveryEstimate),    };
   } catch {
     return BUSINESS;
   }

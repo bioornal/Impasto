@@ -26,7 +26,15 @@ export interface BusinessConfig {
   mensajeCierre: string;
   deliveryFee: number;
   /** Monto de subtotal a partir del cual el envío es gratis. */
-  freeShippingFrom: number;}
+  freeShippingFrom: number;
+  /**
+   * Rango estimado de entrega, para delivery y para retiro. Se muestra **como
+   * estimado, nunca como promesa**: el local no puede garantizar una hora exacta.
+   * Antes había tres tiempos distintos hardcodeados en el carrito y el checkout,
+   * y se contradecían entre sí.
+   */
+  deliveryEstimate: string;
+}
 
 export const SUCURSAL_ID = "iguazu";
 
@@ -49,7 +57,9 @@ export const BUSINESS: BusinessConfig = {
   ventasActivas: true,
   mensajeCierre: "",
   deliveryFee: 3000,
-  freeShippingFrom: 25000,} as const;
+  freeShippingFrom: 25000,
+  deliveryEstimate: "30 a 50 min",
+} as const;
 
 export const DELIVERY_FEE = BUSINESS.deliveryFee;
 export const FREE_SHIPPING_FROM = BUSINESS.freeShippingFrom;

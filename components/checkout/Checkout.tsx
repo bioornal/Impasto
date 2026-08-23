@@ -173,7 +173,7 @@ export function Checkout({ onClose, onConfirm, onCardConfirm, business }: Checko
                   <span className={`dot ${!isDelivery ? "on" : ""}`} />
                 </span>
                 <small>
-                  Listo en 20 min · sin cargo<br />
+                  Listo en {business.deliveryEstimate} · sin cargo<br />
                   {business.address}
                 </small>
               </button>
@@ -260,7 +260,7 @@ export function Checkout({ onClose, onConfirm, onCardConfirm, business }: Checko
           <div className="co-sum">
             <div className="co-sum-head">
               <h4>Tu pedido</h4>
-              <span className="eta">{isDelivery ? "Llega en 30-40 min" : "Listo en 20 min"}</span>
+              <span className="eta">{isDelivery ? "Llega en" : "Listo en"} {business.deliveryEstimate}</span>
             </div>
 
             <div className="co-sum-items">

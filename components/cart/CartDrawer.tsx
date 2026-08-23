@@ -130,7 +130,7 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14" /><path d="m13 5 7 7-7 7" /></svg>
             </button>
             {!tienda.abierto && <small className="drawer-closed">{tienda.motivo}</small>}
-            <small className="drawer-note">Sin costo de servicio · Listo en 30 min</small>
+            <small className="drawer-note">Sin costo de servicio · Entrega estimada {business.deliveryEstimate}</small>
           </div>
         )}
       </aside>

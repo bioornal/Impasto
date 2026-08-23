@@ -80,7 +80,9 @@ chequear("y dice cuándo vuelve a abrir", promptCerrado.includes("Abrimos"));
 /* ── las reglas de venta ── */
 chequear("prohíbe inventar precios y descuentos", /no invent/i.test(prompt) && /descuento/i.test(prompt));
 chequear("prohíbe tomar pedidos", /no tom[aá]s pedidos/i.test(prompt));
-chequear("prohíbe prometer tiempos de entrega", /tiempos de entrega/i.test(prompt));
+chequear("incluye el tiempo estimado de entrega", prompt.includes(business.deliveryEstimate));
+chequear("lo presenta como estimado y no como promesa",
+  /estimado/i.test(prompt) && /nunca prometas una hora exacta/i.test(prompt));
 chequear("pide responder en el idioma del cliente", /portugu[ée]s/i.test(prompt));
 chequear("pide respuestas cortas", prompt.includes("2 a 4 líneas"));
 
