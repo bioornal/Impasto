@@ -1561,6 +1561,144 @@ git add components/sections/Story.tsx components/sections/Hero.tsx lib/marca.ts
 git commit -m "refactor: los argumentos de marca salen de un solo lugar"
 ```
 
+### Task 8: El tiempo de entrega, estimado y en un solo lugar
+
+El sitio hoy promete **tres tiempos distintos que se contradicen**: el carrito dice "Listo en
+30 min", el checkout dice "Listo en 20 min" en un lado y "Llega en 30-40 min" en otro. Son
+promesas exactas que nadie puede sostener, en el camino de compra, que es donde más caro sale
+equivocarse.
+
+**Decisión del dueño (23/08/2026):** no se promete un tiempo exacto. Se dice un **rango
+estimado**, el mismo para delivery y para retiro, y vive en `BusinessConfig` —al lado de
+`deliveryFee` y `freeShippingFrom`— para que el sitio y el bot lean el mismo dato.
+
+**Files:**
+- Modify: `lib/business.ts` (campo nuevo en la interfaz y en `BUSINESS`)
+- Modify: `lib/business-server.ts` (leerlo de la base con respaldo)
+- Modify: `lib/chat-prompt.ts` (agregarlo a EL ENVÍO y cambiar la prohibición)
+- Modify: `tests/chat-prompt.test.ts`
+- Modify: `components/cart/CartDrawer.tsx:133`
+- Modify: `components/checkout/Checkout.tsx:176` y `:263`
+
+**Interfaces:**
+- Consumes: `BusinessConfig` de `@/lib/business`
+- Produces: `BusinessConfig.deliveryEstimate: string`
+
+- [ ] **Step 1: El campo en la config**
+
+En `lib/business.ts`, dentro de `interface BusinessConfig`, después de `freeShippingFrom`:
+
+```ts
+  /**
+   * Rango estimado de entrega, para delivery y para retiro. Se muestra **como
+   * estimado, nunca como promesa**: el local no puede garantizar una hora exacta.
+   * Antes había tres tiempos distintos hardcodeados en el carrito y el checkout,
+   * y se contradecían entre sí.
+   */
+  deliveryEstimate: string;
+```
+
+Y en la constante `BUSINESS`, después de `freeShippingFrom: 25000,`:
+
+```ts
+  deliveryEstimate: "30 a 50 min",
+```
+
+- [ ] **Step 2: Leerlo de la base**
+
+En `lib/business-server.ts`, dentro del objeto que devuelve `getBusinessConfig`, después de
+la línea de `freeShippingFrom`:
+
+```ts
+      deliveryEstimate: String(branch.tiempo_entrega || BUSINESS.deliveryEstimate),
+```
+
+La columna `tiempo_entrega` **todavía no existe** en la tabla `sucursales`. No hay que crearla
+en esta task: `.select("*")` devuelve lo que haya, `branch.tiempo_entrega` queda `undefined` y
+cae al respaldo del código. Cuando se agregue por migración, el dueño lo edita desde el panel
+sin tocar nada más.
+
+- [ ] **Step 3: El prompt lo dice, y como estimado**
+
+En `lib/chat-prompt.ts`, en el bloque `EL ENVÍO`, agregar como último ítem:
+
+```
+- Tiempo estimado, tanto para delivery como para retiro: ${business.deliveryEstimate}. Es un
+  estimado y lo decís como estimado: nunca prometas una hora exacta de llegada.
+```
+
+Y en `LO QUE NO HACÉS NUNCA`, reemplazar la línea que hoy empieza con "No afirmás nada sobre
+tiempos de entrega" por:
+
+```
+- No afirmás nada sobre cantidad de reseñas, puntajes ni años de trayectoria, aunque los veas
+  en algún lado. Del tiempo solo podés decir el estimado que figura en EL ENVÍO.
+```
+
+- [ ] **Step 4: Ajustar el test**
+
+En `tests/chat-prompt.test.ts`, reemplazar el chequeo
+`chequear("prohíbe prometer tiempos de entrega", /tiempos de entrega/i.test(prompt));` por
+estos dos:
+
+```ts
+chequear("incluye el tiempo estimado de entrega", prompt.includes(business.deliveryEstimate));
+chequear("lo presenta como estimado y no como promesa",
+  /estimado/i.test(prompt) && /nunca prometas una hora exacta/i.test(prompt));
+```
+
+Correr:
+
+```bash
+npx tsx tests/chat-prompt.test.ts
+```
+
+Esperado: todos en PASA.
+
+- [ ] **Step 5: El carrito y el checkout leen el mismo dato**
+
+Los dos componentes ya reciben `business` como prop: no hay que agregar ninguna.
+
+`components/cart/CartDrawer.tsx:133`:
+
+```tsx
+            <small className="drawer-note">Sin costo de servicio · Entrega estimada {business.deliveryEstimate}</small>
+```
+
+`components/checkout/Checkout.tsx:176`:
+
+```tsx
+                  Listo en {business.deliveryEstimate} · sin cargo<br />
+```
+
+`components/checkout/Checkout.tsx:263`:
+
+```tsx
+              <span className="eta">{isDelivery ? "Llega en" : "Listo en"} {business.deliveryEstimate}</span>
+```
+
+- [ ] **Step 6: Verificar que no quedó ningún tiempo hardcodeado**
+
+```bash
+grep -rn "20 min\|30 min\|30-40\|40 min" --include=*.tsx --include=*.ts components/ app/ lib/ | grep -v node_modules
+```
+
+Esperado: **sin resultados**. Si aparece alguno, es un cuarto lugar que nadie había visto.
+
+- [ ] **Step 7: Verificar en el navegador**
+
+`pnpm dev`, agregar algo al carrito y abrirlo: el pie tiene que decir "Entrega estimada 30 a 50
+min". Pasar al checkout y confirmar que las dos menciones —la tarjeta de retiro y el `eta` del
+resumen— dicen el mismo rango, en delivery y en take away.
+
+- [ ] **Step 8: Commit**
+
+```bash
+pnpm test && pnpm lint && pnpm build
+git add lib/business.ts lib/business-server.ts lib/chat-prompt.ts tests/chat-prompt.test.ts components/cart/CartDrawer.tsx components/checkout/Checkout.tsx
+git commit -m "fix: un solo tiempo de entrega, estimado y no prometido"
+```
+
 ## Self-review
 
 Repasado contra el spec. Cobertura sección por sección:
