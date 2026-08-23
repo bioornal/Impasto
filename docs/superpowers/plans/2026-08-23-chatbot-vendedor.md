@@ -324,10 +324,14 @@ const catalogo: CatalogData = {
   reviews: [],
 };
 
-// Martes 21:00 en Iguazú: el local está abierto.
-const abierto = estadoTienda(business, new Date("2026-08-25T00:00:00Z"));
-// Lunes 21:00: el único día que no abre.
-const cerrado = estadoTienda(business, new Date("2026-08-24T00:00:00Z"));
+// Ojo con la zona horaria: el local abre martes a domingo, y estas fechas se
+// interpretan en America/Argentina/Buenos_Aires (UTC-3), no en UTC. Un
+// 2026-08-25T00:00:00Z es lunes 21:00 en Iguazú, no martes: verificar con
+// Intl.DateTimeFormat antes de cambiarlas.
+// Martes 25/08 21:00 en Iguazú: el local está abierto.
+const abierto = estadoTienda(business, new Date("2026-08-26T00:00:00Z"));
+// Lunes 24/08 21:00: el único día que no abre.
+const cerrado = estadoTienda(business, new Date("2026-08-25T00:00:00Z"));
 
 const prompt = promptVendedor(catalogo, business, abierto);
 
