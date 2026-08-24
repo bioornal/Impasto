@@ -100,17 +100,45 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
     // datos- `lector.read()` de más abajo no resuelve nunca, y sin esto el
     // cliente queda con "Escribiendo…" para siempre y sin ninguna vía de
     // contacto: esta task le sacó el botón flotante de WhatsApp, así que el
-    // chat es la única puerta. El timer se reinicia con cada fragmento que
-    // llega, así que no corta una respuesta larga y legítima: solo corta el
-    // silencio total. 15s es bastante más que la pausa entre fragmentos de
-    // cualquier stream que ya arrancó a responder, y bastante menos que la
-    // paciencia de alguien mirando un "Escribiendo…" que no avanza.
+    // chat es la única puerta.
+    //
+    // Dos plazos, no uno, porque cubren riesgos distintos:
+    //
+    // - Hasta el primer fragmento: cubre la conexión a `/api/chat` Y la
+    //   espera del primer token de DeepSeek, que ya no está acotada por
+    //   ningún timeout del servidor una vez que sus headers llegaron (ver
+    //   `lib/deepseek.ts:109`, el `clearTimeout` corre apenas resuelve el
+    //   `fetch`, no cuando termina el stream). Tiene que ser holgadamente
+    //   mayor que los 20s de `lib/deepseek.ts:93`
+    //   (`setTimeout(() => controller.abort(), 20_000)`), para que si
+    //   DeepSeek tarda en conectar sea siempre el servidor el que se rinda
+    //   primero y conteste con su propio error -en vez de que este vigía
+    //   aborte una conexión que el servidor todavía estaba atendiendo bien y
+    //   que probablemente hubiera terminado bien-. No se importa esa
+    //   constante desde acá: este archivo es "use client" y
+    //   `lib/deepseek.ts` es server-only (ahí vive la key). Queda espejada a
+    //   mano en `TIMEOUT_ABORT_DEEPSEEK_MS`; si ese 20_000 cambia, este
+    //   cálculo hay que revisarlo también.
+    // - Entre fragmentos, una vez que el stream ya arrancó: ahí sí un
+    //   silencio largo es un cuelgue de verdad, sin relación con la conexión
+    //   a DeepSeek. Se reinicia con cada fragmento que llega, así que no
+    //   corta una respuesta larga y legítima: se midió una de 44,9s con
+    //   pausas de 8-9s entre fragmentos, y no se cortó. 15s sigue siendo
+    //   bastante más que esa pausa y bastante menos que la paciencia de
+    //   alguien mirando un "Escribiendo…" que no avanza.
+    const TIMEOUT_ABORT_DEEPSEEK_MS = 20_000; // espejo de lib/deepseek.ts:93
     const TIMEOUT_INACTIVIDAD_MS = 15_000;
+    const TIMEOUT_PRIMER_BYTE_MS = TIMEOUT_ABORT_DEEPSEEK_MS + TIMEOUT_INACTIVIDAD_MS; // 35s, con margen
+
     const controlador = new AbortController();
     let inactividad: ReturnType<typeof setTimeout> | undefined;
+    // Antes de que llegue el primer fragmento se usa el plazo largo; después,
+    // el corto. `reiniciarInactividad` lee esta bandera en cada llamada.
+    let primerFragmentoLlegado = false;
     const reiniciarInactividad = () => {
       if (inactividad) clearTimeout(inactividad);
-      inactividad = setTimeout(() => controlador.abort(), TIMEOUT_INACTIVIDAD_MS);
+      const plazo = primerFragmentoLlegado ? TIMEOUT_INACTIVIDAD_MS : TIMEOUT_PRIMER_BYTE_MS;
+      inactividad = setTimeout(() => controlador.abort(), plazo);
     };
 
     try {
@@ -149,7 +177,10 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
       for (;;) {
         const { done, value } = await lector.read();
         if (done) break;
-        // Llegó un fragmento: la conexión sigue viva, se reinicia la cuenta.
+        // Llegó un fragmento: la conexión sigue viva. De acá en más el vigía
+        // usa el plazo corto (ver el comentario de arriba): el riesgo del
+        // primer byte ya pasó.
+        primerFragmentoLlegado = true;
         reiniciarInactividad();
         acumulado += decoder.decode(value, { stream: true });
         setMensajes((previos) => {
