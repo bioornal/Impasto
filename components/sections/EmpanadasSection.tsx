@@ -5,9 +5,13 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { fmt } from "@/lib/utils";
 import { argumento } from "@/lib/marca";
+import { TAMANIOS_CAJA_EMPANADAS } from "@/lib/reglas-carta";
 import type { Empanada } from "@/types";
 
-const TIERS: (6 | 12 | 24)[] = [6, 12, 24];
+// Mismos tamaños que lee el prompt del bot (`lib/chat-prompt.ts`) vía
+// `lib/reglas-carta.ts`: el componente que de verdad cobra no puede tener su
+// propia copia de esta lista.
+const TIERS = TAMANIOS_CAJA_EMPANADAS;
 const EMPANADA_PESO = argumento("empanadas-peso");
 const REPULGUE = argumento("repulgue");
 
