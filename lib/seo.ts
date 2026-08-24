@@ -1,6 +1,7 @@
 import type { BusinessConfig } from "@/lib/business";
 import type { CatalogData, Empanada, Pizza } from "@/types";
 import { SITE_URL } from "@/lib/site";
+import { argumento } from "@/lib/marca";
 
 /**
  * Datos estructurados schema.org del sitio. Es lo que le permite a Google
@@ -127,9 +128,16 @@ function carta(data: CatalogData) {
   };
 }
 
-/** Descripción del local, reusada en el `<meta name="description">` y en el JSON-LD. */
+/**
+ * Descripción del local, reusada en el `<meta name="description">` y en el
+ * JSON-LD. Las cifras ("48 hs", "160 g") salen de `ARGUMENTOS_MARCA`
+ * (`lib/marca.ts`), no están escritas a mano acá: son las mismas que ve el
+ * cliente en el sitio y el bot en el prompt.
+ */
 export function descripcionSitio(business: BusinessConfig): string {
-  return `Pizza híbrida en ${business.locationLabel}: técnica napolitana y alma argentina. Fermentación en frío de 48 hs, empanadas de 160 g al horno y bebidas. `
+  const fermentacion = argumento("fermentacion");
+  const empanadaPeso = argumento("empanadas-peso").cifra;
+  return `Pizza híbrida en ${business.locationLabel}: técnica napolitana y alma argentina. ${fermentacion.titulo} de ${fermentacion.cifra}, empanadas de ${empanadaPeso} al horno y bebidas. `
     + `Pedí online con delivery propio o take away: ${business.hours}.`;
 }
 

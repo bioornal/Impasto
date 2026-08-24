@@ -4,7 +4,7 @@ import { PizzaIllus } from "@/components/ui/PizzaIllus";
 import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { fmt } from "@/lib/utils";
-import { precioMitadYMitad } from "@/lib/reglas-carta";
+import { precioMitadYMitad, COMO_SE_COBRA_MITAD_Y_MITAD } from "@/lib/reglas-carta";
 import type { BusinessConfig } from "@/lib/business";
 import type { Pizza } from "@/types";
 
@@ -65,7 +65,7 @@ export function HalfModal({ startPizza, pizzas, business, onClose }: HalfModalPr
           <div>
             <div className="kicker">Mitad y mitad</div>
             <h3>Dos gustos,<br />una pizza</h3>
-            <p className="lede">Tocá una mitad y elegí la variedad. Se cobra el precio de la más cara, sin recargo.</p>
+            <p className="lede">Tocá una mitad y elegí la variedad. {COMO_SE_COBRA_MITAD_Y_MITAD}</p>
           </div>
 
           <div className="half-wheel">

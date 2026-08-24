@@ -16,11 +16,22 @@
 export const precioMitadYMitad = (a: number, b: number): number => Math.max(a, b);
 
 /**
- * La misma frase que ve el cliente en el modal (antes escrita solo ahí) y la
- * que ahora lee el bot en el prompt. Una sola redacción para las dos.
+ * Partida en dos piezas componibles porque no las usan los mismos lectores
+ * con el mismo alcance. El bot necesita las dos frases: primero decir que se
+ * puede pedir, después cómo se cobra. El modal (`components/cart/HalfModal.tsx`)
+ * solo necesita la segunda — el cliente ya está adentro del modal, así que
+ * "se puede pedir" sobra ahí. Repetir la frase completa a mano en el modal, o
+ * cortarla ahí con un `.split()`, era la misma clase de copia que esta regla
+ * existe para evitar.
  */
-export const REGLA_MITAD_Y_MITAD =
-  "Se puede pedir una pizza mitad y mitad de dos gustos. Se cobra el precio de la más cara, sin recargo.";
+export const SE_PUEDE_PEDIR_MITAD_Y_MITAD = "Se puede pedir una pizza mitad y mitad de dos gustos.";
+export const COMO_SE_COBRA_MITAD_Y_MITAD = "Se cobra el precio de la más cara, sin recargo.";
+
+/**
+ * La frase completa que lee el bot en el prompt. El cliente la lee partida:
+ * ver `SE_PUEDE_PEDIR_MITAD_Y_MITAD` y `COMO_SE_COBRA_MITAD_Y_MITAD` arriba.
+ */
+export const REGLA_MITAD_Y_MITAD = `${SE_PUEDE_PEDIR_MITAD_Y_MITAD} ${COMO_SE_COBRA_MITAD_Y_MITAD}`;
 
 /** Tamaños de caja en los que se venden las empanadas. Nunca sueltas. */
 export const TAMANIOS_CAJA_EMPANADAS = [6, 12, 24] as const;
