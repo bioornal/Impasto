@@ -6,7 +6,6 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { useTweaks } from "@/components/providers/TweakProvider";
 import { fmt } from "@/lib/utils";
 import { argumento } from "@/lib/marca";
-import { REGLA_MITAD_Y_MITAD } from "@/lib/reglas-carta";
 import type { Pizza } from "@/types";
 
 const HORNO = argumento("horno");
@@ -63,7 +62,7 @@ export function PizzaList({ pizzas, onHalf }: PizzaListProps) {
             <div className="sec-index">01 — La carta</div>
             <h2>Pizzas</h2>
           </div>
-          <p>Estiradas a mano en el momento y cocidas a {HORNO.detalle}. {PORCIONES.titulo}, base crocante y abundante {MUZZARELLA.titulo.toLowerCase()}. {REGLA_MITAD_Y_MITAD}</p>
+          <p>Estiradas a mano en el momento y cocidas a {HORNO.detalle}. {PORCIONES.titulo}, base crocante y abundante {MUZZARELLA.titulo.toLowerCase()}. Podés pedir cualquiera mitad y mitad sin costo extra.</p>
         </div>
       </div>
 
