@@ -169,6 +169,16 @@ limpieza automática de carritos abandonados, consentimiento de privacidad y ana
 - **Sin pedidos anticipados.** Con el local cerrado no se toman pedidos, ni siquiera programados.
   Si se quiere habilitar, aceptarlos siempre que el horario elegido caiga dentro de la atención.
 - **Email como canal de avisos**, no WhatsApp.
+- **El chatbot ofrece alcohol como cualquier otra bebida.** Se le planteó al dueño el 23/08/2026
+  que listar alcohol en la carta y tener un bot empujándolo son dos posturas distintas frente a
+  la Ley 24.788, porque es un sistema automatizado sin verificación de edad. Decidió que sí, así
+  que **no hay ninguna regla especial sobre alcohol en el prompt**: el Malbec y las cervezas se
+  sugieren igual que una gaseosa. Si algún día se quiere restringir, es una línea en
+  `lib/chat-prompt.ts`.
+- **El copy del sitio no se unifica por refactor.** Pizzas dice “sin costo extra” y el modal de
+  mitad y mitad dice “sin recargo”: significan lo mismo, y reemplazar una por la otra para que
+  salgan de una sola constante le cambia la voz a una sección. Lo que tiene que salir de un
+  solo lugar son los **datos verificables** (cifras, reglas de precio), no la redacción.
 
 ## El catálogo tiene recetas (hallazgo del 20/08/2026)
 
