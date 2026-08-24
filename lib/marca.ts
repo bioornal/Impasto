@@ -89,3 +89,28 @@ export function argumento(id: string): ArgumentoMarca {
   }
   return encontrado;
 }
+
+/** Un argumento de marca que garantiza tener `cifra`, para quien la necesite
+ *  sin volver a chequear `undefined`. */
+export interface ArgumentoMarcaConCifra extends ArgumentoMarca {
+  cifra: string;
+}
+
+/**
+ * Como `argumento()`, pero para el subconjunto de llamadas que meten
+ * `.cifra` dentro de un template literal (`` `${x.cifra}` ``). TypeScript no
+ * marca `undefined` ahí adentro -un `cifra` opcional interpolado compila
+ * igual- así que sacarle la cifra a un argumento en `ARGUMENTOS_MARCA` que
+ * algún lugar interpola pasaría desapercibido hasta producción: imprimiría
+ * literalmente "undefined" en un `<meta description>` o un JSON-LD.
+ *
+ * Este helper hace fallar esa edición acá, ruidosamente, en el momento en
+ * que se pide el argumento, no en el momento en que se renderiza el string.
+ */
+export function argumentoConCifra(id: string): ArgumentoMarcaConCifra {
+  const encontrado = argumento(id);
+  if (encontrado.cifra === undefined) {
+    throw new Error(`El argumento de marca "${id}" no tiene "cifra", pero algo la interpola`);
+  }
+  return encontrado as ArgumentoMarcaConCifra;
+}

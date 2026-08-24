@@ -1,7 +1,7 @@
 import type { BusinessConfig } from "@/lib/business";
 import type { CatalogData, Empanada, Pizza } from "@/types";
 import { SITE_URL } from "@/lib/site";
-import { argumento } from "@/lib/marca";
+import { argumentoConCifra } from "@/lib/marca";
 
 /**
  * Datos estructurados schema.org del sitio. Es lo que le permite a Google
@@ -135,8 +135,10 @@ function carta(data: CatalogData) {
  * cliente en el sitio y el bot en el prompt.
  */
 export function descripcionSitio(business: BusinessConfig): string {
-  const fermentacion = argumento("fermentacion");
-  const empanadaPeso = argumento("empanadas-peso").cifra;
+  // `argumentoConCifra`, no `argumento`: las dos se interpolan en el
+  // template literal de abajo, y ahí un `cifra` faltante compilaría igual.
+  const fermentacion = argumentoConCifra("fermentacion");
+  const empanadaPeso = argumentoConCifra("empanadas-peso").cifra;
   return `Pizza híbrida en ${business.locationLabel}: técnica napolitana y alma argentina. ${fermentacion.titulo} de ${fermentacion.cifra}, empanadas de ${empanadaPeso} al horno y bebidas. `
     + `Pedí online con delivery propio o take away: ${business.hours}.`;
 }

@@ -4,7 +4,7 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { fmt } from "@/lib/utils";
 import { LOGO } from "@/lib/logo";
-import { argumento } from "@/lib/marca";
+import { argumentoConCifra } from "@/lib/marca";
 import type { BusinessConfig } from "@/lib/business";
 
 const NAV: [string, string][] = [
@@ -35,9 +35,11 @@ function Topbar({ business }: { business: BusinessConfig }) {
   );
 }
 
-const FERMENTACION = argumento("fermentacion");
-const HORNO = argumento("horno");
-const EMPANADA_PESO = argumento("empanadas-peso");
+// `argumentoConCifra`, no `argumento`: las tres se interpolan en un template
+// literal más abajo, y ahí TypeScript no marca un `cifra` faltante.
+const FERMENTACION = argumentoConCifra("fermentacion");
+const HORNO = argumentoConCifra("horno");
+const EMPANADA_PESO = argumentoConCifra("empanadas-peso");
 
 const TICKER = [
   "Pizza Híbrida: técnica napolitana y alma argentina",
