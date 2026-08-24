@@ -1,4 +1,4 @@
-import { sanearHistorial, MAX_MENSAJES, MAX_CARACTERES, MAX_CARACTERES_ASSISTANT } from "../lib/chat-mensajes";
+import { sanearHistorial, terminaEnCliente, MAX_MENSAJES, MAX_CARACTERES, MAX_CARACTERES_ASSISTANT } from "../lib/chat-mensajes";
 
 let fallos = 0;
 
@@ -51,6 +51,21 @@ chequear("los que conserva son los últimos, no los primeros", muchos[muchos.len
 /* ── contenido vacío ── */
 chequear("descarta mensajes en blanco", sanearHistorial([{ role: "user", content: "   " }]).length === 0);
 chequear("recorta espacios de los bordes", sanearHistorial([{ role: "user", content: "  hola  " }])[0].content === "hola");
+
+/* ── orden del historial (lo que valida route.ts antes de mandarlo a DeepSeek) ── */
+chequear("historial vacío no termina en cliente", terminaEnCliente([]) === false);
+chequear("termina en assistant no es válido", terminaEnCliente([
+  { role: "user", content: "hola" },
+  { role: "assistant", content: "hola, en qué te ayudo" },
+]) === false);
+chequear("termina en user es válido", terminaEnCliente([
+  { role: "assistant", content: "hola, en qué te ayudo" },
+  { role: "user", content: "qué pizzas tenés" },
+]) === true);
+chequear("el primer request del widget ([assistant, user]) sigue siendo válido", terminaEnCliente([
+  { role: "assistant", content: "saludo pre-escrito del widget" },
+  { role: "user", content: "primera pregunta del cliente" },
+]) === true);
 
 console.log(fallos === 0 ? "\nTodo en orden." : `\n${fallos} fallo(s).`);
 process.exit(fallos === 0 ? 0 : 1);

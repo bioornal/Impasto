@@ -4,7 +4,7 @@ import { getCatalogData } from "@/lib/catalog";
 import { getBusinessConfig } from "@/lib/business-server";
 import { estadoTienda } from "@/lib/hours";
 import { promptVendedor } from "@/lib/chat-prompt";
-import { sanearHistorial } from "@/lib/chat-mensajes";
+import { sanearHistorial, terminaEnCliente } from "@/lib/chat-mensajes";
 import { chatStream, hayChat } from "@/lib/deepseek";
 import type { BusinessConfig } from "@/lib/business";
 import type { CatalogData } from "@/types";
@@ -42,7 +42,7 @@ async function fotoDelCatalogo() {
   // Contrapartida asumida a propósito: si la carta llegara a estar legítimamente
   // vacía (hoy no pasa: siempre hay pizzas y empanadas cargadas), cada mensaje
   // repetiría las doce consultas en vez de aprovechar los cinco minutos de
-  // caché. Lo acota el rate limit de "chat" (20 mensajes cada 10 minutos por IP),
+  // caché. Lo acota el rate limit de "chat" (40 mensajes cada 10 minutos por IP),
   // y es preferible a mentirle al cliente que no hay nada para pedir.
   const cartaVacia = catalogo.pizzas.length === 0 && catalogo.empanadas.length === 0
     && catalogo.bebidas.length === 0;
@@ -61,12 +61,7 @@ export async function POST(req: NextRequest) {
   if (historial.length === 0) {
     return NextResponse.json({ ok: false, error: "No hay ningún mensaje para responder." }, { status: 400 });
   }
-  // `sanearHistorial` garantiza roles válidos y largo, no el orden. El widget
-  // puede arrancar con un saludo del bot ya escrito ([system, assistant,
-  // user] es un primer request válido), pero un historial que TERMINE en
-  // `assistant` no tiene nada para responder: llegaría a DeepSeek así y
-  // volvería como un 502 opaco.
-  if (historial[historial.length - 1].role !== "user") {
+  if (!terminaEnCliente(historial)) {
     return NextResponse.json(
       { ok: false, error: "El último mensaje del historial tiene que ser del cliente." },
       { status: 400 },

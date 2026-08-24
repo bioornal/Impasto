@@ -60,3 +60,15 @@ export function sanearHistorial(bruto: unknown): MensajeCliente[] {
 
   return limpios.slice(-MAX_MENSAJES);
 }
+
+/**
+ * `sanearHistorial` garantiza roles válidos y largo, no el orden. El widget
+ * puede arrancar con un saludo del bot ya escrito —el primer request normal
+ * es `[assistant, user]`, porque el rol `system` que mandara el cliente ya se
+ * descartó antes de llegar acá—, pero un historial que TERMINE en
+ * `assistant` no tiene nada para responder: llegaría a DeepSeek así y
+ * volvería como un 502 opaco.
+ */
+export function terminaEnCliente(historial: MensajeCliente[]): boolean {
+  return historial.length > 0 && historial[historial.length - 1].role === "user";
+}
