@@ -5,7 +5,7 @@
 Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Mercado Pago.
 Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
 
-Última actualización: 24 de agosto de 2026.
+Última actualización: 25 de agosto de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -51,23 +51,24 @@ separación por esquema ni columna de pertenencia. Las tres apuntan al mismo bac
 - El recetario **lee `pedidos`** en `ganancias.astro` para calcular la ganancia del mes. Los
   pedidos de Impasto y los del carro entran **juntos** en ese cálculo.
 
-### La fuga que hay que conocer
+### Separación de tenants — `proyecto_id` (25/08/2026)
 
-`GET /api/productos` de Carro Fogón hace `.select("*").eq("disponible", true)` **sin filtrar
-por categoría**. Al 21/08/2026 su menú lista **65 productos, de los cuales 49 son de Impasto**
-(32 pizzas, 9 empanadas, 8 bebidas) y solo 16 son suyos (hamburguesas, lomos, calzones, otros).
-**Activar un producto acá lo agrega al menú del carro.** Pasó con las 8 bebidas.
+La fuga de productos entre proyectos se arregló con una columna `proyecto_id` en `productos`
+y `pedidos` (migración `20260825120000_tenant-proyecto-id.sql`), **sin base nueva**: los tres
+proyectos siguen conviviendo en la misma base.
 
-En el sentido inverso Impasto **sí** está protegido: filtra por `CATEGORIAS_IMPASTO`
-(`lib/categorias.ts`), y el `POST` de Carro Fogón inserta sin `categoria`, así que sus
-productos quedan con categoría nula y no llegan al catálogo de Impasto.
+- `productos` y `pedidos` llevan `proyecto_id` = `'impasto'` o `'carro'`. Quedó **nullable a
+  propósito**: los inserts del código viejo no se rompen durante la ventana migración→deploy.
+  Backfill verificado: `productos` 49 impasto / 16 carro, sin nulos.
+- Impasto filtra y escribe `proyecto_id = 'impasto'` (además de `CATEGORIAS_IMPASTO` y
+  `sucursal_id`, que se conservan como defensa en profundidad).
+- Carro Fogón filtra y escribe `proyecto_id = 'carro'`: su `GET /api/productos` ya no usa el
+  allowlist de Impasto y su `POST /api/productos` ya no fuerza `categoria = 'pizzas'`.
+- `clientes` queda **compartida a propósito**: el cliente es de la empresa, pida por la tienda
+  o por el carro.
 
-Además Carro Fogón recalcula los precios del pedido cruzando **por `nombre`** contra
-`productos` (`app/api/pedidos/route.ts`), no por `id`: dos filas con el mismo nombre se pisan
-entre proyectos.
-
-**Nada de esto se arregla desde este repo.** El arreglo natural es el filtro de categoría del
-lado del carro, pero es su código y su decisión.
+**Orden obligatorio:** correr la migración ANTES de deployar (el código nuevo lee `proyecto_id`).
+El paso a paso está en `docs/P0-configuracion-cuentas.md`.
 
 ## Lo que está terminado y verificado en producción
 
@@ -81,6 +82,10 @@ lado del carro, pero es su código y su decisión.
   vacaciones. La validación vive en `createPedido`, el punto único por donde pasan todas las
   vías de pago. La hora se calcula en la zona del local, no del servidor (Netlify corre en UTC).
 - **Rate limiting** con respaldo en base (las funciones serverless no comparten memoria).
+- **Separación de tenants (`proyecto_id`)** — `productos` y `pedidos` aislados entre Impasto y
+  Carro Fogón en la misma base (ver "Separación de tenants" más arriba).
+- **Páginas legales** — `/terminos`, `/privacidad` y `/reembolso`, enlazadas desde el footer.
+- **Testimonios** — sin seed falsos: el panel y el sitio solo muestran reseñas reales aprobadas.
 - **Módulo de email** construido y probado, **pero sin proveedor configurado**.
 
 ### Distinción que se presta a confusión
@@ -119,6 +124,7 @@ Hoy los avisos se registran en la tabla `notificaciones` con estado `omitido`.
 
 Van tres cosas trabadas esperando lo mismo, una sesión del dueño: esta (Resend), el bot de
 Telegram del punto 5 y la cuenta de DeepSeek del punto 6. Conviene resolver las tres juntas.
+El paso a paso para las tres (más dominio y webhook) está en `docs/P0-configuracion-cuentas.md`.
 
 ### 2. Catálogo
 **Descripciones y tags: hechos el 20/08/2026.** Las 41 pizzas y empanadas tienen
@@ -158,8 +164,9 @@ Las librerías no oficiales arriesgan el baneo permanente del número del local.
 cuenta de DeepSeek y cargue saldo: hasta entonces el widget es un botón de WhatsApp.
 
 ### 7. Calidad y operación
-Hay tests de horarios, catálogo, aviso al local y SEO. Falta: tests de cotización y pedidos, logs estructurados, monitoreo,
-limpieza automática de carritos abandonados, consentimiento de privacidad y analítica.
+Hay tests de horarios, catálogo, aviso al local y SEO, y páginas legales (`/terminos`,
+`/privacidad`, `/reembolso`). Falta: tests de cotización y pedidos, logs estructurados, monitoreo,
+limpieza automática de carritos abandonados, banner de consentimiento de cookies y analítica.
 
 ## Decisiones tomadas, para no rediscutirlas
 
@@ -169,6 +176,8 @@ limpieza automática de carritos abandonados, consentimiento de privacidad y ana
 - **Sin pedidos anticipados.** Con el local cerrado no se toman pedidos, ni siquiera programados.
   Si se quiere habilitar, aceptarlos siempre que el horario elegido caiga dentro de la atención.
 - **Email como canal de avisos**, no WhatsApp.
+- **Los tres proyectos conviven en la MISMA base** (no se crea base nueva). La separación es por
+  la columna `proyecto_id` en `productos` y `pedidos`; `clientes` se comparte a propósito.
 - **El chatbot ofrece alcohol como cualquier otra bebida.** Se le planteó al dueño el 23/08/2026
   que listar alcohol en la carta y tener un bot empujándolo son dos posturas distintas frente a
   la Ley 24.788, porque es un sistema automatizado sin verificación de edad. Decidió que sí, así
@@ -399,13 +408,10 @@ carrito es siempre el cliente.
 
 ## Cosas que hay que recordar hacer
 
-- **`productos` es una tabla global compartida** con **Carro Fogón**, y no tiene ninguna
-  columna de pertenencia. El único criterio es `categoria` contra `CATEGORIAS_IMPASTO`
-  (`lib/categorias.ts`): `pizzas`, `empanadas` y `bebidas` son de Impasto; `hamburguesas`,
-  `lomos`, `calzones` y `otros` son del otro proyecto. **No borrar ni editar esas filas.**
-  Es el mismo problema que `info_empresa_impasto`, pero con Mercado Pago en producción del
-  otro lado: si el proyecto paralelo carga algo con `categoria = 'pizzas'`, aparece en el
-  sitio y es cobrable.
+- **`productos` es una tabla global compartida** con **Carro Fogón**. Desde el 25/08/2026 la
+  separación es `proyecto_id` (`'impasto'` vs `'carro'`), no solo `categoria`. Igual conviene
+  **no borrar ni editar las filas del carro** (`hamburguesas`, `lomos`, `calzones`, `otros`):
+  comparten base y Mercado Pago en producción.
 - **Al comprar el dominio:** cambiar la URL del webhook en Mercado Pago (se hace por MCP) y
   actualizar la variable en Netlify. Conviene además separar la URL de sandbox de la de
   producción, hoy apuntan al mismo endpoint.
