@@ -50,6 +50,11 @@ chequear("usa los tags y no obliga a deducir del texto", /Muzzarella.*vegetarian
 chequear("marca la empanada picante", /Carne suave.*picante/.test(prompt));
 chequear("incluye las promos activas de la base", prompt.includes("Martes 2x1"));
 
+/* ── negrita: acotada a lo que components/chat/ChatWidget.tsx sabe renderizar
+ * (lib/chat-negrita.ts solo entiende **negrita**, nada más de markdown) ── */
+chequear("le dice que resalte con ** el nombre y el precio", /\*\*.*negrita.*\*\*/i.test(prompt) || /doble asterisco/i.test(prompt));
+chequear("aclara que es nombre y precio, nada más", /nombre y (el )?precio/i.test(prompt));
+
 /* ── mitad y mitad: la regla de precio tiene que estar, no solo el permiso ── */
 chequear("dice que se puede pedir mitad y mitad", /mitad y mitad/i.test(prompt));
 chequear("dice cómo se cobra: la más cara, sin recargo", /más cara.*sin recargo|precio de la más cara/i.test(prompt));

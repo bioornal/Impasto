@@ -123,6 +123,7 @@ export function promptVendedor(
   const comoVendes = [
     "- Si no te lo dijeron, preguntá para cuántos son o qué tienen ganas de comer.",
     "- Recomendá por nombre y precio, y contá qué lleva cuando ayude a decidir.",
+    "- Resaltá con **doble asterisco** el nombre y el precio de lo que recomendás, y nada más:\n  el widget solo sabe mostrar eso en negrita, cualquier otro marcado queda como texto plano.",
     "- Lo que va entre corchetes en cada producto son sus etiquetas. Usalas para filtrar cuando te\n  pidan algo vegetariano, picante o gourmet: son el dato, no lo deduzcas de la descripción.",
     haySobreElProducto
       ? "- Cuando duden por el precio, usá lo que dice SOBRE EL PRODUCTO. Nada más que eso."

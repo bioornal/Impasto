@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BusinessConfig } from "@/lib/business";
+import { parsearNegrita } from "@/lib/chat-negrita";
 
 interface Mensaje {
   role: "user" | "assistant";
@@ -39,6 +40,26 @@ class ErrorServidor extends Error {}
 function nombreCorto(nombre: string): string {
   const [primero] = nombre.split(" - ");
   return primero.trim() || nombre;
+}
+
+/**
+ * Renderiza el contenido de un mensaje resaltando `**negrita**`.
+ *
+ * El parseo vive en `lib/chat-negrita.ts`, aparte del componente, para poder
+ * testearlo con `tsx` (este archivo es `"use client"` y no corre ahí). Acá
+ * solo se mapea la lista de tramos a elementos de React: nunca se arma HTML
+ * a mano ni se usa `dangerouslySetInnerHTML`, así que un tramo no puede
+ * convertirse en markup por más que el modelo (o, a través de él, el
+ * cliente) intente colar algo como `<script>`.
+ */
+function ContenidoMensaje({ texto }: { texto: string }) {
+  return (
+    <>
+      {parsearNegrita(texto).map((tramo, indice) =>
+        tramo.negrita ? <strong key={indice}>{tramo.texto}</strong> : <span key={indice}>{tramo.texto}</span>,
+      )}
+    </>
+  );
 }
 
 export function ChatWidget({ business, disponible }: { business: BusinessConfig; disponible: boolean }) {
@@ -286,7 +307,7 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
           <div className="chat-hilo">
             {mensajes.map((mensaje, indice) => (
               <p key={indice} className={`chat-msg chat-msg-${mensaje.role}`}>
-                {mensaje.content}
+                <ContenidoMensaje texto={mensaje.content} />
               </p>
             ))}
             {esperando && <p className="chat-msg chat-msg-assistant chat-escribiendo">Escribiendo…</p>}
