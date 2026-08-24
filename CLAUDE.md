@@ -138,7 +138,9 @@ buscables**. Buscar "panceta" devuelve cinco pizzas, cuatro de las cuales no la 
 en el nombre. Si se reescriben las descripciones sacando ingredientes, se pierde eso.
 
 ### 3. Bebidas
-0 productos con `categoria = 'bebidas'`. La app las soporta y oculta la sección si no hay.
+**Hecho.** Ya no son 0: hay 8 bebidas cargadas con precio (Vino Malbec, Coca-Cola 1.5 L,
+Quilmes, Brahma, Sprite y agua con y sin gas), verificadas en el sitio el 24/08/2026. La
+app las soporta y oculta la sección si no hay — hoy no hace falta que la oculte.
 
 ### 4. Promociones
 Tabla `promociones` vacía. Falta interfaz, reglas de aplicación, vigencias, límites de uso,
@@ -379,8 +381,9 @@ carrito es siempre el cliente.
   del bot, cinco secciones del sitio (`Story`, `Hero`, `PizzaList`, `EmpanadasSection`,
   `Header`) y `lib/seo.ts`. Antes de este módulo la misma afirmación estuvo duplicada en cinco
   lugares: solo entra acá lo que es verificablemente cierto del negocio.
-- **`BusinessConfig.deliveryEstimate`** es el único tiempo de entrega: lo usan seis lugares del
-  sitio (la confirmación del pedido, el drawer del carrito y el checkout) y el prompt del bot.
+- **`BusinessConfig.deliveryEstimate`** es el único tiempo de entrega: lo usan siete lugares
+  del sitio —tres en `Confirmation.tsx`, tres en `Checkout.tsx`, uno en `CartDrawer.tsx`— más
+  el prompt del bot.
 - Lo que el bot **no** hace: no arma carrito, no toca la pantalla, no captura datos y no
   consulta el estado de pedidos. Nada de la conversación se guarda.
 
