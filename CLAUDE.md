@@ -5,7 +5,7 @@
 Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Mercado Pago.
 Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
 
-Última actualización: 20 de agosto de 2026.
+Última actualización: 24 de agosto de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -117,6 +117,9 @@ necesita verificar el dominio por DNS. Variables a completar en `.env.local` y N
 `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM`.
 Hoy los avisos se registran en la tabla `notificaciones` con estado `omitido`.
 
+Van tres cosas trabadas esperando lo mismo, una sesión del dueño: esta (Resend), el bot de
+Telegram del punto 5 y la cuenta de DeepSeek del punto 6. Conviene resolver las tres juntas.
+
 ### 2. Catálogo
 **Descripciones y tags: hechos el 20/08/2026.** Las 41 pizzas y empanadas tienen
 descripción, y los tags están cargados. Falta todavía: **fotos reales** (hoy son
@@ -149,8 +152,8 @@ que no esté en WhatsApp Business App, verificación con CUIT y plantillas aprob
 Las librerías no oficiales arriesgan el baneo permanente del número del local.
 
 ### 6. Chatbot vendedor
-Sin empezar. La base está lista: catálogo en DB, cotización server-side, carrito persistente
-y pedidos asociados a sucursal.
+**Hecho el 23/08/2026.** Ver "El chatbot vendedor" más abajo. Falta que el dueño cree la
+cuenta de DeepSeek y cargue saldo: hasta entonces el widget es un botón de WhatsApp.
 
 ### 7. Calidad y operación
 Hay tests de horarios, catálogo, aviso al local y SEO. Falta: tests de cotización y pedidos, logs estructurados, monitoreo,
@@ -315,6 +318,71 @@ datos estructurados. Para Google era una página cualquiera, no una pizzería de
 Lo que falta del lado de SEO: **Google Business Profile** (es lo que más mueve en búsqueda
 local y no se hace desde el código), fotos reales, y rutas propias por producto — hoy la
 carta entera vive en `/` y el sitemap tiene una sola entrada.
+
+## El chatbot vendedor (23/08/2026)
+
+Reemplazó al botón flotante de WhatsApp (`components/chat/ChatWidget.tsx`). **Vende, pero no
+toma pedidos**: recomienda de la carta y dice dónde encontrar el producto; el que agrega al
+carrito es siempre el cliente.
+
+- **La IA va por DeepSeek directo**, no por InsForge. `lib/deepseek.ts` es el punto único de
+  llamada, espejo de `lib/telegram.ts` (mismo patrón `{ estado: "omitido"; motivo }`): sin
+  `DEEPSEEK_API_KEY` devuelve `omitido`, `hayChat()` da `false` y el widget pasa a ser un botón
+  de WhatsApp. **La key es server-only, nunca `NEXT_PUBLIC_`.**
+- **InsForge sí tiene IA funcionando** en el plan free de este proyecto —se probó contra el
+  backend el 23/08/2026— pero el Model Gateway nuevo no está disponible y el helper viejo del
+  SDK no hace streaming. Si algún día hay que volver, el camino es `db.ai.chat.completions`.
+- **El modelo es `deepseek-v4-flash`** (default en `lib/deepseek.ts`, se puede pisar con
+  `DEEPSEEK_MODEL`). Los viejos `deepseek-chat` y `deepseek-reasoner` ya no existen: verificar
+  el nombre en la documentación antes de escribirlo de memoria.
+- **`lib/chat-prompt.ts` es todo lo que el bot sabe.** No consulta nada durante la charla. Con
+  la carta cerrada en el prompt no puede inventar un producto, y como sale de
+  `getCatalogData()` —ya filtrado por `CATEGORIAS_IMPASTO`— no puede ofrecer nada del Carro
+  Fogón. **Nunca consultar `productos` directo desde el chat.**
+- **El bot no puede cotizar distinto que el carrito, o le miente al cliente.** La mitad y mitad
+  cobra el precio de la más cara, y las empanadas se venden solo en cajas: sin esas reglas en
+  el prompt, el bot sumaría dos precios donde el carrito cobra uno. Por eso existe
+  `lib/reglas-carta.ts` —no estaba en el plan original—, que las escribe una sola vez y las usan
+  `lib/chat-prompt.ts` y los componentes que de verdad cobran (`HalfModal.tsx`,
+  `EmpanadasSection.tsx`). No importa `db` ni componentes de React, para poder testearse con
+  `tsx`.
+- **El historial lo manda el cliente y se sanea en `lib/chat-mensajes.ts`**: se descarta el rol
+  `system`, se conservan los últimos 12 mensajes, y se cortan por tamaño — pero **el tope no es
+  el mismo para los dos roles**. `user` se corta a 500 caracteres (una consulta de venta no
+  necesita más); `assistant` se corta a 2.000, porque es lo que generó el propio modelo con
+  `max_tokens: 400` (hasta ~1.400 caracteres en español): aplicarle el tope de 500 le
+  devolvería al modelo, en el turno siguiente, una versión truncada de su propia respuesta. El
+  prompt de sistema se arma siempre en el servidor y nunca viaja desde el cliente.
+- **La ruta guarda una foto del catálogo con TTL de 5 minutos** (`app/api/chat/route.ts`).
+  `getCatalogData()` consulta doce tablas y no puede correr en cada mensaje. Un precio recién
+  editado tarda hasta cinco minutos en llegarle al bot; **no afecta lo que se cobra**, que
+  sigue siendo server-side.
+- **Esa foto nunca cachea una carta vacía.** `getCatalogData()` no distingue "la base falló" de
+  "la carta está legítimamente vacía": su único `catch` (`lib/catalog.ts`) devuelve un catálogo
+  sin productos pero perfectamente válido. Si se cacheara esa foto, un corte de base justo
+  cuando el TTL vence dejaría al bot negándole la carta entera a cada cliente durante los cinco
+  minutos siguientes. La contrapartida asumida a propósito: si la carta llegara a estar
+  legítimamente vacía, cada mensaje repetiría las doce consultas en vez de aprovechar la caché
+  — lo acota el rate limit de `chat` (40 mensajes cada 10 minutos por IP).
+- **El widget tiene dos plazos de espera, no uno** (`ChatWidget.tsx`): uno hasta que llega el
+  primer fragmento del stream y otro entre fragmentos una vez que ya arrancó, que se reinicia
+  con cada fragmento nuevo. **El primero tiene que ser mayor que el timeout del servidor**
+  (el `AbortController` de 20s de `lib/deepseek.ts`, que cubre solo la conexión, no el cuerpo
+  del stream): si el del cliente fuera igual o menor, abortaría requests que el servidor
+  todavía estaba atendiendo bien.
+- **El streaming hay que mirarlo en producción, no en `pnpm dev`.** Las funciones serverless
+  pueden bufferear la respuesta y entregarla entera al final: se ve igual que sin streaming y
+  no tira ningún error. **No se verificó en esta sesión** — queda pendiente para después del
+  próximo deploy (ver Step 6 de la task de cierre).
+- **`lib/marca.ts` no alcanza si el sitio no lee de ahí.** Empezó con 3 argumentos sin `id`; hoy
+  tiene 7, cada uno con `id` estable para pedirlo puntual con `argumento()`. Lo leen el prompt
+  del bot, cinco secciones del sitio (`Story`, `Hero`, `PizzaList`, `EmpanadasSection`,
+  `Header`) y `lib/seo.ts`. Antes de este módulo la misma afirmación estuvo duplicada en cinco
+  lugares: solo entra acá lo que es verificablemente cierto del negocio.
+- **`BusinessConfig.deliveryEstimate`** es el único tiempo de entrega: lo usan seis lugares del
+  sitio (la confirmación del pedido, el drawer del carrito y el checkout) y el prompt del bot.
+- Lo que el bot **no** hace: no arma carrito, no toca la pantalla, no captura datos y no
+  consulta el estado de pedidos. Nada de la conversación se guarda.
 
 ## Cosas que hay que recordar hacer
 
