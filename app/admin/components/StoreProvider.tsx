@@ -4,30 +4,6 @@ import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial } from "./typ
 import { DELIVERY_FEE } from "@/lib/business";
 import { esCategoriaImpasto } from "@/lib/categorias";
 
-const TESTI_KEY = "impasto_testimonials_v2";
-
-function defaultTestimonials(): Testimonial[] {
-  const h = (hrs: number) => new Date(Date.now() - hrs * 3600000).toISOString();
-  return [
-    { id: "t01", nombre: "María L.", texto: "La mejor fugazzetta de Iguazú, masa perfecta y sabor único.", rating: 5, estado: "aprobado", fecha: h(48) },
-    { id: "t02", nombre: "Joaquín P.", texto: "Las empanadas de carne cortada a cuchillo son de otro nivel. Recomendado 100%.", rating: 5, estado: "aprobado", fecha: h(72) },
-    { id: "t03", nombre: "Carolina S.", texto: "Pedí la Patagónica y la Tartufo, las dos espectaculares. Llegó calentita.", rating: 5, estado: "aprobado", fecha: h(96) },
-    { id: "t04", nombre: "Valentina R.", texto: "Excelente atención y la pizza llegó rapidísimo. La Diavola es adictiva.", rating: 5, estado: "pendiente", fecha: h(2) },
-    { id: "t05", nombre: "Lucas F.", texto: "La masa estuvo un poco cruda esta vez pero el sabor sigue siendo bueno.", rating: 3, estado: "pendiente", fecha: h(4) },
-  ];
-}
-
-function loadTestimonials(): Testimonial[] {
-  try {
-    const raw = localStorage.getItem(TESTI_KEY);
-    return raw ? JSON.parse(raw) : defaultTestimonials();
-  } catch { return defaultTestimonials(); }
-}
-
-function saveTestimonials(list: Testimonial[]) {
-  localStorage.setItem(TESTI_KEY, JSON.stringify(list));
-}
-
 /* ── adaptadores InsForge → admin ── */
 function adaptProduct(p: Record<string, unknown>): AdminProduct {
   const nombre = String(p.nombre || "");
@@ -133,9 +109,7 @@ async function loadAll() {
     products: (prodRes.data || []).filter((p: Record<string, unknown>) => esCategoriaImpasto(String(p.categoria || ""))).map(adaptProduct),
     orders: (pedRes.data || []).map(adaptOrder),
     customers: (cliRes.data || []).map(adaptCustomer),
-    testimonials: Array.isArray(testiRes.data) && testiRes.data.length > 0
-      ? testiRes.data.map(adaptTestimonial)
-      : loadTestimonials(),
+    testimonials: Array.isArray(testiRes.data) ? testiRes.data.map(adaptTestimonial) : [],
     etiquetas: (etiRes.data || []).map(adaptEtiqueta),
   };
 }
@@ -364,7 +338,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado }),
       }).catch(() => null);
-      if (!response?.ok) saveTestimonials(next);
       showToast("Testimonio actualizado");
     },
 
@@ -372,7 +345,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const next = stateRef.current.testimonials.filter(t => t.id !== id);
       setState(s => ({ ...s, testimonials: next }));
       const response = await fetch(`/api/admin/testimonios/${id}`, { method: "DELETE" }).catch(() => null);
-      if (!response?.ok) saveTestimonials(next);
       showToast("Testimonio eliminado");
     },
 

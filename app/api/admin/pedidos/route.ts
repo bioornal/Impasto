@@ -9,6 +9,7 @@ export async function GET() {
   const { data, error } = await db.database
     .from("pedidos")
     .select("*")
+    .eq("proyecto_id", "impasto")
     .eq("sucursal_id", SUCURSAL_ID)
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });

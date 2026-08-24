@@ -113,6 +113,7 @@ export async function createPedido(
     .from("pedidos")
     .insert({
       numero_pedido: numero,
+      proyecto_id: "impasto",
       nombre_cliente: order.nombre,
       telefono_cliente: order.tel,
       email_cliente: order.email,

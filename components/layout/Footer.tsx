@@ -55,7 +55,10 @@ export function Footer({ business }: { business: BusinessConfig }) {
 
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} {business.name} · {business.city}</span>
-          <span>Delivery propio & Take away · Pagos con Mercado Pago · <a href="/admin-login" aria-label="Acceso administrativo" style={{ opacity: .55 }}>Acceso</a></span>
+          <span>Delivery propio & Take away · Pagos con Mercado Pago</span>
+          <span>
+            <a href="/terminos">Términos</a> · <a href="/privacidad">Privacidad</a> · <a href="/reembolso">Reembolsos</a> · <a href="/admin-login" aria-label="Acceso administrativo" style={{ opacity: .55 }}>Acceso</a>
+          </span>
         </div>
       </div>
     </footer>
