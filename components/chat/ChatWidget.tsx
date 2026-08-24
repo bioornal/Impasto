@@ -135,6 +135,11 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
     // Antes de que llegue el primer fragmento se usa el plazo largo; después,
     // el corto. `reiniciarInactividad` lee esta bandera en cada llamada.
     let primerFragmentoLlegado = false;
+    // Declaradas acá afuera -no dentro del `try`- para que el `catch` también
+    // pueda verlas: necesita saber si la burbuja vacía llegó a agregarse y
+    // cuánto texto trajo, para poder limpiarla igual que el camino feliz.
+    let burbujaAgregada = false;
+    let acumulado = "";
     const reiniciarInactividad = () => {
       if (inactividad) clearTimeout(inactividad);
       const plazo = primerFragmentoLlegado ? TIMEOUT_INACTIVIDAD_MS : TIMEOUT_PRIMER_BYTE_MS;
@@ -170,9 +175,9 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
 
       // Se agrega el mensaje vacío del bot y se va llenando con el stream.
       setMensajes((previos) => [...previos, { role: "assistant", content: "" }]);
+      burbujaAgregada = true;
       const lector = response.body.getReader();
       const decoder = new TextDecoder();
-      let acumulado = "";
 
       for (;;) {
         const { done, value } = await lector.read();
@@ -202,6 +207,15 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
       // de WhatsApp. Lo que ya se acumuló en `mensajes` (si el cuelgue llegó
       // después de texto parcial) queda como está: no se pisa ni se borra, se
       // le agrega el aviso debajo.
+      //
+      // Pero si la burbuja vacía llegó a agregarse y el cuelgue pasó ANTES de
+      // que llegara texto -`lector.read()` rechaza, por ejemplo, por el
+      // aborto del vigía de inactividad-, no puede quedar una píldora vacía
+      // en el hilo para siempre: es el mismo caso que ya cubre el camino
+      // feliz un poco más arriba, solo que llegando por el `catch`.
+      if (burbujaAgregada && !acumulado.trim()) {
+        setMensajes((previos) => previos.slice(0, -1));
+      }
       setFallo(error instanceof ErrorServidor ? error.message : SIN_CHAT);
     } finally {
       // Pase lo que pase -éxito, error del servidor o timeout propio- el timer
