@@ -103,6 +103,14 @@ export async function chatStream(mensajes: ChatMensaje[]): Promise<DeepSeekResul
         // Un vendedor que escribe párrafos no vende, y es el techo de gasto por respuesta.
         max_tokens: 400,
         temperature: 0.7,
+        // `deepseek-v4-flash` es un modelo de razonamiento: sin esto, gasta los
+        // 400 tokens del tope pensando y corta con `finish_reason: length` antes
+        // de escribir una sola palabra de respuesta — se verificó contra la API
+        // real, texto vacío. `reasoning_effort: "minimal"` NO alcanza: sigue
+        // quemando los 400 tokens igual. Apagar el razonamiento del todo es lo
+        // único que deja lugar para la respuesta (y de paso, tres veces más
+        // rápido). No sacar esto pensando que es superfluo.
+        thinking: { type: "disabled" },
       }),
       signal: controller.signal,
     });

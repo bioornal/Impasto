@@ -29,8 +29,21 @@ class ErrorServidor extends Error {}
  * directamente un botón de WhatsApp: no vale la pena fingir que hay un bot ni
  * intentar una request que se sabe que va a fallar.
  */
+/**
+ * `business.name` sale de la base y hoy es "Impasto - Pizzeria y Empanadas":
+ * en el saludo y en el encabezado del panel se lee mal y en el encabezado se
+ * parte en dos líneas. No hay un campo corto aparte en `sucursales`, así que
+ * se recorta acá: todo lo que va antes de " - " (que ya está en el dato, no
+ * es un nombre inventado). Si el nombre no trae ese separador, se usa entero.
+ */
+function nombreCorto(nombre: string): string {
+  const [primero] = nombre.split(" - ");
+  return primero.trim() || nombre;
+}
+
 export function ChatWidget({ business, disponible }: { business: BusinessConfig; disponible: boolean }) {
-  const saludo = `¡Hola! Soy el asistente de ${business.name}. ¿Te doy una mano para elegir? Contame para cuántos son o qué tenés ganas de comer.`;
+  const nombre = nombreCorto(business.name);
+  const saludo = `¡Hola! Soy el asistente de ${nombre}. ¿Te doy una mano para elegir? Contame para cuántos son o qué tenés ganas de comer.`;
 
   const [abierto, setAbierto] = useState(false);
   const [mensajes, setMensajes] = useState<Mensaje[]>(() => [{ role: "assistant", content: saludo }]);
@@ -226,9 +239,13 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
   }
 
   if (!disponible) {
+    // Sin key no hay bot: el botón tiene que verse coherente con lo que hace
+    // -abrir WhatsApp-, no con lo que no puede hacer. Mismo pill, ícono y
+    // texto de WhatsApp.
     return (
-      <a className="chat-fab" href={wsp} target="_blank" rel="noreferrer" aria-label="Escribinos por WhatsApp">
+      <a className="chat-fab chat-fab-pill" href={wsp} target="_blank" rel="noreferrer" aria-label="Escribinos por WhatsApp">
         <IconoWhatsapp />
+        <span className="chat-fab-texto">Escribinos por WhatsApp</span>
       </a>
     );
   }
@@ -237,12 +254,19 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
     <>
       <button
         ref={burbujaRef}
-        className="chat-fab"
+        className={abierto ? "chat-fab" : "chat-fab chat-fab-pill"}
         onClick={() => setAbierto((estaba) => !estaba)}
         aria-expanded={abierto}
         aria-label={abierto ? "Cerrar el asistente" : "Abrir el asistente para elegir tu pedido"}
       >
-        {abierto ? <IconoCerrar /> : <IconoChat />}
+        {abierto ? (
+          <IconoCerrar />
+        ) : (
+          <>
+            <IconoBot />
+            <span className="chat-fab-texto">¿Puedo ayudarte?</span>
+          </>
+        )}
       </button>
 
       {abierto && (
@@ -252,7 +276,7 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
               {/* Nada de promesas acá: "respondo al toque" o "24 hs" son
                   afirmaciones que nadie verificó. */}
               <strong>Te ayudo a elegir</strong>
-              <span>{business.name} · {business.city}</span>
+              <span>{nombre} · {business.city}</span>
             </div>
             <button onClick={cerrar} aria-label="Cerrar">
               <IconoCerrar />
@@ -305,9 +329,21 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
   );
 }
 
-const IconoChat = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M12 3c5 0 9 3.4 9 7.6 0 4.2-4 7.6-9 7.6-.9 0-1.8-.1-2.6-.3L4 20l1.2-3.3C3.8 15.3 3 13.1 3 10.6 3 6.4 7 3 12 3Z" />
+/**
+ * Cara de robot dibujada a mano: cabecita redondeada, antena y dos ojos. El
+ * dueño pidió explícitamente "un ícono propio de bot", no un emoji ni una
+ * librería de íconos. `currentColor` para heredar `--accent-ink` como
+ * cualquier otro ícono del sitio.
+ */
+const IconoBot = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M12 2.4v2.3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    <circle cx="12" cy="2" r="1.15" fill="currentColor" />
+    <rect x="4.2" y="5.6" width="15.6" height="13.4" rx="4.4" stroke="currentColor" strokeWidth="1.6" />
+    <circle cx="9" cy="12.3" r="1.5" fill="currentColor" />
+    <circle cx="15" cy="12.3" r="1.5" fill="currentColor" />
+    <path d="M8.7 16c1.05.85 4.55.85 5.6 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    <path d="M2.6 10.2v3M21.4 10.2v3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
   </svg>
 );
 

@@ -846,19 +846,36 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 @media (max-width:560px){ .footer-grid{ grid-template-columns:1fr; gap:28px; } }
 
 /* ============ CHAT ============ */
+/* z-index 65/66: por encima del `.header` sticky (60, `impasto.css:150`) que
+   si no le tapa la fila del título al panel en pantallas bajas -el header es
+   opaco-, pero por debajo de `.drawer-bg` (100), `.modal-bg` (110) y
+   `.checkout-screen` (120), que sí tienen que taparlo a él. */
 .chat-fab{
-  position:fixed; bottom:24px; right:24px; z-index:55;
+  position:fixed; bottom:24px; right:24px; z-index:65;
   width:56px; height:56px; border-radius:999px; border:0;
   background:var(--accent); color:var(--accent-ink);
-  display:grid; place-items:center; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  text-decoration:none;
   box-shadow:0 14px 34px rgba(0,0,0,.3);
   transition:transform .2s ease, background .2s ease;
 }
-.chat-fab:hover{ transform:scale(1.06); background:var(--accent-hover); }
+/* Forma de píldora del botón cerrado: ícono a la izquierda, texto a la
+   derecha. El estado abierto (botón de cerrar) sigue siendo el círculo de
+   arriba. */
+.chat-fab-pill{ width:auto; border-radius:999px; padding:0 20px 0 16px; gap:10px; }
+.chat-fab-texto{ font-size:14px; font-weight:600; font-family:var(--font-body); white-space:nowrap; }
+.chat-fab svg{ flex:none; }
+.chat-fab:hover{ transform:scale(1.05); background:var(--accent-hover); }
 .chat-fab:focus-visible{ outline:3px solid var(--ink); outline-offset:3px; }
+/* Mobile: la píldora entera puede tapar contenido de la pantalla. Se colapsa
+   al círculo de solo ícono, igual que el estado abierto. */
+@media (max-width:520px){
+  .chat-fab-pill{ width:56px; padding:0; }
+  .chat-fab-pill .chat-fab-texto{ display:none; }
+}
 
 .chat-panel{
-  position:fixed; bottom:92px; right:24px; z-index:56;
+  position:fixed; bottom:92px; right:24px; z-index:66;
   width:min(380px, calc(100vw - 32px)); height:min(520px, calc(100vh - 140px));
   background:var(--surface); border:1px solid var(--line);
   border-radius:var(--radius-lg); box-shadow:var(--shadow-lift);

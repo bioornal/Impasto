@@ -119,6 +119,45 @@ async function main() {
     );
   }
 
+  /* ── el razonamiento tiene que quedar apagado ── */
+  // `deepseek-v4-flash` es un modelo de razonamiento. Se verificó contra la API
+  // real que sin `thinking: { type: "disabled" }` los 400 tokens de
+  // `max_tokens` se los come el razonamiento y la respuesta llega vacía
+  // (`finish_reason: length`). `reasoning_effort: "minimal"` no alcanza. Este
+  // test no le pega a la API: solo comprueba que el cuerpo del request lo
+  // pide, para que nadie lo saque pensando que es superfluo.
+  {
+    const fetchOriginal = global.fetch;
+    let cuerpoEnviado: Record<string, unknown> | null = null;
+    global.fetch = (async (_url: unknown, init?: RequestInit) => {
+      cuerpoEnviado = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      const encoder = new TextEncoder();
+      const cuerpo = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode(`${delta("hola")}\n\n`));
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        },
+      });
+      return new Response(cuerpo, { status: 200 });
+    }) as typeof fetch;
+
+    const keyPrevia = process.env.DEEPSEEK_API_KEY;
+    process.env.DEEPSEEK_API_KEY = "sk-loquesea";
+
+    await chatStream([{ role: "user", content: "hola" }]);
+
+    global.fetch = fetchOriginal;
+    if (keyPrevia === undefined) delete process.env.DEEPSEEK_API_KEY;
+    else process.env.DEEPSEEK_API_KEY = keyPrevia;
+
+    chequear(
+      "el cuerpo del request pide el razonamiento apagado",
+      cuerpoEnviado !== null &&
+        JSON.stringify((cuerpoEnviado as Record<string, unknown>).thinking) === JSON.stringify({ type: "disabled" }),
+    );
+  }
+
   /* ── la key ── */
   delete process.env.DEEPSEEK_API_KEY;
   chequear("sin key el chat no está disponible", hayChat() === false);
