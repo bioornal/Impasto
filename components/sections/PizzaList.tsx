@@ -5,7 +5,12 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useTweaks } from "@/components/providers/TweakProvider";
 import { fmt } from "@/lib/utils";
+import { argumento } from "@/lib/marca";
 import type { Pizza } from "@/types";
+
+const HORNO = argumento("horno");
+const PORCIONES = argumento("porciones");
+const MUZZARELLA = argumento("muzzarella");
 
 const FILTERS: [string, string][] = [
   ["todas", "Todas"],
@@ -57,7 +62,7 @@ export function PizzaList({ pizzas, onHalf }: PizzaListProps) {
             <div className="sec-index">01 — La carta</div>
             <h2>Pizzas</h2>
           </div>
-          <p>Estiradas a mano en el momento y cocidas a 400 °C en 2 a 5 minutos. Ocho porciones, base crocante y abundante muzzarella de primera calidad. Podés pedir cualquiera mitad y mitad sin costo extra.</p>
+          <p>Estiradas a mano en el momento y cocidas a {HORNO.detalle}. {PORCIONES.titulo}, base crocante y abundante {MUZZARELLA.titulo.toLowerCase()}. Podés pedir cualquiera mitad y mitad sin costo extra.</p>
         </div>
       </div>
 

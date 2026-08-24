@@ -1,12 +1,12 @@
 "use client";
 import { SceneIllus } from "@/components/ui/Illus";
 import { STOCK_IMAGES } from "@/lib/stock-images";
+import { argumento } from "@/lib/marca";
 
-const STATS: [string, string][] = [
-  ["Fermentación en frío", "48 hs con harina de fuerza"],
-  ["Estirado a mano", "En el momento, sin moldes"],
-  ["Horno a la piedra", "400 °C en 2 a 5 minutos"],
-];
+// Los tres argumentos de proceso, en el orden en que se muestran acá. El
+// resto de ARGUMENTOS_MARCA (porciones, muzzarella, empanadas) no va en esta
+// sección: cada componente pide solo lo que necesita.
+const STATS = [argumento("fermentacion"), argumento("estirado"), argumento("horno")];
 
 export function Story() {
   return (
@@ -23,10 +23,10 @@ export function Story() {
             Una pizzería artesanal pensada para quienes buscan una experiencia auténtica y memorable: borde aireado, base crocante y abundante muzzarella, perfecta para coronar un día de Cataratas o una gran noche en casa.
           </p>
           <div className="story-stats">
-            {STATS.map(([title, sub]) => (
-              <div key={title}>
-                <b>{title}</b>
-                <small>{sub}</small>
+            {STATS.map((stat) => (
+              <div key={stat.id}>
+                <b>{stat.titulo}</b>
+                <small>{stat.detalle}</small>
               </div>
             ))}
           </div>

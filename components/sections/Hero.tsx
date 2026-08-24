@@ -2,7 +2,12 @@
 import { PizzaIllus } from "@/components/ui/PizzaIllus";
 import { STOCK_IMAGES } from "@/lib/stock-images";
 import { fmt } from "@/lib/utils";
+import { argumento } from "@/lib/marca";
 import type { Pizza } from "@/types";
+
+// Los tres argumentos que se muestran como cifra + etiqueta. "Estirado a
+// mano" no tiene cifra (no hay un número que mostrar) y por eso no está acá.
+const HERO_STATS = [argumento("fermentacion"), argumento("horno"), argumento("empanadas-peso")];
 
 interface HeroProps {
   onCta: (section: string) => void;
@@ -31,18 +36,12 @@ export function Hero({ onCta, onHalf, featured, varieties }: HeroProps) {
             <button className="btn btn-ghost btn-lg" onClick={onHalf}>Pizza mitad y mitad</button>
           </div>
           <div className="hero-stats">
-            <div>
-              <b>48 hs</b>
-              <small>Fermentación en frío</small>
-            </div>
-            <div>
-              <b>400 °C</b>
-              <small>Horno a la piedra</small>
-            </div>
-            <div>
-              <b>160 g</b>
-              <small>Empanadas al horno</small>
-            </div>
+            {HERO_STATS.map((stat) => (
+              <div key={stat.id}>
+                <b>{stat.cifra}</b>
+                <small>{stat.titulo}</small>
+              </div>
+            ))}
           </div>
         </div>
 

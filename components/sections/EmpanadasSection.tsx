@@ -4,9 +4,12 @@ import { EmpanadaIllus } from "@/components/ui/Illus";
 import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { fmt } from "@/lib/utils";
+import { argumento } from "@/lib/marca";
 import type { Empanada } from "@/types";
 
 const TIERS: (6 | 12 | 24)[] = [6, 12, 24];
+const EMPANADA_PESO = argumento("empanadas-peso");
+const REPULGUE = argumento("repulgue");
 
 interface EmpanadasSectionProps {
   empanadas: Empanada[];
@@ -72,7 +75,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
             <div className="sec-index">02 — Rellenas y al horno</div>
             <h2>Armá tu caja</h2>
           </div>
-          <p>Grandes y abundantes de 160 g, con repulgue a mano y cocción al horno. Rellenos generosos con materia prima de primera calidad. Elegí la cantidad para tu caja y combiná los sabores que quieras.</p>
+          <p>Grandes y abundantes de {EMPANADA_PESO.cifra}, con {REPULGUE.titulo.toLowerCase()} y cocción al horno. Rellenos generosos con materia prima de primera calidad. Elegí la cantidad para tu caja y combiná los sabores que quieras.</p>
         </div>
 
         <div className="emp-layout">
@@ -93,7 +96,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
                   <p>{empanada.desc}</p>
                   <div className="emp-foot">
                     <span className="emp-unit">
-                      {agotado ? "Agotado" : count > 0 ? "en la caja" : empanada.precio ? fmt(empanada.precio) : "160 g"}
+                      {agotado ? "Agotado" : count > 0 ? "en la caja" : empanada.precio ? fmt(empanada.precio) : EMPANADA_PESO.cifra}
                     </span>
                     <div className="stepper">
                       <button onClick={() => pick(empanada.id, -1)} disabled={count === 0} aria-label={`Quitar ${empanada.nombre}`}>−</button>
@@ -109,7 +112,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
           <aside className="box-aside">
             <div>
               <h4>Tu caja</h4>
-              <small className="box-sub">Elegí la cantidad (160 g c/u)</small>
+              <small className="box-sub">Elegí la cantidad ({EMPANADA_PESO.cifra} c/u)</small>
             </div>
 
             <div className="box-tiers">

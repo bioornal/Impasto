@@ -4,6 +4,7 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { fmt } from "@/lib/utils";
 import { LOGO } from "@/lib/logo";
+import { argumento } from "@/lib/marca";
 import type { BusinessConfig } from "@/lib/business";
 
 const NAV: [string, string][] = [
@@ -34,14 +35,18 @@ function Topbar({ business }: { business: BusinessConfig }) {
   );
 }
 
+const FERMENTACION = argumento("fermentacion");
+const HORNO = argumento("horno");
+const EMPANADA_PESO = argumento("empanadas-peso");
+
 const TICKER = [
   "Pizza Híbrida: técnica napolitana y alma argentina",
   "Delivery propio & Take away en Puerto Iguazú",
-  "Fermentación en frío 48 hs",
-  "Horno de piedra a 400 °C",
+  `${FERMENTACION.titulo} ${FERMENTACION.cifra}`,
+  `Horno de piedra a ${HORNO.cifra}`,
   "Muzzarella abundante y primeras marcas",
   "Último pedido 23:45",
-  "Empanadas de 160 g al horno",
+  `Empanadas de ${EMPANADA_PESO.cifra} al horno`,
 ];
 
 export function Ticker() {
