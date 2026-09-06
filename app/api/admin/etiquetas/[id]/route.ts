@@ -51,7 +51,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   // Quitar el slug de los productos que lo tengan: dejarlo huérfano lo volvería
   // invisible e imposible de rastrear desde el panel.
   const { data: productos } = await db.database
-    .from("productos").select("id,tags").in("categoria", [...CATEGORIAS_IMPASTO]);
+    .from("productos").select("id,tags").eq("proyecto_id", "impasto").in("categoria", [...CATEGORIAS_IMPASTO]);
   let limpiados = 0;
   for (const p of Array.isArray(productos) ? productos : []) {
     const fila = p as { id: string; tags?: unknown };

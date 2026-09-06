@@ -916,6 +916,14 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 }
 .chat-envio button:disabled{ opacity:.45; cursor:default; }
 .chat-envio button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+/* Reemplaza al formulario cuando el asistente se cae: mismo lugar y mismo peso
+   visual que "Enviar", porque pasa a ser la única acción del panel. */
+.chat-envio .chat-wsp{
+  flex:1; padding:10px 16px; border-radius:999px; text-align:center;
+  background:var(--ink); color:var(--surface); font-size:14px; font-weight:600;
+  text-decoration:none;
+}
+.chat-envio .chat-wsp:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
 
 @media (max-width:520px){
   .chat-panel{ inset:0; width:100vw; height:100dvh; border-radius:0; border:0; }

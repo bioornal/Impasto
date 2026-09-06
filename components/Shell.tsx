@@ -18,6 +18,7 @@ import { HalfModal } from "@/components/cart/HalfModal";
 import { Checkout } from "@/components/checkout/Checkout";
 import { Confirmation } from "@/components/checkout/Confirmation";
 import { ChatWidget } from "@/components/chat/ChatWidget";
+import { ActiveOrderBanner } from "@/components/layout/ActiveOrderBanner";
 import type { BusinessConfig } from "@/lib/business";
 import type { CheckoutOrder } from "@/components/checkout/Checkout";
 import type { CardFormData } from "@/components/checkout/CardPayment";
@@ -119,6 +120,7 @@ function SiteContent({ data, business, chatDisponible }: { data: CatalogData; bu
 
   return (
     <div className={`app ${paletteClass} ${typeClass}`}>
+      <ActiveOrderBanner />
       <Header onCartClick={() => setDrawerOpen(true)} onNav={onNav} current={nav} business={business} sections={sections} />
       <Ticker />
 
@@ -166,6 +168,9 @@ function SiteContent({ data, business, chatDisponible }: { data: CatalogData; bu
             const result = await response.json();
             if (!response.ok || !result.ok) throw new Error(result.error || "No se pudo registrar el pedido");
             clear();
+            try {
+              localStorage.setItem("impasto_active_order", JSON.stringify({ ref: result.numero, at: Date.now() }));
+            } catch {}
             setOrder({
               ...submitted,
               numero: result.numero,
@@ -186,6 +191,9 @@ function SiteContent({ data, business, chatDisponible }: { data: CatalogData; bu
             // 402 es rechazo de la tarjeta: el checkout queda abierto para reintentar.
             if (!response.ok || !result.ok) throw new Error(result.error || "No se pudo procesar el pago");
             clear();
+            try {
+              localStorage.setItem("impasto_active_order", JSON.stringify({ ref: result.numero, at: Date.now() }));
+            } catch {}
             setOrder({
               ...submitted,
               numero: result.numero,

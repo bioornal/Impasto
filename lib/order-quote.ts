@@ -33,7 +33,7 @@ function findEmpanada(data: CatalogData, id: string) {
   return data.empanadas.find((product) => product.id === id);
 }
 
-function quoteItem(rawItem: CartItem, data: CatalogData, rates: QuoteRates): CartItem {
+function quoteItem(rawItem: CartItem, data: CatalogData): CartItem {
   const qty = integerQuantity(rawItem.qty);
   if (!qty) throw new Error("Cantidad de producto inválida");
 
@@ -122,7 +122,7 @@ export async function quoteOrder(
 
   const applied: QuoteRates = { ...DEFAULT_RATES, ...rates };
   const data = await getCatalogData();
-  const items = rawItems.map((item) => quoteItem(item, data, applied));
+  const items = rawItems.map((item) => quoteItem(item, data));
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const freeShipping = subtotal >= applied.freeShippingFrom;
   const shipping = mode === "delivery" && !freeShipping ? applied.deliveryFee : 0;

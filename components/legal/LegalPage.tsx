@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 /**
  * Layout de lectura para las páginas legales: una columna angosta y aireada,
@@ -16,7 +17,7 @@ export function LegalPage({ title, updated, children }: { title: string; updated
         .legal .upd { color: #8a7a66; font-size: 13px; margin-bottom: 28px; }
         .legal a { color: #b2472a; }
       `}</style>
-      <a href="/">← Volver a Impasto</a>
+      <Link href="/">← Volver a Impasto</Link>
       <h1>{title}</h1>
       <p className="upd">Última actualización: {updated}</p>
       {children}

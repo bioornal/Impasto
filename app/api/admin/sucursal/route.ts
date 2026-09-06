@@ -21,7 +21,7 @@ export async function PUT(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const updates: Record<string, unknown> = {};
 
-  for (const campo of ["nombre", "ciudad", "direccion", "telefono", "email", "whatsapp", "horarios", "mensaje_cierre"]) {
+  for (const campo of ["nombre", "ciudad", "direccion", "telefono", "email", "whatsapp", "horarios", "mensaje_cierre", "cbu", "alias_cbu", "banco", "titular_cuenta"]) {
     if (typeof body[campo] === "string") updates[campo] = body[campo].trim();
   }
 

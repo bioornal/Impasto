@@ -5,7 +5,7 @@
 Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Mercado Pago.
 Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
 
-Última actualización: 25 de agosto de 2026.
+Última actualización: 24 de agosto de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -51,24 +51,34 @@ separación por esquema ni columna de pertenencia. Las tres apuntan al mismo bac
 - El recetario **lee `pedidos`** en `ganancias.astro` para calcular la ganancia del mes. Los
   pedidos de Impasto y los del carro entran **juntos** en ese cálculo.
 
-### Separación de tenants — `proyecto_id` (25/08/2026)
+### Separación de tenants — `proyecto_id` (24/08/2026)
 
 La fuga de productos entre proyectos se arregló con una columna `proyecto_id` en `productos`
 y `pedidos` (migración `20260825120000_tenant-proyecto-id.sql`), **sin base nueva**: los tres
-proyectos siguen conviviendo en la misma base.
+proyectos siguen conviviendo en la misma base. **Ya está aplicada y deployada en los dos
+repos**; el nombre del archivo dice `20260825` por un error de fecha, no se renombra porque
+el timestamp ya quedó registrado en la tabla de migraciones.
 
 - `productos` y `pedidos` llevan `proyecto_id` = `'impasto'` o `'carro'`. Quedó **nullable a
   propósito**: los inserts del código viejo no se rompen durante la ventana migración→deploy.
-  Backfill verificado: `productos` 49 impasto / 16 carro, sin nulos.
-- Impasto filtra y escribe `proyecto_id = 'impasto'` (además de `CATEGORIAS_IMPASTO` y
-  `sucursal_id`, que se conservan como defensa en profundidad).
+  Backfill verificado contra la base: `productos` 49 impasto / 16 carro, sin nulos. El de
+  `pedidos` (`sucursal_id = 'iguazu' or external_reference like 'IM-%'`) **nunca se ejerció**:
+  la tabla estaba vacía. Esa regla no está verificada contra datos reales.
+- Impasto filtra y escribe `proyecto_id = 'impasto'` **en todos los caminos que tocan
+  `productos` o `pedidos`** — catálogo, alta, edición y borrado por id, la ruta pública
+  `/api/productos` y las dos de etiquetas (además de `CATEGORIAS_IMPASTO` y `sucursal_id`,
+  que se conservan como defensa en profundidad). Si se agrega una consulta nueva, lleva el
+  filtro: la mitad de las rutas quedó sin él en el primer pase.
 - Carro Fogón filtra y escribe `proyecto_id = 'carro'`: su `GET /api/productos` ya no usa el
   allowlist de Impasto y su `POST /api/productos` ya no fuerza `categoria = 'pizzas'`.
 - `clientes` queda **compartida a propósito**: el cliente es de la empresa, pida por la tienda
   o por el carro.
 
-**Orden obligatorio:** correr la migración ANTES de deployar (el código nuevo lee `proyecto_id`).
-El paso a paso está en `docs/P0-configuracion-cuentas.md`.
+**El orden fue el correcto:** la migración corrió antes del deploy, así que el código nuevo
+—que lee `proyecto_id`— nunca se encontró sin la columna. Se verificó en producción: el sitio
+sigue sirviendo la carta completa. Si alguna vez hay que rehacerlo en otro entorno, ese orden
+es obligatorio: `getCatalogData()` atrapa el error y devuelve un catálogo **vacío pero
+válido**, así que la falla se vería como una carta sin productos, no como un error.
 
 ## Lo que está terminado y verificado en producción
 
@@ -85,7 +95,14 @@ El paso a paso está en `docs/P0-configuracion-cuentas.md`.
 - **Separación de tenants (`proyecto_id`)** — `productos` y `pedidos` aislados entre Impasto y
   Carro Fogón en la misma base (ver "Separación de tenants" más arriba).
 - **Páginas legales** — `/terminos`, `/privacidad` y `/reembolso`, enlazadas desde el footer.
-- **Testimonios** — sin seed falsos: el panel y el sitio solo muestran reseñas reales aprobadas.
+- **Testimonios** — sin seed falsos. Ojo con la historia: las cinco reseñas inventadas
+  ("María L.", "Joaquín P."…) vivían en el **`localStorage` del panel**, no en la base. El
+  **sitio nunca las mostró**: siempre leyó la tabla `testimonios`, que está vacía.
+  Consecuencia de esa tabla vacía: `Reviews.tsx` devuelve `null` con cero reseñas, así que hoy
+  la sección “05 — Opiniones” no se renderiza **y se lleva puesta la tarjeta “Pedí por
+  WhatsApp”**, que vive adentro de ese mismo componente. Verificado en el navegador: del sitio
+  entero queda **un solo link a `wa.me`, en la lista del footer**. Para recuperar el botón
+  grande hay que sacarlo de `Reviews.tsx`; si no, vuelve solo con la primera reseña aprobada.
 - **Módulo de email** construido y probado, **pero sin proveedor configurado**.
 
 ### Distinción que se presta a confusión
@@ -322,8 +339,8 @@ datos estructurados. Para Google era una página cualquiera, no una pizzería de
   panel: una que contenga `</script>` cortaría la etiqueta. Nunca sacar ese escape.
 - **Sin `aggregateRating`.** Google no acepta como rich result las reseñas que el propio
   negocio recolecta y publica sobre sí mismo; declararlas es arriesgar un aviso en Search
-  Console a cambio de nada. (Aparte: el hero muestra “4,9★ +1.200 reseñas” hardcodeado
-  mientras `testimonios` se administra desde el panel. Conviene mostrar el número real.)
+  Console a cambio de nada. Tampoco queda ninguna cifra de reseñas hardcodeada en el sitio:
+  el hero llegó a mostrar “4,9★ +1.200 reseñas” inventadas y ya no existen en el código.
 - **`ciudad` en la base guarda “Puerto Iguazú, Misiones”**, ciudad y provincia juntas, porque
   el sitio la muestra así. schema.org las quiere separadas: `partesUbicacion()` las parte.
   Se descubrió mirando el JSON-LD renderizado contra la base, no con los tests.
@@ -408,7 +425,7 @@ carrito es siempre el cliente.
 
 ## Cosas que hay que recordar hacer
 
-- **`productos` es una tabla global compartida** con **Carro Fogón**. Desde el 25/08/2026 la
+- **`productos` es una tabla global compartida** con **Carro Fogón**. Desde el 24/08/2026 la
   separación es `proyecto_id` (`'impasto'` vs `'carro'`), no solo `categoria`. Igual conviene
   **no borrar ni editar las filas del carro** (`hamburguesas`, `lomos`, `calzones`, `otros`):
   comparten base y Mercado Pago en producción.

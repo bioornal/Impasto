@@ -2,8 +2,28 @@ import type { Review } from "@/types";
 import type { BusinessConfig } from "@/lib/business";
 
 export function Reviews({ reviews, business }: { reviews: Review[]; business: BusinessConfig }) {
-  if (reviews.length === 0) return null;
-  const average = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+  if (reviews.length === 0) {
+    return (
+      <section className="reviews reviews-empty" style={{ paddingTop: "20px", paddingBottom: "40px" }}>
+        <div className="container">
+          <article className="wsp-card" style={{ maxWidth: "700px", margin: "0 auto" }}>
+            <div>
+              <b>Pedí por WhatsApp si preferís</b>
+              <small>Te confirmamos el pedido y te preparamos la orden directamente.</small>
+            </div>
+            <a
+              className="btn btn-cream"
+              href={`https://wa.me/${business.whatsappPhone}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Abrir WhatsApp
+            </a>
+          </article>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="reviews">

@@ -6,6 +6,7 @@ import { estadoTienda } from "@/lib/hours";
 import { promptVendedor } from "@/lib/chat-prompt";
 import { sanearHistorial, terminaEnCliente } from "@/lib/chat-mensajes";
 import { chatStream, hayChat } from "@/lib/deepseek";
+import { avisarFalloDelChat } from "@/lib/aviso-sistema";
 import type { BusinessConfig } from "@/lib/business";
 import type { CatalogData } from "@/types";
 
@@ -91,6 +92,12 @@ export async function POST(req: NextRequest) {
 
   if (resultado.estado !== "ok") {
     console.error("[chat]", resultado.estado, resultado.motivo);
+
+    // Se espera el aviso en vez de dispararlo y seguir: la función serverless
+    // puede congelarse apenas se devuelve la respuesta, y una promesa suelta
+    // no llegaría a mandarse. Es una sola llamada, en un camino que ya falló.
+    await avisarFalloDelChat(resultado.motivo);
+
     return NextResponse.json(
       { ok: false, error: "El asistente no está disponible en este momento." },
       { status: resultado.estado === "omitido" ? 503 : 502 },

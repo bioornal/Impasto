@@ -15,7 +15,7 @@ interface HalfModalProps {
   onClose: () => void;
 }
 
-export function HalfModal({ startPizza, pizzas, business, onClose }: HalfModalProps) {
+export function HalfModal({ startPizza, pizzas, business: _business, onClose }: HalfModalProps) {
   const { add } = useCart();
   const toast = useToast();
   const availablePizzas = pizzas.filter((p) => p.disponible !== false);

@@ -3,16 +3,19 @@
 Estado: el código está listo; falta la configuración del dueño. Resolver las tres cuentas juntas
 (email, Telegram, DeepSeek) y después el dominio.
 
-## Orden de trabajo (importante)
+## Separación de tenants — YA ESTÁ HECHA (24/08/2026)
 
-1. **Aplicar la migración** `migrations/20260825120000_tenant-proyecto-id.sql`:
-   ```sh
-   npx -y @insforge/cli db migrations up --all
-   ```
+No hay nada que hacer acá. Queda registrado por si hay que rehacerlo en otro entorno.
+
+1. ~~**Aplicar la migración** `migrations/20260825120000_tenant-proyecto-id.sql`~~ — **aplicada**,
+   figura en `npx -y @insforge/cli db migrations up --all` / `db migrations list`.
    Nunca con `db query`: descarta el DDL en silencio y reporta éxito igual.
-2. **Deploy del código** (Impasto → push a `main` en Netlify; Carro Fogón → push a su `main` en
-   Vercel). El orden migración → deploy evita que los reads nuevos (`proyecto_id`) fallen.
-3. **Verificar** (ver sección "Verificación" al final).
+2. ~~**Deploy del código**~~ — **deployado** en los dos repos (Impasto → `main` en Netlify;
+   Carro Fogón → `main` en Vercel). El orden migración → deploy se respetó.
+3. **Verificado** contra la base y contra producción: `productos` 49 impasto / 16 carro, sin
+   nulos; el sitio sirve la carta completa y `/terminos`, `/privacidad` y `/reembolso` dan 200.
+
+**Lo único pendiente de este documento son las cuentas del dueño (secciones 1 a 4).**
 
 ## 1. Email (Resend)
 
@@ -50,17 +53,17 @@ Estado: el código está listo; falta la configuración del dueño. Resolver las
 - En Mercado Pago: cambiar la URL del webhook a `https://impastoiguazu.com.ar/api/payments/webhook`
   y conservar el secreto. Conviene separar la URL de sandbox de la de producción.
 
-## Verificación (después del deploy)
+## Verificación de tenants — resultado (24/08/2026)
 
-- **Productos:** el menú de Impasto sigue mostrando pizzas/empanadas/bebidas; el del carro muestra
-  hamburguesas/lomos/calzones (y ya no las de Impasto).
-- Revisar filas mal clasificadas por el backfill (productos del carro que hubieran quedado con
-  `categoria = 'pizzas'` por el bug del POST viejo):
+- **Productos:** ✅ 49 impasto (32 pizzas + 9 empanadas + 8 bebidas) / 16 carro (8 hamburguesas,
+  3 lomos, 4 calzones, 1 otros). Cero nulos. El sitio de Impasto sirve la carta completa.
+- Para volver a revisar filas mal clasificadas:
   ```sql
   select nombre, categoria, proyecto_id from productos order by categoria, nombre;
   ```
-- **Pedidos:** el panel de Impasto no ve pedidos del carro y viceversa.
-- Sin filas con `proyecto_id` nulo en `pedidos` (los inserts nuevos ya lo escriben).
+- **Pedidos:** la tabla estaba **vacía**, así que su backfill
+  (`sucursal_id = 'iguazu' or external_reference like 'IM-%'`) no llegó a ejercitarse. Revisar
+  el primer pedido real de cada proyecto: los inserts nuevos ya escriben `proyecto_id`.
 
 ## Nota legal
 

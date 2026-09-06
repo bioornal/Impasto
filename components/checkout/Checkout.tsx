@@ -40,7 +40,7 @@ const WHEN_OPTIONS: [string, string][] = [
 const PAGOS: [string, string, string, string][] = [
   ["efectivo", "Efectivo", "Pagás al recibir el pedido", "Sin recargo"],
   ["mercadopago", "Tarjeta", "Débito o crédito con Mercado Pago", "Pagás ahora"],
-  ["transferencia", "Transferencia", "Te enviamos el CBU al confirmar", "Al confirmar"],
+  ["transferencia", "Transferencia", "Alias y CBU listos al confirmar", "Sin recargo"],
 ];
 
 export function Checkout({ onClose, onConfirm, onCardConfirm, business }: CheckoutProps) {
@@ -312,7 +312,7 @@ export function Checkout({ onClose, onConfirm, onCardConfirm, business }: Checko
           </div>
 
           <div className="co-trust">
-            {["Te avisamos por WhatsApp cuando la pizza entra al horno.", "Si algo no llega bien, lo reponemos sin vueltas."].map((text) => (
+            {["Seguimiento en vivo del estado de tu pedido.", "Si algo no llega bien, lo reponemos sin vueltas."].map((text) => (
               <div className="co-trust-row" key={text}>
                 <span className="check">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6 9 17l-5-5" /></svg>

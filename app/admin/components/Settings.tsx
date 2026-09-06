@@ -17,6 +17,10 @@ interface Sucursal {
   envio_gratis_desde: number;
   ventas_activas: boolean;
   mensaje_cierre: string;
+  cbu?: string;
+  alias_cbu?: string;
+  banco?: string;
+  titular_cuenta?: string;
 }
 
 const DIAS: [number, string][] = [
@@ -166,6 +170,19 @@ export function Settings() {
               <div className="field"><label>WhatsApp</label><input value={config.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} /></div>
               <div className="field full"><label>Dirección</label><input value={config.direccion} onChange={(e) => set("direccion", e.target.value)} /></div>
               <div className="field full"><label>Ciudad</label><input value={config.ciudad} onChange={(e) => set("ciudad", e.target.value)} /></div>
+            </div>
+          </section>
+
+          <section>
+            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 4 }}>Datos bancarios para transferencias</h4>
+            <div className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
+              Se muestran al cliente en la pantalla de confirmación cuando elige pagar por transferencia.
+            </div>
+            <div className="form-grid">
+              <div className="field"><label>Alias CBU</label><input placeholder="IMPASTO.IGUAZU" value={config.alias_cbu || ""} onChange={(e) => set("alias_cbu", e.target.value)} /></div>
+              <div className="field"><label>Banco / Billetera</label><input placeholder="Mercado Pago / Galicia" value={config.banco || ""} onChange={(e) => set("banco", e.target.value)} /></div>
+              <div className="field full"><label>Titular de la cuenta</label><input placeholder="Impasto Pizzería" value={config.titular_cuenta || ""} onChange={(e) => set("titular_cuenta", e.target.value)} /></div>
+              <div className="field full"><label>CBU / CVU (22 dígitos)</label><input placeholder="00000031000..." value={config.cbu || ""} onChange={(e) => set("cbu", e.target.value)} /></div>
             </div>
           </section>
 

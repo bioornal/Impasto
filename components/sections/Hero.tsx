@@ -16,7 +16,7 @@ interface HeroProps {
   varieties: number;
 }
 
-export function Hero({ onCta, onHalf, featured, varieties }: HeroProps) {
+export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroProps) {
   return (
     <section className="hero">
       <div className="container hero-grid">
@@ -78,7 +78,7 @@ export function Hero({ onCta, onHalf, featured, varieties }: HeroProps) {
   );
 }
 
-export function Features({ freeShippingFrom }: { freeShippingFrom?: number }) {
+export function Features({ freeShippingFrom: _freeShippingFrom }: { freeShippingFrom?: number }) {
   const features: [string, string][] = [
     ["Pizza Híbrida", "Técnica napolitana y alma argentina"],
     ["Delivery propio", "Envíos en Puerto Iguazú"],

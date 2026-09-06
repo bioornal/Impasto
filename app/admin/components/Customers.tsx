@@ -83,7 +83,14 @@ export function Customers() {
 
 function CustomerDetail({ customer, onClose }: { customer: AdminCustomer; onClose: () => void }) {
   const { state } = useStore();
-  const history = state.orders.filter(o => o.cliente === customer.nombre);
+  const normTel = (customer.tel || "").replace(/\D/g, "");
+  const history = state.orders.filter(o => {
+    const oTel = (o.tel || "").replace(/\D/g, "");
+    if (normTel.length >= 8 && oTel.length >= 8 && (oTel.endsWith(normTel.slice(-8)) || normTel.endsWith(oTel.slice(-8)))) {
+      return true;
+    }
+    return Boolean(o.cliente && customer.nombre && o.cliente.trim().toLowerCase() === customer.nombre.trim().toLowerCase());
+  });
 
   return (
     <div className="modal-bg" onClick={onClose}>

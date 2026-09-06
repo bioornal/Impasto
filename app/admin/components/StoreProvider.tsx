@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useRef } from "react";
-import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial } from "./types";
+import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial, AdminOrder, AdminCustomer } from "./types";
 import { DELIVERY_FEE } from "@/lib/business";
 import { esCategoriaImpasto } from "@/lib/categorias";
 
@@ -24,7 +24,7 @@ function adaptProduct(p: Record<string, unknown>): AdminProduct {
   };
 }
 
-function adaptOrder(p: Record<string, unknown>) {
+function adaptOrder(p: Record<string, unknown>): AdminOrder {
   const mode = p.modalidad === "takeaway" ? "takeaway" : p.modalidad === "delivery" ? "delivery" : p.direccion && p.direccion !== "Retiro en local" ? "delivery" : "takeaway";
   const isDelivery = mode === "delivery";
   const total = Number(p.total || 0);
@@ -56,20 +56,57 @@ function adaptOrder(p: Record<string, unknown>) {
   };
 }
 
-function adaptCustomer(c: Record<string, unknown>) {
+function adaptCustomer(c: Record<string, unknown>, orders: AdminOrder[] = []): AdminCustomer {
   const id = String(c.id || c.telefono || "");
+  const tel = String(c.telefono || "—");
+  const nombre = String(c.nombre || "—");
+  const normTel = tel.replace(/\D/g, "");
+
+  // Match orders by telephone (primary) or customer name (fallback)
+  const matchedOrders = orders.filter(o => {
+    const oTel = (o.tel || "").replace(/\D/g, "");
+    if (normTel.length >= 8 && oTel.length >= 8 && (oTel.endsWith(normTel.slice(-8)) || normTel.endsWith(oTel.slice(-8)))) {
+      return true;
+    }
+    return Boolean(o.cliente && nombre && o.cliente.trim().toLowerCase() === nombre.trim().toLowerCase());
+  });
+
+  const validOrders = matchedOrders.filter(o => o.estado !== "cancelado");
+  const calculatedTotal = validOrders.reduce((sum, o) => sum + o.total, 0);
+  const orderCount = Math.max(Number(c.cant_compras || 0), matchedOrders.length);
+
+  // Compute favorite item
+  let fav = String(c.detalles || "—");
+  if (matchedOrders.length > 0) {
+    const itemCounts: Record<string, number> = {};
+    matchedOrders.forEach(o => o.items.forEach(i => {
+      itemCounts[i.name] = (itemCounts[i.name] || 0) + i.qty;
+    }));
+    const sortedItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]);
+    if (sortedItems.length > 0) {
+      fav = `${sortedItems[0][0]} (×${sortedItems[0][1]})`;
+    }
+  }
+
+  // Compute last activity
+  let ultimo = String(c.updated_at || c.created_at || new Date().toISOString());
+  if (matchedOrders.length > 0) {
+    const latest = [...matchedOrders].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())[0];
+    if (latest) ultimo = latest.fecha;
+  }
+
   return {
     _dbId: id,
     id,
-    nombre: String(c.nombre || "—"),
-    tel: String(c.telefono || "—"),
+    nombre,
+    tel,
     email: String(c.email || ""),
     dir: String(c.direccion || ""),
     zona: "",
-    pedidos: Number(c.cant_compras || 0),
-    total: 0,
-    fav: String(c.detalles || "—"),
-    ultimo: String(c.updated_at || c.created_at || new Date().toISOString()),
+    pedidos: orderCount,
+    total: calculatedTotal,
+    fav,
+    ultimo,
   };
 }
 
@@ -97,7 +134,53 @@ function adaptEtiqueta(e: Record<string, unknown>): AdminEtiqueta {
   };
 }
 
-async function loadAll() {
+/** Web Audio API: campanilla bitonal elegante sin dependencias de audio externas */
+function playKitchenChime() {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
+    const now = ctx.currentTime;
+
+    // Tono 1: Mi5 (659.25 Hz)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(659.25, now);
+    gain1.gain.setValueAtTime(0.25, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.35);
+
+    // Tono 2: La5 (880 Hz) con leve retraso
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(880, now + 0.12);
+    gain2.gain.setValueAtTime(0.3, now + 0.12);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.75);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.12);
+    osc2.stop(now + 0.75);
+  } catch {
+    // Ignorar si el navegador bloquea audio antes de interacción
+  }
+}
+
+async function loadAll(): Promise<{
+  products: AdminProduct[];
+  orders: AdminOrder[];
+  customers: AdminCustomer[];
+  testimonials: Testimonial[];
+  etiquetas: AdminEtiqueta[];
+}> {
   const [prodRes, pedRes, cliRes, etiRes] = await Promise.all([
     fetch("/api/admin/productos").then(r => r.json()).catch(() => ({ data: [] })),
     fetch("/api/admin/pedidos").then(r => r.json()).catch(() => ({ data: [] })),
@@ -105,10 +188,14 @@ async function loadAll() {
     fetch("/api/admin/etiquetas").then(r => r.json()).catch(() => ({ data: [] })),
   ]);
   const testiRes = await fetch("/api/admin/testimonios").then(r => r.json()).catch(() => ({ data: [] }));
+  
+  const orders = (pedRes.data || []).map(adaptOrder);
+  const customers = (cliRes.data || []).map((c: Record<string, unknown>) => adaptCustomer(c, orders));
+
   return {
     products: (prodRes.data || []).filter((p: Record<string, unknown>) => esCategoriaImpasto(String(p.categoria || ""))).map(adaptProduct),
-    orders: (pedRes.data || []).map(adaptOrder),
-    customers: (cliRes.data || []).map(adaptCustomer),
+    orders,
+    customers,
     testimonials: Array.isArray(testiRes.data) ? testiRes.data.map(adaptTestimonial) : [],
     etiquetas: (etiRes.data || []).map(adaptEtiqueta),
   };
@@ -119,6 +206,8 @@ interface StoreCtx {
   state: AdminState;
   reload: () => Promise<void>;
   showToast: (msg: string) => void;
+  soundEnabled: boolean;
+  toggleSound: () => void;
   updateProduct: (id: string, patch: Partial<AdminProduct>) => Promise<void>;
   createProduct: (p: Partial<AdminProduct>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -161,30 +250,116 @@ function LoadingScreen({ error }: { error: string | null }) {
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AdminState>({ loading: true, error: null, products: [], orders: [], customers: [], testimonials: [], etiquetas: [] });
   const [toast, setToast] = useState<string | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundEnabledRef = useRef(soundEnabled);
+  soundEnabledRef.current = soundEnabled;
+
   const stateRef = useRef(state);
   stateRef.current = state;
+  const knownOrderIdsRef = useRef<Set<string>>(new Set());
+  const isInitialLoadRef = useRef(true);
 
-  const load = async () => {
-    setState(s => ({ ...s, loading: true, error: null }));
+  // Initialize sound preference from localStorage
+  useEffect(() => {
     try {
-      const data = await loadAll();
-      setState({ loading: false, error: null, ...data });
-    } catch (err) {
-      setState(s => ({ ...s, loading: false, error: err instanceof Error ? err.message : "Error de red" }));
-    }
-  };
-
-  useEffect(() => { load(); }, []);
+      const saved = localStorage.getItem("impasto_admin_sound");
+      if (saved !== null) {
+        const val = saved === "true";
+        setSoundEnabled(val);
+        soundEnabledRef.current = val;
+      }
+    } catch {}
+  }, []);
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
   };
 
+  const toggleSound = () => {
+    setSoundEnabled(prev => {
+      const next = !prev;
+      soundEnabledRef.current = next;
+      try {
+        localStorage.setItem("impasto_admin_sound", String(next));
+      } catch {}
+      if (next) {
+        playKitchenChime();
+        showToast("🔔 Sonido de pedidos activado");
+      } else {
+        showToast("🔕 Sonido silenciado");
+      }
+      return next;
+    });
+  };
+
+  const load = async () => {
+    setState(s => ({ ...s, loading: true, error: null }));
+    try {
+      const data = await loadAll();
+      knownOrderIdsRef.current = new Set(data.orders.map((o: AdminOrder) => o.id));
+      isInitialLoadRef.current = false;
+      setState({ loading: false, error: null, ...data });
+    } catch (err) {
+      setState(s => ({ ...s, loading: false, error: err instanceof Error ? err.message : "Error de red" }));
+    }
+  };
+
+  useEffect(() => {
+    load();
+
+    // Auto-polling every 15s for new orders + kitchen chime
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch("/api/admin/pedidos");
+        if (!res.ok) return;
+        const j = await res.json();
+        if (!j.ok || !Array.isArray(j.data)) return;
+
+        const newOrders: AdminOrder[] = j.data.map(adaptOrder);
+        const prevIds = knownOrderIdsRef.current;
+
+        if (!isInitialLoadRef.current && prevIds.size > 0) {
+          const freshOrders = newOrders.filter(o => !prevIds.has(o.id));
+          if (freshOrders.length > 0) {
+            if (soundEnabledRef.current) {
+              playKitchenChime();
+            }
+            showToast(`🔔 ¡${freshOrders.length} nuevo(s) pedido(s) recibido(s)!`);
+          }
+        }
+
+        knownOrderIdsRef.current = new Set(newOrders.map((o: AdminOrder) => o.id));
+
+        setState(s => {
+          const updatedCustomers = s.customers.map(c =>
+            adaptCustomer({
+              id: c._dbId,
+              telefono: c.tel,
+              nombre: c.nombre,
+              email: c.email,
+              direccion: c.dir,
+              cant_compras: c.pedidos,
+              detalles: c.fav,
+              updated_at: c.ultimo,
+            }, newOrders)
+          );
+          return { ...s, orders: newOrders, customers: updatedCustomers };
+        });
+      } catch {
+        // Silently ignore polling hiccups
+      }
+    }, 15000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const api: StoreCtx = {
     state,
     reload: load,
     showToast,
+    soundEnabled,
+    toggleSound,
 
     updateProduct: async (id, patch) => {
       setState(s => ({ ...s, products: s.products.map(p => p.id === id ? { ...p, ...patch } : p) }));
@@ -333,7 +508,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     updateTestimonial: async (id, estado) => {
       const next = stateRef.current.testimonials.map(t => t.id === id ? { ...t, estado: estado as Testimonial["estado"] } : t);
       setState(s => ({ ...s, testimonials: next }));
-      const response = await fetch(`/api/admin/testimonios/${id}`, {
+      await fetch(`/api/admin/testimonios/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado }),
@@ -344,7 +519,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     deleteTestimonial: async (id) => {
       const next = stateRef.current.testimonials.filter(t => t.id !== id);
       setState(s => ({ ...s, testimonials: next }));
-      const response = await fetch(`/api/admin/testimonios/${id}`, { method: "DELETE" }).catch(() => null);
+      await fetch(`/api/admin/testimonios/${id}`, { method: "DELETE" }).catch(() => null);
       showToast("Testimonio eliminado");
     },
 

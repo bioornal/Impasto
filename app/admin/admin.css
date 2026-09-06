@@ -640,3 +640,185 @@ a{ color:inherit; text-decoration:none; }
 .mt-8{ margin-top:8px; } .mt-12{ margin-top:12px; } .mt-20{ margin-top:20px; }
 .text-muted{ color:var(--a-muted); }
 .text-mono{ font-family:var(--a-font-mono); }
+
+/* ============ COMANDA THERMAL PRINT (80mm / 58mm) ============ */
+.comanda-print-ticket {
+  display: none;
+}
+
+@media print {
+  /* Ocultar toda la interfaz de pantalla */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Resetear página para rollo térmico */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hacer visible exclusivamente la comanda */
+  .comanda-print-ticket,
+  .comanda-print-ticket * {
+    visibility: visible !important;
+  }
+
+  .comanda-print-ticket {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 78mm !important; /* Ancho estándar de rollo 80mm */
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 3mm 2mm 8mm 2mm !important;
+    box-sizing: border-box !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+
+  .comanda-print-ticket .c-center {
+    text-align: center !important;
+  }
+  .comanda-print-ticket .c-brand {
+    font-size: 24px !important;
+    font-weight: 900 !important;
+    letter-spacing: 2px !important;
+  }
+  .comanda-print-ticket .c-tagline {
+    font-size: 11px !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 4px !important;
+  }
+  .comanda-print-ticket .c-order-num {
+    font-size: 22px !important;
+    font-weight: 900 !important;
+    margin: 4px 0 !important;
+  }
+  .comanda-print-ticket .c-date {
+    font-size: 12px !important;
+  }
+  .comanda-print-ticket .c-divider {
+    border-top: 1px dashed #000000 !important;
+    margin: 6px 0 !important;
+  }
+  .comanda-print-ticket .c-divider-thick {
+    border-top: 2px solid #000000 !important;
+    margin: 6px 0 !important;
+  }
+  .comanda-print-ticket .c-mode-badge {
+    text-align: center !important;
+    font-size: 15px !important;
+    font-weight: 900 !important;
+    border: 2px solid #000000 !important;
+    padding: 4px 2px !important;
+    margin: 6px 0 !important;
+  }
+  .comanda-print-ticket .c-meta {
+    font-size: 13px !important;
+    margin: 6px 0 !important;
+  }
+  .comanda-print-ticket .c-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin: 2px 0 !important;
+  }
+  .comanda-print-ticket .c-row-block {
+    margin: 3px 0 !important;
+    word-break: break-word !important;
+  }
+  .comanda-print-ticket .c-muted-ref {
+    font-size: 12px !important;
+    font-style: italic !important;
+  }
+  .comanda-print-ticket .c-section-title {
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    letter-spacing: 1px !important;
+  }
+  .comanda-print-ticket .c-items-list {
+    margin: 6px 0 !important;
+  }
+  .comanda-print-ticket .c-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin: 6px 0 !important;
+  }
+  .comanda-print-ticket .c-item-qty {
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    width: 28px !important;
+    flex-shrink: 0 !important;
+  }
+  .comanda-print-ticket .c-item-info {
+    flex-grow: 1 !important;
+    padding-right: 6px !important;
+  }
+  .comanda-print-ticket .c-item-name {
+    font-size: 14px !important;
+    font-weight: 800 !important;
+  }
+  .comanda-print-ticket .c-item-price {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    flex-shrink: 0 !important;
+  }
+  .comanda-print-ticket .c-notes-box {
+    border: 2px solid #000000 !important;
+    padding: 6px !important;
+    margin: 8px 0 !important;
+    background: #ffffff !important;
+  }
+  .comanda-print-ticket .c-notes-label {
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    margin-bottom: 2px !important;
+  }
+  .comanda-print-ticket .c-notes-text {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    word-break: break-word !important;
+  }
+  .comanda-print-ticket .c-summary {
+    font-size: 13px !important;
+    margin: 6px 0 !important;
+  }
+  .comanda-print-ticket .c-total-row {
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    margin-top: 4px !important;
+  }
+  .comanda-print-ticket .c-payment-status {
+    padding: 4px 0 !important;
+  }
+  .comanda-print-ticket .c-payment-title {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+  }
+  .comanda-print-ticket .c-payment-paid {
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    margin-top: 2px !important;
+  }
+  .comanda-print-ticket .c-payment-due {
+    font-size: 15px !important;
+    font-weight: 900 !important;
+    white-space: pre-line !important;
+    margin-top: 2px !important;
+  }
+  .comanda-print-ticket .c-footer-note {
+    font-size: 11px !important;
+    margin-top: 8px !important;
+    letter-spacing: 1px !important;
+  }
+}

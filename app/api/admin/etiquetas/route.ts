@@ -10,6 +10,7 @@ async function conteoDeUso(): Promise<Record<string, number>> {
   const { data } = await db.database
     .from("productos")
     .select("tags")
+    .eq("proyecto_id", "impasto")
     .in("categoria", [...CATEGORIAS_IMPASTO]);
   const conteo: Record<string, number> = {};
   for (const fila of Array.isArray(data) ? data : []) {

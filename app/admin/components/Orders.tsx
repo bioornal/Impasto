@@ -68,7 +68,26 @@ export function Orders() {
                     <td className="right tbl-price">{fmt(o.total)}</td>
                     <td><span className={`chip chip-${o.estado}`}>{o.estado.replace("-", " ")}</span></td>
                     <td className="tbl-muted text-mono">{timeAgo(o.fecha)}</td>
-                    <td className="right"><button className="btn btn-icon btn-ghost" onClick={e => { e.stopPropagation(); setSelected(o); }}><Icon.Eye /></button></td>
+                    <td className="right" style={{ whiteSpace: "nowrap" }}>
+                      <button
+                        className="btn btn-icon btn-ghost"
+                        title="Imprimir comanda térmica"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setSelected(o);
+                          setTimeout(() => window.print(), 150);
+                        }}
+                      >
+                        <Icon.Printer />
+                      </button>
+                      <button
+                        className="btn btn-icon btn-ghost"
+                        title="Ver detalle"
+                        onClick={e => { e.stopPropagation(); setSelected(o); }}
+                      >
+                        <Icon.Eye />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -205,8 +224,122 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund }: { order:
         </div>
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
-          <button className="btn btn-primary" onClick={() => window.print()}>Imprimir comanda</button>
+          <button className="btn btn-primary" onClick={() => window.print()} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Icon.Printer /> Imprimir comanda
+          </button>
         </div>
+      </div>
+
+      {/* Comanda térmica lista para impresión (80mm / 58mm) */}
+      <ComandaTicket order={order} />
+    </div>
+  );
+}
+
+export function ComandaTicket({ order }: { order: AdminOrder }) {
+  const isPaid = order.pagoEstado === "aprobado";
+  const isDelivery = order.mode === "delivery";
+
+  return (
+    <div className="comanda-print-ticket" aria-hidden="true">
+      <div className="c-center c-brand">IMPASTO</div>
+      <div className="c-center c-tagline">PIZZA NAPOLETANA</div>
+      <div className="c-divider" />
+
+      <div className="c-center c-order-num">{order.id}</div>
+      <div className="c-center c-date">{fmtDateTime(order.fecha)}</div>
+
+      <div className="c-divider" />
+
+      <div className="c-mode-badge">
+        {isDelivery ? "★ ENVÍO A DOMICILIO ★" : "★ RETIRO EN LOCAL ★"}
+      </div>
+
+      <div className="c-meta">
+        <div className="c-row"><span>CLIENTE:</span> <b>{order.cliente}</b></div>
+        <div className="c-row"><span>TELÉFONO:</span> <b>{order.tel}</b></div>
+        {isDelivery && (
+          <>
+            <div className="c-row-block">
+              <span>DIRECCIÓN:</span> <b>{order.dir || "A coordinar"}</b>
+            </div>
+            {order.referencia && (
+              <div className="c-row-block c-muted-ref">
+                <span>REF:</span> {order.referencia}
+              </div>
+            )}
+          </>
+        )}
+        <div className="c-row">
+          <span>HORARIO:</span>
+          <b>{order.cuando === "asap" ? "LO ANTES POSIBLE" : order.cuando.toUpperCase()}</b>
+        </div>
+      </div>
+
+      <div className="c-divider-thick" />
+      <div className="c-center c-section-title">COMANDA DE COCINA</div>
+      <div className="c-divider-thick" />
+
+      <div className="c-items-list">
+        {order.items.map((item, idx) => (
+          <div key={idx} className="c-item">
+            <div className="c-item-qty">{item.qty}×</div>
+            <div className="c-item-info">
+              <div className="c-item-name">{item.name}</div>
+            </div>
+            <div className="c-item-price">{fmt(item.price * item.qty)}</div>
+          </div>
+        ))}
+      </div>
+
+      {order.notas && (
+        <div className="c-notes-box">
+          <div className="c-notes-label">⚠️ OBSERVACIONES / NOTAS:</div>
+          <div className="c-notes-text">{order.notas}</div>
+        </div>
+      )}
+
+      <div className="c-divider" />
+
+      <div className="c-summary">
+        <div className="c-row"><span>Subtotal:</span> <span>{fmt(order.subtotal)}</span></div>
+        {order.shipping > 0 && (
+          <div className="c-row"><span>Costo de envío:</span> <span>{fmt(order.shipping)}</span></div>
+        )}
+        <div className="c-row c-total-row">
+          <span>TOTAL:</span>
+          <span>{fmt(order.total)}</span>
+        </div>
+      </div>
+
+      <div className="c-divider" />
+
+      <div className="c-payment-status">
+        <div className="c-payment-title">ESTADO DE COBRO:</div>
+        {isPaid ? (
+          <div className="c-payment-paid">
+            [✓] PAGADO ONLINE ({order.pago.toUpperCase()})
+          </div>
+        ) : order.pago === "efectivo" ? (
+          <div className="c-payment-due">
+            [!] COBRAR EFECTIVO: {fmt(order.total)}
+            {order.cambio ? `\n(Abona con ${order.cambio})` : ""}
+          </div>
+        ) : order.pago === "transferencia" ? (
+          <div className="c-payment-due">
+            [!] COBRAR TRANSFERENCIA: {fmt(order.total)}
+            {"\n"}(Verificar comprobante)
+          </div>
+        ) : (
+          <div className="c-payment-due">
+            [!] COBRAR AL ENTREGAR: {fmt(order.total)}
+          </div>
+        )}
+      </div>
+
+      <div className="c-divider" />
+      <div className="c-center c-footer-note">
+        impasto.com.ar · Puerto Iguazú
       </div>
     </div>
   );

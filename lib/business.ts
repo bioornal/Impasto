@@ -34,6 +34,11 @@ export interface BusinessConfig {
    * y se contradecían entre sí.
    */
   deliveryEstimate: string;
+  /** Datos bancarios para transferencias directas */
+  cbu?: string;
+  aliasCbu?: string;
+  banco?: string;
+  titularCuenta?: string;
 }
 
 export const SUCURSAL_ID = "iguazu";
@@ -59,6 +64,10 @@ export const BUSINESS: BusinessConfig = {
   deliveryFee: 3000,
   freeShippingFrom: 25000,
   deliveryEstimate: "30 a 50 min",
+  cbu: "",
+  aliasCbu: "IMPASTO.IGUAZU",
+  banco: "Mercado Pago / Banco Galicia",
+  titularCuenta: "Impasto Pizzería",
 } as const;
 
 export const DELIVERY_FEE = BUSINESS.deliveryFee;

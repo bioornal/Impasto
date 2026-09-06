@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BusinessConfig } from "@/lib/business";
 import { parsearNegrita } from "@/lib/chat-negrita";
+import { esFallaDelAsistente } from "@/lib/chat-fallas";
 
 interface Mensaje {
   role: "user" | "assistant";
@@ -17,7 +18,15 @@ const SIN_CHAT = "El asistente no está disponible en este momento.";
  * sobre el que el cliente puede actuar (el del 429 dice cuántos minutos
  * esperar). Cualquier otra falla (red caída, stream vacío) usa `SIN_CHAT`.
  */
-class ErrorServidor extends Error {}
+class ErrorServidor extends Error {
+  /** El código con el que respondió la ruta: decide si el bot se da por caído. */
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
 
 /**
  * El chat del sitio. Ocupa el lugar que dejó el botón flotante de WhatsApp:
@@ -71,6 +80,17 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
   const [texto, setTexto] = useState("");
   const [esperando, setEsperando] = useState(false);
   const [fallo, setFallo] = useState<string | null>(null);
+  /**
+   * El asistente se dio por caído para lo que queda de esta visita.
+   *
+   * Es de sesión, no del sitio: `disponible` lo calcula el servidor en
+   * `app/page.tsx` y solo mira si hay key, así que el próximo visitante vuelve
+   * a ver el bot hasta que él también choque. Dejarlo así es a propósito —
+   * apagar el bot para todos exigiría estado compartido en la base—, y el
+   * aviso por Telegram de `lib/aviso-sistema.ts` cubre el hueco: el dueño se
+   * entera con el primer cliente que choca, no con el último.
+   */
+  const [sinBot, setSinBot] = useState(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
   const entradaRef = useRef<HTMLInputElement>(null);
@@ -203,7 +223,7 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
         } catch {
           // El cuerpo no era JSON parseable: se usa el mensaje genérico.
         }
-        throw new ErrorServidor(mensajeError);
+        throw new ErrorServidor(mensajeError, response.status);
       }
       if (!response.body) throw new Error(SIN_CHAT);
 
@@ -251,6 +271,13 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
         setMensajes((previos) => previos.slice(0, -1));
       }
       setFallo(error instanceof ErrorServidor ? error.message : SIN_CHAT);
+
+      // Si el que falló fue el asistente -no el rate limit, no un historial
+      // mal armado-, insistir no lo va a revivir: el widget se rinde y pasa a
+      // ser el botón de WhatsApp. El panel sigue abierto con el error a la
+      // vista; el cambio se ve recién cuando el cliente lo cierra, para no
+      // arrancarle de la pantalla el link que estaba por tocar.
+      if (error instanceof ErrorServidor && esFallaDelAsistente(error.status)) setSinBot(true);
     } finally {
       // Pase lo que pase -éxito, error del servidor o timeout propio- el timer
       // no puede quedar vivo, y el cliente tiene que poder volver a escribir.
@@ -259,8 +286,9 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
     }
   }
 
-  if (!disponible) {
-    // Sin key no hay bot: el botón tiene que verse coherente con lo que hace
+  if (!disponible || (sinBot && !abierto)) {
+    // Sin key nunca hubo bot; con `sinBot` lo hubo y se cayó. En los dos casos
+    // el botón tiene que verse coherente con lo que hace
     // -abrir WhatsApp-, no con lo que no puede hacer. Mismo pill, ícono y
     // texto de WhatsApp.
     return (
@@ -325,6 +353,17 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
             <div ref={finRef} />
           </div>
 
+          {/* Caído el asistente, el campo de texto no lleva a ningún lado:
+              ocupa su lugar la única vía que sí funciona. Se reemplaza en vez
+              de deshabilitarse para que la trampa de foco de más arriba no
+              tenga que contar un input deshabilitado, que no recibe foco. */}
+          {sinBot ? (
+            <div className="chat-envio">
+              <a className="chat-wsp" href={wsp} target="_blank" rel="noreferrer">
+                Escribinos por WhatsApp
+              </a>
+            </div>
+          ) : (
           <form
             className="chat-envio"
             onSubmit={(evento) => {
@@ -344,6 +383,7 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
               Enviar
             </button>
           </form>
+          )}
         </div>
       )}
     </>

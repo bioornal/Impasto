@@ -32,6 +32,7 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       hours: String(branch.horarios || BUSINESS.hours),
       // Si el parseo diera vacío, el local quedaría cerrado para siempre:
       // ante cualquier duda se usa la configuración del código.
+
       diasApertura: parseDias(branch.dias_apertura) ?? BUSINESS.diasApertura,
       horaApertura: String(branch.hora_apertura || BUSINESS.horaApertura),
       horaCierre: String(branch.hora_cierre || BUSINESS.horaCierre),
@@ -40,7 +41,12 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       mensajeCierre: String(branch.mensaje_cierre || ""),
       deliveryFee: Number(branch.delivery_fee || BUSINESS.deliveryFee),
       freeShippingFrom: Number(branch.envio_gratis_desde || BUSINESS.freeShippingFrom),
-      deliveryEstimate: String(branch.tiempo_entrega || BUSINESS.deliveryEstimate),    };
+      deliveryEstimate: String(branch.tiempo_entrega || BUSINESS.deliveryEstimate),
+      cbu: String(branch.cbu || BUSINESS.cbu || ""),
+      aliasCbu: String(branch.alias_cbu || BUSINESS.aliasCbu || ""),
+      banco: String(branch.banco || BUSINESS.banco || ""),
+      titularCuenta: String(branch.titular_cuenta || BUSINESS.titularCuenta || ""),
+    };
   } catch {
     return BUSINESS;
   }
