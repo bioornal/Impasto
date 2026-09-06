@@ -5,21 +5,22 @@
 Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Mercado Pago.
 Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
 
-Última actualización: 24 de agosto de 2026.
+Última actualización: 6 de septiembre de 2026.
 
 ## Cómo trabajar en este repo
 
 - **El gestor de paquetes es `pnpm`**, no npm. Instalar con npm rompe la auth del panel:
   el `package-lock.json` fijaba `@insforge/sdk@1.2.5`, que no expone el subpath `/ssr`.
   Ese lockfile ya se eliminó; no volver a crearlo.
-- `pnpm build`, `pnpm test` (tests de horarios), `pnpm dev`.
+- `pnpm build`, `pnpm test` (tests de horarios, SEO, catálogo y fallas de chat), `pnpm dev`.
 - **Migraciones:** `npx -y @insforge/cli db migrations new <nombre>` + `db migrations up --all`.
   Nunca con `db query`: **descarta el DDL en silencio y reporta éxito igual**.
 - **Al editar archivos con scripts**, ojo con los finales de línea CRLF: varios reemplazos
   fallaron por eso y TypeScript no los detecta (una prop sin usar compila). Verificar en el
   navegador, no solo con `tsc`.
 - El deploy de Netlify se dispara solo al pushear a `main`. **Cambiar una variable de entorno
-  no afecta a los deploys ya publicados**: hay que reconstruir aunque la variable se lea en runtime.
+  no afecta a los deploys ya publicados**: hay que reconstruir aunque la variable se lee en runtime.
+  También se puede disparar manualmente con `npx netlify deploy --trigger`.
 - `app/api/productos/route.ts` no lo consume nadie en el repo. Se conservó por si algún
   cliente externo lo llama. Si se confirma que no, borrarlo es un cambio de un archivo.
 - **Al verificar con `grep` que no quedan literales duplicados, incluí `.tsx`.** Un grep con
@@ -87,6 +88,22 @@ válido**, así que la falla se vería como una carta sin productos, no como un 
   `POST /v1/orders` con idempotencia, webhook con firma HMAC que falla cerrado, mapeo de estados
   y devoluciones totales y parciales desde el panel.
   **Credenciales de PRODUCCIÓN activas: cobra plata real.**
+- **Transferencias bancarias completas (06/09/2026)** — Datos bancarios (`cbu`, `alias_cbu`,
+  `banco`, `titular_cuenta`) en `sucursales` vía migración `20260906135520_datos-bancarios-sucursal.sql`.
+  Configurables desde `/admin` (Configuración). En Checkout y Confirmation se visualiza tarjeta
+  con CBU/Alias, botón de copiado en 1 clic y botón directo a WhatsApp con mensaje y comprobante prefirmado.
+- **Seguimiento en vivo de pedidos (06/09/2026)** — Endpoint público `/api/orders/[ref]` y pantalla
+  pública de tracking `/pedido/[ref]` con barra de progreso de 4 estados (*Recibido → Preparando → En camino / Listo para retirar → Entregado*), auto-polling de 15 segundos y banner superior discreto persistente en la cabecera cuando hay un pedido activo en `localStorage`.
+- **Comanda térmica para cocina (06/09/2026)** — Layout físico de comanda para impresoras térmicas de
+  80mm/58mm en `Orders.tsx`. `@media print` en `admin.css` aísla exclusivamente el ticket e inhabilita toda la interfaz del navegador al imprimir. Incluye `#IM-XXXX`, cliente, teléfono, dirección y referencias, ítems con cantidad resaltada, observaciones de cocina y estado de cobro claro (`[✓] PAGADO ONLINE` vs `[!] COBRAR EFECTIVO`). Botón de impresión directa en detalle y en la tabla de pedidos.
+- **Panel Admin en tiempo real con campanilla sonora (06/09/2026)** — Auto-polling en segundo plano cada
+  15 segundos en `StoreProvider.tsx` hacia `/api/admin/pedidos`. Al detectar una nueva comanda entrante, reproduce una campanilla bitonal elegante sintetizada en el navegador con la Web Audio API nativa. Botón de mute/unmute persistente en `Topbar`.
+- **Dashboard con métricas reales y CRM (06/09/2026)** — Eliminación de semillas mock. Cálculo real de
+  ventas hoy vs ayer con delta porcentual, pedidos hoy vs ayer, ticket promedio, comandas activas, selector de período de ventas `7d/14d/30d` y cálculo del gasto total real, cantidad de compras y producto favorito por cliente en `Customers.tsx`.
+- **Chatbot vendedor DeepSeek verificado en producción (06/09/2026)** — `DEEPSEEK_API_KEY` sincronizada en
+  Netlify CLI; verificado en vivo con streaming en tiempo real en `vocal-naiad-861a2c.netlify.app`.
+- **Saneamiento de seguridad y linter (06/09/2026)** — Eliminada carpeta huérfana `public/admin/`,
+  removido rewrite obsoleto en `next.config.ts`, desacoplada la tarjeta de WhatsApp en `Reviews.tsx` para que se muestre siempre. 0 errores en `pnpm lint`, 88 tests en `pnpm test` pasando.
 - **Persistencia del pedido** — todos los campos + historial con timestamps en `pedido_eventos`.
 - **Horarios y estado de venta** — configurables desde el panel, con interruptor manual para
   vacaciones. La validación vive en `createPedido`, el punto único por donde pasan todas las
@@ -98,11 +115,6 @@ válido**, así que la falla se vería como una carta sin productos, no como un 
 - **Testimonios** — sin seed falsos. Ojo con la historia: las cinco reseñas inventadas
   ("María L.", "Joaquín P."…) vivían en el **`localStorage` del panel**, no en la base. El
   **sitio nunca las mostró**: siempre leyó la tabla `testimonios`, que está vacía.
-  Consecuencia de esa tabla vacía: `Reviews.tsx` devuelve `null` con cero reseñas, así que hoy
-  la sección “05 — Opiniones” no se renderiza **y se lleva puesta la tarjeta “Pedí por
-  WhatsApp”**, que vive adentro de ese mismo componente. Verificado en el navegador: del sitio
-  entero queda **un solo link a `wa.me`, en la lista del footer**. Para recuperar el botón
-  grande hay que sacarlo de `Reviews.tsx`; si no, vuelve solo con la primera reseña aprobada.
 - **Módulo de email** construido y probado, **pero sin proveedor configurado**.
 
 ### Distinción que se presta a confusión
@@ -169,16 +181,16 @@ app las soporta y oculta la sección si no hay — hoy no hace falta que la ocul
 Tabla `promociones` vacía. Falta interfaz, reglas de aplicación, vigencias, límites de uso,
 descuentos reales en la cotización y validación server-side.
 
-### 5. Notificaciones que faltan
-**El aviso al local ya está hecho** (Telegram, 21/08/2026) — falta que el dueño cree el bot y
-cargue las variables. Sigue faltando el seguimiento en tiempo real y que el panel se actualice
-solo. **WhatsApp automático quedó descartado**: la API oficial de Meta exige un número
-que no esté en WhatsApp Business App, verificación con CUIT y plantillas aprobadas.
-Las librerías no oficiales arriesgan el baneo permanente del número del local.
+### 5. Notificaciones y Seguimiento en Vivo
+**Hecho el 06/09/2026.**
+- **Aviso al local:** Telegram (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_IDS`).
+- **Seguimiento en vivo:** `/pedido/[ref]` con stepper de 4 estados, auto-polling (15s) y banner superior.
+- **Auto-polling en Admin:** `StoreProvider.tsx` consulta silenciosamente cada 15s y reproduce campanilla de cocina (Web Audio API) con botón de silencio en Topbar.
+- **Comanda física:** Formato térmico de 80mm/58mm en `Orders.tsx` para enviar directamente a impresora de cocina.
 
-### 6. Chatbot vendedor
-**Hecho el 23/08/2026.** Ver "El chatbot vendedor" más abajo. Falta que el dueño cree la
-cuenta de DeepSeek y cargue saldo: hasta entonces el widget es un botón de WhatsApp.
+### 6. Chatbot vendedor (DeepSeek)
+**Hecho y verificado en producción (06/09/2026).** `DEEPSEEK_API_KEY` configurada en Netlify CLI.
+El endpoint `/api/chat` responde en tiempo real con streaming y rate limit contra el catálogo real de Impasto.
 
 ### 7. Calidad y operación
 Hay tests de horarios, catálogo, aviso al local y SEO, y páginas legales (`/terminos`,

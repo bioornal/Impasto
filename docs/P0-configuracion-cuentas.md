@@ -27,23 +27,14 @@ No hay nada que hacer acá. Queda registrado por si hay que rehacerlo en otro en
   - `EMAIL_FROM=Impasto <pedidos@impastoiguazu.com.ar>`
 - Reconstruir en Netlify (las env se leen según el caso en build o runtime).
 
-## 2. Aviso al local (Telegram)
+## 2. Aviso al local (Telegram) — CONFIGURADO (Netlify)
 
-- Crear el bot con `@BotFather` → devuelve un token.
-- Mandarle un mensaje al bot y obtener el `chat_id` (ej. con `@userinfobot`).
-- En `.env.local` y Netlify:
-  - `TELEGRAM_BOT_TOKEN=<token>`
-  - `TELEGRAM_CHAT_IDS=<chat_id>` (varios separados por coma)
+- `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_IDS` cargados en Netlify y `.env.local`.
 
-## 3. Chatbot vendedor (DeepSeek)
+## 3. Chatbot vendedor (DeepSeek) — CONFIGURADO Y VERIFICADO EN PRODUCCIÓN (06/09/2026)
 
-- Crear cuenta en https://platform.deepseek.com y cargar saldo.
-- En `.env.local` y Netlify:
-  - `DEEPSEEK_API_KEY=<key>` (server-only, NUNCA `NEXT_PUBLIC_`)
-  - Opcional: `DEEPSEEK_MODEL=deepseek-v4-flash` (es el default)
-- Sin la key, el widget queda como botón de WhatsApp (no se rompe nada).
-- **Verificar el streaming en PRODUCCIÓN**, no en `pnpm dev`: las funciones serverless pueden
-  bufferear la respuesta.
+- Cuenta activa, `DEEPSEEK_API_KEY` sincronizada en Netlify CLI.
+- Verificado en producción (`vocal-naiad-861a2c.netlify.app`): responde en streaming en tiempo real vía `/api/chat`.
 
 ## 4. Dominio propio + webhook de Mercado Pago
 
