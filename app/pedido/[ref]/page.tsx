@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fmt } from "@/lib/utils";
+import { esRespuestaDefinitiva, esEstadoFinal } from "@/lib/seguimiento";
 
 interface OrderItem {
   name?: string;
@@ -77,6 +78,17 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
 
   useEffect(() => {
     let activo = true;
+    let intervalo: ReturnType<typeof setInterval> | undefined;
+    // `cargarPedido()` corre una vez antes de que se arme el intervalo. Si esa
+    // primera respuesta ya dice "no sigas", no hay nada que limpiar todavía:
+    // esta bandera hace que el `setInterval` de más abajo no llegue a quedar vivo.
+    let detenido = false;
+
+    const detener = () => {
+      detenido = true;
+      if (intervalo) clearInterval(intervalo);
+      intervalo = undefined;
+    };
 
     async function cargarPedido() {
       try {
@@ -84,13 +96,18 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
         const data = await res.json();
         if (!res.ok || !data.ok) {
           if (activo) setError(data.error || "No se encontró el pedido");
+          // Una referencia mal escrita o inexistente no va a aparecer sola.
+          if (esRespuestaDefinitiva(res.status)) detener();
           return;
         }
         if (activo) {
           setOrder(data.order);
           setError("");
         }
+        // Entregado o cancelado: el estado ya no cambia, no hay qué refrescar.
+        if (esEstadoFinal(data.order?.estado)) detener();
       } catch {
+        // Una caída de red se puede recuperar sola: acá no se corta el refresco.
         if (activo) setError("Error de conexión al cargar el pedido");
       } finally {
         if (activo) setLoading(false);
@@ -99,10 +116,12 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
 
     cargarPedido();
     // Auto-refresh cada 15 segundos
-    const intervalo = setInterval(cargarPedido, 15000);
+    intervalo = setInterval(cargarPedido, 15000);
+    if (detenido) detener();
+
     return () => {
       activo = false;
-      clearInterval(intervalo);
+      detener();
     };
   }, [ref]);
 
