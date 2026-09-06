@@ -420,10 +420,12 @@ carrito es siempre el cliente.
   (el `AbortController` de 20s de `lib/deepseek.ts`, que cubre solo la conexión, no el cuerpo
   del stream): si el del cliente fuera igual o menor, abortaría requests que el servidor
   todavía estaba atendiendo bien.
-- **El streaming hay que mirarlo en producción, no en `pnpm dev`.** Las funciones serverless
-  pueden bufferear la respuesta y entregarla entera al final: se ve igual que sin streaming y
-  no tira ningún error. **No se verificó en esta sesión** — queda pendiente para después del
-  próximo deploy (ver Step 6 de la task de cierre).
+- **El streaming fue verificado en producción el 06/09/2026:** El endpoint `/api/chat` entrega los fragmentos en tiempo real con `X-Accel-Buffering: no`, probado en vivo en `vocal-naiad-861a2c.netlify.app`.
+- **Manejo de créditos insuficientes y fallas del bot (`lib/chat-fallas.ts` y `lib/aviso-sistema.ts`):**
+  - **Detección de saldo insuficiente (HTTP 402) y key rechazada (HTTP 401):** Cuando DeepSeek responde sin créditos (HTTP 402) o con credencial inválida (HTTP 401), `alertaPorFallo()` genera una alerta del sistema con el encabezado `CHAT CAÍDO`, el motivo exacto y el enlace directo de recarga (`https://platform.deepseek.com`). Errores transitorios de servidor (HTTP 500 o timeouts) no generan alerta para evitar ruido.
+  - **Alerta al dueño por Telegram sin spam:** `lib/aviso-sistema.ts:avisarFalloDelChat` despacha el aviso por Telegram (`sendTelegram`), pero previene el spam mediante deduplicación en la tabla `rate_limit_intentos` con una ventana de 1 hora (`VENTANA_AVISO = 3600`). Si entran decenas de clientes mientras no hay saldo, el dueño recibe un único mensaje por hora.
+  - **Fallback elegante a WhatsApp (`ChatWidget.tsx`):** El cliente `ChatWidget` evalúa el status con `esFallaDelAsistente(status)`. Si recibe un código terminal (502 de backend caído o 503 sin key), se rinde limpiamente (`setSinBot(true)`) y conmuta de inmediato el widget a un botón directo de WhatsApp (`wa.me`), sin romper la UX ni dejar al cliente esperando. Si el error es transitorio (429 por rate limit propio o 400), el widget no se rinde porque reintentar minutos después sí funciona.
+  - **Tests dedicados:** La lógica completa está cubierta por `tests/chat-fallas.test.ts` y se ejecuta con `pnpm test`.
 - **`lib/marca.ts` no alcanza si el sitio no lee de ahí.** Empezó con 3 argumentos sin `id`; hoy
   tiene 7, cada uno con `id` estable para pedirlo puntual con `argumento()`. Lo leen el prompt
   del bot, cinco secciones del sitio (`Story`, `Hero`, `PizzaList`, `EmpanadasSection`,
