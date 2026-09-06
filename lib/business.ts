@@ -64,10 +64,16 @@ export const BUSINESS: BusinessConfig = {
   deliveryFee: 3000,
   freeShippingFrom: 25000,
   deliveryEstimate: "30 a 50 min",
+  // **Vacíos a propósito, y no tocar.** Son los únicos datos del negocio a los
+  // que un cliente le manda plata. `getBusinessConfig()` cae a este objeto ante
+  // cualquier error de base, así que un valor de ejemplo acá se convierte, en
+  // un mal momento, en un alias real mostrado a alguien que está por transferir.
+  // Los datos verdaderos viven en `sucursales` y se cargan desde el panel; si
+  // faltan, la pantalla de transferencia no se muestra.
   cbu: "",
-  aliasCbu: "IMPASTO.IGUAZU",
-  banco: "Mercado Pago / Banco Galicia",
-  titularCuenta: "Impasto Pizzería",
+  aliasCbu: "",
+  banco: "",
+  titularCuenta: "",
 } as const;
 
 export const DELIVERY_FEE = BUSINESS.deliveryFee;

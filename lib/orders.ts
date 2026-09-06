@@ -4,6 +4,7 @@ import { getBusinessConfig } from "@/lib/business-server";
 import { getCartSessionId } from "@/lib/cart-session";
 import { estadoTienda } from "@/lib/hours";
 import { SUCURSAL_ID } from "@/lib/business";
+import { nuevaReferencia } from "@/lib/referencia";
 import type { EstadoPago } from "@/lib/mercadopago";
 import type { CartItem } from "@/types";
 
@@ -106,8 +107,11 @@ export async function createPedido(
 
   await upsertCliente(order);
 
+  // El número sigue siendo el que ve el local en la comanda; la referencia
+  // lleva además un sufijo aleatorio. Ver `lib/referencia.ts`: sin él la
+  // referencia se repetía cada 15 minutos y era adivinable desde afuera.
   const numero = (Date.now() % 900000) + 100000;
-  const referencia = `IM-${numero}`;
+  const referencia = nuevaReferencia(numero);
 
   const { data, error } = await db.database
     .from("pedidos")

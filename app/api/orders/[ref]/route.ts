@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { SUCURSAL_ID } from "@/lib/business";
 import { getBusinessConfig } from "@/lib/business-server";
+import { esReferenciaValida, normalizarReferencia } from "@/lib/referencia";
+import { limitar } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -11,15 +13,22 @@ export const dynamic = "force-dynamic";
  * Devuelve únicamente los datos necesarios para el cliente (sin datos sensibles ni tokens).
  */
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ ref: string }> }
 ) {
   const { ref } = await params;
-  const cleanedRef = String(ref || "").trim().toUpperCase();
+  const cleanedRef = normalizarReferencia(ref);
 
-  if (!cleanedRef || !cleanedRef.startsWith("IM-")) {
+  // El formato se valida antes de tocar la base: un intento de enumeración no
+  // llega a costar una consulta. Ver `lib/referencia.ts`.
+  if (!esReferenciaValida(cleanedRef)) {
     return NextResponse.json({ ok: false, error: "Referencia de pedido inválida" }, { status: 400 });
   }
+
+  // Esta ruta es pública y devuelve nombre y dirección del cliente: el límite
+  // es lo que impide que alguien la use para juntar datos a escala.
+  const limitado = await limitar(req, "seguimiento");
+  if (limitado) return limitado;
 
   const { data, error } = await db.database
     .from("pedidos")

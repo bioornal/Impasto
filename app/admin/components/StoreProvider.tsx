@@ -35,7 +35,10 @@ function adaptOrder(p: Record<string, unknown>): AdminOrder {
   const num = String(p.numero_pedido || "").padStart(4, "0");
   return {
     _dbId: String(p.id),
-    id: "IM-" + num,
+    // La referencia real, con su sufijo (`IM-107345-K7QD`), que es la que tiene
+    // el cliente y la que abre su seguimiento. El `IM-` + número es solo el
+    // respaldo para pedidos viejos que no la tengan.
+    id: String(p.external_reference || "IM-" + num),
     cliente: String(p.nombre_cliente || "—"),
     tel: String(p.telefono_cliente || "—"),
     mode: mode as "delivery" | "takeaway",

@@ -151,7 +151,11 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
   const stepIndex = ESTADOS_ORDEN[order.estado] ?? 0;
   const esCancelado = order.estado === "cancelado";
   const esDelivery = order.modalidad === "delivery";
-  const alias = order.bancoInfo?.alias || "IMPASTO.IGUAZU";
+  // Nunca un valor de ejemplo acá: es el dato al que el cliente le manda plata.
+  // Si el local no lo tiene cargado, se le pide por WhatsApp. Ver `lib/business.ts`.
+  const alias = order.bancoInfo?.alias || "";
+  const paraCopiar = alias || order.bancoInfo?.cbu || "";
+  const hayDatosBancarios = Boolean(paraCopiar);
 
   const wspMensaje = `Hola! Consulto por mi pedido ${order.numero} (${order.cliente}).`;
   const wspUrl = `https://wa.me/${order.whatsappPhone}?text=${encodeURIComponent(wspMensaje)}`;
@@ -230,7 +234,27 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
         </div>
 
         {/* Datos de transferencia bancaria si corresponde */}
-        {order.metodoPago === "transferencia" && order.estadoPago !== "aprobado" && (
+        {order.metodoPago === "transferencia" && order.estadoPago !== "aprobado" && !hayDatosBancarios && (
+          <div style={{ background: "#faf5eb", border: "1.5px dashed #b2472a", borderRadius: "16px", padding: "20px", marginBottom: "20px" }}>
+            <div style={{ color: "#b2472a", fontWeight: 700, fontSize: "15px", marginBottom: "8px" }}>
+              Transferir {fmt(order.total)}
+            </div>
+            <p style={{ margin: "0 0 12px", fontSize: "13.5px", color: "#5a4b3f", lineHeight: 1.4 }}>
+              Escribinos por WhatsApp y te pasamos el alias para transferir.
+            </p>
+            <a
+              href={wspUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", background: "#25d366", color: "white", textDecoration: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: 600, fontSize: "13.5px" }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a10 10 0 0 0-8.56 15.1L2 22l5.05-1.32A10 10 0 1 0 12.04 2Z"/></svg>
+              Pedir los datos por WhatsApp
+            </a>
+          </div>
+        )}
+
+        {order.metodoPago === "transferencia" && order.estadoPago !== "aprobado" && hayDatosBancarios && (
           <div style={{ background: "#faf5eb", border: "1.5px dashed #b2472a", borderRadius: "16px", padding: "20px", marginBottom: "20px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#b2472a", fontWeight: 700, fontSize: "15px", marginBottom: "10px" }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
@@ -241,12 +265,12 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
             </p>
             <div style={{ background: "white", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e8decb", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
               <div>
-                <small style={{ display: "block", color: "#8a7a6b", fontSize: "11px", textTransform: "uppercase" }}>Alias CBU</small>
-                <strong style={{ fontSize: "16px", color: "#2a2018", fontFamily: "monospace" }}>{alias}</strong>
+                <small style={{ display: "block", color: "#8a7a6b", fontSize: "11px", textTransform: "uppercase" }}>{alias ? "Alias CBU" : "CBU / CVU"}</small>
+                <strong style={{ fontSize: "16px", color: "#2a2018", fontFamily: "monospace" }}>{paraCopiar}</strong>
               </div>
               <button
                 type="button"
-                onClick={() => copiarAlias(alias)}
+                onClick={() => copiarAlias(paraCopiar)}
                 style={{ background: copiado ? "#2e7d32" : "#b2472a", color: "white", border: "none", padding: "6px 14px", borderRadius: "6px", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}
               >
                 {copiado ? "✓ Copiado" : "Copiar"}
@@ -256,7 +280,7 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
               <div style={{ fontSize: "12.5px", color: "#6a5c50", marginBottom: "12px" }}>
                 <div><b>Titular:</b> {order.bancoInfo.titular}</div>
                 {order.bancoInfo.banco && <div><b>Banco:</b> {order.bancoInfo.banco}</div>}
-                {order.bancoInfo.cbu && <div><b>CBU/CVU:</b> <span style={{ fontFamily: "monospace" }}>{order.bancoInfo.cbu}</span></div>}
+                {alias && order.bancoInfo.cbu && <div><b>CBU/CVU:</b> <span style={{ fontFamily: "monospace" }}>{order.bancoInfo.cbu}</span></div>}
               </div>
             )}
             <a

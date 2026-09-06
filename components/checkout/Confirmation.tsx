@@ -24,13 +24,22 @@ const PAGO_LABEL: Record<string, string> = {
 
 export function Confirmation({ order, onClose, business }: { order: Order; onClose: () => void; business: BusinessConfig }) {
   const [copiado, setCopiado] = useState(false);
-  const alias = business.aliasCbu || "IMPASTO.IGUAZU";
-  const titular = business.titularCuenta || "Impasto Pizzería";
-  const banco = business.banco || "Mercado Pago / Banco Galicia";
+  const alias = business.aliasCbu || "";
+  const titular = business.titularCuenta || "";
+  const banco = business.banco || "";
+  /**
+   * Sin alias ni CBU no hay a dónde transferir. Antes acá había valores de
+   * ejemplo como respaldo, y eso es lo peor que se puede hacer con este dato:
+   * el cliente le manda plata a un alias que no es del local. Si falta la
+   * configuración se muestra el pedido igual y se le dice que los pida por
+   * WhatsApp.
+   */
+  const hayDatosBancarios = Boolean(alias || business.cbu);
+  const paraCopiar = alias || business.cbu || "";
 
   const copiarAlias = async () => {
     try {
-      await navigator.clipboard.writeText(alias);
+      await navigator.clipboard.writeText(paraCopiar);
       setCopiado(true);
       setTimeout(() => setCopiado(false), 2000);
     } catch {
@@ -79,19 +88,40 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
           </div>
         </div>
 
-        {order.pago === "transferencia" && (
+        {order.pago === "transferencia" && !hayDatosBancarios && (
+          <div style={{ padding: "16px", background: "#faf5eb", border: "1.5px dashed #b2472a", borderRadius: "12px", margin: "16px 0", textAlign: "left" }}>
+            <div style={{ color: "#b2472a", fontWeight: 700, fontSize: "14px", marginBottom: "6px" }}>
+              Datos para transferir {fmt(order.total)}
+            </div>
+            <p style={{ margin: "0 0 12px", fontSize: "13px", color: "#4a3e35" }}>
+              Escribinos por WhatsApp y te pasamos el alias en el momento. Tu pedido ya quedó
+              registrado con el número <b>{order.numero}</b>.
+            </p>
+            <a
+              style={{ width: "100%", display: "inline-flex", justifyContent: "center", alignItems: "center", gap: "6px", background: "#25d366", color: "white", textDecoration: "none", fontWeight: 600, padding: "9px 14px", borderRadius: "8px" }}
+              href={wspUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a10 10 0 0 0-8.56 15.1L2 22l5.05-1.32A10 10 0 1 0 12.04 2Z"/></svg>
+              Pedir los datos por WhatsApp
+            </a>
+          </div>
+        )}
+
+        {order.pago === "transferencia" && hayDatosBancarios && (
           <div style={{ padding: "16px", background: "#faf5eb", border: "1.5px dashed #b2472a", borderRadius: "12px", margin: "16px 0", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#b2472a", fontWeight: 700, fontSize: "14px", marginBottom: "8px" }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
               <span>Datos para transferir {fmt(order.total)}</span>
             </div>
             <div style={{ fontSize: "13px", color: "#4a3e35", display: "flex", flexDirection: "column", gap: "6px" }}>
-              <div><b>Banco:</b> {banco}</div>
-              <div><b>Titular:</b> {titular}</div>
+              {banco && <div><b>Banco:</b> {banco}</div>}
+              {titular && <div><b>Titular:</b> {titular}</div>}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "white", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5dacb", marginTop: "4px" }}>
                 <div>
-                  <small style={{ display: "block", color: "#8a7a6b", fontSize: "11px", textTransform: "uppercase", letterSpacing: ".05em" }}>Alias</small>
-                  <strong style={{ fontSize: "15px", color: "#2a2018", fontFamily: "var(--font-mono, monospace)" }}>{alias}</strong>
+                  <small style={{ display: "block", color: "#8a7a6b", fontSize: "11px", textTransform: "uppercase", letterSpacing: ".05em" }}>{alias ? "Alias" : "CBU / CVU"}</small>
+                  <strong style={{ fontSize: "15px", color: "#2a2018", fontFamily: "var(--font-mono, monospace)" }}>{paraCopiar}</strong>
                 </div>
                 <button
                   type="button"
@@ -102,7 +132,9 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
                   {copiado ? "✓ Copiado" : "Copiar"}
                 </button>
               </div>
-              {business.cbu && (
+              {/* Solo como complemento del alias: si no hay alias, el CBU ya
+                  ocupa el recuadro de arriba y repetirlo confunde. */}
+              {alias && business.cbu && (
                 <div style={{ fontSize: "11.5px", color: "#8a7a6b", marginTop: "2px" }}>
                   CBU/CVU: <span style={{ fontFamily: "monospace" }}>{business.cbu}</span>
                 </div>

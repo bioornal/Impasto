@@ -21,6 +21,13 @@ export const LIMITES = {
   // minutos repartidos entre un hotel entero se agotan rápido, y el costo por
   // conversación es de menos de un décimo de centavo de dólar.
   chat: { max: 40, ventana: 600 },
+  // La página de seguimiento refresca cada 15 s, o sea 40 consultas cada 10
+  // minutos por cliente que la deja abierta. 120 deja lugar a tres mirando el
+  // pedido desde la misma IP -el wifi de un hotel, otra vez- y aun así frena
+  // en seco cualquier intento de barrer referencias. Es defensa en
+  // profundidad: lo que de verdad protege los datos es el sufijo aleatorio de
+  // `lib/referencia.ts`.
+  seguimiento: { max: 120, ventana: 600 },
 } satisfies Record<string, LimiteConfig>;
 
 /** Netlify expone la IP real acá; el resto son respaldos. */

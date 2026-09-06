@@ -179,9 +179,9 @@ export function Settings() {
               Se muestran al cliente en la pantalla de confirmación cuando elige pagar por transferencia.
             </div>
             <div className="form-grid">
-              <div className="field"><label>Alias CBU</label><input placeholder="IMPASTO.IGUAZU" value={config.alias_cbu || ""} onChange={(e) => set("alias_cbu", e.target.value)} /></div>
-              <div className="field"><label>Banco / Billetera</label><input placeholder="Mercado Pago / Galicia" value={config.banco || ""} onChange={(e) => set("banco", e.target.value)} /></div>
-              <div className="field full"><label>Titular de la cuenta</label><input placeholder="Impasto Pizzería" value={config.titular_cuenta || ""} onChange={(e) => set("titular_cuenta", e.target.value)} /></div>
+              <div className="field"><label>Alias CBU</label><input placeholder="MI.ALIAS.BANCARIO" value={config.alias_cbu || ""} onChange={(e) => set("alias_cbu", e.target.value)} /></div>
+              <div className="field"><label>Banco / Billetera</label><input placeholder="Nombre del banco o billetera" value={config.banco || ""} onChange={(e) => set("banco", e.target.value)} /></div>
+              <div className="field full"><label>Titular de la cuenta</label><input placeholder="Nombre y apellido del titular" value={config.titular_cuenta || ""} onChange={(e) => set("titular_cuenta", e.target.value)} /></div>
               <div className="field full"><label>CBU / CVU (22 dígitos)</label><input placeholder="00000031000..." value={config.cbu || ""} onChange={(e) => set("cbu", e.target.value)} /></div>
             </div>
           </section>

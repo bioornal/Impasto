@@ -11,7 +11,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [{
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin", "/admin/", "/admin-login", "/api/"],
+      // `/pedido/` lleva nombre, dirección e ítems del cliente: no va al índice.
+      disallow: ["/admin", "/admin/", "/admin-login", "/api/", "/pedido/"],
     }],
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,
