@@ -39,8 +39,8 @@ const GRAMOS_POR_EMPANADA = 65;
  *   costoReceta = round(precio_prepizza + precio_salsa + Σ(precio_kg * cantidad_kg * multiplo_rendimiento))
  *   precioEfectivo = round(costoReceta * markup)
  *
- * Empanadas:
- *   costoReceta = round(precio_prepizza + precio_salsa + Σ(precio_kg * cantidad_kg * multiplo_rendimiento))
+ * Empanadas (sin prepizza ni salsa, igual que las bebidas):
+ *   costoReceta = round(Σ(precio_kg * cantidad_kg * multiplo_rendimiento))
  *   unidades = floor(totalCantidadKg * 1000 / 65)
  *   costoUnit = costoReceta / unidades
  *   precioEfectivo = round(costoUnit * markup)
@@ -86,8 +86,11 @@ export function buildEffectivePrices(
 
     let costoUnit = 0;
     if (recipe && components.length > 0) {
-      const precioPrepizza = Number(recipe.precio_prepizza ?? defaults?.precio_prepizza_default ?? 0);
-      const precioSalsa = Number(recipe.precio_salsa ?? defaults?.precio_salsa_default ?? 0);
+      // La prepizza y la salsa son de la pizza: empanadas y bebidas no las suman
+      // aunque la receta las tenga cargadas.
+      const llevaPrepizza = subcategoria !== 'Empanadas' && subcategoria !== 'Bebidas';
+      const precioPrepizza = llevaPrepizza ? Number(recipe.precio_prepizza ?? defaults?.precio_prepizza_default ?? 0) : 0;
+      const precioSalsa = llevaPrepizza ? Number(recipe.precio_salsa ?? defaults?.precio_salsa_default ?? 0) : 0;
 
       let costoIngredientes = 0;
       let totalCantidadKg = 0;

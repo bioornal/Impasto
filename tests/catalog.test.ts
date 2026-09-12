@@ -46,6 +46,32 @@ const preciosEfectivos = buildEffectivePrices(
 );
 check("el precio efectivo replica el gestor de costos", preciosEfectivos.get("Pizza Muzzarela"), 20000);
 
+// La prepizza y la salsa son de la pizza. Las 9 recetas de empanadas llegaron a
+// tener 485 y 236 cargados, y eso le sumaba hasta $2.000 por unidad a la web.
+// Con los valores cargados: (700 + 485 + 236) / 7 unidades × 5 = 1.015 → $2.000.
+const sinPrepizza = buildEffectivePrices(
+  [
+    { id: "e1", nombre: "Empanadas de Pollo", precio_prepizza: 485, precio_salsa: 236 },
+    { id: "b1", nombre: "Agua Mineral", precio_prepizza: 485, precio_salsa: 236 },
+  ],
+  [
+    { receta_id: "e1", ingrediente_id: "i1", cantidad_kg: 0.5 },
+    { receta_id: "b1", ingrediente_id: "i2", cantidad_kg: 1 },
+  ],
+  [
+    { id: "i1", precio_kg: 1400, multiplo_rendimiento: 1 },
+    { id: "i2", precio_kg: 2000, multiplo_rendimiento: 1 },
+  ],
+  [
+    { receta_id: "e1", nombre: "Empanadas de Pollo", markup: 5, subcategoria: "Empanadas" },
+    { receta_id: "b1", nombre: "Agua Mineral", markup: 1.5, subcategoria: "Bebidas" },
+  ],
+  { pizzas_objetivo_mes: 0 },
+  0,
+);
+check("la empanada no suma prepizza ni salsa aunque la receta los tenga", sinPrepizza.get("Empanadas de Pollo"), 1000);
+check("la bebida no suma prepizza ni salsa aunque la receta los tenga", sinPrepizza.get("Agua Mineral"), 3000);
+
 const todos = [...catalogo.pizzas, ...catalogo.empanadas, ...catalogo.bebidas].map((p) => p.nombre);
 check("ningún producto del proyecto paralelo se filtra", todos.filter((n) => ["Hamburguesa Simple", "Lomo Completo", "Calzone Napolitano"].includes(n)), []);
 
