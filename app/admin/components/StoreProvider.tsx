@@ -1,8 +1,9 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial, AdminOrder, AdminCustomer } from "./types";
-import { DELIVERY_FEE } from "@/lib/business";
 import { esCategoriaImpasto } from "@/lib/categorias";
+import { adaptOrder } from "@/lib/adapt-order";
+import { esPedidoParaCocina } from "@/lib/pedido-visible";
 
 /* ── adaptadores InsForge → admin ── */
 function adaptProduct(p: Record<string, unknown>): AdminProduct {
@@ -21,41 +22,6 @@ function adaptProduct(p: Record<string, unknown>): AdminProduct {
     tags: Array.isArray(p.tags) ? p.tags : [],
     popular: Boolean(p.popular),
     stock: 24,
-  };
-}
-
-function adaptOrder(p: Record<string, unknown>): AdminOrder {
-  const mode = p.modalidad === "takeaway" ? "takeaway" : p.modalidad === "delivery" ? "delivery" : p.direccion && p.direccion !== "Retiro en local" ? "delivery" : "takeaway";
-  const isDelivery = mode === "delivery";
-  const total = Number(p.total || 0);
-  const shipping = Number(p.envio ?? (isDelivery ? DELIVERY_FEE : 0));
-  const items = Array.isArray(p.productos)
-    ? p.productos.map((i: Record<string, unknown>) => ({ name: String(i.name || i.nombre || "?"), qty: Number(i.qty || i.cantidad || 1), price: Number(i.price || i.precio || 0) }))
-    : [];
-  const num = String(p.numero_pedido || "").padStart(4, "0");
-  return {
-    _dbId: String(p.id),
-    // La referencia real, con su sufijo (`IM-107345-K7QD`), que es la que tiene
-    // el cliente y la que abre su seguimiento. El `IM-` + número es solo el
-    // respaldo para pedidos viejos que no la tengan.
-    id: String(p.external_reference || "IM-" + num),
-    cliente: String(p.nombre_cliente || "—"),
-    tel: String(p.telefono_cliente || "—"),
-    mode: mode as "delivery" | "takeaway",
-    dir: isDelivery ? String(p.direccion || "") : "",
-    zona: "",
-    items,
-    subtotal: Number(p.subtotal ?? Math.max(0, Number(p.total_con_descuento || total) - shipping)),
-    shipping,
-    total,
-    pago: String(p.metodo_pago || "n/d"),
-    pagoEstado: String(p.estado_pago || "pendiente"),
-    cambio: String(p.cambio || ""),
-    referencia: String(p.referencia || ""),
-    cuando: String(p.cuando || "asap"),
-    estado: String(p.status || "nuevo") === "normal" ? "nuevo" : String(p.status || "nuevo"),
-    fecha: String(p.created_at || new Date().toISOString()),
-    notas: String(p.notas || ""),
   };
 }
 
@@ -315,15 +281,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const timer = setInterval(async () => {
       try {
         const res = await fetch("/api/admin/pedidos");
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (res.status === 401) {
+            setState(s => ({
+              ...s,
+              error: "Sesión vencida — por favor volvé a iniciar sesión para seguir recibiendo pedidos",
+            }));
+          }
+          return;
+        }
         const j = await res.json();
         if (!j.ok || !Array.isArray(j.data)) return;
 
         const newOrders: AdminOrder[] = j.data.map(adaptOrder);
         const prevIds = knownOrderIdsRef.current;
 
-        if (!isInitialLoadRef.current && prevIds.size > 0) {
-          const freshOrders = newOrders.filter(o => !prevIds.has(o.id));
+        if (!isInitialLoadRef.current) {
+          const freshOrders = newOrders.filter(o => !prevIds.has(o.id) && esPedidoParaCocina(o));
           if (freshOrders.length > 0) {
             if (soundEnabledRef.current) {
               playKitchenChime();
@@ -477,16 +451,46 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
 
     updateOrderStatus: async (id, estado) => {
+      const prevOrder = stateRef.current.orders.find(o => o.id === id);
+      const prevEstado = prevOrder?.estado;
       setState(s => ({ ...s, orders: s.orders.map(o => o.id === id ? { ...o, estado } : o) }));
       const order = stateRef.current.orders.find(o => o.id === id);
-      if (order) await fetch(`/api/admin/pedidos/${order._dbId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: estado }) });
+      if (order) {
+        const res = await fetch(`/api/admin/pedidos/${order._dbId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: estado }),
+        }).catch(() => null);
+        if (!res || !res.ok) {
+          if (prevEstado) {
+            setState(s => ({ ...s, orders: s.orders.map(o => o.id === id ? { ...o, estado: prevEstado } : o) }));
+          }
+          showToast("Error al actualizar el estado del pedido");
+          return;
+        }
+      }
       showToast(`Pedido ${id} → ${estado}`);
     },
 
     updateOrderPayment: async (id, estado) => {
+      const prevOrder = stateRef.current.orders.find(o => o.id === id);
+      const prevPagoEstado = prevOrder?.pagoEstado;
       setState(s => ({ ...s, orders: s.orders.map(o => o.id === id ? { ...o, pagoEstado: estado } : o) }));
       const order = stateRef.current.orders.find(o => o.id === id);
-      if (order) await fetch(`/api/admin/pedidos/${order._dbId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado_pago: estado }) });
+      if (order) {
+        const res = await fetch(`/api/admin/pedidos/${order._dbId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ estado_pago: estado }),
+        }).catch(() => null);
+        if (!res || !res.ok) {
+          if (prevPagoEstado) {
+            setState(s => ({ ...s, orders: s.orders.map(o => o.id === id ? { ...o, pagoEstado: prevPagoEstado } : o) }));
+          }
+          showToast("Error al actualizar el estado de pago");
+          return;
+        }
+      }
       showToast(`Pago de ${id} → ${estado}`);
     },
 

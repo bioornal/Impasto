@@ -33,8 +33,6 @@ interface CheckoutProps {
 
 const WHEN_OPTIONS: [string, string][] = [
   ["asap", "Lo antes posible"],
-  ["21:00", "Programar 21:00"],
-  ["22:00", "Programar 22:00"],
 ];
 
 const PAGOS: [string, string, string, string][] = [

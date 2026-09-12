@@ -62,7 +62,7 @@ export const BUSINESS: BusinessConfig = {
   ventasActivas: true,
   mensajeCierre: "",
   deliveryFee: 3000,
-  freeShippingFrom: 25000,
+  freeShippingFrom: 35000,
   deliveryEstimate: "30 a 50 min",
   // **Vacíos a propósito, y no tocar.** Son los únicos datos del negocio a los
   // que un cliente le manda plata. `getBusinessConfig()` cae a este objeto ante

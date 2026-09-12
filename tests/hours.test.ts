@@ -1,4 +1,4 @@
-import { estaAbierto, proximaApertura, type HorarioConfig } from "../lib/hours";
+import { estaAbierto, proximaApertura, fechaLocal, type HorarioConfig } from "../lib/hours";
 
 const cfg: HorarioConfig = {
   dias: [2, 3, 4, 5, 6, 0],       // martes a domingo; lunes cerrado
@@ -37,6 +37,18 @@ for (const [nombre, iso, esperado] of aperturas) {
   const real = proximaApertura(cfg, new Date(iso));
   if (real !== esperado) { fallos++; console.log(`FALLA  proximaApertura · ${nombre}: esperado "${esperado}", obtuvo "${real}"`); }
   else console.log(`PASA   proximaApertura · ${nombre}`);
+}
+
+const fechasArg: [string, string, string][] = [
+  ["21:30 hs local (00:30 UTC siguiente)", "2026-09-13T00:30:00Z", "2026-09-12"],
+  ["23:59 hs local (02:59 UTC siguiente)", "2026-09-13T02:59:00Z", "2026-09-12"],
+  ["15:00 hs local (18:00 UTC mismo día)", "2026-09-12T18:00:00Z", "2026-09-12"],
+];
+
+for (const [nombre, iso, esperado] of fechasArg) {
+  const real = fechaLocal(new Date(iso));
+  if (real !== esperado) { fallos++; console.log(`FALLA  fechaLocal · ${nombre}: esperado "${esperado}", obtuvo "${real}"`); }
+  else console.log(`PASA   fechaLocal · ${nombre}`);
 }
 
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);

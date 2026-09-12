@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { CartProvider, useCart } from "@/components/providers/CartProvider";
 import { TweakProvider, useTweaks } from "@/components/providers/TweakProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
@@ -87,6 +87,7 @@ function SiteContent({ data, business, chatDisponible }: { data: CatalogData; bu
   const [screen, setScreen] = useState<"home" | "checkout" | "confirm">("home");
   const [nav, setNav] = useState("home");
   const [order, setOrder] = useState<ConfirmedOrder | null>(null);
+  const lastCardRef = useRef<string>("");
 
   const featured = data.pizzas.find((p) => p.disponible !== false && p.popular && p.categoria === "gourmet")
     || data.pizzas.find((p) => p.disponible !== false && p.popular)
@@ -185,11 +186,15 @@ function SiteContent({ data, business, chatDisponible }: { data: CatalogData; bu
             const response = await fetch("/api/payments/card", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ...submitted, ...card }),
+              body: JSON.stringify({ ...submitted, ...card, externalReference: lastCardRef.current }),
             });
             const result = await response.json();
+            if (result?.numero) {
+              lastCardRef.current = result.numero;
+            }
             // 402 es rechazo de la tarjeta: el checkout queda abierto para reintentar.
             if (!response.ok || !result.ok) throw new Error(result.error || "No se pudo procesar el pago");
+            lastCardRef.current = "";
             clear();
             try {
               localStorage.setItem("impasto_active_order", JSON.stringify({ ref: result.numero, at: Date.now() }));

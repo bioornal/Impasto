@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
-import { createPedido, validateOrderPayload, registrarEvento, clearCartDraft } from "@/lib/orders";
+import { createPedido, validateOrderPayload, registrarEvento, clearCartDraft, type CreatedOrder } from "@/lib/orders";
+import type { CartItem } from "@/types";
 import { createCardOrder, mapOrderStatus, type EstadoPago, type MpOrder } from "@/lib/mercadopago";
 import { notificarPedido } from "@/lib/notifications";
 import { limitar, limpiarIntentosViejos } from "@/lib/rate-limit";
@@ -64,14 +65,59 @@ export async function POST(req: NextRequest) {
   try {
     const order = validateOrderPayload(body);
 
-    // El pedido se registra antes de cobrar: si la respuesta de MP se pierde,
-    // el webhook lo encuentra por external_reference.
-    const created = await createPedido(order, {
-      metodoPago: "mercadopago",
-      estadoPago: "pendiente",
-      proveedorPago: "mercadopago",
-    });
-    pedidoId = created.id;
+    let created: CreatedOrder;
+    const retryRef =
+      typeof body.externalReference === "string"
+        ? body.externalReference.trim()
+        : typeof body.referencia === "string"
+        ? body.referencia.trim()
+        : "";
+
+    let existingPedido: {
+      id: string;
+      total: number;
+      subtotal: number;
+      envio: number;
+      external_reference: string;
+      productos: CartItem[];
+      estado_pago: string;
+    } | null = null;
+
+    if (retryRef) {
+      const { data: existing } = await db.database
+        .from("pedidos")
+        .select("id, total, subtotal, envio, external_reference, productos, estado_pago")
+        .eq("external_reference", retryRef)
+        .eq("proyecto_id", "impasto")
+        .limit(1);
+
+      if (existing && existing.length > 0 && existing[0].estado_pago !== "aprobado") {
+        existingPedido = existing[0];
+      }
+    }
+
+    if (existingPedido) {
+      pedidoId = existingPedido.id;
+      created = {
+        id: existingPedido.id,
+        numero: Number(retryRef.replace(/\D/g, "").slice(0, 6)) || 0,
+        referencia: existingPedido.external_reference,
+        items: Array.isArray(existingPedido.productos) ? existingPedido.productos : order.items,
+        subtotal: Number(existingPedido.subtotal || 0),
+        shipping: Number(existingPedido.envio || 0),
+        total: Number(existingPedido.total || 0),
+        freeShipping: false,
+      };
+    } else {
+      // El pedido se registra antes de cobrar: si la respuesta de MP se pierde,
+      // el webhook lo encuentra por external_reference.
+      created = await createPedido(order, {
+        metodoPago: "mercadopago",
+        estadoPago: "pendiente",
+        proveedorPago: "mercadopago",
+      });
+      pedidoId = created.id;
+    }
 
     let mpOrder: MpOrder;
     try {

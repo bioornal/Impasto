@@ -119,7 +119,7 @@ ARGUMENTOS_MARCA.push(...marcaOriginal);
 
 /* ── el envío, que es la palanca de venta ── */
 chequear("dice cuánto sale el envío", prompt.includes("$3.000"));
-chequear("dice desde cuánto es gratis", prompt.includes("$25.000"));
+chequear("dice desde cuánto es gratis", prompt.includes("$35.000"));
 
 /* ── el estado del local ── */
 chequear("con el local abierto lo dice", prompt.includes("ABIERTO"));

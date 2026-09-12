@@ -2,7 +2,8 @@ import { db } from "@/lib/insforge";
 import { quoteOrder } from "@/lib/order-quote";
 import { getBusinessConfig } from "@/lib/business-server";
 import { getCartSessionId } from "@/lib/cart-session";
-import { estadoTienda } from "@/lib/hours";
+import { estadoTienda, fechaLocal } from "@/lib/hours";
+import { validarCuando } from "@/lib/validar-cuando";
 import { SUCURSAL_ID } from "@/lib/business";
 import { nuevaReferencia } from "@/lib/referencia";
 import type { EstadoPago } from "@/lib/mercadopago";
@@ -53,7 +54,7 @@ export function validateOrderPayload(order: Record<string, unknown>): OrderPaylo
     notas: text(order.notas),
     cambio: text(order.cambio),
     mode: order.mode,
-    when: text(order.when) || "asap",
+    when: validarCuando(order.when),
     items: order.items as CartItem[],
   };
 }
@@ -140,7 +141,7 @@ export async function createPedido(
       id_pago: "",
       mp_order_id: "",
       external_reference: referencia,
-      fecha: new Date().toISOString().slice(0, 10),
+      fecha: fechaLocal(),
     })
     .select("id");
 

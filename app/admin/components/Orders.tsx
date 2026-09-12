@@ -202,9 +202,20 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund }: { order:
             <RefundBox total={order.total} onRefund={onRefund} />
           )}
 
-          <h4 style={{ fontFamily: "var(--a-font-mono)", fontSize: 11, letterSpacing: ".15em", textTransform: "uppercase", color: "var(--a-muted)", marginBottom: 12, marginTop: 20 }}>Detalle</h4>
           <div className="od-items">
-            {order.items.map((i, idx) => <div className="od-row" key={idx}><span>{i.qty}× {i.name}</span><span className="tbl-price">{fmt(i.price * i.qty)}</span></div>)}
+            {order.items.map((i, idx) => (
+              <div className="od-row" key={idx} style={{ flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+                  <span>{i.qty}× {i.name}</span>
+                  <span className="tbl-price">{fmt(i.price * i.qty)}</span>
+                </div>
+                {i.detail ? (
+                  <div style={{ fontSize: 12, color: "var(--a-muted)", paddingLeft: 12 }}>
+                    ↳ {i.detail}
+                  </div>
+                ) : null}
+              </div>
+            ))}
             <div className="od-row"><span>Subtotal</span><span>{fmt(order.subtotal)}</span></div>
             {order.shipping > 0 && <div className="od-row"><span>Envío</span><span>{fmt(order.shipping)}</span></div>}
             <div className="od-row tot"><span>Total</span><span>{fmt(order.total)}</span></div>
@@ -286,6 +297,7 @@ export function ComandaTicket({ order }: { order: AdminOrder }) {
             <div className="c-item-qty">{item.qty}×</div>
             <div className="c-item-info">
               <div className="c-item-name">{item.name}</div>
+              {item.detail ? <div className="c-item-detail">{item.detail}</div> : null}
             </div>
             <div className="c-item-price">{fmt(item.price * item.qty)}</div>
           </div>
@@ -329,6 +341,11 @@ export function ComandaTicket({ order }: { order: AdminOrder }) {
           <div className="c-payment-due">
             [!] COBRAR TRANSFERENCIA: {fmt(order.total)}
             {"\n"}(Verificar comprobante)
+          </div>
+        ) : order.pago === "mercadopago" ? (
+          <div className="c-payment-due">
+            [!] PAGO TARJETA {order.pagoEstado.toUpperCase()}: {fmt(order.total)}
+            {"\n"}(NO ENTREGAR SIN CONFIRMAR PAGO)
           </div>
         ) : (
           <div className="c-payment-due">

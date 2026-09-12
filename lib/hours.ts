@@ -133,3 +133,17 @@ export function horarioDe(business: BusinessConfig): HorarioConfig {
     zonaHoraria: business.zonaHoraria,
   };
 }
+
+/**
+ * Devuelve la fecha YYYY-MM-DD en la zona horaria del local (Argentina).
+ * Evita desfasaje UTC donde pedidos pasadas las 21:00 hs quedan registrados con la fecha del día siguiente.
+ */
+export function fechaLocal(referencia = new Date(), zona = "America/Argentina/Buenos_Aires"): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: zona,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(referencia);
+}
+

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
+import { esPedidoValidoParaVentas } from "@/lib/pedido-visible";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 const timeAgo = (iso: string) => {
@@ -47,7 +48,7 @@ export function Dashboard() {
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const startOfYesterday = startOfToday - 86400000;
 
-  const validOrders = state.orders.filter(o => o.estado !== "cancelado");
+  const validOrders = state.orders.filter(o => esPedidoValidoParaVentas(o));
   const todayOrders = validOrders.filter(o => new Date(o.fecha).getTime() >= startOfToday);
   const yesterdayOrders = validOrders.filter(o => {
     const t = new Date(o.fecha).getTime();
