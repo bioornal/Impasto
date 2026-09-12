@@ -48,7 +48,7 @@ check("el precio efectivo replica el gestor de costos", preciosEfectivos.get("Pi
 
 // La prepizza y la salsa son de la pizza. Las 9 recetas de empanadas llegaron a
 // tener 485 y 236 cargados, y eso le sumaba hasta $2.000 por unidad a la web.
-// Con los valores cargados: (700 + 485 + 236) / 7 unidades × 5 = 1.015 → $2.000.
+// Con los valores cargados: (700 + 485 + 236) / 7 unidades × 5 = 1.015 → $1.500.
 const sinPrepizza = buildEffectivePrices(
   [
     { id: "e1", nombre: "Empanadas de Pollo", precio_prepizza: 485, precio_salsa: 236 },
@@ -69,8 +69,35 @@ const sinPrepizza = buildEffectivePrices(
   { pizzas_objetivo_mes: 0 },
   0,
 );
-check("la empanada no suma prepizza ni salsa aunque la receta los tenga", sinPrepizza.get("Empanadas de Pollo"), 1000);
+check("la empanada no suma prepizza ni salsa aunque la receta los tenga", sinPrepizza.get("Empanadas de Pollo"), 500);
 check("la bebida no suma prepizza ni salsa aunque la receta los tenga", sinPrepizza.get("Agua Mineral"), 3000);
+
+// El precio de venta es el del recetario (redondeado al peso, como lo muestra
+// la página de precios) subido al próximo múltiplo de $500. Con $1.000 los
+// saltos eran dispares: Pollo pasaba de $2.029 a $3.000 y Árabe de $2.993 a $3.000.
+const redondeo = buildEffectivePrices(
+  [{ id: "g1", nombre: "Gaseosa A" }, { id: "g2", nombre: "Gaseosa B" }, { id: "g3", nombre: "Gaseosa C" }],
+  [
+    { receta_id: "g1", ingrediente_id: "x1", cantidad_kg: 1 },
+    { receta_id: "g2", ingrediente_id: "x2", cantidad_kg: 1 },
+    { receta_id: "g3", ingrediente_id: "x3", cantidad_kg: 1 },
+  ],
+  [
+    { id: "x1", precio_kg: 2029, multiplo_rendimiento: 1 },
+    { id: "x2", precio_kg: 3000, multiplo_rendimiento: 1 },
+    { id: "x3", precio_kg: 1667, multiplo_rendimiento: 1 },
+  ],
+  [
+    { receta_id: "g1", nombre: "Gaseosa A", markup: 1, subcategoria: "Bebidas" },
+    { receta_id: "g2", nombre: "Gaseosa B", markup: 1, subcategoria: "Bebidas" },
+    { receta_id: "g3", nombre: "Gaseosa C", markup: 1.2, subcategoria: "Bebidas" },
+  ],
+  { pizzas_objetivo_mes: 0 },
+  0,
+);
+check("el precio sube al próximo múltiplo de $500, no de $1.000", redondeo.get("Gaseosa A"), 2500);
+check("un precio que ya es múltiplo de $500 no sube", redondeo.get("Gaseosa B"), 3000);
+check("se redondea desde el precio al peso del recetario: $2.000,40 queda en $2.000", redondeo.get("Gaseosa C"), 2000);
 
 const todos = [...catalogo.pizzas, ...catalogo.empanadas, ...catalogo.bebidas].map((p) => p.nombre);
 check("ningún producto del proyecto paralelo se filtra", todos.filter((n) => ["Hamburguesa Simple", "Lomo Completo", "Calzone Napolitano"].includes(n)), []);

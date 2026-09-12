@@ -31,9 +31,13 @@ export interface PricingDefaults {
 }
 
 const GRAMOS_POR_EMPANADA = 65;
+// El precio de venta sube al próximo múltiplo de $500. Con $1.000 los saltos
+// eran dispares: Pollo pasaba de $2.029 a $3.000 y Árabe de $2.993 a $3.000.
+const REDONDEO_PRECIO = 500;
 
 /**
  * Replica el cálculo de precios del proyecto recetario-napolitano (precios.astro).
+ * El precio de venta es ese valor al peso, subido al próximo múltiplo de $500.
  *
  * Pizzas:
  *   costoReceta = round(precio_prepizza + precio_salsa + Σ(precio_kg * cantidad_kg * multiplo_rendimiento))
@@ -116,7 +120,8 @@ export function buildEffectivePrices(
 
     const costoOpUnit = subcategoria === 'Empanadas' ? Math.round(costoOpPorPizza / 12) : subcategoria === 'Bebidas' ? 0 : costoOpPorPizza;
     const costoReal = costoUnit + costoOpUnit;
-    prices.set(rule.nombre, Math.ceil((costoReal * markup) / 1000) * 1000);
+    // Primero al peso, como lo muestra el recetario; después hacia arriba al múltiplo de $500.
+    prices.set(rule.nombre, Math.ceil(Math.round(costoReal * markup) / REDONDEO_PRECIO) * REDONDEO_PRECIO);
   }
 
   return prices;
