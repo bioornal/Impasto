@@ -5,7 +5,7 @@
 Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Mercado Pago.
 Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
 
-Última actualización: 6 de septiembre de 2026.
+Última actualización: 12 de septiembre de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -29,14 +29,13 @@ Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
 
 ## Los tres proyectos que comparten esta base
 
-La base InsForge `3agqcygs.us-east.insforge.app` la usan **tres aplicaciones distintas**, sin
-separación por esquema ni columna de pertenencia. Las tres apuntan al mismo backend.
+La base InsForge `3agqcygs.us-east.insforge.app` la usan **tres aplicaciones coordinadas**:
 
 | Proyecto | Qué es | Stack | Producción |
 |---|---|---|---|
-| **Impasto** (este repo) | E-commerce de la pizzería de Iguazú | Next.js 16 | `vocal-naiad-861a2c.netlify.app` |
-| **El Fogón — Dashboard** (`recetario-napolitano`) | Costeo: ingredientes, recetas, costos, márgenes y precios de venta. Más la calculadora de masa napolitana | Astro + Netlify | `recetarionapolitano.netlify.app` |
-| **Carro Fogón** (`carroFogon/next-app`) | Punto de venta del carro: toma pedidos, imprime comanda | Next.js 15 + Vercel | `carro-fogon.vercel.app` |
+| **Impasto** (este repo) | E-commerce exclusivo para clientes online (delivery y takeaway) | Next.js 16 | `vocal-naiad-861a2c.netlify.app` |
+| **El Fogón — Dashboard** (`recetario-napolitano`) | Costeo, recetas, costos operativos, precios y análisis de ganancias | Astro 5 + Netlify | `recetarionapolitano.netlify.app` |
+| **Carro Fogón** (`carroFogon/next-app`) | Terminal POS para operarios (toma de pedidos manuales por WhatsApp y teléfono) | Next.js 15 + Vercel | `carro-fogon.vercel.app` |
 
 ### Quién escribe qué
 
@@ -44,21 +43,22 @@ separación por esquema ni columna de pertenencia. Las tres apuntan al mismo bac
   `costos_variables`, `config_negocio`, `gastos`, `ventas_mes` → **las escribe el recetario**.
   Impasto **solo las lee**: de ahí salieron las descripciones y los tags, y desde el
   21/08/2026 también los precios efectivos. Escribirlas rompe el costeo del recetario.
-- `productos`, `pedidos`, `clientes` → **compartidas entre Impasto y Carro Fogón**. Las tres
-  las escriben los dos.
+- `productos`, `pedidos`, `clientes` → **compartidas entre Impasto y Carro Fogón**.
+  - **Impasto Web**: clientes compran online con Mercado Pago, efectivo o transferencia (`external_reference = 'IM-...'`).
+  - **Carro Fogón POS**: operarios cargan pedidos manuales de WhatsApp/llamadas (`metodo_pago = 'efectivo'`, `proyecto_id = 'impasto'`).
 - `etiquetas`, `carritos`, `pedido_eventos`, `notificaciones`, `promociones`, `testimonios`,
-  `info_empresa_impasto` → hoy las usa solo Impasto, pero **viven en la misma base**, sin
-  prefijo ni esquema propio.
-- El recetario **lee `pedidos`** en `ganancias.astro` para calcular la ganancia del mes. Los
-  pedidos de Impasto y los del carro entran **juntos** en ese cálculo.
+  `info_empresa_impasto` → hoy las usa Impasto, viven en la misma base.
+- El recetario **lee `pedidos`** en `ganancias.astro` para calcular la ganancia del mes desglosando
+  automáticamente los dos canales: `🍕 Impasto Web` y `📲 carroFogon`.
 
-### Separación de tenants — `proyecto_id` (24/08/2026)
+### Separación de tenants y Unificación Operativa (Septiembre 2026)
 
-La fuga de productos entre proyectos se arregló con una columna `proyecto_id` en `productos`
-y `pedidos` (migración `20260825120000_tenant-proyecto-id.sql`), **sin base nueva**: los tres
-proyectos siguen conviviendo en la misma base. **Ya está aplicada y deployada en los dos
-repos**; el nombre del archivo dice `20260825` por un error de fecha, no se renombra porque
-el timestamp ya quedó registrado en la tabla de migraciones.
+- Para la apertura de la pizzería, **Carro Fogón se adaptó como la terminal POS exclusiva para operarios de Impasto**:
+  su `PROYECTO_ID` es `"impasto"` y su `sucursal_id` es `"iguazu"`.
+- Cada pedido manual cargado por el operario en Carro Fogón ingresa de inmediato a la tabla `pedidos`,
+  dispara la campanilla sonora en el panel `/admin` de cocina de Impasto e impacta en el recetario.
+- Los pedidos de Carro Fogón imprimen su comanda térmica con el membrete `"IMPASTO · PIZZA NAPOLETANA · IGUAZÚ"`.
+- `clientes` sigue compartida: un cliente que llama por teléfono queda unificado con su historial web.
 
 - `productos` y `pedidos` llevan `proyecto_id` = `'impasto'` o `'carro'`. Quedó **nullable a
   propósito**: los inserts del código viejo no se rompen durante la ventana migración→deploy.
@@ -111,10 +111,27 @@ válido**, así que la falla se vería como una carta sin productos, no como un 
 - **Rate limiting** con respaldo en base (las funciones serverless no comparten memoria).
 - **Separación de tenants (`proyecto_id`)** — `productos` y `pedidos` aislados entre Impasto y
   Carro Fogón en la misma base (ver "Separación de tenants" más arriba).
-- **Páginas legales** — `/terminos`, `/privacidad` y `/reembolso`, enlazadas desde el footer.
-- **Testimonios** — sin seed falsos. Ojo con la historia: las cinco reseñas inventadas
-  ("María L.", "Joaquín P."…) vivían en el **`localStorage` del panel**, no en la base. El
-  **sitio nunca las mostró**: siempre leyó la tabla `testimonios`, que está vacía.
+- **Seguridad integral y RLS (12/09/2026)** — Clave expuesta de InsForge rotada e invalidada (retorna 401).
+  RLS activado en **las 20 tablas de `public`** mediante migración `20260912205138_habilitar-rls-seguridad.sql`.
+  Permisos de escritura revocados al rol `anon`. Lectura pública restringida al escaparate. Creados índices faltantes de clave foránea.
+- **Tarifa plana de Delivery y Envío Gratis configurable (12/09/2026)** — Delivery base: **$3.000**,
+  envío gratis a partir de **$35.000** (`migrations/20260912213000_configuracion-delivery-35000.sql`).
+  Ambos parámetros configurables en `/admin` (Configuración → Delivery).
+- **Comandas térmicas con desglose de gustos en cajas y mitades (12/09/2026)** — Extraído módulo
+  `lib/adapt-order.ts` (100% testeado). Las comandas de cocina y modal imprimen las variedades exactas de
+  empanadas (ej: `4 Pollo, 4 Carne, 4 Árabe` en Cajas x12) y las pizzas mitad y mitad.
+- **Filtro de cocina para tarjetas rechazadas (12/09/2026)** — Módulo `lib/pedido-visible.ts`.
+  Un pedido con pago rechazado no entra a cocina ni se muestra como "COBRAR AL ENTREGAR". En caso de inspección,
+  se exhibe advertencia destacada `[!] PAGO TARJETA RECHAZADO: NO ENTREGAR SIN CONFIRMAR PAGO`.
+- **Idempotencia en Checkout (12/09/2026)** — Al reintentar el pago de una tarjeta rechazada, se reutiliza
+  la misma `external_reference` (`IM-...`) en `card/route.ts` y `Shell.tsx`, evitando pedidos huérfanos duplicados.
+- **Eliminación de pedidos programados (12/09/2026)** — Opciones de programar horario removidas de `Checkout.tsx`.
+  Todos los pedidos se aceptan como "Lo antes posible" (`asap`), validado server-side con `lib/validar-cuando.ts`.
+- **Fecha en hora local argentina (12/09/2026)** — Función `fechaLocal()` en `lib/hours.ts` (`America/Argentina/Buenos_Aires`).
+  Se elimina el bug donde pedidos nocturnos pasadas las 21:00 hs se registraban con la fecha UTC de mañana.
+- **Sincronización con POS de Operarios y Recetario (12/09/2026)** — Integración total: pedidos de Carro Fogón
+  entran a `/admin` de Impasto y ambos canales (`Impasto Web` y `carroFogon`) se desglosan automáticamente
+  en `recetario-napolitano/ganancias.astro`.
 - **Módulo de email** construido y probado, **pero sin proveedor configurado**.
 
 ### Distinción que se presta a confusión
