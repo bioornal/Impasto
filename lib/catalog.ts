@@ -24,8 +24,12 @@ export async function getCatalogData(): Promise<CatalogData> {
       costosVariablesResult,
       gastosResult,
     ] = await Promise.all([
+      // `archivado` es la baja de carta: el producto sigue en la base (y en el
+      // recetario, para costos históricos) pero no se muestra más al cliente.
+      // Distinto de `disponible`, que es faltante temporal y se muestra agotado.
       safeQuery(db.database.from("productos").select("id,nombre,tipo,categoria,precio,disponible,desc,tags,popular")
         .eq("proyecto_id", "impasto")
+        .not("archivado", "is", true)
         .in("categoria", [...CATEGORIAS_IMPASTO])),
       safeQuery(db.database.from("promociones").select("*").eq("activo", true).eq("sucursal_id", SUCURSAL_ID)),
       safeQuery(db.database.from("testimonios").select("*").eq("estado", "aprobado").eq("sucursal_id", SUCURSAL_ID)),
