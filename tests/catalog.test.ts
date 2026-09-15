@@ -99,6 +99,43 @@ check("el precio sube al próximo múltiplo de $500, no de $1.000", redondeo.get
 check("un precio que ya es múltiplo de $500 no sube", redondeo.get("Gaseosa B"), 3000);
 check("se redondea desde el precio al peso del recetario: $2.000,40 queda en $2.000", redondeo.get("Gaseosa C"), 2000);
 
+// Comisión de MP sumada al precio por categoría (config_negocio.comision_en_precio).
+// Pizza con costo 11.000 y markup 1: sin comisión $11.000; con 7,99 %: 11.000 ÷ 0,9201 = 11.955 → $12.000.
+const recetasComision = [
+  { id: "c1", nombre: "Pizza Comision" },
+  { id: "c2", nombre: "Agua Comision" },
+  { id: "c3", nombre: "Postre Comision" },
+];
+const ingredientesReceta = [
+  { receta_id: "c1", ingrediente_id: "k1", cantidad_kg: 1 },
+  { receta_id: "c2", ingrediente_id: "k2", cantidad_kg: 1 },
+  { receta_id: "c3", ingrediente_id: "k3", cantidad_kg: 1 },
+];
+const ingredientesComision = [
+  { id: "k1", precio_kg: 11000, multiplo_rendimiento: 1 },
+  { id: "k2", precio_kg: 2000, multiplo_rendimiento: 1 },
+  { id: "k3", precio_kg: 1000, multiplo_rendimiento: 1 },
+];
+const reglasComision = [
+  { receta_id: "c1", nombre: "Pizza Comision", markup: 1, subcategoria: "Pizzas" },
+  { receta_id: "c2", nombre: "Agua Comision", markup: 1, subcategoria: "Bebidas" },
+  { receta_id: "c3", nombre: "Postre Comision", markup: 1, subcategoria: "Postres" },
+];
+const conConfig = (config: Record<string, unknown>) =>
+  buildEffectivePrices(recetasComision, ingredientesReceta, ingredientesComision, reglasComision, { pizzas_objetivo_mes: 0, ...config }, 0);
+
+const sinTildes = conConfig({});
+check("sin comision_en_precio los precios quedan como hoy", [sinTildes.get("Pizza Comision"), sinTildes.get("Agua Comision"), sinTildes.get("Postre Comision")], [11000, 2000, 1000]);
+check("con la lista vacía también", conConfig({ comision_en_precio: [], comision_tarjeta_pct: 7.99 }).get("Pizza Comision"), 11000);
+
+const pizzasTildadas = conConfig({ comision_en_precio: ["Pizzas"], comision_tarjeta_pct: 7.99 });
+check("la categoría tildada absorbe la comisión: $11.000 pasa a $12.000", pizzasTildadas.get("Pizza Comision"), 12000);
+check("una categoría sin tildar no cambia", pizzasTildadas.get("Agua Comision"), 2000);
+check("la comisión llega como texto desde la base y se respeta", conConfig({ comision_en_precio: ["Pizzas"], comision_tarjeta_pct: "20" }).get("Pizza Comision"), 14000);
+check("una comisión inválida usa 7,99", conConfig({ comision_en_precio: ["Pizzas"], comision_tarjeta_pct: "abc" }).get("Pizza Comision"), 12000);
+check("una subcategoría desconocida cuenta como Otros para el tilde", conConfig({ comision_en_precio: ["Otros"] }).get("Postre Comision"), 1500);
+check("lo que no es una lista no tilda nada", conConfig({ comision_en_precio: "Pizzas" }).get("Pizza Comision"), 11000);
+
 const todos = [...catalogo.pizzas, ...catalogo.empanadas, ...catalogo.bebidas].map((p) => p.nombre);
 check("ningún producto del proyecto paralelo se filtra", todos.filter((n) => ["Hamburguesa Simple", "Lomo Completo", "Calzone Napolitano"].includes(n)), []);
 

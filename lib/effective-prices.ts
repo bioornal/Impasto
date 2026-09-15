@@ -28,6 +28,8 @@ export interface PricingDefaults {
   pizzas_objetivo_mes?: number | string;
   precio_prepizza_default?: number | string;
   precio_salsa_default?: number | string;
+  comision_tarjeta_pct?: number | string | null;
+  comision_en_precio?: unknown;
 }
 
 const GRAMOS_POR_EMPANADA = 65;
@@ -35,9 +37,24 @@ const GRAMOS_POR_EMPANADA = 65;
 // eran dispares: Pollo pasaba de $2.029 a $3.000 y Árabe de $2.993 a $3.000.
 const REDONDEO_PRECIO = 500;
 
+// Las 7 categorías de precios_venta y la comisión por defecto, iguales a
+// CATEGORIAS_PRECIO y COMISION_TARJETA_DEFAULT del recetario (src/utils/pricing.ts).
+const CATEGORIAS_PRECIO = ['Pizzas', 'Calzones', 'Empanadas', 'Hamburguesas', 'Lomos', 'Bebidas', 'Otros'];
+const COMISION_TARJETA_DEFAULT = 7.99;
+
+/** Igual que leerComisionPct del recetario: si falta, vacío o no sirve, 7,99. */
+function leerComisionPct(valor: unknown): number {
+  if (valor === null || valor === undefined) return COMISION_TARJETA_DEFAULT;
+  if (typeof valor === 'string' && valor.trim() === '') return COMISION_TARJETA_DEFAULT;
+  const n = Number(valor);
+  return Number.isFinite(n) && n >= 0 && n < 100 ? n : COMISION_TARJETA_DEFAULT;
+}
+
 /**
  * Replica el cálculo de precios del proyecto recetario-napolitano (precios.astro).
  * El precio de venta es ese valor al peso, subido al próximo múltiplo de $500.
+ * Si la categoría está en config_negocio.comision_en_precio, el markup se divide por
+ * (1 − comisión): el precio absorbe la comisión de Mercado Pago.
  *
  * Pizzas:
  *   costoReceta = round(precio_prepizza + precio_salsa + Σ(precio_kg * cantidad_kg * multiplo_rendimiento))
@@ -76,6 +93,10 @@ export function buildEffectivePrices(
 
   const pizzasObjetivo = Number(defaults?.pizzas_objetivo_mes) || 0;
   const costoOpPorPizza = pizzasObjetivo > 0 ? Math.round(totalOperativo / pizzasObjetivo) : 0;
+  const comisionPct = leerComisionPct(defaults?.comision_tarjeta_pct);
+  const categoriasConComision = new Set(
+    Array.isArray(defaults?.comision_en_precio) ? (defaults!.comision_en_precio as unknown[]).map(String) : [],
+  );
 
   const prices = new Map<string, number>();
 
@@ -87,6 +108,9 @@ export function buildEffectivePrices(
     const recipe = recipeById.get(String(rule.receta_id));
     const components = riByRecipe.get(String(rule.receta_id)) ?? [];
     const subcategoria = String(rule.subcategoria || '');
+    // La categoría normalizada solo decide el tilde; el costeo sigue con la subcategoría tal cual.
+    const categoria = CATEGORIAS_PRECIO.includes(subcategoria) ? subcategoria : 'Otros';
+    const markupFinal = categoriasConComision.has(categoria) ? markup / (1 - comisionPct / 100) : markup;
 
     let costoUnit = 0;
     if (recipe && components.length > 0) {
@@ -121,7 +145,7 @@ export function buildEffectivePrices(
     const costoOpUnit = subcategoria === 'Empanadas' ? Math.round(costoOpPorPizza / 12) : subcategoria === 'Bebidas' ? 0 : costoOpPorPizza;
     const costoReal = costoUnit + costoOpUnit;
     // Primero al peso, como lo muestra el recetario; después hacia arriba al múltiplo de $500.
-    prices.set(rule.nombre, Math.ceil(Math.round(costoReal * markup) / REDONDEO_PRECIO) * REDONDEO_PRECIO);
+    prices.set(rule.nombre, Math.ceil(Math.round(costoReal * markupFinal) / REDONDEO_PRECIO) * REDONDEO_PRECIO);
   }
 
   return prices;

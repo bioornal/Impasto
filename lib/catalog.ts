@@ -38,7 +38,7 @@ export async function getCatalogData(): Promise<CatalogData> {
       safeQuery(db.database.from("receta_ingredientes").select("receta_id,ingrediente_id,cantidad_kg")),
       safeQuery(db.database.from("ingredientes").select("id,precio_kg,multiplo_rendimiento")),
       safeQuery(db.database.from("precios_venta").select("receta_id,nombre,markup,subcategoria")),
-      safeQuery(db.database.from("config_negocio").select("pizzas_objetivo_mes,precio_prepizza_default,precio_salsa_default").limit(1)),
+      safeQuery(db.database.from("config_negocio").select("pizzas_objetivo_mes,precio_prepizza_default,precio_salsa_default,comision_tarjeta_pct,comision_en_precio").limit(1)),
       safeQuery(db.database.from("costos_fijos").select("monto").eq("activo", true)),
       safeQuery(db.database.from("costos_variables").select("monto_referencia")),
       safeQuery(db.database.from("gastos").select("monto")),
