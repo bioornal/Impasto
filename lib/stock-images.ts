@@ -47,9 +47,48 @@ export const STOCK_IMAGES = {
 };
 
 /**
+ * Fotos reales subidas al storage de InsForge, por id de producto. Tienen
+ * prioridad sobre el banco de stock de abajo.
+ */
+export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
+  "f9305fe1-8eea-465d-90b3-4c81f4656455": // Muzzarella Impasto
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Muzzarella%20Impasto.jpg",
+  "9ee7b500-a31a-4e42-acbe-2b694cf67eb4": // Napoletana all'Aglio
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/napoletana-aglio-v2.jpg",
+  "1ab8b31f-c5ef-443d-b024-0e3f7328d481": // Fugazzetta al Provolone
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/fugazzetta-provolone-v2.jpg",
+  "d36e95b3-243c-4dce-a2cc-4c3f0a52531c": // Americana Agridulce
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Americana%20Agridulce.png",
+  "3a4abc9d-caa0-458e-aef3-d906fb2f7f2b": // Bondiola al Pangrattato
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Bondiola%20al%20Pangrattato.jpg",
+  "4c2c7501-b7ff-4bee-8887-162fbb50b403": // Carbonara Impasto
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Carbonara%20Impasto.jpg",
+  "d312b6ed-209f-4cff-8a37-36b515a12553": // Diavola al Miele Piccante
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Diavola%20al%20Miele%20Piccante.jpg",
+  "bfca7fb7-d9b4-4812-b1df-f4ba0378b8e0": // Mortazza al Pistacchio
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Mortazza%20al%20Pistacchio.jpg",
+  "b4bc6819-1616-441b-8718-879744b8ffec": // Palmitos y Salsa Golf
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Palmitos%20y%20Salsa%20Golf.jpg",
+  "83371dfd-08ec-41d5-a1b1-be09b475d7db": // Patate e Rosmarino
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Patate%20e%20Rosmarino.jpg",
+  "e5a169af-104f-4f5e-a938-d02a0e02dd89": // Pepperoni e Panceta
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Pepperoni%20e%20Panceta.jpg",
+  "3e987e20-d7ca-4166-9679-7559d7603d69": // Porro e Panceta Croccante
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Porro%20e%20Panceta%20Croccante.jpg",
+  "8bfedca8-8bd9-4cb4-a677-491c3be4c667": // Porteña de Jamón y Morrones
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Porte%C3%B1a%20de%20Jam%C3%B3n%20y%20Morrones.jpg",
+  "c0ab17be-8cde-47fd-8be5-576abe4ccf3d": // Quattro Formaggi e Noci
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Quattro%20Formaggi%20e%20Noci.jpg",
+};
+
+/**
  * Obtiene una foto gastronómica adecuada para una pizza según su nombre o tags.
  */
 export function getPizzaImage(nombre = "", id = "", tags: string[] = []): string {
+  if (REAL_PRODUCT_PHOTOS[id]) {
+    return REAL_PRODUCT_PHOTOS[id];
+  }
+
   const norm = (nombre + " " + tags.join(" ")).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
   if (norm.includes("rucula") || norm.includes("crudo") || norm.includes("prosciutto") || norm.includes("gourmet")) {
