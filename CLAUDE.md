@@ -467,3 +467,44 @@ carrito es siempre el cliente.
   dos proyectos la consulta directamente, va a mostrar estos datos.
 - Si se rota el secreto del webhook en el panel de MP, actualizar `MERCADOPAGO_WEBHOOK_SECRET`
   **y reconstruir**, o el webhook rechaza todo con 401.
+
+## Endurecimiento de producción (17/09/2026)
+
+Tanda de arreglos posterior al review de los tres proyectos. Todo mergeado y desplegado.
+
+- **`.env.example`**: `EMAIL_FROM` y `TELEGRAM_BOT_TOKEN` no tenían `=`; copiar la plantilla
+  dejaba los avisos al local y los emails apagados en silencio. Se agregó `EMAIL_FROM_NAME`.
+- **`getBusinessConfig()` falla cerrado**: ante error de base o fila faltante devuelve
+  `ventasActivas: false`. Antes caía a los defaults del código con `ventasActivas: true` y podía
+  aceptar pedidos sin poder confirmar que el local esté abierto.
+- **`getCatalogData()` lanza** si no puede leer `productos` (antes devolvía un catálogo vacío
+  "válido": una caída de base se veía como una carta sin productos). Los errores de las consultas
+  auxiliares ahora se registran todos; si fallan, se degrada (precios guardados, sin promos).
+- **Chat**: si el catálogo no está disponible responde 502; se agregó `app/error.tsx` con mensaje
+  reintentable.
+- **Migración `20260917210103_uniques-pedidos.sql`** (aplicada): `pedidos_numero_uidx` unique
+  `(fecha, proyecto_id, numero_pedido)` y `pedidos_external_reference_uidx` unique **parcial**
+  (`external_reference <> ''`). Ojo: `external_reference` es `NOT NULL DEFAULT ''` (los pedidos
+  del POS quedan con `''`), por eso el unique es parcial. `clientes.telefono` ya tenía unique.
+- **Migración `20260917211335_rls-acceso-minimo.sql`** (aplicada): se quitó la policy genérica de
+  `authenticated` sobre `clientes` (PII) y `sucursales`. Ninguna app las usa con token de usuario
+  (el recetario no las consulta; Impasto y Carro entran con la key de backend). El recetario **sí**
+  sigue necesitando `authenticated` sobre `recetas`, `ingredientes`, `receta_ingredientes`,
+  `costos_fijos`, `costos_variables`, `gastos`, `precios_venta`, `config_negocio`, `productos` y
+  `pedidos`: **no quitarlas** o se rompe el dashboard.
+- **Headers de seguridad** en `next.config.ts`: `X-Content-Type-Options`, `X-Frame-Options: DENY`,
+  `Referrer-Policy`, `Permissions-Policy` y HSTS.
+- **Roles en la base**: `anon`, `authenticated` y `project_admin` (rol de la key `ik_`, sin login).
+  Cada tabla tiene `project_admin_policy` (ALL, `using(true)`). La key `ik_` de
+  `.insforge/project.json` está en texto plano (gitignoreada) y conviene rotarla.
+
+### Lo que queda pendiente de esta tanda
+
+- **CSP estricto** en Impasto: los iframes de Mercado Pago y los estilos inline lo vuelven
+  riesgoso sin probar un pago real. Solo se pusieron los headers que no lo rompen.
+- **Separación por rol** de los usuarios del pool compartido: hoy cualquier `authenticated` puede
+  leer `pedidos` (con PII) y las tablas de costos que usa el recetario.
+- **Contador atómico de `numero_pedido`**: el unique ya evita duplicados, pero una colisión
+  hace fallar la segunda escritura. Requiere una función RPC y tocar Impasto y Carro Fogón.
+- **`ventas_mes` no existe** en la base: el snapshot mensual del recetario falla en silencio.
+  Decidir si se crea la tabla o se saca esa parte del código.
