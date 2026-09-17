@@ -43,8 +43,32 @@ export async function getCatalogData(): Promise<CatalogData> {
       safeQuery(db.database.from("costos_variables").select("monto_referencia")),
       safeQuery(db.database.from("gastos").select("monto")),
     ]);
-    if (productsResult.error) console.error("[catalog] error al consultar productos:", productsResult.error);
+    // Sin productos no hay carta. Antes se devolvía un catálogo vacío "válido":
+    // una caída de base se veía como una pizzería sin nada para vender. Mejor
+    // fallar y que la página muestre un error reintentable.
+    if (productsResult.error) {
+      throw new Error(`no se pudieron leer los productos: ${String(productsResult.error)}`);
+    }
     const products = Array.isArray(productsResult.data) ? productsResult.data as DatabaseProduct[] : [];
+
+    // El resto son consultas auxiliares: si fallan se degrada (precios guardados,
+    // sin promos, etc.), pero se registra cuál falló para poder diagnosticarlo.
+    const auxiliares: Array<[string, { error?: unknown }]> = [
+      ["promociones", promosResult],
+      ["testimonios", reviewsResult],
+      ["etiquetas", etiquetasResult],
+      ["recetas", recipesResult],
+      ["receta_ingredientes", recipeIngredientsResult],
+      ["ingredientes", ingredientsResult],
+      ["precios_venta", salePricesResult],
+      ["config_negocio", defaultsResult],
+      ["costos_fijos", costosFijosResult],
+      ["costos_variables", costosVariablesResult],
+      ["gastos", gastosResult],
+    ];
+    for (const [nombre, res] of auxiliares) {
+      if (res.error) console.error(`[catalog] error al consultar ${nombre}:`, res.error);
+    }
 
     const totalFijos = Array.isArray(costosFijosResult.data)
       ? costosFijosResult.data.reduce((sum: number, row: Record<string, unknown>) => sum + Number(row.monto ?? 0), 0)
@@ -69,10 +93,10 @@ export async function getCatalogData(): Promise<CatalogData> {
       const price = product.nombre ? effectivePrices.get(product.nombre) : undefined;
       return price == null ? product : { ...product, precio: price };
     });
-    if (etiquetasResult.error) console.error("[catalog] error al consultar etiquetas:", etiquetasResult.error);
     const etiquetas = Array.isArray(etiquetasResult.data) ? etiquetasResult.data as Etiqueta[] : [];
     return buildCatalog(productsWithEffectivePrices, promosResult.data, reviewsResult.data, etiquetas);
-  } catch {
-    return buildCatalog([], null, null);
+  } catch (error) {
+    console.error("[catalog] fallo al armar el catálogo:", error);
+    throw error;
   }
 }

@@ -32,19 +32,15 @@ async function fotoDelCatalogo() {
   if (foto && foto.vence > Date.now()) return foto;
   const [catalogo, business] = await Promise.all([getCatalogData(), getBusinessConfig()]);
 
-  // `getCatalogData()` no distingue "la carta está vacía" de "la base falló": su
-  // único `catch` (lib/catalog.ts) devuelve un catálogo sin productos pero
-  // perfectamente válido. Si guardáramos esa foto en la caché, un corte de base
-  // justo cuando el TTL vence dejaría al bot negándole la carta entera a cada
-  // cliente durante los cinco minutos siguientes, sin que nada dispare un
-  // reintento antes. Por eso una foto sin ningún producto no se cachea: se sirve
-  // igual para este request, pero el próximo mensaje vuelve a consultar la base.
+  // Un corte de base hace que `getCatalogData()` lance (no puede leer los
+  // productos), así que ese caso no llega hasta acá. El guardia de carta vacía
+  // cubre el otro caso: una carta legítimamente sin productos no se cachea, se
+  // sirve para este request y el próximo vuelve a consultar la base.
   //
-  // Contrapartida asumida a propósito: si la carta llegara a estar legítimamente
-  // vacía (hoy no pasa: siempre hay pizzas y empanadas cargadas), cada mensaje
-  // repetiría las doce consultas en vez de aprovechar los cinco minutos de
-  // caché. Lo acota el rate limit de "chat" (40 mensajes cada 10 minutos por IP),
-  // y es preferible a mentirle al cliente que no hay nada para pedir.
+  // Contrapartida asumida a propósito: si la carta estuviera vacía de verdad
+  // (hoy no pasa), cada mensaje repetiría las doce consultas en vez de
+  // aprovechar la caché. Lo acota el rate limit de "chat" (40 mensajes cada 10
+  // minutos por IP), y es preferible a mentirle al cliente que no hay nada.
   const cartaVacia = catalogo.pizzas.length === 0 && catalogo.empanadas.length === 0
     && catalogo.bebidas.length === 0;
   if (cartaVacia) return { catalogo, business, vence: 0 };
@@ -79,7 +75,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { catalogo, business } = await fotoDelCatalogo();
+  let datos;
+  try {
+    datos = await fotoDelCatalogo();
+  } catch (error) {
+    console.error("[chat] catálogo no disponible:", error);
+    return NextResponse.json(
+      { ok: false, error: "El asistente no está disponible en este momento." },
+      { status: 502 },
+    );
+  }
+  const { catalogo, business } = datos;
   // El estado del local se recalcula en cada request: la foto puede tener cinco
   // minutos y en ese rato el local pudo cerrar.
   const estado = estadoTienda(business);
