@@ -42,18 +42,34 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
             <button className="drawer-close" onClick={onClose} aria-label="Cerrar carrito">✕</button>
           </div>
 
-          <div className="drawer-ship">
+          <div className={`drawer-ship ${freeShipping ? "is-free" : ""}`}>
             <div className="drawer-ship-top">
-              <span>
-                {freeShipping
-                  ? "¡Tenés envío gratis!"
-                  : `Te faltan ${fmt(business.freeShippingFrom - subtotal)} para envío gratis`}
+              <span className="ship-icon" aria-hidden="true">
+                {freeShipping ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7" /><circle cx="7" cy="17.5" r="1.8" /><circle cx="17" cy="17.5" r="1.8" /></svg>
+                )}
               </span>
-              <span className="flag">{freeShipping ? "✓ Gratis" : fmt(business.freeShippingFrom)}</span>
+              <div className="ship-text">
+                {freeShipping ? (
+                  <>
+                    <b>¡Tu envío es GRATIS!</b>
+                    <small>Te ahorrás {fmt(business.deliveryFee)}</small>
+                  </>
+                ) : (
+                  <>
+                    <b>Sumá {fmt(business.freeShippingFrom - subtotal)} y el envío es GRATIS</b>
+                    <small>Envío gratis desde {fmt(business.freeShippingFrom)} · ahorrás {fmt(business.deliveryFee)}</small>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="ship-track">
-              <div className={`ship-bar ${freeShipping ? "free" : ""}`} style={{ width: `${progress}%` }} />
-            </div>
+            {!freeShipping && (
+              <div className="ship-track">
+                <div className="ship-bar" style={{ width: `${progress}%` }} />
+              </div>
+            )}
           </div>
         </div>
 
@@ -119,7 +135,11 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
             <div className="tot-row"><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
             <div className="tot-row">
               <span>Envío</span>
-              <span className={freeShipping ? "free" : ""}>{freeShipping ? "Gratis" : fmt(business.deliveryFee)}</span>
+              {freeShipping ? (
+                <span className="free"><s className="was">{fmt(business.deliveryFee)}</s> Gratis</span>
+              ) : (
+                <span>{fmt(business.deliveryFee)}</span>
+              )}
             </div>
             <div className="tot-row total">
               <span className="mono">Total</span>

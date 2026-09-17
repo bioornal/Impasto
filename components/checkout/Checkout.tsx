@@ -274,13 +274,33 @@ export function Checkout({ onClose, onConfirm, onCardConfirm, business }: Checko
               ))}
             </div>
 
+            {isDelivery && (
+              <div className={`co-free ${shipping === 0 ? "is-free" : ""}`}>
+                {shipping === 0 ? (
+                  <>
+                    <b>¡Tu envío es GRATIS!</b>
+                    <small>Te ahorrás {fmt(business.deliveryFee)}</small>
+                  </>
+                ) : (
+                  <>
+                    <b>Sumá {fmt(Math.max(0, business.freeShippingFrom - subtotal))} y el envío es GRATIS</b>
+                    <div className="ship-track">
+                      <div className="ship-bar" style={{ width: `${Math.min(100, (subtotal / business.freeShippingFrom) * 100)}%` }} />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             <div className="co-lines" style={{ paddingTop: 14, borderTop: "1px solid rgba(246,241,231,.16)" }}>
               <div><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
               <div>
-                <span>{isDelivery ? (shipping === 0 ? "Envío (gratis)" : "Envío") : "Retiro en local"}</span>
-                <span className={shipping === 0 && isDelivery ? "free" : ""}>
-                  {shipping === 0 ? (isDelivery ? "Gratis" : "—") : fmt(shipping)}
-                </span>
+                <span>{isDelivery ? "Envío" : "Retiro en local"}</span>
+                {isDelivery && shipping === 0 ? (
+                  <span className="free"><s className="was">{fmt(business.deliveryFee)}</s> Gratis</span>
+                ) : (
+                  <span>{shipping === 0 ? "—" : fmt(shipping)}</span>
+                )}
               </div>
             </div>
 
@@ -310,7 +330,7 @@ export function Checkout({ onClose, onConfirm, onCardConfirm, business }: Checko
           </div>
 
           <div className="co-trust">
-            {["Seguimiento en vivo del estado de tu pedido.", "Si algo no llega bien, lo reponemos sin vueltas."].map((text) => (
+            {["Seguimiento en vivo del estado de tu pedido."].map((text) => (
               <div className="co-trust-row" key={text}>
                 <span className="check">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6 9 17l-5-5" /></svg>

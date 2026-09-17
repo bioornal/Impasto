@@ -66,12 +66,6 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroPro
               </div>
             </div>
           )}
-          <div className="hero-stamp">
-            <div>
-              <b>2×1</b>
-              <small>mar · mié</small>
-            </div>
-          </div>
         </div>
       </div>
     </section>
