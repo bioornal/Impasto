@@ -522,70 +522,77 @@ a contraluz.
 
 La sección se llama "Impasto significa masa. Y acá todo empieza ahí." y el texto
 habla de 48 horas de fermentación en frío, estirado a mano y sin moldes. La foto
-tiene que ser eso: **la masa**, no el producto terminado. Es el único lugar de la
-web donde conviene que aparezcan manos — es una sección de oficio, no de venta.
+tiene que ser eso: **la materia prima**, no el producto terminado. Sin manos, sin
+personas y sin pizza armada: un bodegón oscuro con la masa como protagonista y
+los ingredientes crudos alrededor.
 
 El hueco es cuadrado y el fondo de la sección es marrón espresso, así que la foto
 va oscura y cálida para integrarse, no para recortarse.
 
-### Prompt — Nosotros
+### Prompt — Nosotros (bodegón de ingredientes)
 
 ```
-Fotografía documental gastronómica, ultrarrealista, cálida y cinematográfica,
-para la sección "Nosotros" de la web de una pizzería artesanal.
+Bodegón gastronómico ultrarrealista, oscuro y cálido, estilo pintura flamenca
+moderna, para la sección "Nosotros" de la web de una pizzería artesanal.
 
 FORMATO: cuadrado 1:1. Resolución mínima 1600 x 1600 px.
 
-ESCENA: las manos de un pizzero estirando un bollo de masa sobre una mesada de
-mármol gastado y enharinado. Los dedos hunden y empujan la masa desde el centro
-hacia afuera, dejando el borde más grueso. La masa está cruda, blanca y viva: se
-ven las burbujas de la fermentación bajo la superficie y las marcas de los dedos
-recién hechas.
+TOMA: cenital, 90° desde arriba, sobre una mesada de madera muy oscura y gastada.
 
-MANOS: se ven únicamente manos y antebrazos, entrando desde el borde superior del
-cuadro. Manos de adulto, con harina adherida a los dedos y los nudillos. Sin
-anillos, sin reloj, sin tatuajes, sin mangas ni ropa visible. No se ve la cara ni
-el cuerpo de la persona.
+PROTAGONISTA: dos bollos de masa cruda en fermentación, ligeramente descentrados,
+hinchados y relajados, con la piel brillante y tensa y burbujas de aire visibles
+por debajo. Espolvoreados de forma despareja con harina. Uno de los dos quedó un
+poco más deformado que el otro.
 
-DETALLE CLAVE: una nube fina de harina suspendida en el aire, atrapada por la
-luz, cayendo sobre el mármol. Algunos granos de harina desenfocados en primer
-plano. Es lo que le da movimiento y vida a la foto.
+ALREDEDOR, en composición suelta y natural, nunca alineada ni simétrica:
+- harina esparcida sobre la madera, con huellas y un pequeño montoncito
+- un bol chico de cerámica rústica con tomates pelados enteros, rojos y jugosos
+- una bocha de muzzarella fresca partida al medio, con su suero alrededor
+- un hilo de aceite de oliva verde dorado en un cuenco pequeño
+- orégano seco desparramado en un costado
+Todo crudo, sin cocinar. Algunos elementos entran cortados por el borde del cuadro.
 
-LUZ: una sola fuente cálida y lateral desde la izquierda, en clave baja. Recorta
-el relieve de la masa y enciende la harina suspendida. El fondo cae a penumbra
-profunda, casi negro, sin detalle.
+LUZ: una sola fuente cálida y lateral desde la izquierda, en clave baja, como luz
+de ventana en un día nublado. Sombras largas, profundas y suaves hacia la derecha.
+El fondo de la madera cae a casi negro en las esquinas.
 
-FONDO: cocina en penumbra, completamente desenfocada e irreconocible. Nada de
-hornos, llamas ni resplandor naranja. Solo oscuridad cálida.
+CÁMARA: 50 mm, f/8. Todo nítido, con detalle fino en la textura de la masa, la
+harina y la superficie de la madera. Grano fino de película.
 
-CÁMARA: 50 mm, f/4. Foco nítido en la masa y en las manos; el fondo se disuelve
-por distancia. Grano fino de película.
+COLOR: cálido y oscuro — marrón espresso, negros densos, y como puntos claros el
+blanco cremoso de la masa y la muzzarella, el rojo profundo del tomate y el verde
+dorado del aceite. Nada de tonos fríos ni azulados.
 
-COLOR: cálido y oscuro — marrón espresso, negros densos, y como únicos puntos
-claros el blanco cremoso de la masa y el beige de la harina. Nada de tonos fríos
-ni azulados.
-
-NO INCLUIR: hornos, fuego, llamas, resplandor naranja; pan, panes, hogazas,
-espigas de trigo, granos ni semillas; pizza terminada o con ingredientes; texto,
-letras, logos; caras, cuerpos, ropa; utensilios modernos; fondo claro; aspecto
-de render 3D.
+NO INCLUIR: pizza armada, cruda o cocida; ninguna preparación terminada; manos,
+personas, brazos, ropa; hornos, fuego, llamas, resplandor naranja; pan, panes,
+hogazas, espigas de trigo, granos ni semillas; texto, letras, logos; utensilios
+modernos, electrodomésticos; fondo claro; composición simétrica o de catálogo;
+aspecto de render 3D.
 ```
 
-### Variante sin manos
+### Variante minimalista
 
-Las manos son lo que más falla en los generadores. Si no salen bien después de
-unos intentos, cambiá el bloque ESCENA y borrá el bloque MANOS:
+Si el bodegón sale recargado, esta versión es más limpia y silenciosa. Cambiá el
+bloque PROTAGONISTA y borrá el de ALREDEDOR:
 
 ```
-ESCENA: seis o siete bollos de masa cruda en fermentación, apoyados dentro de una
-caja de madera clara, vistos en tres cuartos desde arriba. Los bollos están
-hinchados, brillantes y relajados, casi tocándose entre ellos, espolvoreados con
-harina. Se ven las burbujas de la fermentación bajo la piel de la masa. Uno de
-los bollos quedó apenas deformado y distinto de los demás.
+PROTAGONISTA: un único disco de masa cruda recién estirada a mano, apoyado sobre
+la madera oscura enharinada. El borde es más grueso y desparejo, el centro más
+fino y translúcido. Se ven las marcas de los dedos y burbujas de aire atrapadas
+bajo la superficie. Alrededor, solo harina esparcida sobre la madera. Nada más
+en el cuadro.
 ```
 
-Cuenta lo mismo — las 48 horas de fermentación — y es mucho más fácil de que
-salga impecable al primer intento.
+### Variante de fermentación
+
+También cuenta las 48 horas, y es la que más fácil sale bien:
+
+```
+PROTAGONISTA: seis o siete bollos de masa cruda en fermentación dentro de una caja
+de madera clara, hinchados, brillantes y casi tocándose entre ellos, espolvoreados
+de forma despareja con harina. Se ven las burbujas de la fermentación bajo la piel
+de la masa. Uno quedó apenas deformado y distinto de los demás.
+```
 
 ---
 
