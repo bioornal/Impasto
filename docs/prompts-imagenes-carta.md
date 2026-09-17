@@ -691,3 +691,369 @@ logos, marcas, manos, personas, cubiertos, botellas, latas, servilletas, platos
 estampados, ingredientes que no estén en la lista, quemaduras excesivas, aspecto
 de plástico o de render 3D.
 ```
+
+---
+
+## 5. Empanadas — plantilla y sabores
+
+Mismo sistema visual que las pizzas: mismo fondo oscuro, misma luz lateral, mismo
+4:3, mismo crop apretado. Así las dos secciones de la carta se ven como una sola
+sesión de fotos.
+
+Lo que cambia es un problema que las pizzas no tienen: **el relleno no se ve**.
+Una empanada cerrada es un bulto dorado idéntico al de al lado. Por eso:
+
+- Las **canastitas** van enteras: la abertura de arriba muestra el relleno.
+- Las **cerradas** (repulgue tradicional, pinzado y fatay) van con dos enteras y
+  una tercera partida al medio, con el corte hacia arriba. Sin eso, en una
+  miniatura de 300 px nadie distingue la de carne de la de pollo.
+
+Van de a **tres unidades** por foto: una sola empanada en un 4:3 deja demasiado
+aire y se ve chica y perdida.
+
+### Una decisión a tomar: el ángulo
+
+La plantilla usa cenital 90°, igual que las pizzas. Para las cerradas funciona
+bien: desde arriba se ve el repulgue perfectamente. Pero en las **canastitas** el
+cenital aplasta justo lo que las identifica — los pliegues verticales de la pared
+quedan escondidos y solo se ve la boca con el relleno.
+
+Si querés que se luzcan los pliegues, cambiá el bloque TOMA por este **en las
+nueve empanadas**, no solo en las canastitas: lo importante es que las nueve
+estén tomadas igual entre sí. Las pizzas quedan en cenital y no pasa nada, son
+otra sección de la carta.
+
+```
+TOMA: casi cenital, cámara inclinada unos 20° respecto de la vertical. Se ve la
+boca de las empanadas y el relleno desde arriba, pero también la altura y los
+pliegues de la pared lateral. Formato horizontal 4:3.
+```
+
+### Plantilla maestra — empanadas
+
+```
+Fotografía gastronómica ultrarrealista, calidad editorial para carta digital.
+
+TOMA: cenital exacta, 90° desde arriba. Formato horizontal 4:3.
+
+COMPOSICIÓN: TRES empanadas llenando el encuadre, agrupadas de forma suelta y
+natural, apenas superpuestas entre sí, nunca alineadas ni en fila. Ocupan casi
+todo el cuadro y el fondo solo asoma en las esquinas.
+
+MASA: masa casera de empanada al horno, dorada de forma despareja — más tostada
+en los pliegues y en las partes altas, más pálida en el resto. Superficie
+levemente ampollada y con brillo de pincelado de huevo, alguna burbuja y restos
+mínimos de harina. Bordes hechos a mano, no troquelados: ninguna de las tres es
+idéntica a las otras.
+
+FORMA: [FORMA]
+RELLENO: [RELLENO]
+CÓMO SE MUESTRA: [APERTURA]
+
+FONDO: superficie mate oscura y cálida — pizarra carbón o cemento quemado en tono
+grafito, casi negro en las esquinas. El mismo fondo en todas las fotos de la
+carta. Sin tablas de madera, sin mantel, sin utensilios, sin props.
+
+LUZ: dirigida desde arriba a la izquierda, tipo ventana lateral alta. Marca el
+relieve de los pliegues y deja sombras cortas y definidas entre las empanadas.
+Contraste medio-alto.
+
+COLOR: cálido y apetitoso, con saturación generosa pero natural. Dorados intensos
+en la masa, negros con densidad en el fondo. Nunca lavado, gris ni plano.
+
+CÁMARA: 50 mm, f/8. Nitidez pareja en las tres unidades, con detalle fino en la
+textura de la masa y del relleno.
+
+PRUEBA DE MINIATURA: la foto se va a ver en una tarjeta de unos 300 px de ancho.
+A ese tamaño tiene que reconocerse el sabor. Si a 300 px parecen tres empanadas
+iguales a cualquier otra, está mal resuelta.
+
+COMPOSICIÓN DEL PRECIO: dejar la esquina inferior derecha sin detalle importante.
+
+NO INCLUIR: fondo claro o lavado; imagen plana o de bajo contraste; aire vacío
+alrededor; empanadas idénticas entre sí o alineadas como en catálogo; masa de tapa
+industrial perfectamente circular y lisa; texto, letras, logos, manos, personas,
+cubiertos, platos estampados; ingredientes que no estén en la lista; aspecto de
+plástico o de render 3D.
+```
+
+### Prompt dedicado — canastitas (con imágenes de referencia)
+
+Para los cinco sabores en canastita, este prompt reemplaza a la plantilla de
+arriba: va completo y autocontenido, para pegar junto con las fotos de
+referencia. Solo se cambia el bloque RELLENO.
+
+Va con la cámara inclinada a propósito: la pared oblicua es lo que define a la
+canastita, y en cenital no se ve por más que se la describas.
+
+```
+Fotografía gastronómica ultrarrealista, calidad editorial para carta digital.
+
+IMAGEN DE REFERENCIA: usá las imágenes adjuntas ÚNICAMENTE para la FORMA de la
+empanada: la altura de la pared, su inclinación hacia afuera y el dibujo de los
+pliegues. El fondo, la luz, el encuadre, la cantidad de unidades y el color salen
+de este prompt, no de las referencias. No copies la superficie, la vajilla ni la
+iluminación de las fotos de referencia.
+
+TOMA: casi cenital, con la cámara inclinada unos 25° respecto de la vertical. Se
+ve el relleno desde arriba y, al mismo tiempo, la altura y los pliegues de la
+pared lateral. Formato horizontal 4:3.
+
+COMPOSICIÓN: TRES canastitas llenando el encuadre, agrupadas de forma suelta y
+natural, apenas superpuestas, nunca alineadas ni en fila. Ocupan casi todo el
+cuadro y el fondo solo asoma en las esquinas.
+
+FORMA: canastita de PAREDES ALTAS Y OBLICUAS. La base es chica y plana; desde ahí
+las paredes de masa suben abriéndose hacia afuera, como un tronco de cono
+invertido o un vasito de papel de muffin. La pared es más alta que el radio de la
+base: la empanada es claramente más alta que chata, se sostiene parada sola.
+
+PLIEGUES: la pared está formada por masa recogida en pliegues verticales
+sucesivos, como tela fruncida o como una bolsa de papel que se junta. Los
+pliegues nacen cerca de la base, suben por toda la pared separándose entre sí a
+medida que se abren, y terminan arriba en un borde ondulado de crestas y valles
+irregulares. Entre seis y diez pliegues por canastita, ninguno igual al otro y
+ninguna de las tres canastitas con el mismo dibujo.
+
+BOCA: bien abierta arriba, ocupando casi todo el diámetro superior, con el
+relleno a la vista al ras del borde o apenas sobresaliendo.
+
+RELLENO: [RELLENO]
+
+MASA: pálida y mate en las paredes, dorada solo en las crestas de los pliegues y
+en el borde superior, que es donde pegó el horno. Superficie levemente ampollada
+con brillo de pincelado de huevo. Hecha a mano, con el borde irregular.
+
+FONDO: superficie mate oscura y cálida — pizarra carbón o cemento quemado en tono
+grafito, casi negro en las esquinas. Sin tablas de madera, sin mantel, sin
+rejillas, sin platos, sin utensilios, sin props.
+
+LUZ: dirigida desde arriba a la izquierda, tipo ventana lateral alta. Marca el
+relieve de los pliegues con sombras finas entre uno y otro, y deja sombras cortas
+y definidas entre las canastitas. Contraste medio-alto.
+
+COLOR: cálido y apetitoso, con saturación generosa pero natural. Dorados en las
+crestas, negros con densidad en el fondo. Nunca lavado, gris ni plano.
+
+CÁMARA: 50 mm, f/8. Nitidez pareja en las tres unidades, con detalle fino en la
+textura de la masa, en los pliegues y en el relleno gratinado.
+
+COMPOSICIÓN DEL PRECIO: dejar la esquina inferior derecha sin detalle importante.
+
+NO INCLUIR: paredes rectas o verticales; canastita chata o baja; tartaleta de
+borde liso; molde de muffin o papel; empanada cerrada, media luna o repulgue
+trenzado; pliegues parejos y simétricos; las tres canastitas idénticas entre sí;
+fondo claro o lavado; imagen plana o de bajo contraste; texto, letras, logos,
+manos, personas, cubiertos, platos estampados, rejillas de horno; ingredientes
+que no estén en la lista; aspecto de plástico o de render 3D.
+```
+
+Los cinco rellenos, para el bloque RELLENO:
+
+```
+Espinaca y muzzarella: espinaca salteada bien verde ligada con salsa blanca,
+cubierta de muzzarella gratinada con manchas doradas.
+
+Jamón y muzzarella: cubos de jamón cocido rosado entre muzzarella fundida y
+gratinada, con hilos de queso y burbujas doradas en la superficie.
+
+Roquefort: muzzarella fundida con trozos de queso azul de vetas azul verdosas
+apenas derretidos, y alguna mancha dorada del gratinado. Las vetas azules tienen
+que distinguirse con claridad: es lo único que identifica el sabor.
+
+Palmito: rodajas de palmito blanco marfil entre muzzarella fundida y un ligado
+cremoso rosado de salsa golf, gratinado en la superficie. Al menos una rodaja
+tiene que quedar bien visible y reconocible.
+
+Caprese: tomate en cubos que perdió agua y brilla, muzzarella fundida y gratinada
+en los bordes, y unas gotas de pesto verde como acento.
+```
+
+---
+
+### Los cuatro formatos de cierre
+
+Están escritos completos dentro de cada sabor, pero conviene tenerlos a mano:
+
+- **Canastita** — espinaca y muzza, jamón y muzza, roquefort, palmito, caprese
+- **Repulgue tradicional** — carne, carne dulce
+- **Repulgue pinzado** — pollo
+- **Fatay triangular** — árabe
+
+---
+
+### 1. Carne
+```
+FORMA: media luna con repulgue tradicional argentino. El borde curvo está doblado
+sobre sí mismo en pliegues sucesivos que se montan uno sobre otro, formando una
+trenza gruesa y despareja de unos doce pliegues. Cerrada por completo.
+RELLENO: carne cortada a cuchillo, jugosa, con cebolla, un trozo de huevo duro y
+una aceituna verde entera. Condimentada con pimentón y comino, de modo que el
+jugo tiñe la masa de anaranjado en el corte.
+CÓMO SE MUESTRA: dos enteras y una tercera partida al medio, con las dos mitades
+apoyadas con el corte hacia arriba en primer plano, mostrando el relleno jugoso.
+```
+
+### 2. Carne dulce
+```
+FORMA: media luna con repulgue tradicional argentino. El borde curvo está doblado
+sobre sí mismo en pliegues sucesivos que se montan uno sobre otro, formando una
+trenza gruesa y despareja de unos doce pliegues. Cerrada por completo.
+RELLENO: carne cortada a cuchillo con cebolla, pasas de uva hinchadas y aceituna
+verde. El relleno se ve más oscuro y más brillante que el de la carne salada, con
+las pasas claramente visibles repartidas entre la carne.
+CÓMO SE MUESTRA: dos enteras y una tercera partida al medio, con las dos mitades
+apoyadas con el corte hacia arriba en primer plano. Las pasas tienen que quedar
+bien a la vista: son lo único que la distingue de la de carne.
+```
+
+### 3. Pollo
+```
+FORMA: media luna cerrada con el borde sellado a presión y marcado con pinza,
+dejando un dibujo de muescas regulares a lo largo del borde curvo. No tiene la
+trenza doblada del repulgue tradicional. Cerrada por completo.
+RELLENO: pollo desmenuzado en hilachas, con cebolla y morrón rojo en cubitos y un
+ligado cremoso claro que lo envuelve.
+CÓMO SE MUESTRA: dos enteras y una tercera partida al medio, con las dos mitades
+apoyadas con el corte hacia arriba en primer plano, mostrando las hilachas de
+pollo y el rojo del morrón.
+```
+
+### 4. Árabe
+
+Esta va con **imágenes de referencia adjuntas** y con un bloque extra de
+negativos. Es la forma que más se le escapa al generador: la resuelve como
+estrella, como flor o como sobre de cuatro puntas, casi nunca como triángulo.
+
+El punto fino es cuánto abre. No es una sfiha plana con el relleno expuesto a lo
+ancho: es un fatay **medianamente abierto**, donde los pliegues de masa ocupan
+más superficie que la ventana del centro. Por eso el prompt da la proporción en
+números — es lo único que el generador respeta.
+
+```
+IMAGEN DE REFERENCIA: usá las imágenes adjuntas ÚNICAMENTE para copiar la forma y
+el armado de la empanada: la geometría del triángulo, el grosor y el volumen de
+los tres pliegues, y el tamaño de la abertura del centro. Todo lo demás —fondo,
+luz, encuadre, cantidad de unidades, color— sale de este prompt y no de las
+referencias.
+
+FORMA: empanada árabe al horno, estilo fatay. Se arma sobre un disco de masa al
+que se le levantan EXACTAMENTE TRES lados hacia el centro. Cada lado queda como
+un pliegue grueso, inflado y redondeado, y los tres se unen de a dos en las tres
+esquinas, que terminan en punta marcada y apenas curvada hacia arriba. Vista
+desde arriba es un TRIÁNGULO de tres puntas: nunca cuatro, cinco ni más.
+
+APERTURA (clave): los tres pliegues NO llegan a tocarse en el centro, pero
+tampoco quedan abiertos de par en par. Dejan una ventana central de contorno
+triangular redondeado que ocupa aproximadamente UN TERCIO de la superficie de la
+empanada; los pliegues de masa ocupan los otros dos tercios. Está medianamente
+abierta: ni sfiha plana con el relleno expuesto a lo ancho, ni empanada cerrada.
+
+RELLENO: carne picada fina y jugosa con cebolla y cubitos de tomate, que asoma
+únicamente por la ventana central y queda hundido, por debajo del nivel de los
+pliegues. Brilla por el jugo, que oscurece la masa justo en el borde que toca.
+
+MASA: dorada y brillante por el pincelado de huevo, con las partes altas de los
+pliegues más tostadas, alguna ampolla y zonas más pálidas en los huecos. Los
+pliegues tienen volumen real, inflados por el horno, no son solapas chatas.
+
+CÓMO SE MUESTRA: las tres enteras, ninguna partida — el relleno ya se ve por la
+ventana del centro. Un gajo de limón chico apoyado a un costado, como única
+excepción a la regla de no usar props: es lo que identifica a la árabe de un
+vistazo.
+
+NO INCLUIR (además de lo anterior): empanadas de cuatro, cinco o seis puntas;
+forma de estrella, de flor o de sobre; sfiha plana y completamente abierta con el
+relleno a la vista en toda la superficie; centro cerrado, tapado o cosido;
+pliegues chatos sin volumen; media luna con repulgue; empanada partida al medio.
+```
+
+### 5. Espinaca y muzzarella
+```
+FORMA: canastita. Base chica y redonda de la que suben paredes de masa, con una
+altura parecida al ancho de la base, formando una cazuelita. Las paredes se arman
+recogiendo la masa en PLIEGUES VERTICALES sucesivos, como tela fruncida: se
+marcan de abajo hacia arriba y dejan el borde superior ondulado e irregular,
+nunca liso ni parejo. La boca queda bien abierta, mostrando todo el relleno desde
+arriba. No es una media luna, no tiene repulgue trenzado, no se cierra en el
+centro y no es una tartaleta de borde liso.
+MASA (canastita): pálida y mate en las paredes, dorada solo en las crestas de los
+pliegues y en el borde superior, que es donde pegó el horno. Plegada a mano:
+ninguna de las tres tiene la misma cantidad ni la misma forma de pliegues.
+RELLENO: espinaca salteada bien verde ligada con salsa blanca, cubierta de
+muzzarella gratinada con manchas doradas en la abertura.
+CÓMO SE MUESTRA: las tres enteras, con el relleno visible y burbujeante en la
+abertura superior. El verde de la espinaca tiene que verse desde arriba.
+```
+
+### 6. Jamón y muzzarella
+```
+FORMA: canastita. Base chica y redonda de la que suben paredes de masa, con una
+altura parecida al ancho de la base, formando una cazuelita. Las paredes se arman
+recogiendo la masa en PLIEGUES VERTICALES sucesivos, como tela fruncida: se
+marcan de abajo hacia arriba y dejan el borde superior ondulado e irregular,
+nunca liso ni parejo. La boca queda bien abierta, mostrando todo el relleno desde
+arriba. No es una media luna, no tiene repulgue trenzado, no se cierra en el
+centro y no es una tartaleta de borde liso.
+MASA (canastita): pálida y mate en las paredes, dorada solo en las crestas de los
+pliegues y en el borde superior, que es donde pegó el horno. Plegada a mano:
+ninguna de las tres tiene la misma cantidad ni la misma forma de pliegues.
+RELLENO: cubos de jamón cocido rosado entre muzzarella fundida y gratinada, con
+hilos de queso y burbujas doradas en la superficie.
+CÓMO SE MUESTRA: las tres enteras, con el queso gratinado y el rosa del jamón
+asomando por la abertura superior.
+```
+
+### 7. Roquefort
+```
+FORMA: canastita. Base chica y redonda de la que suben paredes de masa, con una
+altura parecida al ancho de la base, formando una cazuelita. Las paredes se arman
+recogiendo la masa en PLIEGUES VERTICALES sucesivos, como tela fruncida: se
+marcan de abajo hacia arriba y dejan el borde superior ondulado e irregular,
+nunca liso ni parejo. La boca queda bien abierta, mostrando todo el relleno desde
+arriba. No es una media luna, no tiene repulgue trenzado, no se cierra en el
+centro y no es una tartaleta de borde liso.
+MASA (canastita): pálida y mate en las paredes, dorada solo en las crestas de los
+pliegues y en el borde superior, que es donde pegó el horno. Plegada a mano:
+ninguna de las tres tiene la misma cantidad ni la misma forma de pliegues.
+RELLENO: muzzarella fundida con trozos de queso azul de vetas azul verdosas
+apenas derretidos, y alguna mancha dorada del gratinado.
+CÓMO SE MUESTRA: las tres enteras. Las vetas azules del queso tienen que
+distinguirse con claridad en la abertura: es lo único que identifica el sabor.
+```
+
+### 8. Palmito
+```
+FORMA: canastita. Base chica y redonda de la que suben paredes de masa, con una
+altura parecida al ancho de la base, formando una cazuelita. Las paredes se arman
+recogiendo la masa en PLIEGUES VERTICALES sucesivos, como tela fruncida: se
+marcan de abajo hacia arriba y dejan el borde superior ondulado e irregular,
+nunca liso ni parejo. La boca queda bien abierta, mostrando todo el relleno desde
+arriba. No es una media luna, no tiene repulgue trenzado, no se cierra en el
+centro y no es una tartaleta de borde liso.
+MASA (canastita): pálida y mate en las paredes, dorada solo en las crestas de los
+pliegues y en el borde superior, que es donde pegó el horno. Plegada a mano:
+ninguna de las tres tiene la misma cantidad ni la misma forma de pliegues.
+RELLENO: rodajas de palmito blanco marfil entre muzzarella fundida y un ligado
+cremoso rosado de salsa golf, gratinado en la superficie.
+CÓMO SE MUESTRA: las tres enteras, con al menos una rodaja de palmito bien
+visible y reconocible en la abertura de cada una.
+```
+
+### 9. Caprese
+```
+FORMA: canastita. Base chica y redonda de la que suben paredes de masa, con una
+altura parecida al ancho de la base, formando una cazuelita. Las paredes se arman
+recogiendo la masa en PLIEGUES VERTICALES sucesivos, como tela fruncida: se
+marcan de abajo hacia arriba y dejan el borde superior ondulado e irregular,
+nunca liso ni parejo. La boca queda bien abierta, mostrando todo el relleno desde
+arriba. No es una media luna, no tiene repulgue trenzado, no se cierra en el
+centro y no es una tartaleta de borde liso.
+MASA (canastita): pálida y mate en las paredes, dorada solo en las crestas de los
+pliegues y en el borde superior, que es donde pegó el horno. Plegada a mano:
+ninguna de las tres tiene la misma cantidad ni la misma forma de pliegues.
+RELLENO: tomate en cubos que perdió agua y brilla, muzzarella fundida y gratinada
+en los bordes de la abertura, y unas gotas de pesto verde como acento.
+CÓMO SE MUESTRA: las tres enteras. El rojo del tomate y el verde del pesto tienen
+que leerse desde arriba, contra el dorado de la masa.
+```
