@@ -62,7 +62,7 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroPro
               </div>
               <div>
                 <b>{featured.nombre}</b>
-                <small>La más pedida · {fmt(featured.precio)}</small>
+                <small>{featured.popular ? "La más pedida" : "La de la foto"} · {fmt(featured.precio)}</small>
               </div>
             </div>
           )}

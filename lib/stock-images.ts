@@ -6,10 +6,12 @@
 export const STOCK_IMAGES = {
   hero: {
     main: "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/hero1.jpg",
+    // La pizza que aparece en `main`: la etiqueta del hero tiene que nombrar esa. Cambiar juntos.
+    productoId: "c0ab17be-8cde-47fd-8be5-576abe4ccf3d", // Quattro Formaggi e Noci
     chip: "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/hero-quattro-formaggi.jpg",
   },
   story: {
-    dough: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1000&q=85",
+    dough: "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/nosotros.jpg",
     kneading: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1000&q=85",
     oven: "https://images.unsplash.com/photo-1541745537411-b8046dc6d66c?auto=format&fit=crop&w=1000&q=85",
   },

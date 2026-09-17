@@ -23,6 +23,7 @@ import type { BusinessConfig } from "@/lib/business";
 import type { CheckoutOrder } from "@/components/checkout/Checkout";
 import type { CardFormData } from "@/components/checkout/CardPayment";
 import type { CatalogData, Pizza, CartItem } from "@/types";
+import { STOCK_IMAGES } from "@/lib/stock-images";
 
 interface ConfirmedOrder {
   numero: string; nombre: string; mode: string; dir?: string;
@@ -89,7 +90,8 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
   const [order, setOrder] = useState<ConfirmedOrder | null>(null);
   const lastCardRef = useRef<string>("");
 
-  const featured = data.pizzas.find((p) => p.disponible !== false && p.popular && p.categoria === "gourmet")
+  const featured = data.pizzas.find((p) => p.disponible !== false && p.id === STOCK_IMAGES.hero.productoId)
+    || data.pizzas.find((p) => p.disponible !== false && p.popular && p.categoria === "gourmet")
     || data.pizzas.find((p) => p.disponible !== false && p.popular)
     || data.pizzas.find((p) => p.disponible !== false)
     || data.pizzas[0];
