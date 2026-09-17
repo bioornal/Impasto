@@ -5,8 +5,8 @@
 
 export const STOCK_IMAGES = {
   hero: {
-    main: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=85",
-    chip: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=300&q=80",
+    main: "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/hero1.jpg",
+    chip: "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/hero-quattro-formaggi.jpg",
   },
   story: {
     dough: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1000&q=85",
@@ -79,6 +79,16 @@ export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Porte%C3%B1a%20de%20Jam%C3%B3n%20y%20Morrones.jpg",
   "c0ab17be-8cde-47fd-8be5-576abe4ccf3d": // Quattro Formaggi e Noci
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Quattro%20Formaggi%20e%20Noci.jpg",
+  "bffd02f2-b069-45fa-9324-316a204f5447": // Choclo, Panceta y Salsa Criolla
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Choclo,%20Panceta%20y%20Salsa%20Criolla.jpg",
+  "a8659b32-fb98-4a8c-a0f6-cf3e6546a575": // Cinque Formaggi
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Cinque%20Formaggi.jpg",
+  "7a52594e-ac5e-4d6d-b505-23bce62eea75": // Filetto Impasto
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Filetto%20Impasto.jpg",
+  "548ea0b6-ef4c-4f0c-93ee-265f8a7baf83": // La Provoleta Impasto
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/La%20Provoleta%20Impasto.jpg",
+  "6d9ee913-270d-4c56-98eb-9e0b30a663ad": // Prosciutto, Rucola e Parmigiano
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Prosciutto,%20Rucola%20e%20Parmigiano.jpg",
 };
 
 /**

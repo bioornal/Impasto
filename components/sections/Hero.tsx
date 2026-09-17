@@ -19,8 +19,17 @@ interface HeroProps {
 export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroProps) {
   return (
     <section className="hero">
+      <div className="hero-bg" aria-hidden="true">
+        <img
+          src={STOCK_IMAGES.hero.main}
+          alt=""
+          className="hero-bg-img"
+        />
+        <div className="hero-bg-overlay" />
+      </div>
+
       <div className="container hero-grid">
-        <div>
+        <div className="hero-content">
           <div className="hero-eyebrow">Pizzería artesanal · Delivery & Take away</div>
           <h1>
             Pizza híbrida:<br />técnica napolitana,<br /><em>alma argentina.</em>
@@ -46,15 +55,6 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroPro
         </div>
 
         <div className="hero-visual">
-          <div className="hero-frame" />
-          <div className="hero-media">
-            <PizzaIllus
-              id={featured?.id || "hero-main"}
-              name={featured?.nombre}
-              tags={featured?.tags}
-              src={STOCK_IMAGES.hero.main}
-            />
-          </div>
           {featured && (
             <div className="hero-chip">
               <div className="hero-chip-media">

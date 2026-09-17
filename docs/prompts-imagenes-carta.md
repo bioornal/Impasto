@@ -505,7 +505,7 @@ miel ámbar cae sobre la porción. Almendras tostadas fileteadas. Vapor subiendo
 a contraluz.
 ```
 
-### Detalles prácticos
+### Detalles prácticos del hero
 
 - Generá también una **versión vertical u 1:1** del mismo hero para el celular:
   en pantalla chica el recorte centra la imagen y el espacio para texto de la
@@ -515,6 +515,77 @@ a contraluz.
   se come el titular no sirve como fondo.
 - Para el resto de los sabores sirve el mismo prompt: cambiá solo el bloque
   SUJETO por el de la pizza que quieras destacar.
+
+---
+
+## 3c. Imagen de la sección "Nosotros"
+
+La sección se llama "Impasto significa masa. Y acá todo empieza ahí." y el texto
+habla de 48 horas de fermentación en frío, estirado a mano y sin moldes. La foto
+tiene que ser eso: **la masa**, no el producto terminado. Es el único lugar de la
+web donde conviene que aparezcan manos — es una sección de oficio, no de venta.
+
+El hueco es cuadrado y el fondo de la sección es marrón espresso, así que la foto
+va oscura y cálida para integrarse, no para recortarse.
+
+### Prompt — Nosotros
+
+```
+Fotografía documental gastronómica, ultrarrealista, cálida y cinematográfica,
+para la sección "Nosotros" de la web de una pizzería artesanal.
+
+FORMATO: cuadrado 1:1. Resolución mínima 1600 x 1600 px.
+
+ESCENA: las manos de un pizzero estirando un bollo de masa sobre una mesada de
+mármol gastado y enharinado. Los dedos hunden y empujan la masa desde el centro
+hacia afuera, dejando el borde más grueso. La masa está cruda, blanca y viva: se
+ven las burbujas de la fermentación bajo la superficie y las marcas de los dedos
+recién hechas.
+
+MANOS: se ven únicamente manos y antebrazos, entrando desde el borde superior del
+cuadro. Manos de adulto, con harina adherida a los dedos y los nudillos. Sin
+anillos, sin reloj, sin tatuajes, sin mangas ni ropa visible. No se ve la cara ni
+el cuerpo de la persona.
+
+DETALLE CLAVE: una nube fina de harina suspendida en el aire, atrapada por la
+luz, cayendo sobre el mármol. Algunos granos de harina desenfocados en primer
+plano. Es lo que le da movimiento y vida a la foto.
+
+LUZ: una sola fuente cálida y lateral desde la izquierda, en clave baja. Recorta
+el relieve de la masa y enciende la harina suspendida. El fondo cae a penumbra
+profunda, casi negro, sin detalle.
+
+FONDO: cocina en penumbra, completamente desenfocada e irreconocible. Nada de
+hornos, llamas ni resplandor naranja. Solo oscuridad cálida.
+
+CÁMARA: 50 mm, f/4. Foco nítido en la masa y en las manos; el fondo se disuelve
+por distancia. Grano fino de película.
+
+COLOR: cálido y oscuro — marrón espresso, negros densos, y como únicos puntos
+claros el blanco cremoso de la masa y el beige de la harina. Nada de tonos fríos
+ni azulados.
+
+NO INCLUIR: hornos, fuego, llamas, resplandor naranja; pan, panes, hogazas,
+espigas de trigo, granos ni semillas; pizza terminada o con ingredientes; texto,
+letras, logos; caras, cuerpos, ropa; utensilios modernos; fondo claro; aspecto
+de render 3D.
+```
+
+### Variante sin manos
+
+Las manos son lo que más falla en los generadores. Si no salen bien después de
+unos intentos, cambiá el bloque ESCENA y borrá el bloque MANOS:
+
+```
+ESCENA: seis o siete bollos de masa cruda en fermentación, apoyados dentro de una
+caja de madera clara, vistos en tres cuartos desde arriba. Los bollos están
+hinchados, brillantes y relajados, casi tocándose entre ellos, espolvoreados con
+harina. Se ven las burbujas de la fermentación bajo la piel de la masa. Uno de
+los bollos quedó apenas deformado y distinto de los demás.
+```
+
+Cuenta lo mismo — las 48 horas de fermentación — y es mucho más fácil de que
+salga impecable al primer intento.
 
 ---
 
