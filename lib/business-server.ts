@@ -17,7 +17,10 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       .eq("id", branchId)
       .limit(1);
     const branch = Array.isArray(data) ? data[0] as Record<string, unknown> | undefined : undefined;
-    if (error || !branch) return BUSINESS;
+    // Ante un error de base o una fila faltante, el resto de los datos cae a los
+    // valores del código, pero las ventas se cierran: es preferible no tomar
+    // pedidos que aceptarlos cuando no se pudo confirmar que el local esté abierto.
+    if (error || !branch) return { ...BUSINESS, ventasActivas: false };
     return {
       id: String(branch.id || branchId),
       name: String(branch.nombre || BUSINESS.name),
@@ -48,6 +51,6 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       titularCuenta: String(branch.titular_cuenta || BUSINESS.titularCuenta || ""),
     };
   } catch {
-    return BUSINESS;
+    return { ...BUSINESS, ventasActivas: false };
   }
 }
