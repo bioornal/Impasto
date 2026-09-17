@@ -78,7 +78,7 @@ function TweaksPanel() {
   );
 }
 
-function SiteContent({ data, business, chatDisponible }: { data: CatalogData; business: BusinessConfig; chatDisponible: boolean }) {
+function SiteContent({ data, business, chatDisponible, destacadaId }: { data: CatalogData; business: BusinessConfig; chatDisponible: boolean; destacadaId?: string }) {
   const { paletteClass, typeClass } = useTweaks();
   const { clear } = useCart();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -129,7 +129,7 @@ function SiteContent({ data, business, chatDisponible }: { data: CatalogData; bu
         <Hero onCta={onNav} onHalf={() => openHalf()} featured={featured} varieties={data.pizzas.length} />
         <Features freeShippingFrom={business.freeShippingFrom} />
         <Promos promos={data.promos} onNav={onNav} />
-        <PizzaList pizzas={data.pizzas} onHalf={openHalf} />
+        <PizzaList pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} />
         <EmpanadasSection empanadas={data.empanadas} boxPrices={data.empanadaBoxPrices} />
         <Bebidas bebidas={data.bebidas} />
         <Story />
@@ -227,13 +227,13 @@ function SiteContent({ data, business, chatDisponible }: { data: CatalogData; bu
   );
 }
 
-export function Shell({ data, business, estadoInicial, chatDisponible }: { data: CatalogData; business: BusinessConfig; estadoInicial: EstadoTiendaCliente; chatDisponible: boolean }) {
+export function Shell({ data, business, estadoInicial, chatDisponible, destacadaId }: { data: CatalogData; business: BusinessConfig; estadoInicial: EstadoTiendaCliente; chatDisponible: boolean; destacadaId?: string }) {
   return (
     <TweakProvider>
       <StoreStatusProvider inicial={estadoInicial}>
         <ToastProvider>
           <CartProvider>
-            <SiteContent data={data} business={business} chatDisponible={chatDisponible} />
+            <SiteContent data={data} business={business} chatDisponible={chatDisponible} destacadaId={destacadaId} />
           </CartProvider>
         </ToastProvider>
       </StoreStatusProvider>

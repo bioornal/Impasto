@@ -23,9 +23,10 @@ const FILTERS: [string, string][] = [
 interface PizzaListProps {
   pizzas: Pizza[];
   onHalf: (pizza: Pizza) => void;
+  destacadaId?: string;
 }
 
-export function PizzaList({ pizzas, onHalf }: PizzaListProps) {
+export function PizzaList({ pizzas, onHalf, destacadaId }: PizzaListProps) {
   const [cat, setCat] = useState("todas");
   const [q, setQ] = useState("");
   const { tweaks } = useTweaks();
@@ -40,8 +41,9 @@ export function PizzaList({ pizzas, onHalf }: PizzaListProps) {
       const needle = q.toLowerCase();
       result = result.filter((p) => `${p.nombre} ${p.desc}`.toLowerCase().includes(needle));
     }
-    return result;
-  }, [pizzas, cat, q]);
+    const destacada = cat === "todas" && !q.trim() ? result.find((p) => p.id === destacadaId) : undefined;
+    return destacada ? [destacada, ...result.filter((p) => p !== destacada)] : result;
+  }, [pizzas, cat, q, destacadaId]);
 
   const qtyOf = (id: string) => items.find((i) => i.key === id && i.type === "pizza")?.qty || 0;
 
