@@ -91,6 +91,24 @@ export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/La%20Provoleta%20Impasto.jpg",
   "6d9ee913-270d-4c56-98eb-9e0b30a663ad": // Prosciutto, Rucola e Parmigiano
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Prosciutto,%20Rucola%20e%20Parmigiano.jpg",
+  "e21c2dea-c487-4094-b54f-32da320986cf": // Empanadas Arabe
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20arabe.jpg",
+  "6d9a8570-9bfd-435d-9aa1-413792e2bd47": // Empanadas Caprese
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20caprese.jpg",
+  "7bf77e9d-1e36-471a-bfdb-362df3e7298d": // Empanadas Carne Dulce
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20carne%20dulce.jpg",
+  "702e0f9c-25ed-4444-990f-de56fc7a8194": // Empanadas Carne Relleno
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20carne.jpg",
+  "a06602f2-984e-46da-aa90-bb3496a38ca0": // Empanadas de Palmito
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20palmito.jpg",
+  "48804913-5f31-4188-99df-c594ed75f457": // Empanadas de Pollo
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20pollo.jpg",
+  "3d96d200-647e-4719-9fa5-0a3022f44d72": // Empanadas de Roquefort
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20roquefort.jpg",
+  "3ef2a602-17eb-483c-bf9f-ed985a44d4ee": // Empanadas Espinaca y Muzza
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20espinaca.jpg",
+  "bf4ef7e1-400f-417a-be6a-03734e330909": // Empanadas Jamon y Muzza
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20jamon%20y%20muzza.jpg",
 };
 
 /**
@@ -152,6 +170,10 @@ export function getPizzaImage(nombre = "", id = "", tags: string[] = []): string
  * Obtiene una foto gastronómica para una empanada.
  */
 export function getEmpanadaImage(nombre = "", id = ""): string {
+  if (REAL_PRODUCT_PHOTOS[id]) {
+    return REAL_PRODUCT_PHOTOS[id];
+  }
+
   const norm = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
   if (norm.includes("jamon") || norm.includes("queso")) {
