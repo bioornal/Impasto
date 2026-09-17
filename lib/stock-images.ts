@@ -109,6 +109,22 @@ export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20espinaca.jpg",
   "bf4ef7e1-400f-417a-be6a-03734e330909": // Empanadas Jamon y Muzza
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20jamon%20y%20muzza.jpg",
+  "a3bb5e88-2433-49e1-bc8b-9935c8cad0e5": // Agua Mineral con gas 500 ml
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/agua%20gas.webp",
+  "6b52d73e-c482-4a64-a910-abaa95ecb2eb": // Agua Mineral sin gas 500 ml
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/agua.jpg",
+  "c03c9b94-ae21-45bf-ad04-36c732b4805a": // Cerveza Brahma 1 L
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/brahma.jpg",
+  "f62cfa81-9573-43db-9ac0-2f0ceb77d19c": // Cerveza Quilmes 1 L
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/quilmes.jpg",
+  "4953e9dd-86c3-410e-a708-5aa9bff868b4": // Coca-Cola 1.5 L
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/coca.jpg",
+  "5ac93efd-25cd-429a-a69f-bd9aa60e5973": // Coca-Cola Zero 1.5 L
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/coca%20zero.jpg",
+  "742c2588-de49-4516-b8e2-456e2718d4ab": // Sprite 1.5 L
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/sprite.jpg",
+  "ae0da614-592f-45ff-96c3-2fe277701b6f": // Vino Malbec 750 ml — OJO: la etiqueta subida es un Cabernet Sauvignon, no Malbec
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/vino.webp",
 };
 
 /**
@@ -203,6 +219,10 @@ export function getEmpanadaImage(nombre = "", id = ""): string {
  * Obtiene una foto para una bebida.
  */
 export function getDrinkImage(nombre = "", id = ""): string {
+  if (REAL_PRODUCT_PHOTOS[id]) {
+    return REAL_PRODUCT_PHOTOS[id];
+  }
+
   const norm = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
   if (norm.includes("coca") || norm.includes("cola") || norm.includes("pepsi") || norm.includes("gaseosa")) {
