@@ -70,8 +70,16 @@ La base InsForge `3agqcygs.us-east.insforge.app` la usan **tres aplicaciones coo
   `/api/productos` y las dos de etiquetas (además de `CATEGORIAS_IMPASTO` y `sucursal_id`,
   que se conservan como defensa en profundidad). Si se agrega una consulta nueva, lleva el
   filtro: la mitad de las rutas quedó sin él en el primer pase.
-- Carro Fogón filtra y escribe `proyecto_id = 'carro'`: su `GET /api/productos` ya no usa el
-  allowlist de Impasto y su `POST /api/productos` ya no fuerza `categoria = 'pizzas'`.
+- **Desde la unificación de septiembre, Carro Fogón escribe `proyecto_id = 'impasto'`**, no
+  `'carro'` (código del carro, su `CLAUDE.md` y la base lo confirman al 18/09/2026). Web y POS
+  comparten `proyecto_id` y se distinguen por `external_reference`: la web siempre escribe
+  `IM-XXXXXX-XXXX`, el POS deja el default `''`. **Hay dos numeraciones**: la web de seis cifras
+  por reloj y el POS 1, 2, 3… por día. Todo lo que derive identidad de `numero_pedido` se rompe
+  entre días (pasó con la campanilla del panel; ver "Cómo se entera el local").
+- Las **60 filas de `productos` con `proyecto_id = 'carro'`** (hamburguesas, lomos, calzones y
+  copias de pizzas, empanadas y bebidas) son del carro original y **hoy no las muestra ninguna
+  app**: el POS lee las de `'impasto'`. No se borraron; si se confirma que no hacen falta,
+  archivarlas es decisión del dueño.
 - `clientes` queda **compartida a propósito**: el cliente es de la empresa, pida por la tienda
   o por el carro.
 
@@ -177,9 +185,9 @@ El paso a paso para las tres (más dominio y webhook) está en `docs/P0-configur
 descripción, y los tags están cargados. Falta todavía: **fotos reales** (hoy son
 ilustraciones generadas), alérgenos, tamaños y stock.
 
-Ojo con el conteo: la tabla tiene 65 filas, no 41 — 41 de Impasto, 16 del proyecto
-paralelo (`hamburguesas`, `lomos`, `calzones` y `otros`, esta última una sola fila:
-"Esfiha de Carne"), y 8 bebidas cargadas en borrador.
+Ojo con el conteo (18/09/2026): la tabla tiene 130 filas. **70 de Impasto** (53 pizzas,
+9 empanadas y 8 bebidas; parte de las pizzas están archivadas) y **60 del carro original**,
+que ninguna app muestra hoy (ver "Separación de tenants").
 
 **Las descripciones no se inventaron: salen de las recetas reales.** Ver "El catálogo
 tiene recetas" más abajo — es el hallazgo que más rinde de todo el proyecto.
@@ -504,13 +512,28 @@ Tanda de arreglos posterior al review de los tres proyectos. Todo mergeado y des
   Cada tabla tiene `project_admin_policy` (ALL, `using(true)`). La key `ik_` de
   `.insforge/project.json` está en texto plano (gitignoreada) y conviene rotarla.
 
-### Lo que queda pendiente de esta tanda
+### Cierre de esa tanda (18/09/2026)
 
-- **CSP estricto** en Impasto: los iframes de Mercado Pago y los estilos inline lo vuelven
-  riesgoso sin probar un pago real. Solo se pusieron los headers que no lo rompen.
-- **Separación por rol** de los usuarios del pool compartido: hoy cualquier `authenticated` puede
-  leer `pedidos` (con PII) y las tablas de costos que usa el recetario.
-- **Contador atómico de `numero_pedido`**: el unique ya evita duplicados, pero una colisión
-  hace fallar la segunda escritura. Requiere una función RPC y tocar Impasto y Carro Fogón.
-- **`ventas_mes` no existe** en la base: el snapshot mensual del recetario falla en silencio.
-  Decidir si se crea la tabla o se saca esa parte del código.
+- **Separación por rol — hecha.** Migración `20260918023143_recetario-solo-duenio.sql`: las
+  tablas que el recetario lee con token de usuario (costos, recetas, `productos`, `pedidos`,
+  `ventas_mes`) tienen la política `Recetario: usuarios habilitados`, que pide
+  `public.es_usuario_recetario()`. Hoy es `true` solo para `spezialichristian@gmail.com`; las
+  otras cuentas del pool (`megamuebles.lafalda@gmail.com` y las dos semilla de la plataforma)
+  ven todo vacío. Impasto y el POS no se enteran: entran con la key de backend. Verificado
+  simulando cada usuario con `set local role authenticated` + `request.jwt.claims` dentro de un
+  `do $$ … raise exception $$`, que revierte todo (la CLI solo devuelve la última sentencia y
+  rechaza SQL dinámico).
+- **`ventas_mes` — creada.** Migración `20260918023148_ventas-mes.sql`. InsForge agrega
+  `project_admin_policy` sola a cada tabla nueva: **no declararla en la migración** o falla con
+  "already exists" (la migración se revierte entera, no queda a medias).
+- **Contador de `numero_pedido` — resuelto sin RPC.** El POS reintenta si dos terminales chocan
+  (`insertarConNumero` en el carro). La web no puede chocar con el POS: rangos disjuntos.
+- **CSP — en `Report-Only`** (`next.config.ts`): registra en la consola lo que bloquearía sin
+  bloquear. **Pasarlo a `Content-Security-Policy` después de un pago real con tarjeta** que no
+  deje violaciones en la consola.
+- **Pendiente: rotar la key `ik_`.** Además de estar en texto plano en `.insforge/project.json`,
+  el 17/09/2026 quedó impresa en la salida de `netlify env:list --plain` durante una sesión. La
+  rotación toca `INSFORGE_API_KEY` en Netlify (Impasto), **`INSFORGE_ANON_KEY` en Vercel (el
+  carro: a pesar del nombre, guarda la `ik_` de backend, solo del lado del servidor)**, los
+  `.env.local` y `.insforge/project.json`. El recetario no: usa la anon key de verdad. La hace el
+  dueño, porque implica manejar la key nueva. Después, reconstruir Impasto y el carro.
