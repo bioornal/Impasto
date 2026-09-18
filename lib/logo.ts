@@ -27,8 +27,12 @@ export const LOGO_DEGRADE: VarianteLogo = { src: `${BASE}/3.png`, ancho: 2172, a
  *
  * Si el header se queda con el degradé, conviene una versión clara de ese
  * mismo para que las dos puntas del sitio muestren el mismo dibujo.
+ *
+ * Vive en `public/`, no en el storage: `2-claro.png` nunca llegó al bucket y el
+ * footer mostraba una imagen rota. Se generó desde `2.png` pasando la tinta a
+ * `--bg` (#f6f1e7) y conservando la transparencia.
  */
-export const LOGO_CLARO: VarianteLogo = { src: `${BASE}/2-claro.png`, ancho: 2000, alto: 639 };
+export const LOGO_CLARO: VarianteLogo = { src: "/logo-claro.png", ancho: 2000, alto: 639 };
 
 /**
  * El del header. Cambiar acá entre LOGO_PLANO y LOGO_DEGRADE.
