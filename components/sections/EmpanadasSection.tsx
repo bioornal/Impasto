@@ -116,22 +116,26 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
           <aside className="box-aside">
             <div>
               <h4>Tu caja</h4>
-              <small className="box-sub">Elegí la cantidad ({EMPANADA_PESO.cifra} c/u)</small>
+              <small className="box-sub">Empanadas de {EMPANADA_PESO.cifra} c/u</small>
             </div>
 
-            <div className="box-tiers">
-              {TIERS.map((size) => (
-                <button key={size} className={`tier ${tier === size ? "on" : ""}`} onClick={() => changeTier(size)}>
-                  <b>×{size}</b>
-                  <small>{hasUnitPrices ? "por variedad" : fmt(boxPrices[size])}</small>
-                </button>
-              ))}
+            <div>
+              <span className="box-label" id="box-tiers-label">Unidades</span>
+              <div className="box-tiers" role="group" aria-labelledby="box-tiers-label">
+                {TIERS.map((size) => (
+                  <button key={size} className={`tier ${tier === size ? "on" : ""}`} onClick={() => changeTier(size)} aria-pressed={tier === size}>
+                    <b>{size}</b>
+                    {/* Con precio por unidad el total depende de los gustos: no hay un precio fijo que mostrar. */}
+                    {!hasUnitPrices && <small>{fmt(boxPrices[size])}</small>}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
               <div className="box-progress-top">
                 <span>{selected} de {tier} elegidas</span>
-                <span className="remain">{complete ? "Caja completa" : `Faltan ${tier - selected}`}</span>
+                <span className={`remain ${complete ? "done" : ""}`}>{complete ? "Caja completa" : `Faltan ${tier - selected}`}</span>
               </div>
               <div className="box-track">
                 <div className={`box-bar ${complete ? "done" : ""}`} style={{ width: `${Math.min(100, (selected / tier) * 100)}%` }} />
@@ -150,7 +154,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
             </div>
 
             <div className="box-total">
-              <span className="mono">Total caja</span>
+              <span className="box-total-label">Total caja</span>
               <b>{fmt(priceFor(tier, selection))}</b>
             </div>
 

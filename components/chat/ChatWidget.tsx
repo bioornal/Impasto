@@ -293,8 +293,9 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
     // texto de WhatsApp.
     return (
       <a className="chat-fab chat-fab-pill" href={wsp} target="_blank" rel="noreferrer" aria-label="Escribinos por WhatsApp">
-        <IconoWhatsapp />
-        <span className="chat-fab-texto">Escribinos por WhatsApp</span>
+        {/* Sin el punto verde: ese punto dice "el asistente está andando", y acá no. */}
+        <span className="chat-fab-insignia"><IconoWhatsapp /></span>
+        <span className="chat-fab-texto"><b>Escribinos por WhatsApp</b></span>
       </a>
     );
   }
@@ -312,8 +313,15 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
           <IconoCerrar />
         ) : (
           <>
-            <IconoBot />
-            <span className="chat-fab-texto">¿Puedo ayudarte?</span>
+            <span className="chat-fab-insignia">
+              <IconoBot />
+              <span className="chat-fab-punto" />
+            </span>
+            {/* La misma frase que abre el panel ("Te ayudo a elegir"). */}
+            <span className="chat-fab-texto">
+              <b>¿Te ayudo a elegir?</b>
+              <small>Asistente de {nombre}</small>
+            </span>
           </>
         )}
       </button>
@@ -393,8 +401,8 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
 /**
  * Cara de robot dibujada a mano: cabecita redondeada, antena y dos ojos. El
  * dueño pidió explícitamente "un ícono propio de bot", no un emoji ni una
- * librería de íconos. `currentColor` para heredar `--accent-ink` como
- * cualquier otro ícono del sitio.
+ * librería de íconos. `currentColor` para heredar el carbón de la insignia
+ * dorada (`.chat-fab-insignia`).
  */
 const IconoBot = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
