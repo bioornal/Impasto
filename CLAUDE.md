@@ -314,9 +314,15 @@ ese tercero, una tarjeta que se acredita más tarde no le llega a nadie.
 No se duplica: el índice único de `notificaciones` es `(pedido_id, tipo, canal)`, así que el
 aviso de Telegram convive con el del mail y un reintento no manda dos veces.
 
-**Lo que todavía falta:** el panel **no se refresca solo** (`StoreProvider.tsx`, `useEffect`
-con dependencias vacías). Aunque quede abierto en una pantalla del local, un pedido nuevo no
-aparece hasta recargar a mano.
+**El panel se refresca solo** cada 15 segundos y hace sonar la campanilla con cada pedido nuevo
+(`StoreProvider.tsx`). **La identidad de un pedido en el panel es `_dbId`** (el uuid de la fila),
+**nunca `id`**: `id` es solo la etiqueta visible, y para un pedido del POS —que no tiene
+`external_reference`— `adaptOrder` la arma con el número (`IM-0001`). El POS numera 1, 2, 3… y
+reinicia cada día, y `/api/admin/pedidos` devuelve el histórico completo, así que el `#1` de hoy
+y el de ayer comparten `id`. Deduplicar por `id` dejó la campanilla muda desde el segundo día de
+venta; buscar por `id` hacía que un cambio de estado pudiera parchear la fila equivocada. Las
+claves, la detección de nuevos y las acciones van por `_dbId` (`clavesDePedidos` y
+`pedidosNuevosParaCocina` en `lib/pedido-visible.ts`, con test).
 
 ## El storage (arreglado el 23/08/2026)
 

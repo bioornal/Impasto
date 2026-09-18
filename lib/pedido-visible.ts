@@ -35,3 +35,15 @@ export function esPedidoParaCocina(p: PedidoVisibleParams): boolean {
 export function esPedidoValidoParaVentas(p: PedidoVisibleParams): boolean {
   return esPedidoParaCocina(p);
 }
+
+// Por uuid y no por el id visible: el POS numera 1, 2, 3… y ese número se repite entre días.
+export function clavesDePedidos(pedidos: { _dbId: string }[]): Set<string> {
+  return new Set(pedidos.map((p) => p._dbId));
+}
+
+export function pedidosNuevosParaCocina<T extends PedidoVisibleParams & { _dbId: string }>(
+  conocidos: Set<string>,
+  pedidos: T[],
+): T[] {
+  return pedidos.filter((p) => !conocidos.has(p._dbId) && esPedidoParaCocina(p));
+}

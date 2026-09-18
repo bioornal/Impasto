@@ -195,7 +195,7 @@ export function Dashboard() {
               </thead>
               <tbody>
                 {state.orders.slice(0, 5).map(o => (
-                  <tr key={o.id}>
+                  <tr key={o._dbId}>
                     <td className="tbl-mono tbl-strong">{o.id}</td>
                     <td>{o.cliente}</td>
                     <td className="tbl-muted">{o.items.length} ítem{o.items.length !== 1 ? "s" : ""}</td>

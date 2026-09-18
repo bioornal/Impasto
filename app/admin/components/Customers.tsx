@@ -118,7 +118,7 @@ function CustomerDetail({ customer, onClose }: { customer: AdminCustomer; onClos
             ? <div className="empty" style={{ padding: 30 }}><div className="text-muted">Sin pedidos registrados</div></div>
             : <div className="od-items">
                 {history.map(o => (
-                  <div className="od-row" key={o.id}>
+                  <div className="od-row" key={o._dbId}>
                     <div>
                       <span className="tbl-mono tbl-strong">{o.id}</span>
                       <div className="text-muted" style={{ fontSize: 12 }}>{fmtDateTime(o.fecha)} · {o.items.length} ítem{o.items.length !== 1 ? "s" : ""}</div>
