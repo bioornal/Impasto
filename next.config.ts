@@ -7,8 +7,9 @@ const CSP = [
   "script-src 'self' 'unsafe-inline' https://sdk.mercadopago.com https://*.mercadopago.com https://*.mlstatic.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://3agqcygs.us-east.insforge.app https://images.unsplash.com https://*.mercadopago.com https://*.mlstatic.com",
-  "connect-src 'self' https://*.mercadopago.com https://*.mercadolibre.com https://*.mlstatic.com",
+  // cdn.insforge.dev: las fotos de la carta. mercadolibre/mercadolivre: el antifraude de MP.
+  "img-src 'self' data: blob: https://3agqcygs.us-east.insforge.app https://cdn.insforge.dev https://images.unsplash.com https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com https://*.mlstatic.com",
+  "connect-src 'self' https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com https://*.mlstatic.com",
   "frame-src https://*.mercadopago.com https://*.mercadolibre.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
