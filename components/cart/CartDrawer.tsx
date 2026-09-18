@@ -1,4 +1,5 @@
 "use client";
+import { useRef } from "react";
 import { useCart } from "@/components/providers/CartProvider";
 import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -21,6 +22,7 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
   const { items, add, inc, dec, remove, subtotal } = useCart();
   const tienda = useStoreStatus();
   const toast = useToast();
+  const railRef = useRef<HTMLDivElement>(null);
   if (!open) return null;
 
   const freeShipping = subtotal >= business.freeShippingFrom;
@@ -28,7 +30,10 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
   const shipping = freeShipping ? 0 : business.deliveryFee;
 
   const inCart = new Set(items.map((i) => i.key));
-  const upsells = bebidas.filter((b) => b.disponible !== false && !inCart.has(b.id)).slice(0, 2);
+  // Todas las bebidas que todavía no están en el pedido: el carrusel se desliza,
+  // así que ya no hace falta recortar a dos.
+  const upsells = bebidas.filter((b) => b.disponible !== false && !inCart.has(b.id));
+  const deslizar = (sentido: 1 | -1) => railRef.current?.scrollBy({ left: sentido * 260, behavior: "smooth" });
 
   return (
     <div className="drawer-bg" onClick={onClose}>
@@ -104,27 +109,49 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
                 </div>
               ))}
 
+              {/* Sugerencias, no ítems del pedido: por eso otra forma (carrusel en
+                  vez de filas), "Opcional" a la vista y el precio con "+". Antes
+                  eran filas iguales a las del pedido y se confundían con él. */}
               {upsells.length > 0 && (
-                <div className="upsells">
-                  <h5>Completá el pedido</h5>
-                  {upsells.map((bebida) => (
-                    <div className="upsell" key={bebida.id}>
-                      <div className="upsell-media"><DrinkIllus id={bebida.id} label={bebida.nombre} name={bebida.nombre} /></div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <b>{bebida.nombre}</b>
-                        <small>{fmt(bebida.precio)}</small>
-                      </div>
-                      <button
-                        onClick={() => {
-                          add({ key: bebida.id, type: "bebida", name: bebida.nombre, price: bebida.precio, qty: 1 });
-                          toast(`${bebida.nombre} sumada`);
-                        }}
-                      >
-                        Sumar
-                      </button>
+                <section className="upsells" aria-labelledby="upsells-titulo">
+                  <div className="upsells-head">
+                    <div>
+                      <h5 id="upsells-titulo">¿Algo para tomar?</h5>
+                      <small>Opcional · no está en tu pedido</small>
                     </div>
-                  ))}
-                </div>
+                    {upsells.length > 3 && (
+                      <div className="upsell-nav">
+                        <button onClick={() => deslizar(-1)} aria-label="Ver bebidas anteriores">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                        </button>
+                        <button onClick={() => deslizar(1)} aria-label="Ver más bebidas">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="upsell-rail" ref={railRef}>
+                    {upsells.map((bebida) => (
+                      <div className="upsell" key={bebida.id}>
+                        <div className="upsell-top">
+                          <div className="upsell-media"><DrinkIllus id={bebida.id} label={bebida.nombre} name={bebida.nombre} /></div>
+                          <button
+                            className="upsell-add"
+                            aria-label={`Agregar ${bebida.nombre} al pedido`}
+                            onClick={() => {
+                              add({ key: bebida.id, type: "bebida", name: bebida.nombre, price: bebida.precio, qty: 1 });
+                              toast(`${bebida.nombre} sumada`);
+                            }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                          </button>
+                        </div>
+                        <b>{bebida.nombre}</b>
+                        <small>+ {fmt(bebida.precio)}</small>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               )}
             </>
           )}
