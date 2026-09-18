@@ -59,7 +59,7 @@ export function Orders() {
               </thead>
               <tbody>
                 {filtered.map(o => (
-                  <tr key={o.id} style={{ cursor: "pointer" }} onClick={() => setSelected(o)}>
+                  <tr key={o._dbId} style={{ cursor: "pointer" }} onClick={() => setSelected(o)}>
                     <td className="tbl-mono tbl-strong">{o.id}</td>
                     <td><div className="tbl-strong">{o.cliente}</div><div className="tbl-muted">{o.tel}</div></td>
                     <td className="tbl-muted">{o.items.map(i => `${i.qty}× ${i.name}`).join(", ").slice(0, 40)}…</td>
@@ -101,9 +101,9 @@ export function Orders() {
         <OrderDetail
           order={selected}
           onClose={() => setSelected(null)}
-          onUpdate={(estado) => { updateOrderStatus(selected.id, estado); setSelected({ ...selected, estado }); }}
-          onPayment={(estado) => { updateOrderPayment(selected.id, estado); setSelected({ ...selected, pagoEstado: estado }); }}
-          onRefund={(monto) => { refundOrder(selected.id, monto); setSelected(null); }}
+          onUpdate={(estado) => { updateOrderStatus(selected._dbId, estado); setSelected({ ...selected, estado }); }}
+          onPayment={(estado) => { updateOrderPayment(selected._dbId, estado); setSelected({ ...selected, pagoEstado: estado }); }}
+          onRefund={(monto) => { refundOrder(selected._dbId, monto); setSelected(null); }}
         />
       )}
     </>

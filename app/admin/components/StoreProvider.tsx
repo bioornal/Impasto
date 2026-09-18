@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial, AdminOrder, AdminCustomer } from "./types";
 import { esCategoriaImpasto } from "@/lib/categorias";
 import { adaptOrder } from "@/lib/adapt-order";
-import { esPedidoParaCocina } from "@/lib/pedido-visible";
+import { clavesDePedidos, pedidosNuevosParaCocina } from "@/lib/pedido-visible";
 
 /* ── adaptadores InsForge → admin ── */
 function adaptProduct(p: Record<string, unknown>): AdminProduct {
@@ -185,10 +185,10 @@ interface StoreCtx {
   createEtiqueta: (label: string, color: string, mostrar_badge: string) => Promise<void>;
   updateEtiqueta: (id: string, patch: Partial<AdminEtiqueta>) => Promise<void>;
   deleteEtiqueta: (id: string) => Promise<void>;
-  updateOrderStatus: (id: string, estado: string) => Promise<void>;
-  updateOrderPayment: (id: string, estado: string) => Promise<void>;
+  updateOrderStatus: (dbId: string, estado: string) => Promise<void>;
+  updateOrderPayment: (dbId: string, estado: string) => Promise<void>;
   /** Sin `monto` devuelve el total; con `monto` hace una devolución parcial. */
-  refundOrder: (id: string, monto?: number) => Promise<void>;
+  refundOrder: (dbId: string, monto?: number) => Promise<void>;
   updateTestimonial: (id: string, estado: string) => Promise<void>;
   deleteTestimonial: (id: string) => Promise<void>;
   reset: () => Promise<void>;
@@ -266,7 +266,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setState(s => ({ ...s, loading: true, error: null }));
     try {
       const data = await loadAll();
-      knownOrderIdsRef.current = new Set(data.orders.map((o: AdminOrder) => o.id));
+      knownOrderIdsRef.current = clavesDePedidos(data.orders);
       isInitialLoadRef.current = false;
       setState({ loading: false, error: null, ...data });
     } catch (err) {
@@ -297,7 +297,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const prevIds = knownOrderIdsRef.current;
 
         if (!isInitialLoadRef.current) {
-          const freshOrders = newOrders.filter(o => !prevIds.has(o.id) && esPedidoParaCocina(o));
+          const freshOrders = pedidosNuevosParaCocina(prevIds, newOrders);
           if (freshOrders.length > 0) {
             if (soundEnabledRef.current) {
               playKitchenChime();
@@ -306,7 +306,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        knownOrderIdsRef.current = new Set(newOrders.map((o: AdminOrder) => o.id));
+        knownOrderIdsRef.current = clavesDePedidos(newOrders);
 
         setState(s => {
           const updatedCustomers = s.customers.map(c =>
@@ -450,11 +450,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       showToast("Etiquetas actualizadas");
     },
 
-    updateOrderStatus: async (id, estado) => {
-      const prevOrder = stateRef.current.orders.find(o => o.id === id);
+    updateOrderStatus: async (dbId, estado) => {
+      const prevOrder = stateRef.current.orders.find(o => o._dbId === dbId);
       const prevEstado = prevOrder?.estado;
-      setState(s => ({ ...s, orders: s.orders.map(o => o.id === id ? { ...o, estado } : o) }));
-      const order = stateRef.current.orders.find(o => o.id === id);
+      setState(s => ({ ...s, orders: s.orders.map(o => o._dbId === dbId ? { ...o, estado } : o) }));
+      const order = stateRef.current.orders.find(o => o._dbId === dbId);
       if (order) {
         const res = await fetch(`/api/admin/pedidos/${order._dbId}`, {
           method: "PUT",
@@ -463,20 +463,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }).catch(() => null);
         if (!res || !res.ok) {
           if (prevEstado) {
-            setState(s => ({ ...s, orders: s.orders.map(o => o.id === id ? { ...o, estado: prevEstado } : o) }));
+            setState(s => ({ ...s, orders: s.orders.map(o => o._dbId === dbId ? { ...o, estado: prevEstado } : o) }));
           }
           showToast("Error al actualizar el estado del pedido");
           return;
         }
       }
-      showToast(`Pedido ${id} → ${estado}`);
+      showToast(`Pedido ${prevOrder?.id ?? ""} → ${estado}`);
     },
 
-    updateOrderPayment: async (id, estado) => {
-      const prevOrder = stateRef.current.orders.find(o => o.id === id);
+    updateOrderPayment: async (dbId, estado) => {
+      const prevOrder = stateRef.current.orders.find(o => o._dbId === dbId);
       const prevPagoEstado = prevOrder?.pagoEstado;
-      setState(s => ({ ...s, orders: s.orders.map(o => o.id === id ? { ...o, pagoEstado: estado } : o) }));
-      const order = stateRef.current.orders.find(o => o.id === id);
+      setState(s => ({ ...s, orders: s.orders.map(o => o._dbId === dbId ? { ...o, pagoEstado: estado } : o) }));
+      const order = stateRef.current.orders.find(o => o._dbId === dbId);
       if (order) {
         const res = await fetch(`/api/admin/pedidos/${order._dbId}`, {
           method: "PUT",
@@ -485,17 +485,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }).catch(() => null);
         if (!res || !res.ok) {
           if (prevPagoEstado) {
-            setState(s => ({ ...s, orders: s.orders.map(o => o.id === id ? { ...o, pagoEstado: prevPagoEstado } : o) }));
+            setState(s => ({ ...s, orders: s.orders.map(o => o._dbId === dbId ? { ...o, pagoEstado: prevPagoEstado } : o) }));
           }
           showToast("Error al actualizar el estado de pago");
           return;
         }
       }
-      showToast(`Pago de ${id} → ${estado}`);
+      showToast(`Pago de ${prevOrder?.id ?? ""} → ${estado}`);
     },
 
-    refundOrder: async (id, monto) => {
-      const order = stateRef.current.orders.find(o => o.id === id);
+    refundOrder: async (dbId, monto) => {
+      const order = stateRef.current.orders.find(o => o._dbId === dbId);
       if (!order) return;
       const response = await fetch(`/api/admin/pedidos/${order._dbId}/refund`, {
         method: "POST",
@@ -508,8 +508,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         showToast(result.error || "No se pudo procesar la devolución");
         return;
       }
-      setState(s => ({ ...s, orders: s.orders.map(o => o.id === id ? { ...o, pagoEstado: result.estadoPago } : o) }));
-      showToast(result.parcial ? `Devolución parcial de ${id} realizada` : `Pedido ${id} devuelto por completo`);
+      setState(s => ({ ...s, orders: s.orders.map(o => o._dbId === dbId ? { ...o, pagoEstado: result.estadoPago } : o) }));
+      showToast(result.parcial ? `Devolución parcial de ${order.id} realizada` : `Pedido ${order.id} devuelto por completo`);
     },
 
     updateTestimonial: async (id, estado) => {
