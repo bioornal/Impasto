@@ -193,6 +193,11 @@ está disponible).
 - `pedidos@impastopizzas.com` **solo envía**: no hay casilla. Por eso `lib/email.ts` manda
   `reply_to` desde `EMAIL_REPLY_TO` (en Netlify: el Gmail del dueño). **No escribir esa
   dirección en el código: el repo es público.**
+- **El mail de contacto que ve el cliente es otro: `impastopizzas.pedidos@gmail.com`** (19/09/2026),
+  una casilla creada para eso y pública a propósito. Sale de `sucursales.email` (panel →
+  Configuración) y, de respaldo, de `BUSINESS.email` en `lib/business.ts`; lo muestran el
+  footer, el JSON-LD y `llms.txt`. Antes decía `hola@impastoiguazu.com.ar`, un dominio que no
+  existe. No poner ahí `pedidos@impastopizzas.com`: `impastopizzas.com` no tiene MX y rebota.
 - El dueño confirmó que la prueba llegó **a la bandeja de entrada**, no a spam.
 
 ### 2. Catálogo
