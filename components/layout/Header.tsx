@@ -104,9 +104,6 @@ interface HeaderProps {
 export function Header({ onCartClick, onNav, onSearch, current, business, sections, oculto }: HeaderProps) {
   const { count, subtotal } = useCart();
   const navItems = NAV.filter(([key]) => sections.includes(key));
-  // El nombre de la base puede ser "Impasto - Pizzeria y Empanadas": el wordmark
-  // usa solo la primera parte.
-  const wordmark = (business.name.split(" - ")[0] || business.name).trim();
   return (
     <>
       <Topbar business={business} />
@@ -121,12 +118,6 @@ export function Header({ onCartClick, onNav, onSearch, current, business, sectio
               className="logo-img"
               priority
             />
-          </button>
-
-          {/* Wordmark tipográfico mobile: el lockup de 72px no entra en un header de 56px. */}
-          <button className="wordmark" onClick={() => onNav("home")} aria-label="Ir al inicio">
-            <span className="wordmark-name">{wordmark}</span>
-            <span className="wordmark-sub">Pizza napoletana · Iguazú</span>
           </button>
 
           <nav className="nav">

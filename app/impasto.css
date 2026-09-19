@@ -1756,7 +1756,6 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 /* ============ MOBILE (≤760px) — Rediseño 2026 ============ */
 /* Franja de estado del local: reemplaza a .topbar, que en mobile no se oculta. */
 .m-status{ display:none; }
-.wordmark{ display:none; }
 .dock{ display:none; }
 .p-rows{ display:none; }
 .drawer-handle{ display:none; }
@@ -1792,13 +1791,11 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   }
   .header.is-collapsed{ transform:translateY(-100%); }
   .header-inner{ height:56px; padding-block:0; gap:12px; }
-  .header .logo{ display:none; }
-  .wordmark{
-    display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
-    flex:1; min-width:0; text-align:left; padding:0; background:none; border:0; color:inherit; cursor:pointer;
-  }
-  .wordmark-name{ font-family:var(--font-display); font-size:22px; font-weight:700; letter-spacing:-.03em; line-height:1; }
-  .wordmark-sub{ font-family:var(--font-mono); font-size:8.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--muted); margin-top:3px; }
+  /* El logo de la marca y no el wordmark tipográfico que pedía el handoff:
+     decisión del dueño (19/09/2026). A 44px de alto entra en el header de 56px,
+     así que no cambia ninguno de los desplazamientos que cuelgan de esos 56px. */
+  .header .logo{ flex:1; min-width:0; }
+  .logo-img{ height:44px; }
   .header-actions{ gap:12px; margin-left:0; }
   .icon-btn{ width:44px; height:44px; background:var(--bg); }
   .cart-btn{

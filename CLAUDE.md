@@ -541,6 +541,9 @@ vive detrás del corte **760px**: `@media (max-width:760px)` en `impasto.css` y
   caja»). Al agregarla, mobile vuelve a la carta; escritorio se queda donde está.
 - **La búsqueda mobile no filtra la carta**: tiene su propio texto y al elegir un resultado
   lleva a esa pizza (limpia filtros y la resalta). La de escritorio sigue en `PizzaList`.
+- **El header mobile lleva el logo**, no el wordmark tipográfico que pedía el handoff: el
+  dueño lo quiere porque es la esencia de la marca. A 44px de alto entra en el header de
+  56px, así que no cambian los desplazamientos de 56px (rail, selector de empanadas, Shell).
 - **Hero compacto** (opción A, elegida por el dueño): titular, cifras y «Pizzas desde $X»; se
   ocultan la franja verde, el párrafo, los botones y tres de las cuatro features. La primera
   pizza pasó de 1.624px a 453px.
