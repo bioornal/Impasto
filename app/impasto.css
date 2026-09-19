@@ -19,6 +19,7 @@
   --accent-light: #e2714d;  /* terracota claro: solo la card "Tu caja". En el resto del sitio era demasiado naranja */
   --carbon: #181614;        /* carbón neutro, sin el tinte marrón de --ink */
   --green: #7dbd6a;
+  --ok-soft: #eaf0e6;       /* fondo de los chips «Seguro» y «Sin recargo» */
 
   --radius: 18px;
   --radius-lg: 20px;
@@ -80,6 +81,7 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 @keyframes imp-fade{ from{opacity:0} to{opacity:1} }
 @keyframes imp-slidein{ from{transform:translateX(28px);opacity:0} to{transform:translateX(0);opacity:1} }
 @keyframes imp-slideup{ from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes imp-up{ from{transform:translateY(18px);opacity:0} to{transform:translateY(0);opacity:1} }
 
 /* ---- utilidades tipográficas ---- */
 .mono{
@@ -1750,3 +1752,476 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 }
 
 .co-cta:disabled { opacity: .55; cursor: not-allowed; }
+
+/* ============ MOBILE (≤760px) — Rediseño 2026 ============ */
+/* Franja de estado del local: reemplaza a .topbar, que en mobile no se oculta. */
+.m-status{ display:none; }
+.wordmark{ display:none; }
+.dock{ display:none; }
+.p-rows{ display:none; }
+.drawer-handle{ display:none; }
+.emp-size{ display:none; }
+.chip-count{ display:none; }
+
+@media (max-width:760px){
+  /* Solo mobile: texto secundario más oscuro (3,4:1 → 4,6:1 sobre --surface) y
+     16px en los campos, que es lo que evita el zoom de iOS al tocarlos. */
+  :root{ --muted:#6f6152; }
+  .app{ min-height:100dvh; }
+  .field input, .field textarea, .field select{ font-size:16px; }
+
+  /* ---- franja de estado ---- */
+  .topbar{ display:none; }
+  .m-status{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    min-height:26px; padding:0 16px 8px;
+    background:var(--carbon); color:rgba(246,241,231,.72);
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  }
+  .m-status .dot{ width:6px; height:6px; border-radius:999px; background:var(--green); flex:none; }
+  .m-status .dot.off{ background:#e5484d; }
+  .m-status-sep{ color:rgba(246,241,231,.3); }
+  .m-status-eta{ color:var(--gold); }
+
+  /* ---- header 56px ---- */
+  .header{
+    height:56px; background:var(--surface); backdrop-filter:none;
+    transition:transform .22s ease; will-change:transform;
+  }
+  .header.is-collapsed{ transform:translateY(-100%); }
+  .header-inner{ height:56px; padding-block:0; gap:12px; }
+  .header .logo{ display:none; }
+  .wordmark{
+    display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
+    flex:1; min-width:0; text-align:left; padding:0; background:none; border:0; color:inherit; cursor:pointer;
+  }
+  .wordmark-name{ font-family:var(--font-display); font-size:22px; font-weight:700; letter-spacing:-.03em; line-height:1; }
+  .wordmark-sub{ font-family:var(--font-mono); font-size:8.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--muted); margin-top:3px; }
+  .header-actions{ gap:12px; margin-left:0; }
+  .icon-btn{ width:44px; height:44px; background:var(--bg); }
+  .cart-btn{
+    position:relative; width:44px; height:44px; padding:0; justify-content:center;
+    border-radius:999px; background:var(--ink); border:1px solid var(--ink); color:var(--bg);
+  }
+  .cart-btn .cart-btn-label{ display:none; }
+  .cart-badge{
+    position:absolute; top:-2px; right:-2px; min-width:20px; height:20px; padding:0 5px;
+    border-radius:999px; background:var(--accent); border:2px solid var(--surface);
+    color:var(--accent-ink); font-size:11px; font-weight:700; display:grid; place-items:center;
+  }
+
+  /* ---- hero compacto (opción A, elegida por el dueño el 19/09/2026) ----
+     Foto, titular, las tres cifras en una fila y «Pizzas desde $X»: la primera
+     pizza queda en la primera pantalla (antes, a casi dos pantallas de scroll).
+     Se ocultan la franja verde, el párrafo largo, los dos botones (los cubren
+     la barra de abajo y el ½½ de cada pizza) y tres de las cuatro features.
+     El párrafo sigue en el HTML: solo no se muestra en mobile. */
+  .ticker{ display:none; }
+  .hero-grid{ padding-block:22px 20px; gap:0; }
+  .hero-eyebrow, .hero-lede, .hero-ctas, .hero-visual{ display:none; }
+  .hero h1{ font-size:31px; line-height:1.02; margin:0 0 16px; }
+  .hero-stats{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; padding-top:14px; }
+  .hero-stats b{ font-size:21px; }
+  .hero-stats small{ display:block; font-size:11px; letter-spacing:.1em; line-height:1.4; margin-top:2px; }
+  .features .feature:not(:first-child){ display:none; }
+  .features .feature{ padding:12px 0; border:0; }
+  .features .feature b{ display:inline; font-size:17px; margin-right:8px; }
+  .features .feature small{ font-size:12.5px; }
+
+  /* ---- barra de secciones + pedido (dock) ---- */
+  .dock{
+    display:flex; flex-direction:column; gap:10px;
+    position:fixed; left:0; right:0; bottom:0; z-index:61;
+    padding:0 12px 10px; padding-bottom:calc(10px + env(safe-area-inset-bottom));
+    pointer-events:none;
+  }
+  .dock > *{ pointer-events:auto; }
+  .dock-tabs{
+    background:rgba(255,250,240,.96); backdrop-filter:blur(14px);
+    border:1px solid var(--line); border-radius:16px; display:flex; padding:5px; gap:4px;
+    box-shadow:0 8px 24px rgba(30,20,10,.12);
+  }
+  .dock-tab{
+    flex:1; min-height:46px; border-radius:12px; border:0; background:none; color:var(--ink-2);
+    font-size:13.5px; font-weight:500; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  }
+  .dock-tab .count{ font-family:var(--font-mono); font-size:9.5px; letter-spacing:.12em; color:var(--muted); }
+  .dock-tab.on{ background:var(--ink); color:var(--bg); font-weight:600; }
+  .dock-tab.on .count{ color:var(--gold); }
+  .dock-order{
+    display:flex; align-items:center; gap:12px; width:100%; height:58px; padding:0 8px 0 18px;
+    border:0; border-radius:16px; background:var(--accent); color:var(--accent-ink); text-align:left;
+    box-shadow:0 14px 30px rgba(178,71,42,.36); animation:imp-up .22s ease;
+  }
+  .dock-order-count{
+    min-width:26px; height:26px; border-radius:999px; background:rgba(255,250,240,.22);
+    display:grid; place-items:center; font-size:12.5px; font-weight:700; padding:0 7px; flex:none;
+  }
+  .dock-order-main{ flex:1; min-width:0; }
+  .dock-order-main b{ display:block; font-size:15px; font-weight:600; line-height:1.2; }
+  .dock-order-main small{ font-size:11.5px; color:rgba(255,250,240,.78); }
+  .dock-order-total{ font-family:var(--font-display); font-size:20px; font-weight:600; font-variant-numeric:lining-nums tabular-nums; padding-right:12px; }
+  .dock-box{
+    background:var(--carbon); border-radius:16px; padding:14px 16px 15px;
+    box-shadow:0 14px 34px rgba(0,0,0,.34); animation:imp-up .22s ease; color:#f6f1e7;
+  }
+  .dock-box-top{
+    display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;
+    font-size:13px; color:rgba(246,241,231,.62); width:100%; padding:0; border:0; background:none; text-align:left;
+  }
+  .dock-box-top .missing{ font-weight:600; color:var(--accent-light); }
+  .dock-box-top .missing.done{ color:var(--green); }
+  .dock-box-track{ height:6px; border-radius:999px; background:rgba(246,241,231,.1); overflow:hidden; margin-bottom:12px; }
+  .dock-box-bar{ height:100%; border-radius:999px; background:var(--accent-light); transition:width .3s ease; }
+  .dock-box-bottom{ display:flex; align-items:center; gap:12px; }
+  .dock-box-total{ flex:1; min-width:0; }
+  .dock-box-label{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:rgba(246,241,231,.5); }
+  .dock-box-total b{ font-family:var(--font-display); font-size:24px; font-weight:600; color:#f6f1e7; font-variant-numeric:lining-nums tabular-nums; }
+  .dock-box-cta{ flex:none; height:48px; padding:0 20px; border:0; border-radius:13px; font-size:14.5px; font-weight:600; background:rgba(246,241,231,.08); color:rgba(246,241,231,.45); }
+  .dock-box-cta.ready{ background:var(--accent); color:var(--accent-ink); }
+  .dock-box-lines{ display:flex; flex-direction:column; gap:8px; padding:12px 0 0; margin:12px 0 0; border-top:1px solid rgba(246,241,231,.1); }
+  .dock-box-line{ display:flex; justify-content:space-between; font-size:13px; color:rgba(246,241,231,.82); }
+  .dock-box-line span:last-child{ color:rgba(246,241,231,.5); font-variant-numeric:tabular-nums; }
+
+  /* ---- rail de filtros ---- */
+  .menubar{ top:56px; border-top:0; }
+  .header-collapsed .menubar{ top:0; }
+  .menubar .container{ padding:0 16px; }
+  .menubar-inner{ padding-block:0; flex-wrap:nowrap; }
+  .chips{ flex-wrap:nowrap; overflow-x:auto; scroll-snap-type:x proximity; gap:8px; padding:10px 0; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .chips::-webkit-scrollbar{ display:none; }
+  .chip{ flex:none; min-height:38px; padding:0 15px; font-size:13.5px; white-space:nowrap; scroll-snap-align:start; }
+  .chip-count{ display:inline; }
+  .menubar .search, .menubar .menubar-right{ display:none; }
+
+  /* ---- carta mobile ---- */
+  .menu{ padding:0; }
+  .menu .section-head{ display:none; }
+  .menu .menu-body{ padding:0; }
+  .menu-grid, .menu-list{ display:none; }
+  .p-rows{ display:flex; flex-direction:column; gap:12px; padding:14px 16px 160px; }
+  .p-feat{
+    background:var(--surface); border:1px solid var(--line); border-radius:18px; overflow:hidden;
+    box-shadow:0 1px 2px rgba(30,20,10,.04), 0 8px 22px rgba(30,20,10,.05);
+  }
+  .p-feat-media{ position:relative; aspect-ratio:16/10; background:var(--bg-2); overflow:hidden; }
+  .p-feat-badge{
+    position:absolute; left:12px; top:12px; z-index:2;
+    font-family:var(--font-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    padding:6px 10px; border-radius:999px; background:var(--gold); color:var(--ink); font-weight:500;
+  }
+  .p-feat-price{
+    position:absolute; right:12px; bottom:12px; z-index:2;
+    font-family:var(--font-display); font-size:18px; font-weight:600; font-variant-numeric:lining-nums tabular-nums;
+    padding:6px 14px; border-radius:999px; background:rgba(246,241,231,.94); color:var(--ink);
+  }
+  .p-feat-body{ padding:14px 16px 16px; }
+  .p-feat-title{ font-family:var(--font-display); font-size:22px; font-weight:600; letter-spacing:-.02em; margin:0 0 5px; line-height:1.15; }
+  .p-feat-desc{ margin:0 0 14px; font-size:13.5px; line-height:1.5; color:var(--muted); text-wrap:pretty; }
+  .p-feat-actions{ display:flex; gap:8px; }
+  .p-feat-add{ flex:1; height:46px; border-radius:12px; border:0; background:var(--accent); color:var(--accent-ink); font-weight:600; font-size:14.5px; box-shadow:0 10px 22px rgba(178,71,42,.3); }
+  .p-feat-add:active{ background:var(--accent-hover); }
+  .p-feat-half{ width:60px; height:46px; border-radius:12px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font-weight:600; font-size:15px; }
+  .p-rows-count{
+    display:flex; align-items:center; justify-content:space-between; padding:6px 2px 0;
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+  }
+  .p-row{ background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:10px; display:flex; gap:12px; align-items:center; }
+  .p-row-media{ width:76px; height:76px; border-radius:12px; flex:none; overflow:hidden; background:var(--bg-2); position:relative; }
+  .p-row-main{ flex:1; min-width:0; }
+  .p-row-title{ display:flex; align-items:baseline; gap:7px; }
+  .p-row-title h3{ font-family:var(--font-display); font-size:17.5px; font-weight:600; letter-spacing:-.018em; line-height:1.2; margin:0; }
+  .p-row-flag{ font-family:var(--font-mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-2); flex:none; }
+  .p-row-desc{
+    margin:3px 0 6px; font-size:12.5px; line-height:1.4; color:var(--muted);
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .p-row-price{ font-family:var(--font-display); font-size:16.5px; font-weight:600; font-variant-numeric:lining-nums tabular-nums; }
+  .p-row-side{ flex:none; display:flex; flex-direction:column; gap:6px; align-items:center; }
+  .p-row-half{ width:44px; height:30px; border-radius:9px; border:1px solid var(--line); background:var(--bg); color:var(--ink-2); font-size:12.5px; font-weight:600; }
+  .p-row-add{
+    width:44px; height:44px; border-radius:999px; border:0; background:var(--accent); color:var(--accent-ink);
+    font-size:23px; line-height:1; display:grid; place-items:center; box-shadow:0 6px 16px rgba(178,71,42,.28);
+  }
+  .p-row-add:active{ background:var(--accent-hover); }
+  .p-row-step{ display:flex; align-items:center; background:var(--ink); border-radius:999px; height:44px; padding:0 4px; gap:2px; }
+  .p-row-step button{ width:34px; height:40px; border:0; background:none; color:var(--bg); font-size:19px; line-height:1; border-radius:999px; }
+  .p-row-step span{ min-width:16px; text-align:center; color:var(--bg); font-size:14px; font-weight:700; }
+  .p-rows-end{ margin:12px 2px 0; font-size:12.5px; color:var(--muted); line-height:1.5; text-align:center; }
+  /* Pizza elegida en la búsqueda: un anillo dorado que se apaga solo. */
+  .p-row.is-foco, .p-feat.is-foco{ animation:imp-foco 1.8s ease; }
+
+  /* ---- empanadas mobile ---- */
+  .emp-section{ padding:0 0 190px; }
+  .emp-section .section-head{ gap:8px; margin-bottom:18px; }
+  .emp-section .sec-index{ font-size:10.5px; letter-spacing:.2em; margin-bottom:8px; }
+  .emp-section .section-head h2{ font-size:32px; letter-spacing:-.03em; }
+  .emp-section .section-head p{ font-size:13.5px; }
+  .emp-layout{ grid-template-columns:1fr; }
+  .box-aside{ display:none; }
+  .emp-size{
+    display:flex; gap:4px; padding:10px 16px; position:sticky; top:56px; z-index:40;
+    background:var(--surface); border-bottom:1px solid var(--line);
+  }
+  .header-collapsed .emp-size{ top:0; }
+  .emp-size-btn{ flex:1; min-height:44px; border-radius:11px; border:1px solid var(--line); background:var(--bg); color:var(--ink-2); font-size:14px; font-weight:500; }
+  .emp-size-btn.on{ background:var(--ink); border-color:var(--ink); color:var(--bg); font-weight:600; }
+  /* minmax(0,1fr): con 1fr a secas el contenido mínimo de la card ensanchaba la
+     grilla y a 360px la página se desbordaba 6px hacia el costado. */
+  .emp-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .emp-card{ padding:10px; gap:9px; border-radius:16px; min-width:0; }
+  .emp-media{ aspect-ratio:16/11; border-radius:11px; margin-bottom:0; }
+  .emp-head h4{ font-size:16px; }
+  .emp-card p{ font-size:11.5px; min-height:31px; height:31px; overflow:hidden; margin:0; line-height:1.35; }
+  /* Pie apilado: rótulo arriba, stepper a lo ancho. Al lado no entran ni el
+     precio a 360px ni «en la caja» a 390px, y partirlo recién al sumar la
+     primera unidad movería el + debajo del dedo. */
+  .emp-foot{ flex-direction:column; align-items:stretch; gap:8px; }
+  .emp-unit{ font-size:10.5px; letter-spacing:.1em; white-space:nowrap; }
+  .stepper{ height:40px; }
+  .emp-card .stepper{ display:flex; justify-content:space-between; }
+  .stepper button{ width:38px; height:38px; }
+  .stepper span{ min-width:18px; }
+
+  /* ---- bebidas mobile ---- */
+  #bebidas .section-head{ margin-bottom:18px; }
+  #bebidas .section-head h2{ font-size:32px; }
+  .drinks-grid{ grid-template-columns:repeat(2,1fr); gap:12px; }
+  .drink-card{ padding:10px; gap:10px; border-radius:16px; }
+  .drink-add{ height:44px; }
+
+  /* ---- secciones de destino ---- */
+  #pizzas, #empanadas, #bebidas{ scroll-margin-top:56px; }
+
+  /* ---- hoja del carrito (bottom sheet) ---- */
+  .drawer-bg{ align-items:flex-end; justify-content:flex-start; background:rgba(18,16,13,.52); backdrop-filter:blur(3px); }
+  .drawer{
+    width:100%; max-width:none; height:auto; max-height:640px;
+    border-radius:24px 24px 0 0; box-shadow:0 -20px 60px rgba(0,0,0,.3);
+    animation:imp-up .26s cubic-bezier(.2,.8,.2,1);
+    transition:transform .2s ease;
+  }
+  /* Zona de arrastre: sin touch-action:none el navegador toma el gesto como
+     scroll, cancela el puntero y la hoja no se cierra. */
+  .drawer-handle, .drawer-head{ touch-action:none; }
+  .drawer-handle{ display:grid; place-items:center; padding:10px 0 4px; flex:none; background:none; border:0; width:100%; cursor:pointer; }
+  .drawer-handle span{ width:42px; height:5px; border-radius:999px; background:var(--line-2); display:block; }
+  .drawer-close{ display:none; }
+  .drawer-head{ padding:8px 18px 14px; }
+  .drawer-head-top{ margin-bottom:12px; }
+  .drawer-head h3{ font-size:24px; }
+  .drawer-head small{ font-size:11px; letter-spacing:.14em; }
+  .drawer-ship{ border-radius:14px; padding:12px 14px; }
+  .drawer-body{ padding:8px 18px 18px; }
+  .cart-item{ grid-template-columns:60px 1fr auto; gap:12px; padding:14px 0; }
+  .ci-media{ width:60px; height:60px; }
+  .cart-item h4{ font-size:14.5px; }
+  .qty-pill{ height:40px; }
+  .qty-pill button{ width:40px; height:38px; }
+  .ci-remove{ font-family:var(--font-body); font-size:12.5px; letter-spacing:0; text-transform:none; text-decoration:underline; text-underline-offset:3px; min-height:40px; }
+  .upsell{ flex:0 0 118px; }
+  .upsell-add{ width:40px; height:40px; }
+  .drawer-foot{ padding:16px 18px 24px; padding-bottom:calc(24px + env(safe-area-inset-bottom)); }
+  .drawer-cta{ height:54px; border-radius:14px; }
+  .drawer-note{ font-family:var(--font-body); font-size:12px; letter-spacing:0; text-transform:none; }
+
+  /* ---- chat FAB y aviso: siempre 12px por encima de la barra de abajo ----
+     --dock-h lo mide Shell, porque la barra cambia de alto: pestañas solas, con
+     «Ver mi pedido» o con «Tu caja». Al bajar, el FAB se desvanece en el lugar:
+     desplazarlo lo dejaba encima de la barra. */
+  .chat-fab{
+    bottom:calc(var(--dock-h, 68px) + 12px); right:16px;
+    transition:transform .2s ease, opacity .2s ease, bottom .22s ease, background .2s ease, border-color .2s ease;
+  }
+  .chat-fab.is-hidden{ opacity:0; transform:translateY(12px); pointer-events:none; }
+  .chat-panel{ bottom:12px; right:12px; }
+  /* max-content: con left:50% el ancho disponible era medio viewport y el aviso
+     se partía en tres líneas. */
+  .toast{ bottom:calc(var(--dock-h, 68px) + 12px); width:max-content; }
+
+  /* ---- padding inferior para que el pie no quede bajo el dock ---- */
+  .footer{ padding-bottom:calc(var(--dock-h, 68px) + 24px); }
+}
+
+/* Comprobación a 360px: descripción a una línea, miniatura 72px. */
+@media (max-width:370px){
+  .p-row-media{ width:72px; height:72px; }
+  .p-row-desc{ -webkit-line-clamp:1; }
+}
+
+@keyframes imp-foco{ from{ box-shadow:0 0 0 3px var(--gold); } to{ box-shadow:0 0 0 3px transparent; } }
+
+@media (max-width:760px) and (prefers-reduced-motion:reduce){
+  .dock-order, .dock-box, .drawer, .header, .p-row, .p-feat{ animation:none; transition:none; }
+}
+
+/* ============ CHECKOUT MOBILE (≤760px) ============ */
+.co-topbar, .checkout-scroll, .co-footbar, .co-summary, .co-footbar-note{ display:none; }
+
+@media (max-width:760px){
+  .checkout-screen{ display:flex; flex-direction:column; overflow:hidden; }
+  .checkout-bar{ display:none; }
+  .checkout-inner{ display:none; }
+
+  .co-topbar{
+    display:flex; align-items:center; gap:8px; height:58px; flex:none;
+    padding:0 10px 0 6px; background:var(--surface); border-bottom:1px solid var(--line);
+  }
+  .co-topbar .co-back{ width:44px; height:44px; border-radius:999px; border:0; background:none; color:var(--ink); display:grid; place-items:center; flex:none; }
+  .co-topbar b{ flex:1; font-family:var(--font-display); font-size:20px; font-weight:600; letter-spacing:-.02em; }
+  .co-secure-chip{
+    display:flex; align-items:center; gap:6px; flex:none; padding:0 10px; height:30px;
+    border-radius:999px; background:var(--ok-soft); color:var(--accent-2); font-size:11.5px; font-weight:600;
+  }
+
+  .checkout-scroll{
+    display:flex; flex-direction:column; gap:12px; flex:1; overflow-y:auto; overscroll-behavior:contain;
+    padding:14px 16px 24px;
+  }
+  /* Sin esto la columna encoge a sus hijos para que entren, y el resumen
+     (overflow:hidden, así que su alto mínimo es 0) quedaba en 0px, invisible. */
+  .checkout-scroll > *{ flex-shrink:0; }
+
+  /* resumen colapsado */
+  .co-summary{ display:block; background:var(--carbon); border-radius:16px; overflow:hidden; }
+  .co-summary-head{
+    width:100%; min-height:60px; border:0; background:none; color:var(--bg);
+    display:flex; align-items:center; gap:12px; padding:12px 16px; text-align:left;
+  }
+  .co-summary-head-main{ flex:1; min-width:0; }
+  .co-summary-head-main b{ display:block; font-size:14.5px; font-weight:600; }
+  .co-summary-head-main small{ font-size:12px; color:rgba(246,241,231,.6); }
+  .co-summary-head-total{ font-family:var(--font-display); font-size:21px; font-weight:600; font-variant-numeric:lining-nums tabular-nums; }
+  .co-summary-body{ padding:0 16px 16px; display:flex; flex-direction:column; gap:11px; }
+  .co-summary-item{ display:flex; gap:11px; align-items:center; padding-top:11px; border-top:1px solid rgba(246,241,231,.12); }
+  .co-summary-item .co-sum-media{ width:42px; height:42px; border-radius:10px; flex:none; }
+  .co-summary-item-main{ flex:1; min-width:0; }
+  .co-summary-item-main b{ display:block; font-size:13.5px; font-weight:600; color:var(--bg); line-height:1.3; }
+  .co-summary-item-main small{ font-size:12px; color:rgba(246,241,231,.55); }
+  .co-summary-item .co-summary-price{ font-size:13.5px; color:rgba(246,241,231,.88); font-variant-numeric:tabular-nums; }
+  .co-summary-line{ display:flex; justify-content:space-between; font-size:13.5px; color:rgba(246,241,231,.7); padding-top:11px; border-top:1px solid rgba(246,241,231,.12); }
+  .co-summary-line:first-of-type{ border-top:1px solid rgba(246,241,231,.12); }
+
+  /* tarjetas 1-2-3 */
+  .co-card{ padding:18px 16px; border-radius:16px; gap:0; }
+  .co-card-head{ margin-bottom:14px; }
+  .co-num{ width:24px; height:24px; font-size:11px; }
+  .co-card-head h4{ font-size:19px; }
+  .co-modes{ display:flex; flex-direction:column; gap:10px; }
+  .radio-card{ padding:14px; border-radius:13px; display:flex; gap:12px; align-items:flex-start; }
+  .radio-card-top{ display:flex; width:100%; }
+  .radio-card .dot{ width:20px; height:20px; }
+  .radio-card.on .dot{ border-width:6px; }
+  .radio-card b{ font-size:15.5px; }
+  .radio-card small{ font-size:13px; }
+  .when-row{ display:none; }
+  .form-grid{ grid-template-columns:1fr; gap:14px; }
+  .field{ gap:6px; }
+  .field label{ font-family:var(--font-body); font-size:12.5px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--ink-2); }
+  .field label .opt{ font-weight:400; color:var(--muted); }
+  .field input, .field textarea{ height:52px; padding:0 14px; border-radius:12px; background:var(--bg); border:1px solid var(--line); font-size:16px; }
+  .field textarea{ height:auto; padding:13px 14px; }
+  .field .hint{ font-size:12px; color:var(--muted); }
+  .field .err{ font-size:12px; color:var(--accent); }
+  .field.error input, .field.error textarea{ border-color:var(--accent); box-shadow:none; }
+  .pay-list{ gap:10px; }
+  .pay-row{ min-height:62px; padding:12px 14px; border-radius:13px; gap:12px; }
+  .pay-row .dot{ width:20px; height:20px; }
+  .pay-row.on .dot{ border-width:6px; }
+  .pay-row b{ font-size:15px; }
+  .pay-row small{ font-size:12.5px; }
+  .pay-row .tag{ font-family:var(--font-body); font-size:11.5px; letter-spacing:0; text-transform:none; }
+  .pay-row.on .tag{ color:var(--accent-2); background:var(--ok-soft); padding:5px 9px; border-radius:999px; font-weight:600; }
+
+  .co-trust-mobile{ display:flex; gap:10px; align-items:flex-start; padding:2px 4px; }
+  .co-trust-mobile svg{ color:var(--accent-2); flex:none; margin-top:2px; }
+  .co-trust-mobile small{ font-size:12.5px; color:var(--muted); line-height:1.5; }
+
+  /* pie fijo */
+  .co-footbar{
+    display:flex; flex-direction:column; gap:0; flex:none;
+    background:var(--surface); border-top:1px solid var(--line);
+    padding:14px 16px 26px; padding-bottom:calc(26px + env(safe-area-inset-bottom));
+    box-shadow:0 -8px 24px rgba(30,20,10,.08);
+  }
+  /* Error de cotización o de envío: dentro del pie, arriba del botón, a la vista
+     aunque el cliente esté al final del formulario. */
+  .co-footbar .co-error-card{ margin-bottom:12px; }
+  .co-footbar-row{ display:flex; align-items:center; gap:14px; }
+  .co-footbar-total{ flex:none; }
+  .co-footbar-total .lbl{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .co-footbar-total b{ font-family:var(--font-display); font-size:26px; font-weight:600; font-variant-numeric:lining-nums tabular-nums; line-height:1.1; }
+  .co-footbar-cta{
+    flex:1; height:56px; border-radius:14px; border:0; background:var(--accent); color:var(--accent-ink);
+    font-size:16px; font-weight:600; box-shadow:0 12px 28px rgba(178,71,42,.34);
+  }
+  .co-footbar-cta:disabled{ opacity:.6; }
+  .co-footbar-note{ display:block; text-align:center; margin-top:10px; font-size:12px; color:var(--muted); line-height:1.45; }
+}
+
+/* ============ CAPA DE BÚSQUEDA (mobile) ============ */
+.search-overlay{ display:none; }
+@media (max-width:760px){
+  .search-overlay{
+    display:flex; flex-direction:column; position:fixed; inset:0; z-index:150;
+    background:var(--bg); animation:imp-fade .18s ease;
+  }
+  .search-overlay-top{
+    display:flex; align-items:center; gap:8px; padding:0 8px 0 4px; height:58px; flex:none;
+    background:var(--surface); border-bottom:1px solid var(--line);
+  }
+  .search-overlay-back{ width:44px; height:44px; border-radius:999px; border:0; background:none; color:var(--ink); display:grid; place-items:center; flex:none; }
+  .search-overlay-field{
+    display:flex; align-items:center; gap:9px; flex:1; min-width:0; height:44px; padding:0 14px;
+    border-radius:999px; background:var(--bg); border:1px solid var(--line); color:var(--muted);
+  }
+  .search-overlay-field input{ flex:1; min-width:0; border:0; outline:0; background:none; font-size:16px; color:var(--ink); }
+  .search-overlay-list{ flex:1; overflow-y:auto; padding:8px 16px; display:flex; flex-direction:column; }
+  .search-overlay-item{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:16px 0; border-bottom:1px solid var(--line); background:none; text-align:left;
+  }
+  .search-overlay-name{ font-size:15px; font-weight:600; color:var(--ink); }
+  .search-overlay-price{ font-family:var(--font-display); font-size:16px; font-weight:600; font-variant-numeric:lining-nums tabular-nums; }
+  .search-overlay-empty{ color:var(--muted); font-size:14.5px; padding:24px 0; text-align:center; }
+}
+
+/* ---- estados agotados / flags en la fila densa ---- */
+@media (max-width:760px){
+  .p-row-flag.hot{ color:var(--accent); }
+  .p-row-add:disabled, .p-row-half:disabled, .p-feat-add:disabled, .p-feat-half:disabled{ opacity:.45; cursor:not-allowed; }
+  .p-row-half:hover:not(:disabled){ border-color:var(--gold); }
+  .p-row.is-agotado .p-row-media{ opacity:.75; }
+}
+
+/* Error de cotización/envío del checkout mobile (escritorio usa .co-error) */
+.co-error-card{
+  background:var(--accent-soft); border:1px solid var(--accent); color:var(--accent-hover);
+  border-radius:12px; padding:12px 14px; font-size:13px;
+}
+
+/* Radio-card mobile (punto a la izquierda, título + detalle apilados) */
+.m-radio{ display:none; }
+@media (max-width:760px){
+  .m-radio{
+    display:flex; gap:12px; align-items:flex-start; padding:14px; border-radius:13px;
+    border:1px solid var(--line); background:var(--bg); text-align:left; width:100%;
+  }
+  .m-radio.on{ border-color:var(--accent); background:var(--surface); box-shadow:0 0 0 1px var(--accent); }
+  .m-radio-dot{ width:20px; height:20px; border-radius:999px; border:1px solid var(--line-2); background:var(--surface); flex:none; margin-top:2px; }
+  .m-radio.on .m-radio-dot{ border:6px solid var(--accent); }
+  .m-radio-body{ flex:1; min-width:0; }
+  .m-radio-body b{ display:block; font-size:15.5px; font-weight:600; margin-bottom:3px; }
+  .m-radio-body small{ display:block; font-size:13px; color:var(--muted); line-height:1.45; }
+}
+
+/* El estado vacío del escritorio no se muestra en mobile (lo maneja .p-rows). */
+@media (max-width:760px){
+  .menu-empty-desktop{ display:none; }
+  .p-row-media .media-agotado-bar{ font-size:9px; letter-spacing:.15em; padding:4px 0; }
+}
+
+/* El badge del header solo aparece cuando hay ítems. */
+@media (max-width:760px){
+  .cart-btn .cart-badge:not(.filled){ display:none; }
+}

@@ -25,11 +25,20 @@ interface PizzaListProps {
   pizzas: Pizza[];
   onHalf: (pizza: Pizza) => void;
   destacadaId?: string;
+  /** Mobile: pizza elegida en la búsqueda. Limpia filtros y la resalta un momento. */
+  foco?: { id: string; vez: number } | null;
 }
 
-export function PizzaList({ pizzas, onHalf, destacadaId }: PizzaListProps) {
+export function PizzaList({ pizzas, onHalf, destacadaId, foco }: PizzaListProps) {
   const [cat, setCat] = useState("todas");
   const [q, setQ] = useState("");
+  // Ajuste de estado al cambiar la prop (patrón de React, sin efecto): la pizza
+  // buscada tiene que estar en la lista aunque hubiera un filtro activo.
+  const [focoVisto, setFocoVisto] = useState(foco);
+  if (foco !== focoVisto) {
+    setFocoVisto(foco);
+    if (foco) { setCat("todas"); setQ(""); }
+  }
   const { tweaks } = useTweaks();
   const { items, add, incKey, decKey } = useCart();
   const toast = useToast();
@@ -57,6 +66,11 @@ export function PizzaList({ pizzas, onHalf, destacadaId }: PizzaListProps) {
     <p className="empty-state">Sin resultados — probá con otro filtro o buscá otro ingrediente.</p>
   );
 
+  // Mobile: tarjeta destacada (solo con «Todas» y sin búsqueda) + filas densas.
+  const showFeatured = cat === "todas" && !q.trim();
+  const mobileFeatured = showFeatured && list.length > 0 ? list[0] : null;
+  const mobileRows = mobileFeatured ? list.slice(1) : list;
+
   return (
     <section className="menu" id="pizzas">
       <div className="container">
@@ -75,6 +89,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId }: PizzaListProps) {
             {FILTERS.map(([key, label]) => (
               <button key={key} className={`chip ${cat === key ? "active" : ""}`} onClick={() => setCat(key)}>
                 {label}
+                {key === "todas" && <span className="chip-count"> {pizzas.length}</span>}
               </button>
             ))}
           </div>
@@ -95,7 +110,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId }: PizzaListProps) {
       </div>
 
       <div className="container menu-body">
-        {list.length === 0 ? emptyState : layout === "mosaico" ? (
+        {list.length === 0 ? <div className="menu-empty-desktop">{emptyState}</div> : layout === "mosaico" ? (
           <div className="menu-grid">
             {list.map((pizza, index) => {
               const qty = qtyOf(pizza.id);
@@ -177,6 +192,81 @@ export function PizzaList({ pizzas, onHalf, destacadaId }: PizzaListProps) {
             })}
           </div>
         )}
+
+        {/* Fila densa mobile: la destacada conserva la tarjeta grande. */}
+        <div className="p-rows">
+          {mobileFeatured && (() => {
+            const pizza = mobileFeatured;
+            const agotado = pizza.disponible === false;
+            return (
+              <article className={`p-feat ${foco?.id === pizza.id ? "is-foco" : ""}`} data-pizza={pizza.id}>
+                <div className="p-feat-media">
+                  <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
+                  {pizza.popular && !agotado && <span className="p-feat-badge">★ Más pedida</span>}
+                  {agotado && <div className="media-agotado-bar">Agotado</div>}
+                  <span className="p-feat-price">{fmt(pizza.precio)}</span>
+                </div>
+                <div className="p-feat-body">
+                  <h3 className="p-feat-title">{pizza.nombre}</h3>
+                  <p className="p-feat-desc">{pizza.desc}</p>
+                  <div className="p-feat-actions">
+                    {agotado ? (
+                      <button className="p-feat-add" disabled>Agotado</button>
+                    ) : (
+                      <button className="p-feat-add" onClick={() => addPizza(pizza)}>Agregar</button>
+                    )}
+                    <button className="p-feat-half" disabled={agotado} title="Mitad y mitad" onClick={() => !agotado && onHalf(pizza)}>½½</button>
+                  </div>
+                </div>
+              </article>
+            );
+          })()}
+
+          <div className="p-rows-count">
+            <span>{list.length} de {pizzas.length} pizzas</span>
+            <span>Mitad y mitad sin costo</span>
+          </div>
+
+          {list.length === 0 ? emptyState : mobileRows.map((pizza) => {
+            const qty = qtyOf(pizza.id);
+            const agotado = pizza.disponible === false;
+            return (
+              <article className={`p-row ${agotado ? "is-agotado" : ""} ${foco?.id === pizza.id ? "is-foco" : ""}`} key={pizza.id} data-pizza={pizza.id}>
+                <div className="p-row-media">
+                  <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
+                  {agotado && <div className="media-agotado-bar">Agotado</div>}
+                </div>
+                <div className="p-row-main">
+                  <div className="p-row-title">
+                    <h3>{pizza.nombre}</h3>
+                    {pizza.tags.includes("vegetariana") && !agotado && <span className="p-row-flag">Veggie</span>}
+                    {pizza.tags.includes("picante") && !agotado && <span className="p-row-flag hot">Picante</span>}
+                  </div>
+                  <p className="p-row-desc">{pizza.desc}</p>
+                  <span className="p-row-price">{fmt(pizza.precio)}</span>
+                </div>
+                <div className="p-row-side">
+                  <button className="p-row-half" disabled={agotado} title="Mitad y mitad" onClick={() => !agotado && onHalf(pizza)}>½½</button>
+                  {agotado ? (
+                    <button className="p-row-add" disabled aria-label="Agotado">+</button>
+                  ) : qty > 0 ? (
+                    <div className="p-row-step">
+                      <button onClick={() => decKey(pizza.id)} aria-label="Quitar uno">−</button>
+                      <span>{qty}</span>
+                      <button onClick={() => incKey(pizza.id)} aria-label="Sumar uno">+</button>
+                    </div>
+                  ) : (
+                    <button className="p-row-add" onClick={() => addPizza(pizza)} aria-label={`Agregar ${pizza.nombre}`}>+</button>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+
+          {mobileRows.length > 0 && (
+            <p className="p-rows-end">Fin de {list.length} resultados. Seguí en Empanadas desde la barra de abajo.</p>
+          )}
+        </div>
       </div>
     </section>
   );

@@ -26,6 +26,8 @@ export interface CheckoutOrder extends CheckoutData {
 
 interface CheckoutProps {
   onClose: () => void;
+  /** Mobile: el botón volver reabre la hoja del carrito, no la carta. */
+  onBack: () => void;
   onConfirm: (order: CheckoutOrder) => Promise<void>;
   onCardConfirm: (order: CheckoutOrder, card: CardFormData) => Promise<void>;
   business: BusinessConfig;
@@ -41,8 +43,8 @@ const PAGOS: [string, string, string, string][] = [
   ["transferencia", "Transferencia", "Alias y CBU listos al confirmar", "Sin recargo"],
 ];
 
-export function Checkout({ onClose, onConfirm, onCardConfirm, business }: CheckoutProps) {
-  const { items, subtotal: localSubtotal } = useCart();
+export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }: CheckoutProps) {
+  const { items, count, subtotal: localSubtotal } = useCart();
   const [data, setData] = useState<CheckoutData>({
     mode: "delivery", when: "asap", nombre: "", tel: "", email: "", dir: "", ref: "",
     pago: "efectivo", cambio: "", notas: "",
@@ -53,6 +55,7 @@ export function Checkout({ onClose, onConfirm, onCardConfirm, business }: Checko
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [brickOpen, setBrickOpen] = useState(false);
+  const [resumenAbierto, setResumenAbierto] = useState(false);
   const quoteKey = JSON.stringify({ items, mode: data.mode });
 
   useEffect(() => {
@@ -94,11 +97,19 @@ export function Checkout({ onClose, onConfirm, onCardConfirm, business }: Checko
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) next.email = "Email inválido";
     if (isDelivery && !data.dir.trim()) next.dir = "Dirección requerida";
     setErrors(next);
-    return Object.keys(next).length === 0;
+    return next;
   };
 
   const confirm = async () => {
-    if (!validate()) return;
+    const next = validate();
+    if (Object.keys(next).length > 0) {
+      // Mobile: el foco va al primer campo con error. Escritorio sigue como estaba.
+      if (window.matchMedia("(max-width: 760px)").matches) {
+        const primero = (["nombre", "tel", "email", "dir"] as const).find((campo) => next[campo]);
+        if (primero) document.getElementById(`co-m-${primero}`)?.focus();
+      }
+      return;
+    }
     setSubmitError("");
 
     // Con tarjeta primero se cobra: el Brick tokeniza y recién ahí se registra el pedido.
@@ -140,6 +151,18 @@ export function Checkout({ onClose, onConfirm, onCardConfirm, business }: Checko
             <button className="btn btn-light btn-sm" onClick={onClose}>← Seguir comprando</button>
           </div>
         </div>
+      </div>
+
+      {/* Mobile: barra superior. El chip de seguridad no se oculta. */}
+      <div className="co-topbar">
+        <button className="co-back" onClick={onBack} aria-label="Volver al pedido">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+        </button>
+        <b>Finalizá tu pedido</b>
+        <span className="co-secure-chip">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+          Seguro
+        </span>
       </div>
 
       <div className="checkout-inner">
@@ -340,6 +363,159 @@ export function Checkout({ onClose, onConfirm, onCardConfirm, business }: Checko
             ))}
           </div>
         </aside>
+      </div>
+
+      {/* Mobile: resumen colapsado arriba, tarjetas 1-2-3 y pie fijo con el total.
+          Escritorio usa .checkout-inner, de arriba; los dos comparten el estado. */}
+      <div className="checkout-scroll">
+        <div className="co-summary">
+          <button className="co-summary-head" onClick={() => setResumenAbierto((v) => !v)} aria-expanded={resumenAbierto}>
+            <span className="co-summary-head-main">
+              <b>Tu pedido</b>
+              <small>{count} ítem{count !== 1 ? "s" : ""} · {resumenAbierto ? "Ocultar detalle" : "Ver detalle"}</small>
+            </span>
+            <b className="co-summary-head-total">{fmt(total)}</b>
+          </button>
+          {resumenAbierto && (
+            <div className="co-summary-body">
+              {lineItems.map((item) => (
+                <div className="co-summary-item" key={item.cartId}>
+                  <div className="co-sum-media"><ItemMedia item={item} /></div>
+                  <div className="co-summary-item-main">
+                    <b>{item.name}</b>
+                    <small>×{item.qty}</small>
+                  </div>
+                  <span className="co-summary-price">{fmt(item.price * item.qty)}</span>
+                </div>
+              ))}
+              <div className="co-summary-line"><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
+              <div className="co-summary-line">
+                <span>{isDelivery ? "Envío" : "Retiro en el local"}</span>
+                <span>{isDelivery && shipping === 0 ? "Gratis" : shipping === 0 ? "Sin cargo" : fmt(shipping)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <section className="co-card">
+          <div className="co-card-head">
+            <span className="co-num">1</span>
+            <h4>¿Cómo lo recibís?</h4>
+          </div>
+          <div className="co-modes">
+            <button className={`m-radio ${isDelivery ? "on" : ""}`} onClick={() => set("mode", "delivery")}>
+              <span className="m-radio-dot" />
+              <span className="m-radio-body">
+                <b>Delivery</b>
+                <small>A domicilio en {business.deliveryEstimate} · {fmt(business.deliveryFee)}. Gratis desde {fmt(business.freeShippingFrom)}.</small>
+              </span>
+            </button>
+            <button className={`m-radio ${!isDelivery ? "on" : ""}`} onClick={() => set("mode", "takeaway")}>
+              <span className="m-radio-dot" />
+              <span className="m-radio-body">
+                <b>Retiro en el local</b>
+                <small>Listo en {business.deliveryEstimate}, sin cargo. {business.address}.</small>
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <section className="co-card">
+          <div className="co-card-head">
+            <span className="co-num">2</span>
+            <h4>Tus datos</h4>
+          </div>
+          <div className="form-grid">
+            <div className={`field ${errors.nombre ? "error" : ""}`}>
+              <label htmlFor="co-m-nombre">Nombre y apellido</label>
+              <input id="co-m-nombre" autoComplete="name" placeholder="Juan Pérez" value={data.nombre} onChange={(e) => set("nombre", e.target.value)} />
+              {errors.nombre && <span className="err">{errors.nombre}</span>}
+            </div>
+            <div className={`field ${errors.tel ? "error" : ""}`}>
+              <label htmlFor="co-m-tel">WhatsApp</label>
+              <input id="co-m-tel" type="tel" inputMode="tel" autoComplete="tel" placeholder="3757 55 1234" value={data.tel} onChange={(e) => set("tel", e.target.value)} />
+              {errors.tel && <span className="err">{errors.tel}</span>}
+            </div>
+            <div className={`field ${errors.email ? "error" : ""}`}>
+              <label htmlFor="co-m-email">Email</label>
+              <input id="co-m-email" type="email" inputMode="email" autoComplete="email" placeholder="vos@email.com" value={data.email} onChange={(e) => set("email", e.target.value)} />
+              {errors.email ? <span className="err">{errors.email}</span> : <span className="hint">Te mandamos la confirmación del pedido acá.</span>}
+            </div>
+
+            {isDelivery && (
+              <>
+                <div className={`field full ${errors.dir ? "error" : ""}`}>
+                  <label htmlFor="co-m-dir">Dirección</label>
+                  <input id="co-m-dir" autoComplete="street-address" placeholder="Calle y altura" value={data.dir} onChange={(e) => set("dir", e.target.value)} />
+                  {errors.dir && <span className="err">{errors.dir}</span>}
+                </div>
+                <div className="field full">
+                  <label htmlFor="co-m-ref">Referencia <span className="opt">(opcional)</span></label>
+                  <input id="co-m-ref" placeholder="Casa verde, timbre 2B" value={data.ref} onChange={(e) => set("ref", e.target.value)} />
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="field form-note">
+            <label htmlFor="co-m-notas">Notas del pedido <span className="opt">(opcional)</span></label>
+            <textarea id="co-m-notas" rows={2} placeholder="Sin cebolla, cortada en 12 porciones…" value={data.notas} onChange={(e) => set("notas", e.target.value)} />
+          </div>
+        </section>
+
+        <section className="co-card">
+          <div className="co-card-head">
+            <span className="co-num">3</span>
+            <h4>Pago</h4>
+          </div>
+          <div className="pay-list">
+            {PAGOS.map(([key, title, sub, tag]) => (
+              <button key={key} className={`pay-row ${data.pago === key ? "on" : ""}`} onClick={() => set("pago", key)}>
+                <span className={`dot ${data.pago === key ? "on" : ""}`} />
+                <span style={{ flex: 1, textAlign: "left" }}>
+                  <b>{title}</b>
+                  <small>{sub}</small>
+                </span>
+                <span className="tag">{tag}</span>
+              </button>
+            ))}
+          </div>
+          {data.pago === "efectivo" && (
+            <div className="field form-note">
+              <label htmlFor="co-m-cambio">¿Con cuánto abonás?</label>
+              <input id="co-m-cambio" inputMode="numeric" placeholder="Ej: $20.000" value={data.cambio} onChange={(e) => set("cambio", e.target.value)} />
+            </div>
+          )}
+        </section>
+
+        <div className="co-trust-mobile">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M20 6 9 17l-5-5" /></svg>
+          <small>Seguimiento en vivo del estado de tu pedido, sin registrarte.</small>
+        </div>
+      </div>
+
+      <div className="co-footbar">
+        {(quoteError || submitError) && <div className="co-error-card" role="alert">{quoteError || submitError}</div>}
+        <div className="co-footbar-row">
+          <div className="co-footbar-total">
+            <div className="lbl">Total</div>
+            <b>{fmt(total)}</b>
+          </div>
+          <button className="co-footbar-cta" onClick={confirm} disabled={submitting || quoteLoading || Boolean(quoteError)}>
+            {submitting
+              ? "Registrando pedido…"
+              : quoteLoading
+                ? "Actualizando total…"
+                : data.pago === "mercadopago"
+                  ? "Pagar con tarjeta"
+                  : "Confirmar pedido"}
+          </button>
+        </div>
+        <small className="co-footbar-note">
+          {isDelivery
+            ? `Tarifa única de ${fmt(business.deliveryFee)} en ${business.city} centro. Gratis desde ${fmt(business.freeShippingFrom)}.`
+            : `Retirás en ${business.address}. Te avisamos cuando esté listo.`}
+        </small>
       </div>
 
       {brickOpen && (

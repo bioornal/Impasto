@@ -71,7 +71,7 @@ function ContenidoMensaje({ texto }: { texto: string }) {
   );
 }
 
-export function ChatWidget({ business, disponible }: { business: BusinessConfig; disponible: boolean }) {
+export function ChatWidget({ business, disponible, oculto = false }: { business: BusinessConfig; disponible: boolean; oculto?: boolean }) {
   const nombre = nombreCorto(business.name);
   const saludo = `¡Hola! Soy el asistente de ${nombre}. ¿Te doy una mano para elegir? Contame para cuántos son o qué tenés ganas de comer.`;
 
@@ -292,7 +292,7 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
     // -abrir WhatsApp-, no con lo que no puede hacer. Mismo pill, ícono y
     // texto de WhatsApp.
     return (
-      <a className="chat-fab chat-fab-pill" href={wsp} target="_blank" rel="noreferrer" aria-label="Escribinos por WhatsApp">
+      <a className={`chat-fab chat-fab-pill ${oculto ? "is-hidden" : ""}`} href={wsp} target="_blank" rel="noreferrer" aria-label="Escribinos por WhatsApp">
         {/* Sin el punto verde: ese punto dice "el asistente está andando", y acá no. */}
         <span className="chat-fab-insignia"><IconoWhatsapp /></span>
         <span className="chat-fab-texto"><b>Escribinos por WhatsApp</b></span>
@@ -304,7 +304,7 @@ export function ChatWidget({ business, disponible }: { business: BusinessConfig;
     <>
       <button
         ref={burbujaRef}
-        className={abierto ? "chat-fab" : "chat-fab chat-fab-pill"}
+        className={`${abierto ? "chat-fab" : "chat-fab chat-fab-pill"} ${oculto && !abierto ? "is-hidden" : ""}`}
         onClick={() => setAbierto((estaba) => !estaba)}
         aria-expanded={abierto}
         aria-label={abierto ? "Cerrar el asistente" : "Abrir el asistente para elegir tu pedido"}

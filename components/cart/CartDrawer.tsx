@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/providers/CartProvider";
 import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -8,6 +8,9 @@ import { DrinkIllus } from "@/components/ui/Illus";
 import { fmt } from "@/lib/utils";
 import type { BusinessConfig } from "@/lib/business";
 import type { Bebida } from "@/types";
+
+/** Mismo corte que `@media (max-width:760px)` en impasto.css. */
+const esMobile = () => window.matchMedia("(max-width: 760px)").matches;
 
 interface CartDrawerProps {
   open: boolean;
@@ -23,6 +26,36 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
   const tienda = useStoreStatus();
   const toast = useToast();
   const railRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const [dragY, setDragY] = useState(0);
+  const arrastre = useRef<{ inicio: number; puntero: number } | null>(null);
+
+  // Mobile: Esc cierra la hoja y el foco queda atrapado mientras está abierta.
+  // En escritorio el panel lateral sigue como estaba.
+  useEffect(() => {
+    if (!open) return;
+    const alTeclear = (evento: KeyboardEvent) => {
+      if (!esMobile()) return;
+      if (evento.key === "Escape") { onClose(); return; }
+      if (evento.key !== "Tab" || !sheetRef.current) return;
+      const focusables = sheetRef.current.querySelectorAll<HTMLElement>(
+        "button:not(:disabled), input, a[href], textarea",
+      );
+      if (focusables.length === 0) return;
+      const primero = focusables[0];
+      const ultimo = focusables[focusables.length - 1];
+      if (evento.shiftKey && document.activeElement === primero) {
+        evento.preventDefault();
+        ultimo.focus();
+      } else if (!evento.shiftKey && document.activeElement === ultimo) {
+        evento.preventDefault();
+        primero.focus();
+      }
+    };
+    document.addEventListener("keydown", alTeclear);
+    return () => document.removeEventListener("keydown", alTeclear);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   const freeShipping = subtotal >= business.freeShippingFrom;
@@ -35,10 +68,43 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
   const upsells = bebidas.filter((b) => b.disponible !== false && !inCart.has(b.id));
   const deslizar = (sentido: 1 | -1) => railRef.current?.scrollBy({ left: sentido * 260, behavior: "smooth" });
 
+  // Mobile: arrastrar la manija o la cabecera hacia abajo cierra la hoja. El
+  // puntero queda capturado y esas zonas llevan touch-action:none (impasto.css):
+  // sin eso el navegador toma el gesto como scroll y cancela el arrastre.
+  const alApoyar = (e: React.PointerEvent<HTMLElement>) => {
+    if (!esMobile() || (e.pointerType === "mouse" && e.button !== 0)) return;
+    arrastre.current = { inicio: e.clientY, puntero: e.pointerId };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const alMover = (e: React.PointerEvent<HTMLElement>) => {
+    if (arrastre.current?.puntero !== e.pointerId) return;
+    setDragY(Math.max(0, e.clientY - arrastre.current.inicio));
+  };
+  const alSoltar = (e: React.PointerEvent<HTMLElement>) => {
+    if (arrastre.current?.puntero !== e.pointerId) return;
+    const cerrar = e.clientY - arrastre.current.inicio > 120;
+    arrastre.current = null;
+    setDragY(0);
+    if (cerrar) onClose();
+  };
+  const alCancelar = () => { arrastre.current = null; setDragY(0); };
+  const zonaDeArrastre = { onPointerDown: alApoyar, onPointerMove: alMover, onPointerUp: alSoltar, onPointerCancel: alCancelar };
+
   return (
     <div className="drawer-bg" onClick={onClose}>
-      <aside className="drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Tu pedido">
-        <div className="drawer-head">
+      <aside
+        ref={sheetRef}
+        className="drawer"
+        style={dragY ? { transform: `translateY(${dragY}px)`, transition: "none" } : undefined}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-label="Tu pedido"
+      >
+        <button className="drawer-handle" onClick={onClose} aria-label="Cerrar pedido" {...zonaDeArrastre}>
+          <span />
+        </button>
+
+        <div className="drawer-head" {...zonaDeArrastre}>
           <div className="drawer-head-top">
             <div>
               <h3>Tu pedido</h3>

@@ -1,8 +1,5 @@
 "use client";
-import { useState } from "react";
 import { EmpanadaIllus } from "@/components/ui/Illus";
-import { useCart } from "@/components/providers/CartProvider";
-import { useToast } from "@/components/providers/ToastProvider";
 import { fmt } from "@/lib/utils";
 import { argumento } from "@/lib/marca";
 import { TAMANIOS_CAJA_EMPANADAS } from "@/lib/reglas-carta";
@@ -18,61 +15,34 @@ const REPULGUE = argumento("repulgue");
 interface EmpanadasSectionProps {
   empanadas: Empanada[];
   boxPrices: Record<6 | 12 | 24, number>;
+  selection: Record<string, number>;
+  tier: 6 | 12 | 24;
+  onPick: (id: string, delta: number) => void;
+  onChangeTier: (tier: 6 | 12 | 24) => void;
+  onAddBox: () => void;
+  priceFor: (size: 6 | 12 | 24, current: Record<string, number>) => number;
 }
 
-export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps) {
-  const { add } = useCart();
-  const toast = useToast();
-  const [selection, setSelection] = useState<Record<string, number>>({});
-  const [tier, setTier] = useState<6 | 12 | 24>(12);
-
+export function EmpanadasSection({ empanadas, boxPrices, selection, tier, onPick, onChangeTier, onAddBox, priceFor }: EmpanadasSectionProps) {
   if (empanadas.length === 0) return null;
 
   const selected = Object.values(selection).reduce((a, b) => a + b, 0);
   const complete = selected === tier;
   const hasUnitPrices = empanadas.some((e) => Number(e.precio) > 0);
 
-  const priceFor = (size: 6 | 12 | 24, current: Record<string, number>) => {
-    if (!hasUnitPrices) return boxPrices[size];
-    return Object.entries(current).reduce((sum, [id, amount]) => {
-      const empanada = empanadas.find((e) => e.id === id);
-      return sum + Number(empanada?.precio || 0) * amount;
-    }, 0);
-  };
-
-  const pick = (id: string, delta: number) =>
-    setSelection((prev) => {
-      if (delta > 0 && Object.values(prev).reduce((a, b) => a + b, 0) >= tier) return prev;
-      const next = { ...prev, [id]: Math.max(0, (prev[id] || 0) + delta) };
-      if (next[id] === 0) delete next[id];
-      return next;
-    });
-
-  const changeTier = (next: 6 | 12 | 24) => { setTier(next); setSelection({}); };
-
-  const addBox = () => {
-    if (!complete) return;
-    const detail = Object.entries(selection)
-      .map(([id, amount]) => `${amount}× ${empanadas.find((e) => e.id === id)?.nombre}`)
-      .join(", ");
-    add({
-      key: `emp-${tier}-${Object.keys(selection).sort().join("-")}`,
-      unique: true,
-      type: "empanadas",
-      name: `Caja de ${tier} empanadas`,
-      detail,
-      price: priceFor(tier, selection),
-      qty: 1,
-      variant: { kind: "empanadas-box", size: tier, selections: selection },
-    });
-    setSelection({});
-    toast(`Caja de ${tier} agregada`);
-  };
-
   const lines = Object.entries(selection).filter(([, amount]) => amount > 0);
 
   return (
     <section className="emp-section" id="empanadas">
+      {/* Selector de tamaño mobile: pegado bajo el header. */}
+      <div className="emp-size" role="group" aria-label="Tamaño de la caja">
+        {TIERS.map((size) => (
+          <button key={size} className={`emp-size-btn ${tier === size ? "on" : ""}`} onClick={() => onChangeTier(size)} aria-pressed={tier === size}>
+            {size} unidades
+          </button>
+        ))}
+      </div>
+
       <div className="container">
         <div className="section-head">
           <div>
@@ -103,9 +73,9 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
                       {agotado ? "Agotado" : count > 0 ? "en la caja" : empanada.precio ? fmt(empanada.precio) : EMPANADA_PESO.cifra}
                     </span>
                     <div className="stepper">
-                      <button onClick={() => pick(empanada.id, -1)} disabled={count === 0} aria-label={`Quitar ${empanada.nombre}`}>−</button>
+                      <button onClick={() => onPick(empanada.id, -1)} disabled={count === 0} aria-label={`Quitar ${empanada.nombre}`}>−</button>
                       <span>{count}</span>
-                      <button onClick={() => pick(empanada.id, 1)} disabled={agotado || selected >= tier} aria-label={`Sumar ${empanada.nombre}`} title={agotado ? "Variedad agotada" : undefined}>+</button>
+                      <button onClick={() => onPick(empanada.id, 1)} disabled={agotado || selected >= tier} aria-label={`Sumar ${empanada.nombre}`} title={agotado ? "Variedad agotada" : undefined}>+</button>
                     </div>
                   </div>
                 </article>
@@ -123,7 +93,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
               <span className="box-label" id="box-tiers-label">Unidades</span>
               <div className="box-tiers" role="group" aria-labelledby="box-tiers-label">
                 {TIERS.map((size) => (
-                  <button key={size} className={`tier ${tier === size ? "on" : ""}`} onClick={() => changeTier(size)} aria-pressed={tier === size}>
+                  <button key={size} className={`tier ${tier === size ? "on" : ""}`} onClick={() => onChangeTier(size)} aria-pressed={tier === size}>
                     <b>{size}</b>
                     {/* Con precio por unidad el total depende de los gustos: no hay un precio fijo que mostrar. */}
                     {!hasUnitPrices && <small>{fmt(boxPrices[size])}</small>}
@@ -158,7 +128,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
               <b>{fmt(priceFor(tier, selection))}</b>
             </div>
 
-            <button className={`box-cta ${complete ? "ready" : ""}`} onClick={addBox} disabled={!complete}>
+            <button className={`box-cta ${complete ? "ready" : ""}`} onClick={onAddBox} disabled={!complete}>
               {complete ? "Agregar caja al carrito" : `Elegí ${tier - selected} más`}
             </button>
           </aside>

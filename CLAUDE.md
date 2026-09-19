@@ -520,6 +520,36 @@ carrito es siempre el cliente.
   Node devuelven el 301 correcto.
 - La sesión del panel `/admin` es por dominio: en el dominio nuevo hay que volver a entrar.
 
+## Rediseño mobile (19/09/2026)
+
+Sale del handoff `design_handoff_impasto_mobile` (carta, empanadas, carrito y checkout). Todo
+vive detrás del corte **760px**: `@media (max-width:760px)` en `impasto.css` y
+`matchMedia("(max-width: 760px)")` en JS.
+
+- **Escritorio no se toca.** Pedido explícito del dueño. Los tokens que cambian (`--muted`
+  más oscuro, 16px en los campos, `100dvh`) están redefinidos dentro del media query, no en
+  `:root`. En `Checkout.tsx` el JSX de escritorio es el mismo que antes y el de mobile es un
+  bloque aparte (`.checkout-scroll` + `.co-footbar`). Se verificó comparando los estilos
+  calculados de cada elemento contra la hoja anterior: 0 diferencias a 1280, 1000 y 800px.
+- **Barra inferior (`.dock`)**: pestañas Pizzas/Empanadas/Bebidas, más «Ver mi pedido» o «Tu
+  caja». Shell mide su alto con un `ResizeObserver` y lo publica en `--dock-h` sobre `<html>`:
+  de ahí cuelgan el FAB del chat, el aviso (`.toast`) y el padding del footer.
+- **El header se esconde al bajar**, salvo durante un scroll programado (pestañas, búsqueda):
+  si se escondiera, quedaría un hueco de 56px sobre el destino. Lo controla `navegando` en
+  Shell, que se libera con `scrollend` o a los 1,5 s.
+- **La caja de empanadas vive en Shell** (la usan la grilla, el aside de escritorio y «Tu
+  caja»). Al agregarla, mobile vuelve a la carta; escritorio se queda donde está.
+- **La búsqueda mobile no filtra la carta**: tiene su propio texto y al elegir un resultado
+  lleva a esa pizza (limpia filtros y la resalta). La de escritorio sigue en `PizzaList`.
+- **Hero compacto** (opción A, elegida por el dueño): titular, cifras y «Pizzas desde $X»; se
+  ocultan la franja verde, el párrafo, los botones y tres de las cuatro features. La primera
+  pizza pasó de 1.624px a 453px.
+- **Los gestos de la hoja del carrito** (arrastre para cerrar, Esc, foco atrapado) solo
+  corren en mobile. El arrastre necesita `touch-action:none` en la manija y la cabecera, o el
+  navegador cancela el gesto.
+- **El carrito de cualquier prueba se guarda en `carritos`** (borrador por cookie en
+  `/api/cart/draft`). Después de probar, vaciarlo desde la hoja.
+
 ## Cosas que hay que recordar hacer
 
 - **`productos` es una tabla global compartida** con **Carro Fogón**. Desde el 24/08/2026 la

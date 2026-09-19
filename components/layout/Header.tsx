@@ -19,19 +19,35 @@ function Topbar({ business }: { business: BusinessConfig }) {
   const tienda = useStoreStatus();
 
   return (
-    <div className="topbar">
-      <div className="container topbar-inner">
-        <div className="topbar-status">
-          <span className={`dot ${tienda.abierto ? "" : "off"}`} />
-          {tienda.etiqueta || business.hours}
-        </div>
-        <div className="topbar-links">
-          <span>{business.address} · {business.city}</span>
-          <span>{business.phone}</span>
-          <span className="gold">Envío gratis desde {fmt(business.freeShippingFrom)}</span>
+    <>
+      <div className="topbar">
+        <div className="container topbar-inner">
+          <div className="topbar-status">
+            <span className={`dot ${tienda.abierto ? "" : "off"}`} />
+            {tienda.etiqueta || business.hours}
+          </div>
+          <div className="topbar-links">
+            <span>{business.address} · {business.city}</span>
+            <span>{business.phone}</span>
+            <span className="gold">Envío gratis desde {fmt(business.freeShippingFrom)}</span>
+          </div>
         </div>
       </div>
-    </div>
+      {/* Franja de estado mobile: no se oculta, es el dato que decide si el
+          cliente sigue o se va. */}
+      <div className="m-status">
+        <span className={`dot ${tienda.abierto ? "" : "off"}`} />
+        {tienda.abierto ? (
+          <>
+            <span>Abierto hasta {business.horaCierre}</span>
+            <span className="m-status-sep">·</span>
+            <span className="m-status-eta">Entrega {business.deliveryEstimate}</span>
+          </>
+        ) : (
+          <span>{tienda.etiqueta}</span>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -76,19 +92,25 @@ export function Ticker({ desde }: { desde: number | null }) {
 interface HeaderProps {
   onCartClick: () => void;
   onNav: (section: string) => void;
+  onSearch?: () => void;
   current: string;
   business: BusinessConfig;
   /** Secciones que efectivamente se renderizan; el resto no se ofrece en el nav. */
   sections: string[];
+  /** Mobile: el header se colapsa al scrollear hacia abajo. */
+  oculto?: boolean;
 }
 
-export function Header({ onCartClick, onNav, current, business, sections }: HeaderProps) {
+export function Header({ onCartClick, onNav, onSearch, current, business, sections, oculto }: HeaderProps) {
   const { count, subtotal } = useCart();
   const navItems = NAV.filter(([key]) => sections.includes(key));
+  // El nombre de la base puede ser "Impasto - Pizzeria y Empanadas": el wordmark
+  // usa solo la primera parte.
+  const wordmark = (business.name.split(" - ")[0] || business.name).trim();
   return (
     <>
       <Topbar business={business} />
-      <header className="header">
+      <header className={`header ${oculto ? "is-collapsed" : ""}`}>
         <div className="container header-inner">
           <button className="logo" onClick={() => onNav("home")} aria-label="Ir al inicio">
             <Image
@@ -99,6 +121,12 @@ export function Header({ onCartClick, onNav, current, business, sections }: Head
               className="logo-img"
               priority
             />
+          </button>
+
+          {/* Wordmark tipográfico mobile: el lockup de 72px no entra en un header de 56px. */}
+          <button className="wordmark" onClick={() => onNav("home")} aria-label="Ir al inicio">
+            <span className="wordmark-name">{wordmark}</span>
+            <span className="wordmark-sub">Pizza napoletana · Iguazú</span>
           </button>
 
           <nav className="nav">
@@ -114,7 +142,7 @@ export function Header({ onCartClick, onNav, current, business, sections }: Head
           </nav>
 
           <div className="header-actions">
-            <button className="icon-btn" aria-label="Buscar en la carta" onClick={() => onNav("pizzas")}>
+            <button className="icon-btn" aria-label="Buscar en la carta" onClick={onSearch || (() => onNav("pizzas"))}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
             </button>
             <button className="cart-btn" onClick={onCartClick} aria-label="Abrir carrito">
