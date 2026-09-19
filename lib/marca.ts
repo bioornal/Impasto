@@ -55,6 +55,11 @@ export const ARGUMENTOS_MARCA: ArgumentoMarca[] = [
     cifra: "400 °C",
   },
   {
+    id: "base",
+    titulo: "Base fina y tierna",
+    detalle: "Al estilo napoletano, con el borde alto y aireado",
+  },
+  {
     id: "porciones",
     titulo: "Ocho porciones",
     detalle: "Cada pizza rinde ocho porciones",
@@ -63,6 +68,13 @@ export const ARGUMENTOS_MARCA: ArgumentoMarca[] = [
     id: "muzzarella",
     titulo: "Muzzarella de primera calidad",
     detalle: "Abundante en cada pizza",
+  },
+  {
+    // Salen de las recetas reales (tablas del recetario), no de una idea
+    // general: todos se usan en pizzas activas de la carta.
+    id: "ingredientes",
+    titulo: "Ingredientes premium",
+    detalle: "Provolone, parmesano, jamón crudo y muzzarella de primera calidad",
   },
   {
     id: "empanadas-peso",

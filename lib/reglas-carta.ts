@@ -56,6 +56,20 @@ export function seCobraPorUnidad(empanadas: { precio?: number }[]): boolean {
   return empanadas.some((e) => Number(e.precio) > 0);
 }
 
+/**
+ * El precio más bajo de la carta de pizzas, para el "desde $X" del sitio.
+ * Nunca se escribe a mano: los precios cambian, así que se toma de la carta
+ * viva en cada carga. Deja afuera las agotadas (no se puede ofrecer lo que no
+ * se vende) y cualquier precio 0 o inválido. Sin ninguna pizza que cumpla,
+ * devuelve `null` y el sitio no muestra la frase.
+ */
+export function precioDesde(pizzas: readonly { precio: number; disponible: boolean }[]): number | null {
+  const precios = pizzas
+    .filter((p) => p.disponible !== false && Number.isFinite(p.precio) && p.precio > 0)
+    .map((p) => p.precio);
+  return precios.length > 0 ? Math.min(...precios) : null;
+}
+
 /** "6, 12, 24" → "6, 12 o 24", para que el prompt lea natural. */
 export function listaConO(nums: readonly number[]): string {
   return nums.join(", ").replace(/, (\d+)$/, " o $1");

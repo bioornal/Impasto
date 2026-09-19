@@ -18,7 +18,7 @@ export function Footer({ business }: { business: BusinessConfig }) {
               className="footer-logo"
             />
             <p>
-              Pizza híbrida: técnica napolitana y alma argentina. Delivery y Take away en {business.locationLabel}.
+              Pizza híbrida: técnica napoletana y alma argentina. Delivery y Take away en {business.locationLabel}.
             </p>
           </div>
 

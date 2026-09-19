@@ -158,6 +158,10 @@ function carta(data: CatalogData) {
  * Arranca con la búsqueda real ("pizza napolitana" + ciudad) y recién después
  * la marca: un negocio nuevo no tiene todavía quién lo busque por nombre, pero
  * sí mucha gente buscando dónde comer pizza napolitana en Iguazú.
+ *
+ * Es, junto con `PALABRAS_CLAVE`, el único lugar que dice "napolitana": el
+ * resto del sitio dice "napoletana" (pedido del dueño, 19/09/2026), pero en
+ * Google se busca "napolitana". Si se cambia, se cambia a propósito.
  */
 export function tituloSitio(business: BusinessConfig): string {
   return `Pizza napolitana en ${business.city} · ${business.name} — Delivery y Take Away`;
@@ -174,7 +178,7 @@ export function descripcionSitio(business: BusinessConfig): string {
   // template literal de abajo, y ahí un `cifra` faltante compilaría igual.
   const fermentacion = argumentoConCifra("fermentacion");
   const empanadaPeso = argumentoConCifra("empanadas-peso").cifra;
-  return `Pizza napolitana con alma argentina en ${business.city}: fermentación en frío de ${fermentacion.cifra}, `
+  return `Pizza napoletana con alma argentina en ${business.city}: fermentación en frío de ${fermentacion.cifra}, `
     + `horno de piedra y muzzarella abundante. Empanadas de ${empanadaPeso}, delivery propio y take away. Pedí online.`;
 }
 
@@ -191,6 +195,7 @@ function mapaUrl(business: BusinessConfig): string {
  */
 export const PALABRAS_CLAVE = [
   "mejor pizza de Puerto Iguazú",
+  "pizza napoletana Iguazú",
   "pizza napolitana Iguazú",
   "pizza artesanal Puerto Iguazú",
   "pizzería Puerto Iguazú",
@@ -211,7 +216,7 @@ export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {
     "@id": `${SITE_URL}/#local`,
     name: business.name,
     alternateName: `${business.name} ${business.city}`,
-    slogan: "Pizza híbrida: técnica napolitana, alma argentina.",
+    slogan: "Pizza híbrida: técnica napoletana, alma argentina.",
     description: descripcionSitio(business),
     url: SITE_URL,
     image: [STOCK_IMAGES.hero.main, `${SITE_URL}/opengraph-image`],

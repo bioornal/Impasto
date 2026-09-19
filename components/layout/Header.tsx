@@ -4,7 +4,7 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { fmt } from "@/lib/utils";
 import { LOGO } from "@/lib/logo";
-import { argumentoConCifra } from "@/lib/marca";
+import { argumento, argumentoConCifra } from "@/lib/marca";
 import type { BusinessConfig } from "@/lib/business";
 
 const NAV: [string, string][] = [
@@ -40,21 +40,26 @@ function Topbar({ business }: { business: BusinessConfig }) {
 const FERMENTACION = argumentoConCifra("fermentacion");
 const HORNO = argumentoConCifra("horno");
 const EMPANADA_PESO = argumentoConCifra("empanadas-peso");
+const PORCIONES = argumento("porciones");
 
 const TICKER = [
-  "Pizza Híbrida: técnica napolitana y alma argentina",
+  "Pizza Híbrida: técnica napoletana y alma argentina",
   "Delivery propio & Take away en Puerto Iguazú",
   `${FERMENTACION.titulo} ${FERMENTACION.cifra}`,
   `Horno de piedra a ${HORNO.cifra}`,
-  "Muzzarella abundante y primeras marcas",
+  "Ingredientes premium y muzzarella abundante",
   "Último pedido 23:45",
   `Empanadas de ${EMPANADA_PESO.cifra} al horno`,
 ];
 
-export function Ticker() {
+export function Ticker({ desde }: { desde: number | null }) {
+  // El precio va segundo, después de la pizza híbrida. Sin "desde" no se muestra.
+  const items = desde === null
+    ? TICKER
+    : [TICKER[0], `${PORCIONES.titulo} desde ${fmt(desde)}`, ...TICKER.slice(1)];
   const run = (key: string) => (
     <span key={key}>
-      {TICKER.map((text) => (
+      {items.map((text) => (
         <span key={text} style={{ display: "inline-flex", alignItems: "center", gap: 34 }}>
           <i>✦</i>{text}
         </span>

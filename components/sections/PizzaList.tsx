@@ -11,6 +11,7 @@ import type { Pizza } from "@/types";
 const HORNO = argumento("horno");
 const PORCIONES = argumento("porciones");
 const MUZZARELLA = argumento("muzzarella");
+const BASE = argumento("base");
 
 const FILTERS: [string, string][] = [
   ["todas", "Todas"],
@@ -64,7 +65,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId }: PizzaListProps) {
             <div className="sec-index">01 — La carta</div>
             <h2>Pizzas</h2>
           </div>
-          <p>Estiradas a mano en el momento y cocidas a {HORNO.detalle}. {PORCIONES.titulo} y abundante {MUZZARELLA.titulo.toLowerCase()}. Podés pedir cualquiera mitad y mitad sin costo extra.</p>
+          <p>Estiradas a mano en el momento y cocidas a {HORNO.detalle}. {BASE.titulo}, {PORCIONES.titulo.toLowerCase()} y abundante {MUZZARELLA.titulo.toLowerCase()}. Podés pedir cualquiera mitad y mitad sin costo extra.</p>
         </div>
       </div>
 

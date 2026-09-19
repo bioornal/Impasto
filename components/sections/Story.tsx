@@ -35,7 +35,7 @@ export function Story({ onCta }: { onCta: (section: string) => void }) {
           <h2>Impasto<br />significa <em>masa.</em></h2>
           <p className="story-sub">Y acá todo empieza ahí.</p>
           <p className="story-lede">
-            En italiano, <em>impasto</em> es la masa: el corazón de toda buena pizza. Le pusimos así a nuestro proyecto en Puerto Iguazú porque creemos en el tiempo y el oficio. Borde alto y aireado, masa liviana y muzzarella abundante: la pizza para cerrar un día de Cataratas o una gran noche en casa.
+            En italiano, <em>impasto</em> es la masa: el corazón de toda buena pizza. Le pusimos así a nuestro proyecto en Puerto Iguazú porque creemos en el tiempo, el oficio y los ingredientes de primera. Borde alto y aireado, base fina y tierna, y muzzarella abundante: la pizza para cerrar un día de Cataratas o una gran noche en casa.
           </p>
         </div>
         <div className="story-cifras">

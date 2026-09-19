@@ -5,6 +5,7 @@ import { TweakProvider, useTweaks } from "@/components/providers/TweakProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { StoreStatusProvider, type EstadoTiendaCliente } from "@/components/providers/StoreStatusProvider";
 import { Header, Ticker } from "@/components/layout/Header";
+import { precioDesde } from "@/lib/reglas-carta";
 import { Footer } from "@/components/layout/Footer";
 import { Hero, Features } from "@/components/sections/Hero";
 import { Promos } from "@/components/sections/Promos";
@@ -91,6 +92,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
   const [order, setOrder] = useState<ConfirmedOrder | null>(null);
   const lastCardRef = useRef<string>("");
 
+  const desde = precioDesde(data.pizzas);
   const featured = data.pizzas.find((p) => p.disponible !== false && p.id === STOCK_IMAGES.hero.productoId)
     || data.pizzas.find((p) => p.disponible !== false && p.popular && p.categoria === "gourmet")
     || data.pizzas.find((p) => p.disponible !== false && p.popular)
@@ -126,11 +128,11 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
     <div className={`app ${paletteClass} ${typeClass}`}>
       <ActiveOrderBanner />
       <Header onCartClick={() => setDrawerOpen(true)} onNav={onNav} current={nav} business={business} sections={sections} />
-      <Ticker />
+      <Ticker desde={desde} />
 
       <main>
-        <Hero onCta={onNav} onHalf={() => openHalf()} featured={featured} varieties={data.pizzas.length} />
-        <Features freeShippingFrom={business.freeShippingFrom} />
+        <Hero desde={desde} onCta={onNav} onHalf={() => openHalf()} featured={featured} varieties={data.pizzas.length} />
+        <Features freeShippingFrom={business.freeShippingFrom} desde={desde} />
         <Promos promos={data.promos} onNav={onNav} />
         <PizzaList pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} />
         <EmpanadasSection empanadas={data.empanadas} boxPrices={data.empanadaBoxPrices} />

@@ -79,7 +79,7 @@ export function EmpanadasSection({ empanadas, boxPrices }: EmpanadasSectionProps
             <div className="sec-index">02 — Rellenas y al horno</div>
             <h2>Armá tu caja</h2>
           </div>
-          <p>Grandes y abundantes de {EMPANADA_PESO.cifra}, con {REPULGUE.titulo.toLowerCase()} y cocción al horno. Rellenos generosos con materia prima de primera calidad. Elegí la cantidad para tu caja y combiná los sabores que quieras.</p>
+          <p>Grandes y abundantes de {EMPANADA_PESO.cifra}, con {REPULGUE.titulo.toLowerCase()} y cocción al horno. Rellenos generosos con ingredientes de primera calidad. Elegí la cantidad para tu caja y combiná los sabores que quieras.</p>
         </div>
 
         <div className="emp-layout">
