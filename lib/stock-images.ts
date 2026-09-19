@@ -84,7 +84,7 @@ export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
   "bffd02f2-b069-45fa-9324-316a204f5447": // Choclo, Panceta y Salsa Criolla
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Choclo,%20Panceta%20y%20Salsa%20Criolla.jpg",
   "a8659b32-fb98-4a8c-a0f6-cf3e6546a575": // Cinque Formaggi
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Cinque%20Formaggi.jpg",
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Cinque%20Formaggi%20%281%29.jpg",
   "7a52594e-ac5e-4d6d-b505-23bce62eea75": // Filetto Impasto
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Filetto%20Impasto.jpg",
   "548ea0b6-ef4c-4f0c-93ee-265f8a7baf83": // La Provoleta Impasto
