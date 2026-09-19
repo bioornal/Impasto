@@ -13,6 +13,7 @@ import { Promos } from "@/components/sections/Promos";
 import { PizzaList } from "@/components/sections/PizzaList";
 import { EmpanadasSection } from "@/components/sections/EmpanadasSection";
 import { Bebidas } from "@/components/sections/Bebidas";
+import { PedidoWhatsapp } from "@/components/sections/PedidoWhatsapp";
 import { Story } from "@/components/sections/Story";
 import { Reviews } from "@/components/sections/Reviews";
 import { Faq } from "@/components/sections/Faq";
@@ -322,6 +323,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
           priceFor={empPriceFor}
         />
         <Bebidas bebidas={data.bebidas} />
+        <PedidoWhatsapp business={business} />
         <Story onCta={goSection} />
         <Reviews reviews={data.reviews} business={business} />
         <Faq business={business} />

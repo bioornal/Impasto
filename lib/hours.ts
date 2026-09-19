@@ -10,6 +10,21 @@ export interface HorarioConfig {
 
 const DIAS_NOMBRE = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
+/**
+ * Los días en que el local no abre, para mostrar: "Lunes cerrado", "Lunes y
+ * martes cerrados". Sale de `diasApertura`, así que sigue al panel. Antes el
+ * footer decía "Lunes cerrado" escrito a mano. Si abre todos los días, "".
+ */
+export function diasCerrados(dias: number[]): string {
+  const cerrados = [1, 2, 3, 4, 5, 6, 0].filter((d) => !dias.includes(d)).map((d) => DIAS_NOMBRE[d]);
+  if (cerrados.length === 0) return "";
+  const lista = cerrados.length === 1
+    ? cerrados[0]
+    : `${cerrados.slice(0, -1).join(", ")} y ${cerrados[cerrados.length - 1]}`;
+  const texto = `${lista} ${cerrados.length === 1 ? "cerrado" : "cerrados"}`;
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
 const aMinutos = (hhmm: string) => {
   const [h, m] = hhmm.split(":").map(Number);
   return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);

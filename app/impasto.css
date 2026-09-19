@@ -1762,6 +1762,8 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 .drawer-handle{ display:none; }
 .emp-size{ display:none; }
 .chip-count{ display:none; }
+.drink-side{ display:none; }
+.wsp-strip{ display:none; }
 
 @media (max-width:760px){
   /* Solo mobile: texto secundario más oscuro (3,4:1 → 4,6:1 sobre --surface) y
@@ -1983,12 +1985,73 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   .stepper button{ width:38px; height:38px; }
   .stepper span{ min-width:18px; }
 
-  /* ---- bebidas mobile ---- */
-  #bebidas .section-head{ margin-bottom:18px; }
-  #bebidas .section-head h2{ font-size:32px; }
-  .drinks-grid{ grid-template-columns:repeat(2,1fr); gap:12px; }
-  .drink-card{ padding:10px; gap:10px; border-radius:16px; }
-  .drink-add{ height:44px; }
+  /* ---- bebidas en filas, como las pizzas (antes: tarjetas de 349px, 1,9 pantallas) ---- */
+  #bebidas{ padding:28px 0 12px; }
+  /* !important: la cabecera trae el marginBottom de escritorio como estilo inline. */
+  #bebidas .section-head{ margin-bottom:14px !important; }
+  #bebidas .section-head h2{ font-size:28px; }
+  .drinks-grid{ grid-template-columns:1fr; gap:10px; }
+  .drink-card{ flex-direction:row; align-items:center; padding:10px; gap:12px; border-radius:16px; }
+  .drink-card:hover{ transform:none; box-shadow:none; }
+  .drink-media{ width:56px; height:56px; aspect-ratio:auto; flex:none; border-radius:10px; background:#fff; }
+  .drink-media img{ object-fit:contain; }
+  .drink-card:not(.is-agotado):hover .drink-media img{ transform:none; }
+  .drink-media .media-agotado-bar{ font-size:9px; letter-spacing:.15em; padding:4px 0; }
+  .drink-card h4{ font-size:16px; }
+  .drink-card small{ font-family:var(--font-display); font-size:15.5px; font-weight:600; color:var(--ink); font-variant-numeric:lining-nums tabular-nums; }
+  .drink-add{ display:none; }
+  .drink-side{ display:flex; flex:none; }
+
+  /* ---- pedir por WhatsApp: al cierre de la carta y en una fila ----
+     La tarjeta de Opiniones quedaba a más de nueve pantallas de scroll. */
+  .wsp-strip{ display:block; padding:6px 0 26px; }
+  .wsp-strip-card{
+    display:flex; align-items:center; gap:12px; padding:14px 14px 14px 18px;
+    border-radius:16px; background:var(--accent-2); color:var(--accent-ink);
+  }
+  .wsp-strip-card b{ flex:1; min-width:0; font-family:var(--font-display); font-size:17px; font-weight:600; line-height:1.2; }
+  .wsp-strip-card .btn{ flex:none; height:44px; padding:0 16px; }
+  .reviews-empty, .reviews .wsp-card{ display:none; }
+
+  /* ---- nosotros: foto más baja, sin las cifras que ya muestra el hero ni el
+     botón que repite la barra de abajo. «A mano» queda: no está en otro lado. ---- */
+  .story{ padding-bottom:36px; }
+  .story-bg{ height:170px; }
+  .story-inner{ margin-top:-40px; }
+  .story h2{ font-size:38px; }
+  .story-sub{ font-size:20px; margin-bottom:14px; }
+  .story-lede{ font-size:15.5px; line-height:1.6; }
+  .story-cifras{ margin-top:20px; padding-top:4px; }
+  .story-cifras > div:nth-child(1), .story-cifras > div:nth-child(3), .story-cta{ display:none; }
+  .story-cifras > div{ border-bottom:0; }
+  .story-cifras b{ font-size:30px; min-width:0; }
+
+  /* ---- preguntas: una lista compacta. Las nueve siguen en el HTML: alimentan
+     el FAQPage de lib/seo.ts, que Google quiere visible en la página. ---- */
+  .faq{ padding:32px 0; }
+  .faq .section-head{ margin-bottom:16px; }
+  .faq .section-head h2{ font-size:28px; }
+  .faq .side-note{ display:none; }
+  .faq-list{ gap:0; background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+  .faq-item{ border:0; border-radius:0; border-bottom:1px solid var(--line); padding:0 16px; }
+  .faq-item:last-child{ border-bottom:0; }
+  .faq-item summary{ padding:14px 0; min-height:52px; }
+  .faq-item summary h3{ font-size:16.5px; }
+  .faq-item p{ font-size:14.5px; padding-bottom:16px; }
+
+  /* ---- footer compacto ---- */
+  .footer{ padding-top:32px; }
+  .footer-logo{ height:44px; margin-bottom:0; }
+  .footer-about p{ display:none; }
+  .footer-grid{ gap:18px; padding-bottom:22px; }
+  .footer h5{ margin-bottom:6px; }
+  .footer-list{ gap:2px; font-size:14px; }
+  .footer-list a{ display:inline-block; padding:5px 0; }
+  .footer-horarios, .footer-redes{ flex-direction:row; flex-wrap:wrap; align-items:baseline; gap:0 8px; }
+  .footer-horarios li + li:not(.footer-cerrado)::before, .footer-redes li + li::before{ content:"·"; margin-right:8px; color:rgba(246,241,231,.35); }
+  .footer-cerrado{ flex-basis:100%; }
+  .footer-bottom{ padding-top:14px; gap:6px; }
+  .footer-bottom-extra{ display:none; }
 
   /* ---- secciones de destino ---- */
   #pizzas, #empanadas, #bebidas{ scroll-margin-top:56px; }

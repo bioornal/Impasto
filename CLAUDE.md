@@ -547,8 +547,21 @@ vive detrás del corte **760px**: `@media (max-width:760px)` en `impasto.css` y
 - **Los gestos de la hoja del carrito** (arrastre para cerrar, Esc, foco atrapado) solo
   corren en mobile. El arrastre necesita `touch-action:none` en la manija y la cabecera, o el
   navegador cancela el gesto.
+- **De Bebidas al footer, compacto** (segunda tanda, mismo día): la página mobile pasó de
+  10.204 a 8.130px. Bebidas en filas con el mismo `+` / `− n +` que las pizzas (reusa las
+  clases `.p-row-add` y `.p-row-step`); «Pedí por WhatsApp» sube al cierre de la carta como
+  `PedidoWhatsapp` (en mobile se oculta la tarjeta de Opiniones); Nosotros sin las cifras que
+  ya muestra el hero; las preguntas en una lista, **las nueve**, porque alimentan el
+  `FAQPage` de `lib/seo.ts`; footer compacto.
+- **Footer, en escritorio y mobile** (aprobado aparte): teléfono, mail e Instagram son
+  enlaces (`lib/contacto.ts`, con test) y los días cerrados salen de `diasApertura`
+  (`diasCerrados()` en `lib/hours.ts`), no de un «Lunes cerrado» fijo. Facebook sigue como
+  texto: `facebook` guarda el nombre visible, no la URL de la página. El botón de WhatsApp
+  abre el chat con «¡Hola! Quiero hacer un pedido.» ya escrito.
 - **El carrito de cualquier prueba se guarda en `carritos`** (borrador por cookie en
-  `/api/cart/draft`). Después de probar, vaciarlo desde la hoja.
+  `/api/cart/draft`). Después de probar, vaciarlo desde la hoja **y** confirmar con
+  `GET /api/cart/draft`: si se vacía rápido, un POST viejo puede llegar después del DELETE y
+  dejar el borrador vivo (pasó dos veces; bug abierto).
 
 ## Cosas que hay que recordar hacer
 

@@ -6,11 +6,15 @@ import { fmt } from "@/lib/utils";
 import type { Bebida } from "@/types";
 
 export function Bebidas({ bebidas }: { bebidas: Bebida[] }) {
-  const { items, add } = useCart();
+  const { items, add, incKey, decKey } = useCart();
   const toast = useToast();
   if (bebidas.length === 0) return null;
 
   const qtyOf = (id: string) => items.find((i) => i.key === id && i.type === "bebida")?.qty || 0;
+  const agregar = (bebida: Bebida) => {
+    add({ key: bebida.id, type: "bebida", name: bebida.nombre, price: bebida.precio, qty: 1 });
+    toast(`${bebida.nombre} agregada`);
+  };
 
   return (
     <section className="section" id="bebidas">
@@ -41,16 +45,24 @@ export function Bebidas({ bebidas }: { bebidas: Bebida[] }) {
                     Agotado
                   </button>
                 ) : (
-                  <button
-                    className="drink-add"
-                    onClick={() => {
-                      add({ key: bebida.id, type: "bebida", name: bebida.nombre, price: bebida.precio, qty: 1 });
-                      toast(`${bebida.nombre} agregada`);
-                    }}
-                  >
+                  <button className="drink-add" onClick={() => agregar(bebida)}>
                     {qty > 0 ? `En el carrito · ${qty}` : "Agregar"}
                   </button>
                 )}
+                {/* Mobile: la fila lleva el mismo + / − n + que las pizzas (estilos .p-row-*). */}
+                <div className="drink-side">
+                  {agotado ? (
+                    <button className="p-row-add" disabled aria-label={`${bebida.nombre} agotada`}>+</button>
+                  ) : qty > 0 ? (
+                    <div className="p-row-step">
+                      <button onClick={() => decKey(bebida.id)} aria-label={`Quitar una ${bebida.nombre}`}>−</button>
+                      <span>{qty}</span>
+                      <button onClick={() => incKey(bebida.id)} aria-label={`Sumar una ${bebida.nombre}`}>+</button>
+                    </div>
+                  ) : (
+                    <button className="p-row-add" onClick={() => agregar(bebida)} aria-label={`Agregar ${bebida.nombre}`}>+</button>
+                  )}
+                </div>
               </article>
             );
           })}
