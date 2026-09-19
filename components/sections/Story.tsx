@@ -1,46 +1,53 @@
 "use client";
 import { SceneIllus } from "@/components/ui/Illus";
 import { STOCK_IMAGES } from "@/lib/stock-images";
-import { argumento } from "@/lib/marca";
+import { argumento, argumentoConCifra } from "@/lib/marca";
 
-// Los tres argumentos de proceso, en el orden en que se muestran acá. El
-// resto de ARGUMENTOS_MARCA (porciones, muzzarella, empanadas) no va en esta
-// sección: cada componente pide solo lo que necesita.
+// Las tres cifras grandes de abajo, en el orden del proceso: masa, estirado,
+// horno. Salen de ARGUMENTOS_MARCA para que el bot y el sitio digan lo mismo;
+// el resto (porciones, muzzarella, empanadas) no va en esta sección.
 //
-// El lede de arriba (el <p> antes de .story-stats) cita dos de estos tres
-// mismos argumentos con las variables de abajo, para no repetir a mano lo
-// que este array ya centraliza. "48 horas" queda hardcodeado a propósito:
-// `FERMENTACION.cifra` es "48 hs", no "48 horas", así que insertarlo
-// deformaría la prosa del dueño. Si mañana cambia la fermentación, ese
-// número puntual va a quedar desincronizado del stat de abajo — es el costo
-// aceptado de no reescribir el copy en esta pasada.
-const FERMENTACION = argumento("fermentacion");
+// "Estirado a mano" no tiene `cifra` (no hay número que mostrar), así que su
+// cifra grande es "A mano" y el texto de abajo es su detalle: con el titular
+// quedaría "A mano / Estirado a mano", la misma idea dos veces.
+const FERMENTACION = argumentoConCifra("fermentacion");
 const ESTIRADO = argumento("estirado");
-const HORNO = argumento("horno");
-const STATS = [FERMENTACION, ESTIRADO, HORNO];
+const HORNO = argumentoConCifra("horno");
+// A este tamaño el espacio común de "400 °C" separa demasiado el grado: se
+// cambia por el espacio fino que no corta (U+202F). Solo antes del grado: en
+// "48 hs" el espacio fino de Playfair casi no se ve y pega el número a la unidad.
+const fino = (s: string) => s.replace(/ °/g, "\u202F°");
+const CIFRAS = [
+  { id: FERMENTACION.id, grande: fino(FERMENTACION.cifra), texto: FERMENTACION.titulo },
+  { id: ESTIRADO.id, grande: "A mano", texto: ESTIRADO.detalle },
+  { id: HORNO.id, grande: fino(HORNO.cifra), texto: HORNO.titulo },
+];
 
-export function Story() {
+export function Story({ onCta }: { onCta: (section: string) => void }) {
   return (
     <section className="story" id="nosotros">
-      <div className="container story-grid">
-        <div className="story-media"><SceneIllus id="story" tone="dark" src={STOCK_IMAGES.story.dough} /></div>
-        <div>
+      <div className="story-bg" aria-hidden>
+        <SceneIllus id="story" tone="dark" src={STOCK_IMAGES.story.dough} />
+      </div>
+      <div className="container story-inner">
+        <div className="story-copy">
           <div className="sec-index gold">04 — Nosotros</div>
-          <h2>Impasto significa masa.<br />Y acá todo empieza ahí.</h2>
-          <p>
-            En italiano, <em>impasto</em> significa &ldquo;masa&rdquo;: el origen y corazón de toda buena pizza. Le pusimos así a nuestro proyecto en Puerto Iguazú porque creemos en el tiempo y el oficio: 48 horas de fermentación en frío, {ESTIRADO.titulo.toLowerCase()} en el momento y fuego de piedra a {HORNO.cifra}.
+          <h2>Impasto<br />significa <em>masa.</em></h2>
+          <p className="story-sub">Y acá todo empieza ahí.</p>
+          <p className="story-lede">
+            En italiano, <em>impasto</em> es la masa: el corazón de toda buena pizza. Le pusimos así a nuestro proyecto en Puerto Iguazú porque creemos en el tiempo y el oficio. Borde alto y aireado, masa liviana y muzzarella abundante: la pizza para cerrar un día de Cataratas o una gran noche en casa.
           </p>
-          <p style={{ marginTop: 14 }}>
-            Una pizzería artesanal pensada para quienes buscan una experiencia auténtica y memorable: borde aireado, base crocante y abundante muzzarella, perfecta para coronar un día de Cataratas o una gran noche en casa.
-          </p>
-          <div className="story-stats">
-            {STATS.map((stat) => (
-              <div key={stat.id}>
-                <b>{stat.titulo}</b>
-                <small>{stat.detalle}</small>
-              </div>
-            ))}
-          </div>
+        </div>
+        <div className="story-cifras">
+          {CIFRAS.map((c) => (
+            <div key={c.id}>
+              <b>{c.grande}</b>
+              <span>{c.texto}</span>
+            </div>
+          ))}
+          <button className="btn btn-primary btn-lg story-cta" onClick={() => onCta("pizzas")}>
+            Ver la carta →
+          </button>
         </div>
       </div>
     </section>

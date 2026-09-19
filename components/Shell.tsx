@@ -135,7 +135,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
         <PizzaList pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} />
         <EmpanadasSection empanadas={data.empanadas} boxPrices={data.empanadaBoxPrices} />
         <Bebidas bebidas={data.bebidas} />
-        <Story />
+        <Story onCta={onNav} />
         <Reviews reviews={data.reviews} business={business} />
         <Faq business={business} />
       </main>

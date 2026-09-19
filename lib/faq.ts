@@ -49,7 +49,7 @@ export function preguntasFrecuentes(business: BusinessConfig): PreguntaFrecuente
       pregunta: "¿Qué significa que la pizza sea híbrida?",
       respuesta: `Es nuestra forma de decir "técnica napolitana, alma argentina": fermentación en frío ${fermentacion.detalle.toLowerCase()}, `
         + `estirado a mano sin moldes y horno a la piedra a ${horno.cifra}. `
-        + "El resultado es un borde alto y liviano con base crocante y muzzarella abundante, como nos gusta en Argentina.",
+        + "El resultado es un borde alto y liviano, con muzzarella abundante como nos gusta en Argentina.",
     },
     {
       pregunta: "¿Se puede pedir pizza mitad y mitad?",
