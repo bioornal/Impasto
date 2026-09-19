@@ -17,15 +17,14 @@ No hay nada que hacer acá. Queda registrado por si hay que rehacerlo en otro en
 
 **Lo único pendiente de este documento son las cuentas del dueño (secciones 1 a 4).**
 
-## 1. Email (Resend)
+## 1. Email (Resend) — CONFIGURADO (19/09/2026)
 
-- Crear cuenta en https://resend.com (100 mails/día gratis).
-- Verificar el dominio por DNS (Resend pide un registro TXT/DKIM).
-- En `.env.local` y en el panel de Netlify:
-  - `EMAIL_PROVIDER=resend`
-  - `RESEND_API_KEY=<tu key>`
-  - `EMAIL_FROM=Impasto <pedidos@impastoiguazu.com.ar>`
-- Reconstruir en Netlify (las env se leen según el caso en build o runtime).
+- Cuenta creada, dominio `impastopizzas.com` verificado (región São Paulo).
+- Netlify: `EMAIL_PROVIDER=resend`, `EMAIL_FROM=Impasto <pedidos@impastopizzas.com>`,
+  `RESEND_API_KEY` (secreta, solo envío). Sitio reconstruido.
+- Detalle de los registros DNS y de la prueba en `CLAUDE.md`, pendiente 1.
+- Las respuestas de los clientes van al Gmail del dueño (`EMAIL_REPLY_TO` en Netlify).
+- Prueba recibida en la bandeja de entrada, no en spam.
 
 ## 2. Aviso al local (Telegram) — CONFIGURADO (Netlify)
 
@@ -36,13 +35,14 @@ No hay nada que hacer acá. Queda registrado por si hay que rehacerlo en otro en
 - Cuenta activa, `DEEPSEEK_API_KEY` sincronizada en Netlify CLI.
 - Verificado en producción (`vocal-naiad-861a2c.netlify.app`): responde en streaming en tiempo real vía `/api/chat`.
 
-## 4. Dominio propio + webhook de Mercado Pago
+## 4. Dominio propio + webhook de Mercado Pago — HECHO (19/09/2026)
 
-- Comprar el dominio (ej. `impastoiguazu.com.ar`).
-- En Netlify: asignarlo como dominio principal del sitio.
-- Cargar `NEXT_PUBLIC_SITE_URL=https://impastoiguazu.com.ar` y **reconstruir** (se lee en build).
-- En Mercado Pago: cambiar la URL del webhook a `https://impastoiguazu.com.ar/api/payments/webhook`
-  y conservar el secreto. Conviene separar la URL de sandbox de la de producción.
+- Dominio `impastopizzas.com` (Hostinger, DNS en Hostinger). Principal: `www.impastopizzas.com`.
+- Netlify: dominio + alias sin `www`, certificado Let's Encrypt activo.
+- `NEXT_PUBLIC_SITE_URL=https://www.impastopizzas.com` cargada y sitio reconstruido.
+- Webhook de MP en `https://www.impastopizzas.com/api/payments/webhook`, mismo secreto.
+- Detalle y orden de los pasos en `CLAUDE.md`, sección "Dominio propio".
+- Pendiente menor: separar la URL de sandbox de la de producción.
 
 ## Verificación de tenants — resultado (24/08/2026)
 

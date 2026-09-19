@@ -28,12 +28,20 @@ async function sendConResend(message: EmailMessage): Promise<EmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!apiKey || !from) return { estado: "omitido", motivo: "Faltan RESEND_API_KEY o EMAIL_FROM" };
+  // El remitente no tiene casilla: sin esto, la respuesta de un cliente rebota.
+  const replyTo = process.env.EMAIL_REPLY_TO?.trim();
 
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: message.to, subject: message.subject, html: message.html }),
+      body: JSON.stringify({
+        from,
+        to: message.to,
+        subject: message.subject,
+        html: message.html,
+        ...(replyTo ? { reply_to: replyTo } : {}),
+      }),
     });
     const body = await response.json().catch(() => null);
     if (!response.ok) return { estado: "fallido", motivo: body?.message || `HTTP ${response.status}` };

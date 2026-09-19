@@ -3,9 +3,10 @@
 # Impasto · Estado del proyecto
 
 Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Mercado Pago.
-Deploy en Netlify: https://vocal-naiad-861a2c.netlify.app
+Deploy en Netlify: **https://www.impastopizzas.com** (dominio propio desde el 19/09/2026; el
+subdominio `vocal-naiad-861a2c.netlify.app` sigue respondiendo). Ver "Dominio propio".
 
-Última actualización: 12 de septiembre de 2026.
+Última actualización: 19 de septiembre de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -33,7 +34,7 @@ La base InsForge `3agqcygs.us-east.insforge.app` la usan **tres aplicaciones coo
 
 | Proyecto | Qué es | Stack | Producción |
 |---|---|---|---|
-| **Impasto** (este repo) | E-commerce exclusivo para clientes online (delivery y takeaway) | Next.js 16 | `vocal-naiad-861a2c.netlify.app` |
+| **Impasto** (este repo) | E-commerce exclusivo para clientes online (delivery y takeaway) | Next.js 16 | `www.impastopizzas.com` |
 | **El Fogón — Dashboard** (`recetario-napolitano`) | Costeo, recetas, costos operativos, precios y análisis de ganancias | Astro 5 + Netlify | `recetarionapolitano.netlify.app` |
 | **Carro Fogón** (`carroFogon/next-app`) | Terminal POS para operarios (toma de pedidos manuales por WhatsApp y teléfono) | Next.js 15 + Vercel | `carro-fogon.vercel.app` |
 
@@ -140,7 +141,8 @@ válido**, así que la falla se vería como una carta sin productos, no como un 
 - **Sincronización con POS de Operarios y Recetario (12/09/2026)** — Integración total: pedidos de Carro Fogón
   entran a `/admin` de Impasto y ambos canales (`Impasto Web` y `carroFogon`) se desglosan automáticamente
   en `recetario-napolitano/ganancias.astro`.
-- **Módulo de email** construido y probado, **pero sin proveedor configurado**.
+- **Módulo de email con Resend (19/09/2026)** — dominio verificado y envío aceptado por la API;
+  falta ver el primer pedido real con `enviado` en `notificaciones`. Ver pendiente 1.
 
 ### Distinción que se presta a confusión
 
@@ -170,15 +172,28 @@ aparte en el panel.
 ## Pendientes, en orden sugerido
 
 ### 1. Proveedor de email
-El código está listo; falta solo configuración. InsForge está en **plan free**, donde
-`emails.send()` no está disponible. Recomendación: **Resend** (100 mails/día gratis), que
-necesita verificar el dominio por DNS. Variables a completar en `.env.local` y Netlify:
-`EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM`.
-Hoy los avisos se registran en la tabla `notificaciones` con estado `omitido`.
-
-Van tres cosas trabadas esperando lo mismo, una sesión del dueño: esta (Resend), el bot de
-Telegram del punto 5 y la cuenta de DeepSeek del punto 6. Conviene resolver las tres juntas.
-El paso a paso para las tres (más dominio y webhook) está en `docs/P0-configuracion-cuentas.md`.
+**Configurado el 19/09/2026 con Resend** (InsForge está en plan free, donde `emails.send()` no
+está disponible).
+- Dominio `impastopizzas.com` verificado en Resend, región **São Paulo (sa-east-1)**. Registros
+  en Hostinger: `TXT resend._domainkey` (DKIM), `CNAME rsend → rsend-sae1.forge.rmta.net` y
+  `CNAME send → send.forge.rmta.net` (el SPF nuevo de Resend va por CNAME, no por MX + TXT) y
+  `TXT _dmarc = v=DMARC1; p=none;`. Hostinger muestra los TXT entre comillas: es solo la
+  presentación, el valor publicado no las lleva.
+- Netlify: `EMAIL_PROVIDER=resend`, `EMAIL_FROM=Impasto <pedidos@impastopizzas.com>` y
+  `RESEND_API_KEY` (secreta: Netlify no deja volver a leerla). Reconstruido.
+- La key es **solo de envío** (`Sending access`, limitada al dominio): `GET /emails/{id}` da
+  401. El estado de entrega se mira en el dashboard de Resend, no por API.
+- La key también está en `.env.local`; ahí `EMAIL_PROVIDER` y `EMAIL_FROM` quedaron **vacías a
+  propósito**, para que un pedido de prueba en `pnpm dev` no le mande mails reales a nadie.
+- Prueba: la API aceptó un envío con el mismo payload que `sendConResend` (HTTP 200). **Falta
+  ver el primer pedido real** con `estado = 'enviado'` en `notificaciones`.
+- `lib/email.ts` importa el SDK de InsForge: no se puede probar bajo `tsx` (falla la
+  resolución de `@insforge/shared-schemas`). Para probar el envío, llamar a la API de Resend
+  directo con el mismo payload.
+- `pedidos@impastopizzas.com` **solo envía**: no hay casilla. Por eso `lib/email.ts` manda
+  `reply_to` desde `EMAIL_REPLY_TO` (en Netlify: el Gmail del dueño). **No escribir esa
+  dirección en el código: el repo es público.**
+- El dueño confirmó que la prueba llegó **a la bandeja de entrada**, no a spam.
 
 ### 2. Catálogo
 **Descripciones y tags: hechos el 20/08/2026.** Las 41 pizzas y empanadas tienen
@@ -468,15 +483,41 @@ carrito es siempre el cliente.
 - Lo que el bot **no** hace: no arma carrito, no toca la pantalla, no captura datos y no
   consulta el estado de pedidos. Nada de la conversación se guarda.
 
+## Dominio propio (19/09/2026)
+
+- **`impastopizzas.com`**, comprado en Hostinger. **El DNS se quedó en Hostinger** (nameservers
+  `aster`/`helios.dns-parking.com`), no se pasó a Netlify DNS: los registros de Resend van en ese
+  mismo panel.
+- Registros: `A @ → 75.2.60.5` (balanceador de Netlify) y `CNAME www →
+  vocal-naiad-861a2c.netlify.app`. No agregar otro `A` ni un `AAAA` en `@`.
+- **El principal es `www.impastopizzas.com`**: Netlify recomienda `www` cuando el DNS es externo
+  (el apex por registro `A` no pasa por su CDN). `impastopizzas.com` es alias y redirige 301 a `www`.
+- Certificado Let's Encrypt para los dos nombres; lo renueva Netlify solo.
+- `NEXT_PUBLIC_SITE_URL=https://www.impastopizzas.com` en Netlify (todos los contextos),
+  reconstruido y verificado en producción: canonical, `og:url`, JSON-LD, `robots.txt` y sitemap.
+- **Webhook de MP** (app `ImpastoIguazu`, id `6099901691897793`): producción y sandbox en
+  `https://www.impastopizzas.com/api/payments/webhook`. Se guardó por MCP pidiendo solo el tema
+  `order` y MP dejó suscritos `order` y `payment`; el handler resuelve los dos y es idempotente.
+  El secreto no cambió (se comparó el prefijo con `MERCADOPAGO_WEBHOOK_SECRET`).
+- **El subdominio `netlify.app` no redirige al dominio nuevo** (sigue dando 200 al 19/09). Los
+  links viejos —seguimientos `/pedido/...`, el portfolio de `selvaDigital`— siguen andando, y
+  Google consolida por el canonical.
+- **Orden obligatorio si hay que rehacerlo: DNS primero, dominio en Netlify después.** Al revés,
+  si Netlify redirigiera el subdominio a un dominio que todavía apunta a otro lado, se caen el
+  sitio y el webhook de MP.
+- En Windows, `curl` al apex recién configurado dio `000`: es el chequeo de revocación de
+  schannel con un certificado recién emitido, no una falla. `curl --ssl-no-revoke` o `fetch` de
+  Node devuelven el 301 correcto.
+- La sesión del panel `/admin` es por dominio: en el dominio nuevo hay que volver a entrar.
+
 ## Cosas que hay que recordar hacer
 
 - **`productos` es una tabla global compartida** con **Carro Fogón**. Desde el 24/08/2026 la
   separación es `proyecto_id` (`'impasto'` vs `'carro'`), no solo `categoria`. Igual conviene
   **no borrar ni editar las filas del carro** (`hamburguesas`, `lomos`, `calzones`, `otros`):
   comparten base y Mercado Pago en producción.
-- **Al comprar el dominio:** cambiar la URL del webhook en Mercado Pago (se hace por MCP) y
-  actualizar la variable en Netlify. Conviene además separar la URL de sandbox de la de
-  producción, hoy apuntan al mismo endpoint.
+- **Webhook de MP:** conviene separar la URL de sandbox de la de producción; hoy las dos
+  apuntan a `https://www.impastopizzas.com/api/payments/webhook`.
 - **`info_empresa_impasto`** sigue siendo una tabla global con datos de Iguazú. Si otro de los
   dos proyectos la consulta directamente, va a mostrar estos datos.
 - Si se rota el secreto del webhook en el panel de MP, actualizar `MERCADOPAGO_WEBHOOK_SECRET`
