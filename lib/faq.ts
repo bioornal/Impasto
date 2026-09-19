@@ -72,8 +72,8 @@ export function preguntasFrecuentes(business: BusinessConfig): PreguntaFrecuente
     },
     {
       pregunta: "¿Hay opciones vegetarianas o sin picante?",
-      respuesta: "Sí. En la carta cada producto muestra sus etiquetas (vegetariano, picante, gourmet), así podés "
-        + "identificarlas antes de pedir. Si tenés una alergia o restricción, avisanos por WhatsApp.",
+      respuesta: "Sí. Arriba de la carta tenés las pestañas Veggie y Picantes para filtrar, y las pizzas "
+        + "picantes llevan un cartelito en la tarjeta. Si tenés una alergia o restricción, avisanos por WhatsApp.",
     },
   ];
 }
