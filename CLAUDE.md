@@ -191,13 +191,18 @@ está disponible).
   resolución de `@insforge/shared-schemas`). Para probar el envío, llamar a la API de Resend
   directo con el mismo payload.
 - `pedidos@impastopizzas.com` **solo envía**: no hay casilla. Por eso `lib/email.ts` manda
-  `reply_to` desde `EMAIL_REPLY_TO` (en Netlify: el Gmail del dueño). **No escribir esa
-  dirección en el código: el repo es público.**
-- **El mail de contacto que ve el cliente es otro: `impastopizzas.pedidos@gmail.com`** (19/09/2026),
-  una casilla creada para eso y pública a propósito. Sale de `sucursales.email` (panel →
-  Configuración) y, de respaldo, de `BUSINESS.email` en `lib/business.ts`; lo muestran el
-  footer, el JSON-LD y `llms.txt`. Antes decía `hola@impastoiguazu.com.ar`, un dominio que no
-  existe. No poner ahí `pedidos@impastopizzas.com`: `impastopizzas.com` no tiene MX y rebota.
+  `reply_to` desde `EMAIL_REPLY_TO`.
+- **Desde el 19/09/2026 hay una sola casilla del negocio: `impastopizzas.pedidos@gmail.com`**,
+  creada por el dueño y pública a propósito. Es a la vez el `EMAIL_REPLY_TO` de Netlify (antes
+  era el Gmail personal del dueño, que **nunca va en el código: el repo es público**) y el mail
+  de contacto del sitio: sale de `sucursales.email` (panel → Configuración) y, de respaldo, de
+  `BUSINESS.email` en `lib/business.ts`; lo muestran el footer, el JSON-LD y `llms.txt`. Antes el
+  sitio decía `hola@impastoiguazu.com.ar`, un dominio que no existe. No poner ahí
+  `pedidos@impastopizzas.com`: `impastopizzas.com` no tiene MX y rebota.
+- Ojo al cambiar `EMAIL_REPLY_TO`: el deploy tiene que **arrancar después** de guardar la
+  variable. El 19/09 se reconstruyó justo antes de guardarla y el deploy quedó con el valor viejo;
+  se detectó comparando el `updated_at` de la variable con el `created_at` del deploy
+  (`netlify api getEnvVar` / `listSiteDeploys`).
 - El dueño confirmó que la prueba llegó **a la bandeja de entrada**, no a spam.
 
 ### 2. Catálogo
