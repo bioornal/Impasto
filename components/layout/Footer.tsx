@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { LOGO_CLARO } from "@/lib/logo";
+import { LOGO_BLANCO } from "@/lib/logo";
 import type { BusinessConfig } from "@/lib/business";
 
 export function Footer({ business }: { business: BusinessConfig }) {
@@ -11,10 +11,10 @@ export function Footer({ business }: { business: BusinessConfig }) {
         <div className="footer-grid">
           <div className="footer-about">
             <Image
-              src={LOGO_CLARO.src}
+              src={LOGO_BLANCO.src}
               alt={business.name}
-              width={LOGO_CLARO.ancho}
-              height={LOGO_CLARO.alto}
+              width={LOGO_BLANCO.ancho}
+              height={LOGO_BLANCO.alto}
               className="footer-logo"
             />
             <p>

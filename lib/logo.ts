@@ -21,24 +21,24 @@ export const LOGO_PLANO: VarianteLogo = { src: `${BASE}/2.png`, ancho: 2000, alt
 export const LOGO_DEGRADE: VarianteLogo = { src: `${BASE}/3.png`, ancho: 2172, alto: 724 };
 
 /**
- * El plano con la tinta en crema, para fondos oscuros. El original tiene el
- * texto en rgb(21,12,5) y sobre `--ink-deep` (#12100d) da 1.02:1 de contraste,
- * o sea invisible; así da 16.87:1. La llama terracota se conserva igual.
+ * El plano entero en blanco, llama incluida, para el footer. El original tiene
+ * el texto en rgb(21,12,5) y sobre `--ink-deep` (#12100d) da 1.02:1 de
+ * contraste, o sea invisible.
  *
- * Si el header se queda con el degradé, conviene una versión clara de ese
- * mismo para que las dos puntas del sitio muestren el mismo dibujo.
+ * Se generó desde `2.png` pintando todo de #fff y conservando el canal alfa.
+ * La espiga se sigue leyendo porque el hueco de la llama es transparente: deja
+ * ver el fondo oscuro entre las dos. Si se vuelve a generar desde otro dibujo,
+ * mirar que ese hueco exista, o la espiga se funde con la llama.
  *
- * Vive en `public/`, no en el storage: `2-claro.png` nunca llegó al bucket y el
- * footer mostraba una imagen rota. Se generó desde `2.png` pasando la tinta a
- * `--bg` (#f6f1e7) y conservando la transparencia.
+ * Vive en `public/`, no en el storage: es un asset fijo del sitio.
  */
-export const LOGO_CLARO: VarianteLogo = { src: "/logo-claro.png", ancho: 2000, alto: 639 };
+export const LOGO_BLANCO: VarianteLogo = { src: "/logo-blanco.png", ancho: 2000, alto: 639 };
 
 /**
  * El del header. Cambiar acá entre LOGO_PLANO y LOGO_DEGRADE.
  *
  * Va el plano: el degradé se probó en producción el 23/08/2026 y se descartó.
- * Además es el que le corresponde a LOGO_CLARO, así que el header y el footer
+ * Además es el que le corresponde a LOGO_BLANCO, así que el header y el footer
  * muestran el mismo dibujo.
  */
 export const LOGO: VarianteLogo = LOGO_PLANO;
