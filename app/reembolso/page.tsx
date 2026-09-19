@@ -2,9 +2,14 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/LegalPage";
 import { BUSINESS } from "@/lib/business";
 
+const TITULO = "Reembolsos y Cancelaciones";
+const DESCRIPCION = `Política de reembolso y cancelación de ${BUSINESS.name}.`;
+
 export const metadata: Metadata = {
-  title: "Reembolsos y Cancelaciones",
-  description: `Política de reembolso y cancelación de ${BUSINESS.name}.`,
+  title: TITULO,
+  description: DESCRIPCION,
+  alternates: { canonical: "/reembolso" },
+  openGraph: { title: TITULO, description: DESCRIPCION, url: "/reembolso" },
 };
 
 export default function ReembolsoPage() {

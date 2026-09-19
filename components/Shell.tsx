@@ -13,6 +13,7 @@ import { EmpanadasSection } from "@/components/sections/EmpanadasSection";
 import { Bebidas } from "@/components/sections/Bebidas";
 import { Story } from "@/components/sections/Story";
 import { Reviews } from "@/components/sections/Reviews";
+import { Faq } from "@/components/sections/Faq";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { HalfModal } from "@/components/cart/HalfModal";
 import { Checkout } from "@/components/checkout/Checkout";
@@ -136,6 +137,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
         <Bebidas bebidas={data.bebidas} />
         <Story />
         <Reviews reviews={data.reviews} business={business} />
+        <Faq business={business} />
       </main>
 
       <Footer business={business} />

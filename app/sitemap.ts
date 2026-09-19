@@ -2,16 +2,39 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 
 /**
- * El sitio es una sola página con secciones (#pizzas, #empanadas, #bebidas,
- * #nosotros). Los fragmentos no van en el sitemap —Google los ignora— así que
- * hay una sola entrada. Cuando la carta se abra a rutas propias por producto,
- * este archivo es el lugar donde enumerarlas.
+ * La home es la página que vende y concentra todas las señales (carta, horarios,
+ * FAQ y JSON-LD). Las legales se listan igual: son indexables, dan confianza a
+ * Google y a los motores de IA, y hasta ahora heredaban el canonical `/` del
+ * layout, así que quedaban fuera del índice.
+ *
+ * Los fragmentos (`#pizzas`, `#empanadas`, `#preguntas`) no van: Google los ignora.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [{
-    url: `${SITE_URL}/`,
-    lastModified: new Date(),
-    changeFrequency: "weekly",
-    priority: 1,
-  }];
+  const ahora = new Date();
+  return [
+    {
+      url: `${SITE_URL}/`,
+      lastModified: ahora,
+      changeFrequency: "weekly",
+      priority: 1,
+    },
+    {
+      url: `${SITE_URL}/terminos`,
+      lastModified: ahora,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${SITE_URL}/privacidad`,
+      lastModified: ahora,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${SITE_URL}/reembolso`,
+      lastModified: ahora,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+  ];
 }

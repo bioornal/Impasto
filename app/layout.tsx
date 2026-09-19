@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./impasto.css";
 import { BUSINESS } from "@/lib/business";
-import { descripcionSitio } from "@/lib/seo";
+import { PALABRAS_CLAVE, descripcionSitio, tituloSitio } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";
 
 /**
@@ -11,7 +11,7 @@ import { SITE_URL } from "@/lib/site";
  * horario y el teléfono son los del JSON-LD de `app/page.tsx`, que sí lee la
  * configuración viva del panel.
  */
-const TITULO = `${BUSINESS.name} · Pizza híbrida: técnica napolitana, alma argentina · ${BUSINESS.locationLabel}`;
+const TITULO = tituloSitio(BUSINESS);
 const DESCRIPCION = descripcionSitio(BUSINESS);
 
 export const metadata: Metadata = {
@@ -20,15 +20,10 @@ export const metadata: Metadata = {
   description: DESCRIPCION,
   applicationName: BUSINESS.name,
   category: "restaurant",
-  keywords: [
-    "pizzería Puerto Iguazú",
-    "pizza Puerto Iguazú",
-    "delivery Puerto Iguazú",
-    "empanadas Puerto Iguazú",
-    "pedir pizza Iguazú",
-    "take away Iguazú",
-    "Impasto",
-  ],
+  keywords: PALABRAS_CLAVE,
+  authors: [{ name: BUSINESS.name, url: SITE_URL }],
+  creator: BUSINESS.name,
+  publisher: BUSINESS.name,
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -42,10 +37,33 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+      "max-snippet": -1,
+    },
   },
-  icons: { icon: "/favicon.ico" },
+  // Códigos de verificación de Search Console y Bing. Sin la variable cargada
+  // no se emite la etiqueta: un valor vacío es peor que ninguno.
+  verification: {
+    ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+      ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+      : {}),
+    ...(process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+      ? { other: { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION } }
+      : {}),
+  },
+  appleWebApp: { capable: true, title: BUSINESS.name, statusBarStyle: "default" },
+  icons: { icon: "/favicon.ico", apple: "/favicon.ico" },
   formatDetection: { telephone: true, address: false, email: false },
+  // Señales geográficas: AR-N es el código ISO 3166-2 de Misiones. Ayudan a
+  // atar el sitio a Puerto Iguazú cuando el dominio todavía es nuevo.
+  other: {
+    "geo.region": "AR-N",
+    "geo.placename": BUSINESS.city,
+  },
 };
 
 export const viewport: Viewport = {

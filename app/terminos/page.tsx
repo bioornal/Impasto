@@ -2,9 +2,14 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/LegalPage";
 import { BUSINESS } from "@/lib/business";
 
+const TITULO = "Términos y Condiciones";
+const DESCRIPCION = `Términos y condiciones del servicio de ${BUSINESS.name}, pizzería en ${BUSINESS.locationLabel}.`;
+
 export const metadata: Metadata = {
-  title: "Términos y Condiciones",
-  description: `Términos y condiciones del servicio de ${BUSINESS.name}, pizzería en ${BUSINESS.locationLabel}.`,
+  title: TITULO,
+  description: DESCRIPCION,
+  alternates: { canonical: "/terminos" },
+  openGraph: { title: TITULO, description: DESCRIPCION, url: "/terminos" },
 };
 
 export default function TerminosPage() {

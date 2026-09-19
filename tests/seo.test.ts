@@ -1,5 +1,7 @@
 import { jsonLdSitio, descripcionSitio, serializarJsonLd } from "../lib/seo";
 import { BUSINESS, type BusinessConfig } from "../lib/business";
+import { preguntasFrecuentes } from "../lib/faq";
+import { SITE_URL } from "../lib/site";
 import type { CatalogData } from "../types";
 
 let fallos = 0;
@@ -75,6 +77,23 @@ chequear("una empanada sin precio no inventa una oferta", sinPrecio.offers === u
 
 /* ── lo que no se declara ── */
 chequear("no publica aggregateRating con reseñas propias", local.aggregateRating === undefined);
+
+/* ── página, FAQ y acción de pedido ── */
+const pagina = grafo.find((nodo) => nodo["@type"] === "WebPage") as Nodo;
+const faq = grafo.find((nodo) => nodo["@type"] === "FAQPage") as Nodo;
+chequear("la página declara el sitio y el local a los que pertenece",
+  pagina.isPartOf["@id"] === sitio["@id"] && pagina.about["@id"] === local["@id"]);
+chequear("la página declara qué se puede leer en voz alta", pagina.speakable.cssSelector.includes("h1"));
+chequear("hay una pregunta en la FAQ por cada pregunta frecuente",
+  faq.mainEntity.length === preguntasFrecuentes(business).length);
+chequear("cada respuesta de la FAQ es un Answer",
+  faq.mainEntity.every((q: Nodo) => q.acceptedAnswer["@type"] === "Answer" && q.acceptedAnswer.text.length > 0));
+chequear("publica la acción de pedido online",
+  local.potentialAction["@type"] === "OrderAction" && local.potentialAction.target.urlTemplate === SITE_URL);
+chequear("declara el logo de la marca", typeof local.logo === "string" && local.logo.length > 0);
+chequear("declara que no toma reservas", local.acceptsReservations === false);
+chequear("cada ítem de la carta lleva imagen",
+  secciones.every((s: Nodo) => s.hasMenuItem.every((i: Nodo) => typeof i.image === "string" && i.image.length > 0)));
 
 /* ── sin bebidas la sección no existe ── */
 const sinBebidas = jsonLdSitio(business, { ...catalogo, bebidas: [] })["@graph"]

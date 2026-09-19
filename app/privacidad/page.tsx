@@ -2,9 +2,14 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/LegalPage";
 import { BUSINESS } from "@/lib/business";
 
+const TITULO = "Política de Privacidad";
+const DESCRIPCION = `Cómo ${BUSINESS.name} trata tus datos personales.`;
+
 export const metadata: Metadata = {
-  title: "Política de Privacidad",
-  description: `Cómo ${BUSINESS.name} trata tus datos personales.`,
+  title: TITULO,
+  description: DESCRIPCION,
+  alternates: { canonical: "/privacidad" },
+  openGraph: { title: TITULO, description: DESCRIPCION, url: "/privacidad" },
 };
 
 export default function PrivacidadPage() {
