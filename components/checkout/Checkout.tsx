@@ -37,10 +37,22 @@ const WHEN_OPTIONS: [string, string][] = [
   ["asap", "Lo antes posible"],
 ];
 
+/**
+ * El cuarto valor es el chip de la derecha, y dice **cuándo se paga**, nunca
+ * cuánto: el total es el mismo por los tres medios (`lib/order-quote.ts` no
+ * mira el medio de pago) porque la comisión de Mercado Pago ya está adentro
+ * del precio de lista —`config_negocio.comision_en_precio` incluye Pizzas,
+ * Empanadas y Bebidas, ver `lib/effective-prices.ts`—.
+ *
+ * Efectivo y transferencia decían "Sin recargo". Como la tarjeta decía otra
+ * cosa, el contraste le inventaba a la tarjeta un recargo que no existe, y de
+ * paso insinuaba que el precio depende de cómo se paga. Mantener los tres
+ * chips en el mismo eje (el tiempo) es lo que evita que vuelva a pasar.
+ */
 const PAGOS: [string, string, string, string][] = [
-  ["efectivo", "Efectivo", "Pagás al recibir el pedido", "Sin recargo"],
-  ["mercadopago", "Tarjeta", "Débito o crédito con Mercado Pago", "Pagás ahora"],
-  ["transferencia", "Transferencia", "Alias y CBU listos al confirmar", "Sin recargo"],
+  ["efectivo", "Efectivo", "Pagás al recibir el pedido", "Al recibir"],
+  ["mercadopago", "Tarjeta", "Débito o crédito con Mercado Pago", "Ahora"],
+  ["transferencia", "Transferencia", "Alias y CBU listos al confirmar", "Al confirmar"],
 ];
 
 export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }: CheckoutProps) {

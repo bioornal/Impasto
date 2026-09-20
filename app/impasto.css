@@ -19,7 +19,7 @@
   --accent-light: #e2714d;  /* terracota claro: solo la card "Tu caja". En el resto del sitio era demasiado naranja */
   --carbon: #181614;        /* carbón neutro, sin el tinte marrón de --ink */
   --green: #7dbd6a;
-  --ok-soft: #eaf0e6;       /* fondo de los chips «Seguro» y «Sin recargo» */
+  --ok-soft: #eaf0e6;       /* fondo del chip «Seguro» y del medio de pago elegido */
 
   --radius: 18px;
   --radius-lg: 20px;
