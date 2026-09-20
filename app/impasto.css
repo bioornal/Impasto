@@ -1931,10 +1931,7 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   .p-row-title{ display:flex; align-items:baseline; gap:7px; }
   .p-row-title h3{ font-family:var(--font-display); font-size:17.5px; font-weight:600; letter-spacing:-.018em; line-height:1.2; margin:0; }
   .p-row-flag{ font-family:var(--font-mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-2); flex:none; }
-  .p-row-desc{
-    margin:3px 0 6px; font-size:12.5px; line-height:1.4; color:var(--muted);
-    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-  }
+  .p-row-desc{ margin:3px 0 6px; font-size:12.5px; line-height:1.4; color:var(--muted); }
   .p-row-price{ font-family:var(--font-display); font-size:16.5px; font-weight:600; font-variant-numeric:lining-nums tabular-nums; }
   .p-row-side{ flex:none; display:flex; flex-direction:column; gap:6px; align-items:center; }
   .p-row-half{ width:44px; height:30px; border-radius:9px; border:1px solid var(--line); background:var(--bg); color:var(--ink-2); font-size:12.5px; font-weight:600; }
@@ -2103,10 +2100,9 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   .footer{ padding-bottom:calc(var(--dock-h, 68px) + 24px); }
 }
 
-/* Comprobación a 360px: descripción a una línea, miniatura 72px. */
+/* Comprobación a 360px: miniatura 72px. */
 @media (max-width:370px){
   .p-row-media{ width:72px; height:72px; }
-  .p-row-desc{ -webkit-line-clamp:1; }
 }
 
 @keyframes imp-foco{ from{ box-shadow:0 0 0 3px var(--gold); } to{ box-shadow:0 0 0 3px transparent; } }
