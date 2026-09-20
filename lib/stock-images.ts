@@ -137,7 +137,7 @@ export function getPizzaImage(nombre = "", id = "", tags: string[] = []): string
 
   const norm = (nombre + " " + tags.join(" ")).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  if (norm.includes("rucula") || norm.includes("crudo") || norm.includes("prosciutto") || norm.includes("gourmet")) {
+  if (norm.includes("rucula") || norm.includes("crudo") || norm.includes("prosciutto")) {
     return STOCK_IMAGES.pizzas.rucula;
   }
   if (norm.includes("fugazz") || norm.includes("cebolla") || norm.includes("fugaza")) {
@@ -166,6 +166,12 @@ export function getPizzaImage(nombre = "", id = "", tags: string[] = []): string
   }
   if (norm.includes("muzza") || norm.includes("mozza") || norm.includes("clasica")) {
     return STOCK_IMAGES.pizzas.muzzarella;
+  }
+  // "gourmet" va ultimo a proposito: es una etiqueta de estilo, no un ingrediente,
+  // y matchea muchisimas pizzas. Arriba de todo tapaba ramas mas especificas --
+  // una pizza de hongos etiquetada gourmet terminaba mostrando la foto de rucula.
+  if (norm.includes("gourmet")) {
+    return STOCK_IMAGES.pizzas.rucula;
   }
 
   // Lista rotativa como fallback por id
