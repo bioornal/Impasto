@@ -16,11 +16,12 @@ interface HeroProps {
   onHalf: () => void;
   featured?: Pizza;
   varieties: number;
-  /** Precio más bajo de la carta (`precioDesde`); null si no hay pizzas disponibles. */
-  desde: number | null;
+  // El "desde $X" no vive acá: lo muestra `Features`, la franja de abajo, con
+  // más peso visual. Repetirlo en el párrafo era decir el mismo precio dos
+  // veces en la misma pantalla.
 }
 
-export function Hero({ onCta, onHalf, featured, varieties: _varieties, desde }: HeroProps) {
+export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroProps) {
   return (
     <section className="hero">
       <div className="hero-bg" aria-hidden="true">
@@ -39,7 +40,7 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties, desde }: 
             Pizza híbrida:<br />técnica napoletana,<br /><em>alma argentina.</em>
           </h1>
           <p className="hero-lede">
-            Borde alto y aireado, base fina y tierna, muzzarella que se estira e ingredientes de primera que se reconocen de un bocado. Cada pizza se estira a mano en el momento y sale del horno a la piedra en minutos.{desde !== null && <> {PORCIONES.titulo} desde <b>{fmt(desde)}</b>.</>} Pedí online y recibila en tu casa, o pasá a retirar por el local.
+            Borde alto y aireado, base fina y tierna, muzzarella que se estira e ingredientes de primera que se reconocen de un bocado. Cada pizza se estira a mano en el momento y sale del horno a la piedra en minutos. Pedí online y recibila en tu casa, o pasá a retirar por el local.
           </p>
           <div className="hero-ctas">
             <button className="btn btn-primary btn-lg" onClick={() => onCta("pizzas")}>
@@ -81,7 +82,9 @@ export function Features({ freeShippingFrom: _freeShippingFrom, desde }: { freeS
     // La tarjeta de la pizza híbrida repetía el título del hero, que está justo
     // arriba: su lugar lo ocupa el precio. Solo vuelve si no hay "desde".
     desde !== null
-      ? [`Pizzas desde ${fmt(desde)}`, `${PORCIONES.titulo}, mitad y mitad sin recargo`]
+      // "mitad y mitad sin recargo" invitaba a comparar precios donde no hay
+      // nada que comparar: el modal muestra el total antes de agregar.
+      ? [`Pizzas desde ${fmt(desde)}`, `${PORCIONES.titulo}, con uno o dos gustos`]
       : ["Pizza Híbrida", "Técnica napoletana y alma argentina"],
     ["Delivery propio", "Envíos en Puerto Iguazú"],
     ["Take away", "Retiro en el local sin esperas"],

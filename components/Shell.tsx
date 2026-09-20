@@ -308,7 +308,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
       <Ticker desde={desde} />
 
       <main>
-        <Hero desde={desde} onCta={goSection} onHalf={() => openHalf()} featured={featured} varieties={data.pizzas.length} />
+        <Hero onCta={goSection} onHalf={() => openHalf()} featured={featured} varieties={data.pizzas.length} />
         <Features freeShippingFrom={business.freeShippingFrom} desde={desde} />
         <Promos promos={data.promos} onNav={goSection} />
         <PizzaList pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} foco={focoPizza} />

@@ -16,13 +16,21 @@
 export const precioMitadYMitad = (a: number, b: number): number => Math.max(a, b);
 
 /**
- * Partida en dos piezas componibles porque no las usan los mismos lectores
- * con el mismo alcance. El bot necesita las dos frases: primero decir que se
- * puede pedir, después cómo se cobra. El modal (`components/cart/HalfModal.tsx`)
- * solo necesita la segunda — el cliente ya está adentro del modal, así que
- * "se puede pedir" sobra ahí. Repetir la frase completa a mano en el modal, o
- * cortarla ahí con un `.split()`, era la misma clase de copia que esta regla
- * existe para evitar.
+ * Partida en dos piezas componibles porque no todos los lectores necesitan las
+ * dos frases.
+ *
+ * **El bot necesita las dos y no se le pueden sacar**: es el único que cotiza
+ * de memoria, así que sin "se cobra la más cara" sumaría dos precios donde el
+ * carrito cobra uno, y le mentiría al cliente.
+ *
+ * En el sitio, en cambio, la regla **no se enuncia**: el modal
+ * (`components/cart/HalfModal.tsx`) muestra el "Total" real y lo recalcula con
+ * cada mitad elegida, así que el precio está a la vista antes de agregar nada
+ * al carrito. Decirlo además con palabras ("sin recargo", "sin costo extra")
+ * invitaba a comparar precios donde no hay nada que comparar. Por eso hoy
+ * `COMO_SE_COBRA_MITAD_Y_MITAD` solo se usa para armar `REGLA_MITAD_Y_MITAD`
+ * (bot y FAQ); se deja separada para que el día que alguna vista la necesite
+ * no vuelva a escribirse a mano.
  */
 export const SE_PUEDE_PEDIR_MITAD_Y_MITAD = "Se puede pedir una pizza mitad y mitad de dos gustos.";
 export const COMO_SE_COBRA_MITAD_Y_MITAD = "Se cobra el precio de la más cara, sin recargo.";

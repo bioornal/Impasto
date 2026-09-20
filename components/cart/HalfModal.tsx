@@ -4,7 +4,7 @@ import { PizzaIllus } from "@/components/ui/PizzaIllus";
 import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { fmt } from "@/lib/utils";
-import { precioMitadYMitad, COMO_SE_COBRA_MITAD_Y_MITAD } from "@/lib/reglas-carta";
+import { precioMitadYMitad } from "@/lib/reglas-carta";
 import type { BusinessConfig } from "@/lib/business";
 import type { Pizza } from "@/types";
 
@@ -65,7 +65,10 @@ export function HalfModal({ startPizza, pizzas, business: _business, onClose }: 
           <div>
             <div className="kicker">Mitad y mitad</div>
             <h3>Dos gustos,<br />una pizza</h3>
-            <p className="lede">Tocá una mitad y elegí la variedad. {COMO_SE_COBRA_MITAD_Y_MITAD}</p>
+            {/* La regla de cobro no se explica con palabras: el "Total" de abajo
+                ya muestra el precio exacto y se actualiza con cada mitad que se
+                elige, así que el cliente lo ve antes de agregar nada al carrito. */}
+            <p className="lede">Tocá una mitad y elegí la variedad.</p>
           </div>
 
           <div className="half-wheel">

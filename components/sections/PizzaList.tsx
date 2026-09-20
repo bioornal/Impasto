@@ -5,14 +5,16 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useTweaks } from "@/components/providers/TweakProvider";
 import { fmt } from "@/lib/utils";
-import { argumento } from "@/lib/marca";
 import type { Pizza } from "@/types";
 
-const HORNO = argumento("horno");
-const PORCIONES = argumento("porciones");
-const MUZZARELLA = argumento("muzzarella");
-const BASE = argumento("base");
-
+/**
+ * La cabecera de esta sección **no repite los argumentos de marca**. Antes
+ * listaba estirado a mano, horno, base, porciones y muzzarella: los cinco ya
+ * los dice el hero, que está unos scrolls más arriba, y el horno además es una
+ * de sus tres cifras. Acá va solo lo que hace falta para usar *esta* carta —
+ * que se puede combinar dos gustos, y que las pestañas de abajo filtran—, así
+ * que si se agrega un argumento a `lib/marca.ts` no tiene por qué aparecer acá.
+ */
 const FILTERS: [string, string][] = [
   ["todas", "Todas"],
   ["clasica", "Clásicas"],
@@ -79,7 +81,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco }: PizzaListProps)
             <div className="sec-index">01 — La carta</div>
             <h2>Pizzas</h2>
           </div>
-          <p>Estiradas a mano en el momento y cocidas a {HORNO.detalle}. {BASE.titulo}, {PORCIONES.titulo.toLowerCase()} y abundante {MUZZARELLA.titulo.toLowerCase()}. Podés pedir cualquiera mitad y mitad sin costo extra.</p>
+          <p>Elegí un gusto, o combiná dos en la misma pizza. Filtrá por estilo: clásicas, gourmet, veggie o picantes.</p>
         </div>
       </div>
 
