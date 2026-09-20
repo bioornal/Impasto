@@ -39,7 +39,7 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties, desde }: 
             Pizza híbrida:<br />técnica napoletana,<br /><em>alma argentina.</em>
           </h1>
           <p className="hero-lede">
-            Hacemos una pizza que no existe en otro lado: borde alto y liviano y base fina y tierna al estilo napoletano, ingredientes de primera y muzzarella abundante como nos gusta acá.{desde !== null && <> {PORCIONES.titulo} desde <b>{fmt(desde)}</b>.</>} Pedí online y recibila en tu casa, o pasá a retirar por el local.
+            Borde alto y aireado, base fina y tierna, muzzarella que se estira e ingredientes de primera que se reconocen de un bocado. Cada pizza se estira a mano en el momento y sale del horno a la piedra en minutos.{desde !== null && <> {PORCIONES.titulo} desde <b>{fmt(desde)}</b>.</>} Pedí online y recibila en tu casa, o pasá a retirar por el local.
           </p>
           <div className="hero-ctas">
             <button className="btn btn-primary btn-lg" onClick={() => onCta("pizzas")}>
