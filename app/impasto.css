@@ -2053,7 +2053,11 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   /* ---- hoja del carrito (bottom sheet) ---- */
   .drawer-bg{ align-items:flex-end; justify-content:flex-start; background:rgba(18,16,13,.52); backdrop-filter:blur(3px); }
   .drawer{
-    width:100%; max-width:none; height:auto; max-height:640px;
+    width:100%; max-width:none; height:auto;
+    /* Crece con el pedido hasta casi toda la pantalla. Con el tope fijo de
+       640px, en un teléfono de 844px sobraban 200px de página borrosa arriba
+       mientras los ítems scrolleaban en 176px. En uno de 667px da lo mismo. */
+    max-height:640px; max-height:calc(100dvh - 24px);
     border-radius:24px 24px 0 0; box-shadow:0 -20px 60px rgba(0,0,0,.3);
     animation:imp-up .26s cubic-bezier(.2,.8,.2,1);
     transition:transform .2s ease;
@@ -2076,8 +2080,35 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   .qty-pill{ height:40px; }
   .qty-pill button{ width:40px; height:38px; }
   .ci-remove{ font-family:var(--font-body); font-size:12.5px; letter-spacing:0; text-transform:none; text-decoration:underline; text-underline-offset:3px; min-height:40px; }
-  .upsell{ flex:0 0 118px; }
-  .upsell-add{ width:40px; height:40px; }
+  /* Bebidas sugeridas: en la hoja la zona que scrollea mide 120–180px, y las
+     tarjetas con foto grande (246px de sección) no entraban ni solas. En mobile
+     son chips de una fila: foto chica, nombre y precio, «+» a la derecha. El
+     ::after del botón cubre el chip entero, así que se toca en cualquier lado. */
+  .upsells{ margin-top:14px; }
+  .upsells-head{ margin-bottom:8px; }
+  .upsells-head > div{ display:flex; flex-wrap:wrap; align-items:baseline; column-gap:8px; }
+  .upsells-head small{ margin-top:0; }
+  .upsell-rail{ gap:8px; padding:2px 18px 4px; }
+  .upsell{
+    position:relative; flex:0 0 auto; max-width:300px;
+    display:grid; grid-template-columns:40px minmax(0,auto) 34px; grid-template-rows:auto auto;
+    column-gap:10px; align-items:center; padding:6px 7px 6px 6px; border-radius:12px;
+  }
+  .upsell-top{ display:contents; }
+  .upsell-media{ grid-column:1; grid-row:1 / span 2; width:40px; height:40px; aspect-ratio:auto; border-radius:8px; }
+  .upsell b{
+    grid-column:2; grid-row:1; align-self:end; min-height:0; font-size:13px; line-height:1.25;
+    display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .upsell small{ grid-column:2; grid-row:2; align-self:start; margin-top:1px; font-size:12px; }
+  .upsell-add{
+    grid-column:3; grid-row:1 / span 2; position:static;
+    width:34px; height:34px; border:0; box-shadow:none;
+  }
+  .upsell-add svg{ width:14px; height:14px; }
+  .upsell-add::after{ content:""; position:absolute; inset:0; border-radius:12px; }
+  .upsell-add:hover{ transform:none; }
+  .upsell:active{ background:var(--bg-2); }
   .drawer-foot{ padding:16px 18px 24px; padding-bottom:calc(24px + env(safe-area-inset-bottom)); }
   .drawer-cta{ height:54px; border-radius:14px; }
   .drawer-note{ font-family:var(--font-body); font-size:12px; letter-spacing:0; text-transform:none; }
