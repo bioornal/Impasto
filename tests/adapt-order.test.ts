@@ -53,5 +53,33 @@ if (adapted2.items[0]?.detail === "1/2 Margarita + 1/2 Cuatro Quesos") {
   console.log("FALLA  soporte 'detalle' falló:", adapted2.items[0]?.detail);
 }
 
+const legadoMp = adaptOrder({ ...rawConDetalle, status: "pagado_mp", metodo_pago: "efectivo", estado_pago: "pendiente" });
+if (legadoMp.estado === "nuevo" && legadoMp.pago === "mercadopago" && legadoMp.pagoEstado === "aprobado") {
+  console.log("PASA   adaptOrder separa cocina y pago del POS histórico");
+} else {
+  fallos++;
+  console.log("FALLA  estado/pago histórico del POS:", legadoMp.estado, legadoMp.pago, legadoMp.pagoEstado);
+}
+const legadoReembolsado = adaptOrder({ ...rawConDetalle, status: "pagado_mp", metodo_pago: "efectivo", estado_pago: "reembolsado" });
+if (legadoReembolsado.pagoEstado === "reembolsado") {
+  console.log("PASA   devolución explícita prevalece sobre estado MP histórico");
+} else {
+  fallos++;
+  console.log("FALLA  devolución histórica:", legadoReembolsado.pagoEstado);
+}
+if (legadoMp.puedeDevolverMP === false && adaptOrder({ ...rawConDetalle, metodo_pago: "mercadopago", proveedor_pago: "mercadopago", mp_order_id: "mp-123" }).puedeDevolverMP === true) {
+  console.log("PASA   solo pagos gestionados por la web muestran devolución automática");
+} else {
+  fallos++;
+  console.log("FALLA  origen de devolución Mercado Pago");
+}
+const mpManual = adaptOrder({ ...rawConDetalle, external_reference: "", metodo_pago: "mercadopago", estado_pago: "pendiente" });
+if (mpManual.pagoMpManual === true) {
+  console.log("PASA   el panel distingue MP manual de tarjeta web");
+} else {
+  fallos++;
+  console.log("FALLA  MP manual identificado como pago automático");
+}
+
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
 process.exit(fallos === 0 ? 0 : 1);

@@ -66,9 +66,20 @@ y seguimiento. No se ejecutó ningún cobro real en esta tanda.
 Implementado y publicado en `carroFogon/next-app` el 22/09/2026, commit `4abfe7b`: la única
 cuenta permitida es `spezialichristian@gmail.com` y ninguna variable de entorno puede ampliar esa
 autorización. Login y rutas API validan la política; hay pruebas del correo único y del inventario
-de guards. Las creaciones, cambios y eliminaciones de pedidos dejan actor ID/email en
-`pedido_eventos` como auditoría best-effort. Falta comprobar el despliegue y, en producción, un
-login permitido y otro denegado.
+de guards. Las creaciones y cambios de pedidos dejan actor ID/email en `pedido_eventos` como
+auditoría best-effort. El dueño confirmó el 22/09/2026 que A03 fue probado en producción.
+
+### A04/A05 — contrato de cobro, caja y comandas
+
+Implementado el 22/09/2026 en Carro Fogón (commit `3cb82ea`) e Impasto; pendiente de prueba
+operativa en producción. El POS ahora crea pedidos sin descuento automático y con un único medio
+(`efectivo`, `transferencia` o `mercadopago`). El dueño verifica los cobros manuales MP en su app
+y después los acredita desde el POS; los pagos web siguen bajo control del proveedor. Cocina
+y cobro usan columnas separadas. La caja desglosa cobrado por medio y pendiente. `pagado_mp` y
+`parcial_mp` históricos solo se interpretan para lectura. La reimpresión desde el POS adapta
+productos web/pos, sabores, modalidad y notas, y bloquea tarjetas pendientes. El panel de
+Impasto solo ofrece devolución automática cuando existe una orden MP gestionada por la web.
+Faltan pruebas con pedidos reales y la corrección contable del recetario (A06/A08/A18).
 
 ## Los tres proyectos que comparten esta base
 
@@ -88,7 +99,8 @@ La base InsForge `3agqcygs.us-east.insforge.app` la usan **tres aplicaciones coo
   21/08/2026 también los precios efectivos. Escribirlas rompe el costeo del recetario.
 - `productos`, `pedidos`, `clientes` → **compartidas entre Impasto y Carro Fogón**.
   - **Impasto Web**: clientes compran online con Mercado Pago, efectivo o transferencia (`external_reference = 'IM-...'`).
-  - **Carro Fogón POS**: operarios cargan pedidos manuales de WhatsApp/llamadas (`metodo_pago = 'efectivo'`, `proyecto_id = 'impasto'`).
+  - **Carro Fogón POS**: operarios cargan pedidos manuales de WhatsApp/llamadas
+    (`proyecto_id = 'impasto'`; pago elegido entre efectivo, transferencia y MP desde A04).
 - `etiquetas`, `carritos`, `pedido_eventos`, `notificaciones`, `promociones`, `testimonios`,
   `info_empresa_impasto` → hoy las usa Impasto, viven en la misma base.
 - El recetario **lee `pedidos`** en `ganancias.astro` para calcular la ganancia del mes desglosando

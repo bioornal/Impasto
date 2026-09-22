@@ -188,7 +188,9 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund }: { order:
             <div style={{ padding: 14, background: "var(--a-warn-soft)", borderRadius: 12, fontSize: 13.5, color: "var(--a-warn)", marginTop: 12 }}>
               <b>Pedido bloqueado para cocina.</b>{" "}
               {order.pagoEstado === "pendiente"
-                ? "Esperando la acreditación automática de Mercado Pago."
+                ? order.pagoMpManual
+                  ? "Verificá el ingreso en la app de Mercado Pago y confirmalo desde Carro Fogón."
+                  : "Esperando la acreditación automática de Mercado Pago."
                 : `El pago figura como ${order.pagoEstado}; no preparar ni imprimir.`}
             </div>
           )}
@@ -213,10 +215,10 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund }: { order:
           <div style={{ padding: 14, background: "var(--a-bg)", borderRadius: 12, fontSize: 13.5, marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <div><b>Pago: </b><span style={{ textTransform: "capitalize" }}>{order.pago}</span><div className="text-muted" style={{ fontSize: 12 }}>Estado: {order.pagoEstado}</div></div>
             {order.pagoEstado === "pendiente" && order.pago !== "mercadopago" && <button className="btn btn-success btn-sm" onClick={() => onPayment("aprobado")}>Marcar pago recibido</button>}
-            {order.pagoEstado === "pendiente" && order.pago === "mercadopago" && <span className="text-muted" style={{ fontSize: 12 }}>Se actualiza automáticamente</span>}
+            {order.pagoEstado === "pendiente" && order.pago === "mercadopago" && <span className="text-muted" style={{ fontSize: 12 }}>{order.pagoMpManual ? "Verificar en MP y confirmar en Carro Fogón" : "Se actualiza automáticamente"}</span>}
           </div>
 
-          {order.pago === "mercadopago" && order.pagoEstado === "aprobado" && onRefund && (
+          {order.pago === "mercadopago" && order.pagoEstado === "aprobado" && order.puedeDevolverMP && onRefund && (
             <RefundBox total={order.total} onRefund={onRefund} />
           )}
 

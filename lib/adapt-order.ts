@@ -22,6 +22,10 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
       }))
     : [];
   const num = String(p.numero_pedido || "").padStart(4, "0");
+  const estadoCrudo = String(p.status || "normal");
+  const pagoMpHistorico = estadoCrudo === "pagado_mp";
+  const estadoPreparacion = ["normal", "pagado_mp", "parcial_mp"].includes(estadoCrudo)
+    ? "nuevo" : estadoCrudo;
   return {
     _dbId: String(p.id || ""),
     id: String(p.external_reference || "IM-" + num),
@@ -34,12 +38,15 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
     subtotal: Number(p.subtotal ?? Math.max(0, Number(p.total_con_descuento || total) - shipping)),
     shipping,
     total,
-    pago: String(p.metodo_pago || "n/d"),
-    pagoEstado: String(p.estado_pago || "pendiente"),
+    pago: pagoMpHistorico ? "mercadopago" : String(p.metodo_pago || "n/d"),
+    pagoEstado: pagoMpHistorico && !["rechazado", "reembolsado"].includes(String(p.estado_pago))
+      ? "aprobado" : String(p.estado_pago || "pendiente"),
+    puedeDevolverMP: p.proveedor_pago === "mercadopago" && Boolean(p.mp_order_id),
+    pagoMpManual: p.metodo_pago === "mercadopago" && !p.mp_order_id && !p.external_reference,
     cambio: String(p.cambio || ""),
     referencia: String(p.referencia || ""),
     cuando: String(p.cuando || "asap"),
-    estado: String(p.status || "nuevo") === "normal" ? "nuevo" : String(p.status || "nuevo"),
+    estado: estadoPreparacion,
     fecha: String(p.created_at || new Date().toISOString()),
     notas: String(p.notas || ""),
   };

@@ -117,7 +117,7 @@ Acción: verificar cada resultado, distinguir ausencia real de falla, hacer tran
 
 ### A03 — Alta: autorización de operarios demasiado amplia
 
-**Estado 22/09/2026: corregido y publicado en Carro Fogón (`4abfe7b`) con una única cuenta autorizada (`spezialichristian@gmail.com`), auditoría de actor y pruebas; pendiente de verificar el despliegue y hacer humo de acceso.**
+**Estado 22/09/2026: corregido y publicado en Carro Fogón (`4abfe7b`) con una única cuenta autorizada (`spezialichristian@gmail.com`), auditoría de actor y pruebas. El dueño confirmó que A03 ya fue probado en producción.**
 
 `requireAuth()` acepta cualquier usuario que InsForge valide, sin comprobar pertenencia a la pizzería ni rol de operario. Login tampoco comprueba habilitación. Las rutas de pedidos/clientes operan después con el cliente de backend, separado de la identidad del usuario.
 
@@ -129,6 +129,8 @@ Acción: lista explícita o roles de empleados verificados en servidor. Aceptaci
 
 ### A04 — Alta: estados incompatibles y cierre de caja incorrecto entre web y POS
 
+**Estado del código 22/09/2026: separación de preparación/cobro y caja por medio implementadas en Carro Fogón; adaptador histórico en Impasto. Pendiente de confirmar despliegue y ensayar la caja.** Los pedidos nuevos tienen un solo medio de pago y no reciben el descuento histórico del 10%. El dueño verifica manualmente en su app los cobros MP de pedidos telefónicos/WhatsApp antes de acreditarlos en el POS. No se modifica la acreditación automática de compras web. Los reembolsos parciales y el criterio de Ganancias siguen pendientes (A18/A06/A08).
+
 El POS marca pagos mediante `status=pagado_mp/parcial_mp`, mientras la web usa `estado_pago` y reserva `status` para preparación. El PATCH del POS no actualiza el modelo de pago de la web. Al pasar un pedido del POS de `pagado_mp` a `entregado` en la web, se pierde la marca de cobro que la caja del POS utiliza.
 
 La caja del POS suma MP únicamente con `status=pagado_mp`. El pedido web de $1.000 observado está aprobado en MP y entregado; ese criterio no lo cuenta como MP. También incluye todo pedido no cancelado, sin excluir tarjetas pendientes/rechazadas. El recetario reconoce comisión solo por `metodo_pago=mercadopago` y `estado_pago=aprobado`, por lo que un pago señalado solamente como `pagado_mp` en el POS no la genera.
@@ -138,6 +140,8 @@ Evidencia: [estados POS](C:/Users/spezi/Documents/PROYECTOS/carroFogon/next-app/
 Acción: separar preparación y cobro en los tres sistemas; registrar importes por medio de pago y saldo pendiente. Aceptación: entregar, cancelar, cobrar parcialmente y reembolsar no destruyen ni reinterpretan el historial de pagos.
 
 ### A05 — Alta: reimprimir un pedido web en POS pierde los productos
+
+**Estado del código 22/09/2026: adaptador e impresor del POS corregidos para los dos formatos de ítems, detalles, modalidad, notas, descuento real y medio de pago; pendiente de confirmar despliegue y hacer una prueba física.** El primer ticket del POS utiliza la fila devuelta por el servidor. Una tarjeta web pendiente o rechazada no habilita la reimpresión en el POS.
 
 El listado del POS trae pedidos web del mismo proyecto y pasa `p.productos` directamente a su impresor. Este solo entiende `nombre/cantidad/precio`; la web guarda `name/qty/price/detail`. La reimpresión de una compra web produce cantidades/precios cero y nombre vacío, aunque el total del pedido siga visible. Tampoco interpreta los sabores de cajas.
 

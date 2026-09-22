@@ -33,6 +33,8 @@ export interface AdminOrder {
   total: number;
   pago: string;
   pagoEstado: string;
+  puedeDevolverMP?: boolean;
+  pagoMpManual?: boolean;
   cambio: string;
   referencia: string;
   cuando: string;
