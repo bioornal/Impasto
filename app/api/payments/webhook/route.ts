@@ -10,6 +10,7 @@ import {
   verifyWebhookSignature,
   type EstadoPago,
 } from "@/lib/mercadopago";
+import { requireDbRows, requireUpdatedRow } from "@/lib/db-result";
 
 /** Resuelve la notificación contra la API de MP: nunca confiamos en el payload recibido. */
 async function resolverNotificacion(tipo: string, id: string) {
@@ -64,20 +65,22 @@ export async function POST(req: NextRequest) {
     // Se traen los datos completos porque un pago que se aprueba acá puede ser
     // la primera noticia que tenga el local de ese pedido: si la tarjeta quedó
     // pendiente en el checkout, nunca se avisó.
-    const { data } = await db.database
+    const lookup = await db.database
       .from("pedidos")
       .select("id,estado_pago,numero_pedido,external_reference,nombre_cliente,telefono_cliente,email_cliente,direccion,modalidad,productos,subtotal,envio,total,metodo_pago")
       .eq("external_reference", resuelto.externalReference)
+      .eq("proyecto_id", "impasto")
       .limit(1);
 
-    const pedido = Array.isArray(data) ? data[0] : undefined;
+    const rows = requireDbRows(lookup as { data: Record<string, unknown>[] | null; error: unknown }, "leer el pedido del webhook");
+    const pedido = rows[0];
     if (!pedido) return NextResponse.json({ ok: true, ignored: true });
 
     // Idempotencia: si el estado no cambió, no volvemos a escribir ni a registrar evento.
     if (pedido.estado_pago === resuelto.estado) return NextResponse.json({ ok: true, unchanged: true });
 
     const estado = resuelto.estado as EstadoPago;
-    await db.database
+    const persisted = await db.database
       .from("pedidos")
       .update({
         estado_pago: estado,
@@ -85,7 +88,13 @@ export async function POST(req: NextRequest) {
         ...(resuelto.mpOrderId ? { mp_order_id: resuelto.mpOrderId } : {}),
         ...(estado === "aprobado" ? { pagado_en: new Date().toISOString() } : {}),
       })
-      .eq("id", pedido.id);
+      .eq("id", pedido.id)
+      .eq("proyecto_id", "impasto")
+      .select("id,estado_pago");
+    requireUpdatedRow(
+      persisted as { data: { id: string; estado_pago: string }[] | null; error: unknown },
+      "guardar el pago recibido por webhook",
+    );
 
     await registrarEvento({
       pedidoId: String(pedido.id),

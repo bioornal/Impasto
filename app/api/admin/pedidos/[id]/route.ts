@@ -3,6 +3,8 @@ import { db } from "@/lib/insforge";
 import { SUCURSAL_ID } from "@/lib/business";
 import { requireAdmin } from "@/lib/admin-auth";
 import { registrarEvento } from "@/lib/orders";
+import { validarActualizacionAdminPedido } from "@/lib/admin-order-update";
+import { requireDbRows, requireUpdatedRow } from "@/lib/db-result";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const unauthorized = await requireAdmin();
@@ -19,8 +21,43 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     updates.estado_pago = body.estado_pago;
   }
   if (Object.keys(updates).length === 0) return NextResponse.json({ ok: false, error: "actualización vacía" }, { status: 400 });
-  const { error } = await db.database.from("pedidos").update(updates).eq("id", id).eq("sucursal_id", SUCURSAL_ID);
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+  try {
+    const lookup = await db.database
+      .from("pedidos")
+      .select("id,metodo_pago,estado_pago,status")
+      .eq("id", id)
+      .eq("sucursal_id", SUCURSAL_ID)
+      .eq("proyecto_id", "impasto")
+      .limit(1);
+    const rows = requireDbRows(
+      lookup as { data: Record<string, unknown>[] | null; error: unknown },
+      "leer el pedido antes de actualizarlo",
+    );
+    const pedido = rows[0];
+    if (!pedido) return NextResponse.json({ ok: false, error: "Pedido no encontrado" }, { status: 404 });
+
+    const motivoBloqueo = validarActualizacionAdminPedido(pedido, updates);
+    if (motivoBloqueo) {
+      return NextResponse.json({ ok: false, error: motivoBloqueo }, { status: 409 });
+    }
+
+    const updated = await db.database
+      .from("pedidos")
+      .update(updates)
+      .eq("id", id)
+      .eq("sucursal_id", SUCURSAL_ID)
+      .eq("proyecto_id", "impasto")
+      .eq("estado_pago", String(pedido.estado_pago || ""))
+      .select("id");
+    requireUpdatedRow(
+      updated as { data: { id: string }[] | null; error: unknown },
+      "actualizar el pedido desde el panel",
+    );
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "No se pudo actualizar el pedido";
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  }
 
   // Deja el timestamp de cada cambio hecho desde el panel.
   if (updates.status) await registrarEvento({ pedidoId: id, tipo: "estado", valor: updates.status, origen: "panel" });
@@ -33,7 +70,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
   const { id } = await params;
-  const { error } = await db.database.from("pedidos").delete().eq("id", id).eq("sucursal_id", SUCURSAL_ID);
+  const { error } = await db.database.from("pedidos").delete().eq("id", id).eq("sucursal_id", SUCURSAL_ID).eq("proyecto_id", "impasto");
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

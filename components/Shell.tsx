@@ -28,6 +28,12 @@ import type { CheckoutOrder } from "@/components/checkout/Checkout";
 import type { CardFormData } from "@/components/checkout/CardPayment";
 import type { CatalogData, Pizza, CartItem } from "@/types";
 import { STOCK_IMAGES } from "@/lib/stock-images";
+import {
+  clearCardAttemptReference,
+  createCardAttemptReference,
+  getOrCreateCardAttemptReference,
+  shouldConfirmPendingCardAttempt,
+} from "@/lib/card-attempt";
 
 /** Mismo corte que `@media (max-width:760px)` en impasto.css. */
 const esMobile = () => typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches;
@@ -97,6 +103,22 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
   const [nav, setNav] = useState("home");
   const [order, setOrder] = useState<ConfirmedOrder | null>(null);
   const lastCardRef = useRef<string>("");
+
+  const cardReference = () => {
+    try {
+      const reference = getOrCreateCardAttemptReference(sessionStorage);
+      lastCardRef.current = reference;
+      return reference;
+    } catch {
+      if (!lastCardRef.current) lastCardRef.current = createCardAttemptReference();
+      return lastCardRef.current;
+    }
+  };
+
+  const clearCardReference = (expected: string) => {
+    try { clearCardAttemptReference(sessionStorage, expected); } catch {}
+    if (lastCardRef.current === expected) lastCardRef.current = "";
+  };
 
   // Mobile: búsqueda, sección activa, colapso del header y caja de empanadas.
   // La búsqueda mobile tiene su propio texto: no filtra la carta, lleva a la pizza.
@@ -461,18 +483,42 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
             setScreen("confirm");
           }}
           onCardConfirm={async (submitted: CheckoutOrder, card: CardFormData) => {
+            // Se genera y persiste antes del request. Si la respuesta se pierde,
+            // el próximo intento recupera el mismo pedido en vez de cobrar otro.
+            const externalReference = cardReference();
             const response = await fetch("/api/payments/card", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ...submitted, ...card, externalReference: lastCardRef.current }),
+              body: JSON.stringify({ ...submitted, ...card, externalReference }),
             });
             const result = await response.json();
-            if (result?.numero) {
-              lastCardRef.current = result.numero;
+            if (shouldConfirmPendingCardAttempt(response.status, result)) {
+              clearCardReference(externalReference);
+              clear();
+              try {
+                localStorage.setItem("impasto_active_order", JSON.stringify({ ref: result.numero, at: Date.now() }));
+              } catch {}
+              setOrder({
+                ...submitted,
+                numero: result.numero,
+                estadoPago: "pendiente",
+                items: result.items,
+                subtotal: result.subtotal,
+                shipping: result.shipping,
+                total: result.total,
+                fecha: new Date(),
+              });
+              setScreen("confirm");
+              return;
             }
-            // 402 es rechazo de la tarjeta: el checkout queda abierto para reintentar.
-            if (!response.ok || !result.ok) throw new Error(result.error || "No se pudo procesar el pago");
-            lastCardRef.current = "";
+            // Solo un rechazo definitivo habilita un intento nuevo. Los 202,
+            // 409 y 5xx conservan la referencia: el cobro anterior podría seguir
+            // procesándose y no hay que abrir una segunda operación.
+            if (!response.ok || !result.ok) {
+              if (response.status === 402) clearCardReference(externalReference);
+              throw new Error(result.error || "No se pudo procesar el pago");
+            }
+            clearCardReference(externalReference);
             clear();
             try {
               localStorage.setItem("impasto_active_order", JSON.stringify({ ref: result.numero, at: Date.now() }));

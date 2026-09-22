@@ -41,6 +41,32 @@ export function clavesDePedidos(pedidos: { _dbId: string }[]): Set<string> {
   return new Set(pedidos.map((p) => p._dbId));
 }
 
+/**
+ * IDs que ya estaban habilitados para cocina al iniciar el panel.
+ * Una tarjeta pendiente queda deliberadamente afuera para poder anunciarla
+ * cuando Mercado Pago la apruebe en un sondeo posterior.
+ */
+export function clavesDePedidosParaCocina<T extends PedidoVisibleParams & { _dbId: string }>(
+  pedidos: T[],
+): Set<string> {
+  return new Set(pedidos.filter(esPedidoParaCocina).map((p) => p._dbId));
+}
+
+/**
+ * Mantiene un historial monótono de pedidos que alguna vez entraron a cocina.
+ * No elimina IDs al cancelar: así una eventual reactivación no vuelve a sonar.
+ */
+export function registrarPedidosConocidosParaCocina<T extends PedidoVisibleParams & { _dbId: string }>(
+  conocidos: Set<string>,
+  pedidos: T[],
+): Set<string> {
+  const siguientes = new Set(conocidos);
+  for (const pedido of pedidos) {
+    if (esPedidoParaCocina(pedido)) siguientes.add(pedido._dbId);
+  }
+  return siguientes;
+}
+
 export function pedidosNuevosParaCocina<T extends PedidoVisibleParams & { _dbId: string }>(
   conocidos: Set<string>,
   pedidos: T[],

@@ -1,8 +1,10 @@
 ﻿import {
   clavesDePedidos,
+  clavesDePedidosParaCocina,
   esPedidoParaCocina,
   esPedidoValidoParaVentas,
   pedidosNuevosParaCocina,
+  registrarPedidosConocidosParaCocina,
 } from "../lib/pedido-visible";
 import { adaptOrder } from "../lib/adapt-order";
 
@@ -78,6 +80,43 @@ const hoyCancelado = adaptOrder({ ...filaPos("c2e8f0aa-cancelado", "2026-09-17")
 verificar(
   "un pedido nuevo pero cancelado no suena",
   pedidosNuevosParaCocina(clavesDePedidos([ayer]), [hoyCancelado]).length === 0,
+);
+
+const tarjetaPendiente = adaptOrder({
+  ...filaPos("tarjeta-pendiente", "2026-09-17"),
+  metodo_pago: "mercadopago",
+  estado_pago: "pendiente",
+});
+const conocidosMientrasPendiente = clavesDePedidosParaCocina([tarjetaPendiente]);
+verificar(
+  "una tarjeta pendiente no se marca como conocida por cocina",
+  conocidosMientrasPendiente.size === 0,
+);
+
+const tarjetaAprobada = { ...tarjetaPendiente, pagoEstado: "aprobado" };
+const aprobadosNuevos = pedidosNuevosParaCocina(conocidosMientrasPendiente, [tarjetaAprobada]);
+verificar(
+  "una tarjeta suena cuando pasa de pendiente a aprobada",
+  aprobadosNuevos.length === 1 && aprobadosNuevos[0]._dbId === tarjetaAprobada._dbId,
+);
+
+const conocidosDespuesDeAprobar = registrarPedidosConocidosParaCocina(
+  conocidosMientrasPendiente,
+  [tarjetaAprobada],
+);
+verificar(
+  "una tarjeta aprobada no vuelve a sonar en el siguiente sondeo",
+  pedidosNuevosParaCocina(conocidosDespuesDeAprobar, [tarjetaAprobada]).length === 0,
+);
+
+const aprobadaLuegoCancelada = { ...tarjetaAprobada, estado: "cancelado" };
+const conocidosDespuesDeCancelar = registrarPedidosConocidosParaCocina(
+  conocidosDespuesDeAprobar,
+  [aprobadaLuegoCancelada],
+);
+verificar(
+  "cancelar no olvida un pedido ya anunciado a cocina",
+  conocidosDespuesDeCancelar.has(tarjetaAprobada._dbId),
 );
 
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);

@@ -6,6 +6,8 @@ import { estadoTienda, fechaLocal } from "@/lib/hours";
 import { validarCuando } from "@/lib/validar-cuando";
 import { SUCURSAL_ID } from "@/lib/business";
 import { nuevaReferencia } from "@/lib/referencia";
+import { resolveOrderExternalReference } from "@/lib/card-attempt";
+import { requireUpdatedRow } from "@/lib/db-result";
 import type { EstadoPago } from "@/lib/mercadopago";
 import type { CartItem } from "@/types";
 
@@ -96,6 +98,7 @@ async function upsertCliente(order: OrderPayload) {
 export async function createPedido(
   order: OrderPayload,
   payment: { metodoPago: string; estadoPago: EstadoPago; proveedorPago: string },
+  options: { externalReference?: string } = {},
 ): Promise<CreatedOrder> {
   const business = await getBusinessConfig();
 
@@ -112,7 +115,10 @@ export async function createPedido(
   // lleva además un sufijo aleatorio. Ver `lib/referencia.ts`: sin él la
   // referencia se repetía cada 15 minutos y era adivinable desde afuera.
   const numero = (Date.now() % 900000) + 100000;
-  const referencia = nuevaReferencia(numero);
+  const referencia = resolveOrderExternalReference(
+    options.externalReference,
+    () => nuevaReferencia(numero),
+  );
 
   const { data, error } = await db.database
     .from("pedidos")
@@ -145,8 +151,12 @@ export async function createPedido(
     })
     .select("id");
 
-  if (error) throw error;
-  const id = String((Array.isArray(data) ? data[0]?.id : undefined) || "");
+  const inserted = requireUpdatedRow(
+    { data: Array.isArray(data) ? data : null, error },
+    "crear el pedido",
+  );
+  const id = String((inserted as { id?: unknown }).id || "");
+  if (!id) throw new Error("El pedido se guardó sin identificador");
 
   await registrarEvento({
     pedidoId: id,

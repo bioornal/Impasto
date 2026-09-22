@@ -1,14 +1,100 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
-import { createPedido, validateOrderPayload, registrarEvento, clearCartDraft, type CreatedOrder } from "@/lib/orders";
-import type { CartItem } from "@/types";
+import { createPedido, validateOrderPayload, registrarEvento, clearCartDraft, type CreatedOrder, type OrderPayload } from "@/lib/orders";
 import { createCardOrder, mapOrderStatus, type EstadoPago, type MpOrder } from "@/lib/mercadopago";
 import { notificarPedido } from "@/lib/notifications";
 import { limitar, limpiarIntentosViejos } from "@/lib/rate-limit";
+import {
+  decideCardAttempt,
+  normalizeCardAttemptReference,
+  type PersistedCardAttempt,
+} from "@/lib/card-attempt";
+import { DatabaseOperationError, requireDbRows, requireUpdatedRow } from "@/lib/db-result";
 
 const TIPOS_TARJETA = ["credit_card", "debit_card"];
 
 const text = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+
+interface ExistingCardOrder extends PersistedCardAttempt {
+  total: number;
+  subtotal: number;
+  envio: number;
+  mp_order_id?: string;
+}
+
+function createdFromExisting(existing: ExistingCardOrder): CreatedOrder {
+  return {
+    id: existing.id,
+    numero: Number(existing.external_reference.match(/^IM-(\d{6})-/)?.[1] || 0),
+    referencia: existing.external_reference,
+    items: Array.isArray(existing.productos) ? existing.productos : [],
+    subtotal: Number(existing.subtotal || 0),
+    shipping: Number(existing.envio || 0),
+    total: Number(existing.total || 0),
+    freeShipping: Number(existing.envio || 0) === 0,
+  };
+}
+
+async function findExistingCardOrder(reference: string): Promise<ExistingCardOrder | null> {
+  const result = await db.database
+    .from("pedidos")
+    .select("id,total,subtotal,envio,external_reference,productos,estado_pago,nombre_cliente,telefono_cliente,email_cliente,direccion,modalidad,mp_order_id")
+    .eq("external_reference", reference)
+    .eq("proyecto_id", "impasto")
+    .limit(1);
+  const rows = requireDbRows(result as { data: ExistingCardOrder[] | null; error: unknown }, "leer el intento de pago");
+  return rows[0] ?? null;
+}
+
+async function responseForExistingCardOrder(existing: ExistingCardOrder, order: OrderPayload) {
+  const decision = decideCardAttempt(existing, order);
+  const created = createdFromExisting(existing);
+  const common = {
+    numero: created.referencia,
+    estadoPago: existing.estado_pago,
+    items: created.items,
+    subtotal: created.subtotal,
+    shipping: created.shipping,
+    total: created.total,
+  };
+
+  if (decision === "recover-approved") {
+    await clearCartDraft();
+    return NextResponse.json({ ok: true, recovered: true, ...common });
+  }
+  if (decision === "wait-pending") {
+    return NextResponse.json(
+      { ok: false, ...common, error: "El pago anterior todavía se está confirmando. No volvimos a cobrarte." },
+      { status: 202 },
+    );
+  }
+  if (decision === "return-rejected") {
+    return NextResponse.json(
+      { ok: false, ...common, error: "El intento anterior fue rechazado. Podés volver a intentarlo con una nueva tarjeta." },
+      { status: 402 },
+    );
+  }
+  if (decision === "conflict") {
+    return NextResponse.json(
+      { ok: false, error: "La referencia de pago pertenece a otro carrito. Actualizá el checkout e intentá nuevamente." },
+      { status: 409 },
+    );
+  }
+  return NextResponse.json(
+    { ok: false, ...common, error: "Ese intento de pago ya está cerrado." },
+    { status: 409 },
+  );
+}
+
+async function persistPaymentState(pedidoId: string, values: Record<string, unknown>) {
+  const result = await db.database
+    .from("pedidos")
+    .update(values)
+    .eq("id", pedidoId)
+    .eq("proyecto_id", "impasto")
+    .select("id,estado_pago");
+  return requireUpdatedRow(result as { data: { id: string; estado_pago: string }[] | null; error: unknown }, "guardar el estado del pago");
+}
 
 /** Mensaje mostrable según por qué Mercado Pago no aprobó el pago. */
 function motivoRechazo(statusDetail: string) {
@@ -62,62 +148,34 @@ export async function POST(req: NextRequest) {
   }
 
   let pedidoId = "";
+  let attemptReference = "";
   try {
     const order = validateOrderPayload(body);
 
     let created: CreatedOrder;
-    const retryRef =
-      typeof body.externalReference === "string"
-        ? body.externalReference.trim()
-        : typeof body.referencia === "string"
-        ? body.referencia.trim()
-        : "";
+    const normalizedReference = normalizeCardAttemptReference(body.externalReference);
+    if (!normalizedReference) throw new Error("Referencia de pago inválida. Actualizá el checkout e intentá nuevamente.");
+    attemptReference = normalizedReference;
 
-    let existingPedido: {
-      id: string;
-      total: number;
-      subtotal: number;
-      envio: number;
-      external_reference: string;
-      productos: CartItem[];
-      estado_pago: string;
-    } | null = null;
+    const existingPedido = await findExistingCardOrder(attemptReference);
+    if (existingPedido) return responseForExistingCardOrder(existingPedido, order);
 
-    if (retryRef) {
-      const { data: existing } = await db.database
-        .from("pedidos")
-        .select("id, total, subtotal, envio, external_reference, productos, estado_pago")
-        .eq("external_reference", retryRef)
-        .eq("proyecto_id", "impasto")
-        .limit(1);
-
-      if (existing && existing.length > 0 && existing[0].estado_pago !== "aprobado") {
-        existingPedido = existing[0];
-      }
-    }
-
-    if (existingPedido) {
-      pedidoId = existingPedido.id;
-      created = {
-        id: existingPedido.id,
-        numero: Number(retryRef.replace(/\D/g, "").slice(0, 6)) || 0,
-        referencia: existingPedido.external_reference,
-        items: Array.isArray(existingPedido.productos) ? existingPedido.productos : order.items,
-        subtotal: Number(existingPedido.subtotal || 0),
-        shipping: Number(existingPedido.envio || 0),
-        total: Number(existingPedido.total || 0),
-        freeShipping: false,
-      };
-    } else {
-      // El pedido se registra antes de cobrar: si la respuesta de MP se pierde,
-      // el webhook lo encuentra por external_reference.
+    // La referencia nace en el navegador y se guarda antes de llamar a MP. Si
+    // la respuesta se pierde, el siguiente request encuentra este mismo pedido.
+    try {
       created = await createPedido(order, {
         metodoPago: "mercadopago",
         estadoPago: "pendiente",
         proveedorPago: "mercadopago",
-      });
-      pedidoId = created.id;
+      }, { externalReference: attemptReference });
+    } catch (createError) {
+      // Dos envíos simultáneos pueden llegar a consultar antes del INSERT. El
+      // índice único deja uno solo; el perdedor recupera la fila ganadora.
+      const racedPedido = await findExistingCardOrder(attemptReference);
+      if (racedPedido) return responseForExistingCardOrder(racedPedido, order);
+      throw createError;
     }
+    pedidoId = created.id;
 
     let mpOrder: MpOrder;
     try {
@@ -138,7 +196,7 @@ export async function POST(req: NextRequest) {
       // así que se dejan pendientes para que los resuelva el webhook.
       const estado: EstadoPago = httpStatus >= 400 && httpStatus < 500 ? "rechazado" : "pendiente";
 
-      await db.database.from("pedidos").update({ estado_pago: estado }).eq("id", pedidoId);
+      await persistPaymentState(pedidoId, { estado_pago: estado });
       await registrarEvento({
         pedidoId,
         tipo: "pago",
@@ -158,6 +216,10 @@ export async function POST(req: NextRequest) {
           ok: false,
           numero: created.referencia,
           estadoPago: estado,
+          items: created.items,
+          subtotal: created.subtotal,
+          shipping: created.shipping,
+          total: created.total,
           error: validacion
             || (estado === "rechazado"
               ? "El pago fue rechazado. Probá con otra tarjeta o elegí efectivo."
@@ -170,15 +232,12 @@ export async function POST(req: NextRequest) {
     const pago = mpOrder.transactions?.payments?.[0];
     const estadoPago = mapOrderStatus(mpOrder.status, mpOrder.status_detail);
 
-    await db.database
-      .from("pedidos")
-      .update({
-        estado_pago: estadoPago,
-        mp_order_id: String(mpOrder.id || ""),
-        id_pago: String(pago?.id || ""),
-        ...(estadoPago === "aprobado" ? { pagado_en: new Date().toISOString() } : {}),
-      })
-      .eq("id", pedidoId);
+    await persistPaymentState(pedidoId, {
+      estado_pago: estadoPago,
+      mp_order_id: String(mpOrder.id || ""),
+      id_pago: String(pago?.id || ""),
+      ...(estadoPago === "aprobado" ? { pagado_en: new Date().toISOString() } : {}),
+    });
 
     await registrarEvento({
       pedidoId,
@@ -236,7 +295,13 @@ export async function POST(req: NextRequest) {
       total: created.total,
     });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "No se pudo procesar el pago";
-    return NextResponse.json({ ok: false, error: msg }, { status: 400 });
+    const persistenceFailure = err instanceof DatabaseOperationError;
+    const msg = persistenceFailure
+      ? "No pudimos confirmar el estado del pedido. No vuelvas a pagar: reintentá para recuperar este mismo intento."
+      : err instanceof Error ? err.message : "No se pudo procesar el pago";
+    return NextResponse.json(
+      { ok: false, ...(attemptReference ? { numero: attemptReference } : {}), error: msg },
+      { status: persistenceFailure ? 500 : 400 },
+    );
   }
 }

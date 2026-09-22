@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 import type { AdminOrder } from "./types";
+import { esPedidoParaCocina } from "@/lib/pedido-visible";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 const timeAgo = (iso: string) => {
@@ -71,9 +72,11 @@ export function Orders() {
                     <td className="right" style={{ whiteSpace: "nowrap" }}>
                       <button
                         className="btn btn-icon btn-ghost"
-                        title="Imprimir comanda térmica"
+                        title={esPedidoParaCocina(o) ? "Imprimir comanda térmica" : "Pago sin acreditar: la comanda está bloqueada"}
+                        disabled={!esPedidoParaCocina(o)}
                         onClick={e => {
                           e.stopPropagation();
+                          if (!esPedidoParaCocina(o)) return;
                           setSelected(o);
                           setTimeout(() => window.print(), 150);
                         }}
@@ -101,8 +104,12 @@ export function Orders() {
         <OrderDetail
           order={selected}
           onClose={() => setSelected(null)}
-          onUpdate={(estado) => { updateOrderStatus(selected._dbId, estado); setSelected({ ...selected, estado }); }}
-          onPayment={(estado) => { updateOrderPayment(selected._dbId, estado); setSelected({ ...selected, pagoEstado: estado }); }}
+          onUpdate={async (estado) => {
+            if (await updateOrderStatus(selected._dbId, estado)) setSelected({ ...selected, estado });
+          }}
+          onPayment={async (estado) => {
+            if (await updateOrderPayment(selected._dbId, estado)) setSelected({ ...selected, pagoEstado: estado });
+          }}
           onRefund={(monto) => { refundOrder(selected._dbId, monto); setSelected(null); }}
         />
       )}
@@ -156,6 +163,7 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund }: { order:
   const [now] = useState(() => Date.now());
   const steps = ["nuevo", "preparando", "en-camino", "entregado"];
   const currentIdx = steps.indexOf(order.estado);
+  const habilitadoCocina = esPedidoParaCocina(order);
 
   return (
     <div className="modal-bg" onClick={onClose}>
@@ -176,9 +184,18 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund }: { order:
             ))}
           </div>
 
+          {!habilitadoCocina && order.pago === "mercadopago" && (
+            <div style={{ padding: 14, background: "var(--a-warn-soft)", borderRadius: 12, fontSize: 13.5, color: "var(--a-warn)", marginTop: 12 }}>
+              <b>Pedido bloqueado para cocina.</b>{" "}
+              {order.pagoEstado === "pendiente"
+                ? "Esperando la acreditación automática de Mercado Pago."
+                : `El pago figura como ${order.pagoEstado}; no preparar ni imprimir.`}
+            </div>
+          )}
+
           {order.estado !== "entregado" && order.estado !== "cancelado" && (
             <div className="flex gap-8 mt-12" style={{ flexWrap: "wrap" }}>
-              {currentIdx < 3 && (
+              {habilitadoCocina && currentIdx < 3 && (
                 <button className="btn btn-primary" onClick={() => onUpdate(steps[currentIdx + 1])}>
                   <Icon.Arrow /> Marcar como &ldquo;{steps[currentIdx + 1].replace("-", " ")}&rdquo;
                 </button>
@@ -195,7 +212,8 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund }: { order:
 
           <div style={{ padding: 14, background: "var(--a-bg)", borderRadius: 12, fontSize: 13.5, marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <div><b>Pago: </b><span style={{ textTransform: "capitalize" }}>{order.pago}</span><div className="text-muted" style={{ fontSize: 12 }}>Estado: {order.pagoEstado}</div></div>
-            {order.pagoEstado === "pendiente" && <button className="btn btn-success btn-sm" onClick={() => onPayment("aprobado")}>Marcar pago recibido</button>}
+            {order.pagoEstado === "pendiente" && order.pago !== "mercadopago" && <button className="btn btn-success btn-sm" onClick={() => onPayment("aprobado")}>Marcar pago recibido</button>}
+            {order.pagoEstado === "pendiente" && order.pago === "mercadopago" && <span className="text-muted" style={{ fontSize: 12 }}>Se actualiza automáticamente</span>}
           </div>
 
           {order.pago === "mercadopago" && order.pagoEstado === "aprobado" && onRefund && (
@@ -235,14 +253,20 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund }: { order:
         </div>
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
-          <button className="btn btn-primary" onClick={() => window.print()} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <button
+            className="btn btn-primary"
+            disabled={!habilitadoCocina}
+            title={habilitadoCocina ? "Imprimir comanda" : "Pago sin acreditar: la comanda está bloqueada"}
+            onClick={() => { if (habilitadoCocina) window.print(); }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
             <Icon.Printer /> Imprimir comanda
           </button>
         </div>
       </div>
 
       {/* Comanda térmica lista para impresión (80mm / 58mm) */}
-      <ComandaTicket order={order} />
+      {habilitadoCocina && <ComandaTicket order={order} />}
     </div>
   );
 }
