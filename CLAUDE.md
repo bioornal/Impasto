@@ -85,9 +85,10 @@ Faltan pruebas con pedidos reales y la corrección contable del recetario (A06/A
 
 El dueño eligió bloquear ventas cuando falla una fuente necesaria de precios, sin usar el
 último precio ni asumir costo cero. Una receta individual inválida bloqueará solo sus productos.
-El diseño está en `docs/superpowers/specs/2026-09-22-precios-fail-closed-design.md`;
-**todavía no está implementado ni probado en producción**. La revisión del documento y el
-plan de implementación son los siguientes pasos.
+El diseño aprobado está en `docs/superpowers/specs/2026-09-22-precios-fail-closed-design.md`
+y el plan en `docs/superpowers/plans/2026-09-22-precios-fail-closed.md`. **Todavía no está
+implementado ni probado en producción.** El siguiente paso es revisar el plan y elegir el
+método de ejecución antes de tocar los proyectos.
 
 ## Los tres proyectos que comparten esta base
 
