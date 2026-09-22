@@ -81,6 +81,14 @@ productos web/pos, sabores, modalidad y notas, y bloquea tarjetas pendientes. El
 Impasto solo ofrece devolución automática cuando existe una orden MP gestionada por la web.
 Faltan pruebas con pedidos reales y la corrección contable del recetario (A06/A08/A18).
 
+### A09 — precios ante fallas de costos
+
+El dueño eligió bloquear ventas cuando falla una fuente necesaria de precios, sin usar el
+último precio ni asumir costo cero. Una receta individual inválida bloqueará solo sus productos.
+El diseño está en `docs/superpowers/specs/2026-09-22-precios-fail-closed-design.md`;
+**todavía no está implementado ni probado en producción**. La revisión del documento y el
+plan de implementación son los siguientes pasos.
+
 ## Los tres proyectos que comparten esta base
 
 La base InsForge `3agqcygs.us-east.insforge.app` la usan **tres aplicaciones coordinadas**:
