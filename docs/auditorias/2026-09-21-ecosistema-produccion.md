@@ -4,14 +4,15 @@ Fecha de cierre de comprobaciones: 21/09/2026, aproximadamente 15:37, Argentina.
 
 ## Estado de implementación posterior
 
-Actualización local del 22/09/2026, todavía sin commit, push ni despliegue:
+Actualización del 22/09/2026, publicada en `origin/main` con el commit `3013480`; el
+despliegue y la prueba operativa en producción todavía no fueron verificados:
 
-- **A01 implementado localmente:** la referencia del intento se crea y persiste antes del primer request; aprobado se recupera sin un nuevo cobro; pendiente abre seguimiento sin repetir la operación; rechazado habilita una referencia nueva; una referencia no se puede reutilizar con otro cliente o carrito.
-- **A02 implementado localmente en las escrituras críticas:** checkout y webhook comprueban errores y fila afectada al leer/guardar el estado de pago. Un fallo de persistencia responde como error reintentable y conserva la referencia.
-- **A10 implementado localmente:** el panel recuerda solo pedidos que alguna vez estuvieron habilitados para cocina. Una tarjeta pendiente queda a la espera y produce una única campanilla cuando Mercado Pago la acredita; cancelarla después no permite que vuelva a sonar.
-- **A11 implementado localmente:** una tarjeta pendiente o rechazada no puede avanzar a preparación, reparto o entrega ni generar una comanda. El panel no permite acreditarla manualmente y el servidor aplica la misma prohibición; efectivo y transferencia conservan la confirmación manual.
+- **A01 implementado y publicado:** la referencia del intento se crea y persiste antes del primer request; aprobado se recupera sin un nuevo cobro; pendiente abre seguimiento sin repetir la operación; rechazado habilita una referencia nueva; una referencia no se puede reutilizar con otro cliente o carrito.
+- **A02 implementado y publicado en las escrituras críticas:** checkout y webhook comprueban errores y fila afectada al leer/guardar el estado de pago. Un fallo de persistencia responde como error reintentable y conserva la referencia.
+- **A10 implementado y publicado:** el panel recuerda solo pedidos que alguna vez estuvieron habilitados para cocina. Una tarjeta pendiente queda a la espera y produce una única campanilla cuando Mercado Pago la acredita; cancelarla después no permite que vuelva a sonar.
+- **A11 implementado y publicado:** una tarjeta pendiente o rechazada no puede avanzar a preparación, reparto o entrega ni generar una comanda. El panel no permite acreditarla manualmente y el servidor aplica la misma prohibición; efectivo y transferencia conservan la confirmación manual.
 - Pruebas agregadas: `tests/card-attempt.test.ts`, `tests/db-result.test.ts` y `tests/admin-order-update.test.ts`; también se ampliaron los casos de `tests/pedido-visible.test.ts`. Suite completa, TypeScript y build de producción terminaron con código 0; ESLint quedó con 0 errores y las 11 advertencias preexistentes.
-- Estos puntos deben considerarse cerrados solo después de revisión, commit, despliegue y prueba controlada con el ambiente de prueba de Mercado Pago. No se ejecutó ningún cobro real.
+- Estos puntos deben considerarse cerrados operacionalmente solo después de verificar el SHA desplegado y ejecutar una prueba controlada con el ambiente de prueba de Mercado Pago. No se ejecutó ningún cobro real.
 
 ## 1. Dictamen ejecutivo
 
@@ -116,6 +117,8 @@ Acción: verificar cada resultado, distinguir ausencia real de falla, hacer tran
 
 ### A03 — Alta: autorización de operarios demasiado amplia
 
+**Estado 22/09/2026: corregido y publicado en Carro Fogón (`4abfe7b`) con una única cuenta autorizada (`spezialichristian@gmail.com`), auditoría de actor y pruebas; pendiente de verificar el despliegue y hacer humo de acceso.**
+
 `requireAuth()` acepta cualquier usuario que InsForge valide, sin comprobar pertenencia a la pizzería ni rol de operario. Login tampoco comprueba habilitación. Las rutas de pedidos/clientes operan después con el cliente de backend, separado de la identidad del usuario.
 
 Por tanto, la protección del recetario por UUID no es equivalente a una autorización del POS. Una cuenta válida no habilitada para operar podría atravesar esos controles. No se registró una cuenta ajena ni se intentó explotar el acceso; no se verificó si el registro público está habilitado ni los secretos exactos desplegados en Vercel.
@@ -188,7 +191,7 @@ Acción: ante datos incompletos, detener venta del producto o servir una versió
 
 ### A10 — Media/alta: campanilla no avisa cuando un pendiente conocido se aprueba
 
-**Estado local 22/09/2026: corregido y verificado; pendiente de commit, despliegue y prueba operativa.**
+**Estado 22/09/2026: corregido, verificado y publicado en `3013480`; pendiente de verificar despliegue y prueba operativa.**
 
 Se recuerdan los UUID de **todos** los pedidos recibidos, incluso pendientes de tarjeta. La campanilla exige UUID desconocido y pedido habilitado para cocina. Si primero entra pendiente y luego se aprueba, ya es conocido y no suena.
 
@@ -200,7 +203,7 @@ Acción: detectar entrada a condición “apto para cocina”, no solo creación
 
 ### A11 — Media/alta: todavía se puede preparar o aprobar manualmente una tarjeta pendiente
 
-**Estado local 22/09/2026: corregido y verificado; pendiente de commit, despliegue y prueba operativa.**
+**Estado 22/09/2026: corregido, verificado y publicado en `3013480`; pendiente de verificar despliegue y prueba operativa.**
 
 La regla `esPedidoParaCocina` se usa para campanilla y para ventas del Dashboard, pero no bloquea los botones de avanzar preparación/imprimir de la pantalla Pedidos. “Marcar pago recibido” aparece para cualquier pago pendiente, incluida tarjeta. El servidor acepta modificar `estado_pago` a aprobado desde el panel.
 

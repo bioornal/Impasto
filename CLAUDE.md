@@ -6,10 +6,14 @@ Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Me
 Deploy en Netlify: **https://www.impastopizzas.com** (dominio propio desde el 19/09/2026; el
 subdominio `vocal-naiad-861a2c.netlify.app` sigue respondiendo). Ver "Dominio propio".
 
-Última actualización: 19 de septiembre de 2026.
+Última actualización: 22 de septiembre de 2026.
 
 ## Cómo trabajar en este repo
 
+- **`CLAUDE.md` es la memoria operativa del proyecto y se actualiza en cada bloque terminado.**
+  Registrar fecha, alcance real, verificación ejecutada, commit/despliegue y pendientes que
+  cambien. No marcar algo como verificado en producción solo porque pasó localmente o se
+  pusheó. Nunca copiar claves, tokens ni valores secretos a este archivo.
 - **El gestor de paquetes es `pnpm`**, no npm. Instalar con npm rompe la auth del panel:
   el `package-lock.json` fijaba `@insforge/sdk@1.2.5`, que no expone el subpath `/ssr`.
   Ese lockfile ya se eliminó; no volver a crearlo.
@@ -27,6 +31,44 @@ subdominio `vocal-naiad-861a2c.netlify.app` sigue respondiendo). Ver "Dominio pr
 - **Al verificar con `grep` que no quedan literales duplicados, incluí `.tsx`.** Un grep con
   solo `--include=*.ts` dio un falso negativo y dejó pasar una cuarta copia de la allowlist
   de categorías en `StoreProvider.tsx`.
+
+## Estado actual del endurecimiento de pagos y cocina (22/09/2026)
+
+Publicado en `main` con el commit **`3013480`** (`fix: harden card payment order flow`):
+
+- **A01 — intento de tarjeta durable:** el navegador crea y conserva la referencia antes del
+  primer request. Un aprobado se recupera sin cobrar de nuevo, un pendiente abre seguimiento
+  sin repetir la operación y un rechazado permite iniciar un intento nuevo. La referencia no
+  puede reutilizarse con otro cliente o carrito.
+- **A02 — persistencia comprobada:** checkout y webhook distinguen ausencia de fila de error
+  de base, validan cada escritura crítica y exigen exactamente una fila actualizada. Un fallo
+  de persistencia queda como error reintentable y conserva la referencia del intento.
+- **A10 — campanilla al acreditarse:** el panel recuerda solo pedidos que alguna vez quedaron
+  habilitados para cocina. Una tarjeta pendiente produce una única campanilla cuando pasa a
+  aprobada y no vuelve a sonar por cancelación/reactivación.
+- **A11 — tarjeta sin acreditar bloqueada:** Mercado Pago pendiente o rechazado no puede avanzar
+  a preparación/reparto/entrega, acreditarse manualmente ni imprimir comanda. La interfaz y el
+  servidor aplican la misma regla; efectivo y transferencia conservan confirmación manual.
+  La escritura administrativa compara además el estado de pago validado para cerrar carreras
+  con el webhook y revierte el estado visual si el servidor rechaza el cambio.
+- Pruebas nuevas: `tests/card-attempt.test.ts`, `tests/db-result.test.ts` y
+  `tests/admin-order-update.test.ts`; `tests/pedido-visible.test.ts` cubre pendiente→aprobado y
+  no repetición. Antes del push pasaron `pnpm test`, TypeScript, build de producción y ESLint
+  con 0 errores (11 advertencias preexistentes).
+
+**Todavía no equivale a verificación operativa en producción.** Falta confirmar el SHA
+desplegado por Netlify y ejecutar humo controlado con el ambiente de prueba de Mercado Pago:
+doble clic, pérdida de respuesta, pendiente→aprobado, rechazo, campanilla, bloqueo de comanda
+y seguimiento. No se ejecutó ningún cobro real en esta tanda.
+
+### A03 — acceso de operarios del POS
+
+Implementado y publicado en `carroFogon/next-app` el 22/09/2026, commit `4abfe7b`: la única
+cuenta permitida es `spezialichristian@gmail.com` y ninguna variable de entorno puede ampliar esa
+autorización. Login y rutas API validan la política; hay pruebas del correo único y del inventario
+de guards. Las creaciones, cambios y eliminaciones de pedidos dejan actor ID/email en
+`pedido_eventos` como auditoría best-effort. Falta comprobar el despliegue y, en producción, un
+login permitido y otro denegado.
 
 ## Los tres proyectos que comparten esta base
 
@@ -66,11 +108,12 @@ La base InsForge `3agqcygs.us-east.insforge.app` la usan **tres aplicaciones coo
   Backfill verificado contra la base: `productos` 49 impasto / 16 carro, sin nulos. El de
   `pedidos` (`sucursal_id = 'iguazu' or external_reference like 'IM-%'`) **nunca se ejerció**:
   la tabla estaba vacía. Esa regla no está verificada contra datos reales.
-- Impasto filtra y escribe `proyecto_id = 'impasto'` **en todos los caminos que tocan
-  `productos` o `pedidos`** — catálogo, alta, edición y borrado por id, la ruta pública
+- Impasto filtra y escribe `proyecto_id = 'impasto'` en los caminos principales que tocan
+  `productos` o `pedidos` — catálogo, alta, edición y borrado por id, la ruta pública
   `/api/productos` y las dos de etiquetas (además de `CATEGORIAS_IMPASTO` y `sucursal_id`,
-  que se conservan como defensa en profundidad). Si se agrega una consulta nueva, lleva el
-  filtro: la mitad de las rutas quedó sin él en el primer pase.
+  que se conservan como defensa en profundidad). PUT/DELETE de pedidos quedaron acotados al
+  proyecto en `3013480`; la ruta de devolución todavía debe auditarse/completarse como parte
+  de A19. Si se agrega una consulta nueva, siempre lleva el filtro.
 - **Desde la unificación de septiembre, Carro Fogón escribe `proyecto_id = 'impasto'`**, no
   `'carro'` (código del carro, su `CLAUDE.md` y la base lo confirman al 18/09/2026). Web y POS
   comparten `proyecto_id` y se distinguen por `external_reference`: la web siempre escribe
@@ -87,12 +130,16 @@ La base InsForge `3agqcygs.us-east.insforge.app` la usan **tres aplicaciones coo
 **El orden fue el correcto:** la migración corrió antes del deploy, así que el código nuevo
 —que lee `proyecto_id`— nunca se encontró sin la columna. Se verificó en producción: el sitio
 sigue sirviendo la carta completa. Si alguna vez hay que rehacerlo en otro entorno, ese orden
-es obligatorio: `getCatalogData()` atrapa el error y devuelve un catálogo **vacío pero
-válido**, así que la falla se vería como una carta sin productos, no como un error.
+es obligatorio. Desde el endurecimiento del 17/09, una falla al leer `productos` hace fallar
+`getCatalogData()`; las fuentes auxiliares de costos todavía pueden degradarse a listas vacías,
+riesgo A09 que debe cerrarse antes de considerar el precio a prueba de fallas parciales.
 
-## Lo que está terminado y verificado en producción
+## Historial de funcionalidades terminadas
 
-- **Auth del panel** — las 10 rutas admin protegidas + rate limiting en el login.
+La nota de cada punto indica si llegó a verificarse en producción. Para pagos y cocina, el
+estado del 22/09/2026 documentado arriba prevalece sobre las descripciones históricas.
+
+- **Auth del panel** — todas las rutas admin actuales protegidas + rate limiting en el login.
 - **Mercado Pago (Checkout API vía Orders)** — formulario propio con Secure Fields (no Brick),
   `POST /v1/orders` con idempotencia, webhook con firma HMAC que falla cerrado, mapeo de estados
   y devoluciones totales y parciales desde el panel.
@@ -112,7 +159,7 @@ válido**, así que la falla se vería como una carta sin productos, no como un 
 - **Chatbot vendedor DeepSeek verificado en producción (06/09/2026)** — `DEEPSEEK_API_KEY` sincronizada en
   Netlify CLI; verificado en vivo con streaming en tiempo real en `vocal-naiad-861a2c.netlify.app`.
 - **Saneamiento de seguridad y linter (06/09/2026)** — Eliminada carpeta huérfana `public/admin/`,
-  removido rewrite obsoleto en `next.config.ts`, desacoplada la tarjeta de WhatsApp en `Reviews.tsx` para que se muestre siempre. 0 errores en `pnpm lint`, 88 tests en `pnpm test` pasando.
+  removido rewrite obsoleto en `next.config.ts`, desacoplada la tarjeta de WhatsApp en `Reviews.tsx` para que se muestre siempre. La suite siguió creciendo; no mantener aquí un conteo fijo, usar `pnpm test` como fuente de verdad.
 - **Persistencia del pedido** — todos los campos + historial con timestamps en `pedido_eventos`.
 - **Horarios y estado de venta** — configurables desde el panel, con interruptor manual para
   vacaciones. La validación vive en `createPedido`, el punto único por donde pasan todas las
@@ -129,11 +176,13 @@ válido**, así que la falla se vería como una carta sin productos, no como un 
 - **Comandas térmicas con desglose de gustos en cajas y mitades (12/09/2026)** — Extraído módulo
   `lib/adapt-order.ts` (100% testeado). Las comandas de cocina y modal imprimen las variedades exactas de
   empanadas (ej: `4 Pollo, 4 Carne, 4 Árabe` en Cajas x12) y las pizzas mitad y mitad.
-- **Filtro de cocina para tarjetas rechazadas (12/09/2026)** — Módulo `lib/pedido-visible.ts`.
-  Un pedido con pago rechazado no entra a cocina ni se muestra como "COBRAR AL ENTREGAR". En caso de inspección,
-  se exhibe advertencia destacada `[!] PAGO TARJETA RECHAZADO: NO ENTREGAR SIN CONFIRMAR PAGO`.
-- **Idempotencia en Checkout (12/09/2026)** — Al reintentar el pago de una tarjeta rechazada, se reutiliza
-  la misma `external_reference` (`IM-...`) en `card/route.ts` y `Shell.tsx`, evitando pedidos huérfanos duplicados.
+- **Filtro de cocina para tarjetas (iniciado 12/09/2026, endurecido 22/09/2026)** —
+  `lib/pedido-visible.ts` excluye pendientes/rechazadas; `3013480` agregó bloqueo de avance,
+  acreditación manual e impresión tanto en panel como en servidor. Falta humo postdespliegue.
+- **Idempotencia en Checkout (iniciada 12/09/2026, endurecida 22/09/2026)** — La versión
+  vigente es A01 en `3013480`: referencia durable antes del request, recuperación de aprobado
+  o pendiente y referencia nueva después de un rechazo definitivo. No restaurar el comportamiento
+  histórico que reutilizaba silenciosamente un rechazado.
 - **Eliminación de pedidos programados (12/09/2026)** — Opciones de programar horario removidas de `Checkout.tsx`.
   Todos los pedidos se aceptan como "Lo antes posible" (`asap`), validado server-side con `lib/validar-cuando.ts`.
 - **Fecha en hora local argentina (12/09/2026)** — Función `fechaLocal()` en `lib/hours.ts` (`America/Argentina/Buenos_Aires`).
@@ -623,8 +672,9 @@ Tanda de arreglos posterior al review de los tres proyectos. Todo mergeado y des
 - **`ventas_mes` — creada.** Migración `20260918023148_ventas-mes.sql`. InsForge agrega
   `project_admin_policy` sola a cada tabla nueva: **no declararla en la migración** o falla con
   "already exists" (la migración se revierte entera, no queda a medias).
-- **Contador de `numero_pedido` — resuelto sin RPC.** El POS reintenta si dos terminales chocan
-  (`insertarConNumero` en el carro). La web no puede chocar con el POS: rangos disjuntos.
+- **Contador de `numero_pedido` del POS — resuelto sin RPC.** El POS reintenta si dos terminales
+  chocan (`insertarConNumero` en el carro). La web usa otro rango y no choca con el POS, pero
+  su número derivado del reloj todavía puede colisionar con otro pedido web: pendiente A19.
 - **CSP — en `Report-Only`** (`next.config.ts`): registra en la consola lo que bloquearía sin
   bloquear. **Pasarlo a `Content-Security-Policy` después de un pago real con tarjeta** que no
   deje violaciones en la consola.
