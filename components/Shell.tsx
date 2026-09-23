@@ -328,6 +328,11 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
         oculto={headerOculto}
       />
       <Ticker desde={desde} />
+      {(data.preciosNoDisponibles?.length ?? 0) > 0 && (
+        <p role="status" style={{ textAlign: "center", padding: "10px 16px", background: "#fff3db", color: "#60420a" }}>
+          Algunos productos no están disponibles temporalmente por su precio. Podés pedir los demás.
+        </p>
+      )}
 
       <main>
         <Hero onCta={goSection} onHalf={() => openHalf()} featured={featured} varieties={data.pizzas.length} />

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createPedido, validateOrderPayload, clearCartDraft } from "@/lib/orders";
 import { limitar } from "@/lib/rate-limit";
 import { notificarPedido } from "@/lib/notifications";
+import { pricingHttpError } from "@/lib/pricing-http";
 
 /** Métodos que se cobran al entregar: no pasan por Mercado Pago. */
 const METODOS_OFFLINE = ["efectivo", "transferencia"];
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
       freeShipping: created.freeShipping,
     });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Error desconocido";
-    return NextResponse.json({ ok: false, error: msg }, { status: 400 });
+    const failure = pricingHttpError(err);
+    return NextResponse.json({ ok: false, error: failure.error }, { status: failure.status });
   }
 }

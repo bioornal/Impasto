@@ -1,15 +1,13 @@
 import { db } from "@/lib/insforge";
 import type { CatalogData } from "@/types";
 import { SUCURSAL_ID } from "@/lib/business";
-import { buildCatalog, type DatabaseProduct } from "@/lib/catalog-build";
 import { CATEGORIAS_IMPASTO } from "@/lib/categorias";
-import type { Etiqueta } from "@/lib/etiquetas";
-import { buildEffectivePrices } from "@/lib/effective-prices";
+import { assembleCatalogFromResults, settleCatalogQuery } from "@/lib/catalog-source";
+import { PricingUnavailableError } from "@/lib/pricing-safety";
 
 export async function getCatalogData(): Promise<CatalogData> {
   try {
-    const safeQuery = (query: PromiseLike<{ data?: unknown; error?: unknown }>) =>
-      Promise.resolve(query).catch((error) => ({ data: null, error }));
+    const safeQuery = settleCatalogQuery;
     const [
       productsResult,
       promosResult,
@@ -43,60 +41,20 @@ export async function getCatalogData(): Promise<CatalogData> {
       safeQuery(db.database.from("costos_variables").select("monto_referencia")),
       safeQuery(db.database.from("gastos").select("monto")),
     ]);
-    // Sin productos no hay carta. Antes se devolvía un catálogo vacío "válido":
-    // una caída de base se veía como una pizzería sin nada para vender. Mejor
-    // fallar y que la página muestre un error reintentable.
-    if (productsResult.error) {
-      throw new Error(`no se pudieron leer los productos: ${String(productsResult.error)}`);
+    for (const [source, result] of [
+      ["promociones", promosResult], ["testimonios", reviewsResult], ["etiquetas", etiquetasResult],
+    ] as const) {
+      if (result.error) console.error(`[catalog] fuente decorativa ${source}:`, result.error);
     }
-    const products = Array.isArray(productsResult.data) ? productsResult.data as DatabaseProduct[] : [];
-
-    // El resto son consultas auxiliares: si fallan se degrada (precios guardados,
-    // sin promos, etc.), pero se registra cuál falló para poder diagnosticarlo.
-    const auxiliares: Array<[string, { error?: unknown }]> = [
-      ["promociones", promosResult],
-      ["testimonios", reviewsResult],
-      ["etiquetas", etiquetasResult],
-      ["recetas", recipesResult],
-      ["receta_ingredientes", recipeIngredientsResult],
-      ["ingredientes", ingredientsResult],
-      ["precios_venta", salePricesResult],
-      ["config_negocio", defaultsResult],
-      ["costos_fijos", costosFijosResult],
-      ["costos_variables", costosVariablesResult],
-      ["gastos", gastosResult],
-    ];
-    for (const [nombre, res] of auxiliares) {
-      if (res.error) console.error(`[catalog] error al consultar ${nombre}:`, res.error);
-    }
-
-    const totalFijos = Array.isArray(costosFijosResult.data)
-      ? costosFijosResult.data.reduce((sum: number, row: Record<string, unknown>) => sum + Number(row.monto ?? 0), 0)
-      : 0;
-    const totalVariables = Array.isArray(costosVariablesResult.data)
-      ? costosVariablesResult.data.reduce((sum: number, row: Record<string, unknown>) => sum + Number(row.monto_referencia ?? 0), 0)
-      : 0;
-    const totalGastos = Array.isArray(gastosResult.data)
-      ? gastosResult.data.reduce((sum: number, row: Record<string, unknown>) => sum + Number(row.monto ?? 0), 0)
-      : 0;
-    const totalOperativo = totalFijos + totalVariables + totalGastos;
-
-    const effectivePrices = buildEffectivePrices(
-      Array.isArray(recipesResult.data) ? recipesResult.data : [],
-      Array.isArray(recipeIngredientsResult.data) ? recipeIngredientsResult.data : [],
-      Array.isArray(ingredientsResult.data) ? ingredientsResult.data : [],
-      Array.isArray(salePricesResult.data) ? salePricesResult.data : [],
-      Array.isArray(defaultsResult.data) && defaultsResult.data[0] ? defaultsResult.data[0] : undefined,
-      totalOperativo,
-    );
-    const productsWithEffectivePrices = products.map((product) => {
-      const price = product.nombre ? effectivePrices.get(product.nombre) : undefined;
-      return price == null ? product : { ...product, precio: price };
+    return assembleCatalogFromResults({
+      productos: productsResult, promociones: promosResult, testimonios: reviewsResult, etiquetas: etiquetasResult,
+      recetas: recipesResult, receta_ingredientes: recipeIngredientsResult, ingredientes: ingredientsResult,
+      precios_venta: salePricesResult, config_negocio: defaultsResult, costos_fijos: costosFijosResult,
+      costos_variables: costosVariablesResult, gastos: gastosResult,
     });
-    const etiquetas = Array.isArray(etiquetasResult.data) ? etiquetasResult.data as Etiqueta[] : [];
-    return buildCatalog(productsWithEffectivePrices, promosResult.data, reviewsResult.data, etiquetas);
   } catch (error) {
-    console.error("[catalog] fallo al armar el catálogo:", error);
+    if (error instanceof PricingUnavailableError) console.error(`[catalog] fuente crítica ${error.source} no disponible`);
+    else console.error("[catalog] fallo al armar el catálogo:", error);
     throw error;
   }
 }

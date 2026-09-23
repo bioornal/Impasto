@@ -10,6 +10,7 @@ import {
   type PersistedCardAttempt,
 } from "@/lib/card-attempt";
 import { DatabaseOperationError, requireDbRows, requireUpdatedRow } from "@/lib/db-result";
+import { PricingUnavailableError } from "@/lib/pricing-safety";
 
 const TIPOS_TARJETA = ["credit_card", "debit_card"];
 
@@ -296,12 +297,13 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     const persistenceFailure = err instanceof DatabaseOperationError;
+    const pricingFailure = err instanceof PricingUnavailableError;
     const msg = persistenceFailure
       ? "No pudimos confirmar el estado del pedido. No vuelvas a pagar: reintentá para recuperar este mismo intento."
       : err instanceof Error ? err.message : "No se pudo procesar el pago";
     return NextResponse.json(
       { ok: false, ...(attemptReference ? { numero: attemptReference } : {}), error: msg },
-      { status: persistenceFailure ? 500 : 400 },
+      { status: persistenceFailure ? 500 : pricingFailure ? 503 : 400 },
     );
   }
 }

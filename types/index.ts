@@ -52,6 +52,7 @@ export interface CatalogData {
   empanadaBoxPrices: Record<6 | 12 | 24, number>;
   promos: Promo[];
   reviews: Review[];
+  preciosNoDisponibles?: string[];
 }
 
 export interface CartItem {
