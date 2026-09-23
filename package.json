@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx tests/hours.test.ts && tsx tests/catalog.test.ts && tsx tests/pricing-safety.test.ts && tsx tests/pricing-flow.test.ts && tsx tests/pricing-http.test.ts && tsx tests/aviso-local.test.ts && tsx tests/seo.test.ts && tsx tests/chat-mensajes.test.ts && tsx tests/chat-prompt.test.ts && tsx tests/chat-negrita.test.ts && tsx tests/chat-fallas.test.ts && tsx tests/referencia.test.ts && tsx tests/card-attempt.test.ts && tsx tests/db-result.test.ts && tsx tests/seguimiento.test.ts && tsx tests/deepseek.test.ts && tsx tests/marca.test.ts && tsx tests/adapt-order.test.ts && tsx tests/pedido-visible.test.ts && tsx tests/admin-order-update.test.ts && tsx tests/validar-cuando.test.ts && tsx tests/precio-desde.test.ts && tsx tests/contacto.test.ts"
+    "test": "tsx tests/local-printer.test.ts && tsx tests/hours.test.ts && tsx tests/catalog.test.ts && tsx tests/pricing-safety.test.ts && tsx tests/pricing-flow.test.ts && tsx tests/pricing-http.test.ts && tsx tests/aviso-local.test.ts && tsx tests/seo.test.ts && tsx tests/chat-mensajes.test.ts && tsx tests/chat-prompt.test.ts && tsx tests/chat-negrita.test.ts && tsx tests/chat-fallas.test.ts && tsx tests/referencia.test.ts && tsx tests/card-attempt.test.ts && tsx tests/db-result.test.ts && tsx tests/seguimiento.test.ts && tsx tests/deepseek.test.ts && tsx tests/marca.test.ts && tsx tests/adapt-order.test.ts && tsx tests/pedido-visible.test.ts && tsx tests/admin-order-update.test.ts && tsx tests/validar-cuando.test.ts && tsx tests/precio-desde.test.ts && tsx tests/contacto.test.ts"
   },
   "dependencies": {
     "@insforge/sdk": "^1.2.5",
