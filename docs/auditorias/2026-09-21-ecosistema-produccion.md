@@ -14,6 +14,27 @@ despliegue y la prueba operativa en producción todavía no fueron verificados:
 - Pruebas agregadas: `tests/card-attempt.test.ts`, `tests/db-result.test.ts` y `tests/admin-order-update.test.ts`; también se ampliaron los casos de `tests/pedido-visible.test.ts`. Suite completa, TypeScript y build de producción terminaron con código 0; ESLint quedó con 0 errores y las 11 advertencias preexistentes.
 - Estos puntos deben considerarse cerrados operacionalmente solo después de verificar el SHA desplegado y ejecutar una prueba controlada con el ambiente de prueba de Mercado Pago. No se ejecutó ningún cobro real.
 
+## Actualización A09 — 23/09/2026 (solo código local)
+
+A09 quedó implementado en las dos vías de venta: Impasto `037fe19` + `7b5183c`,
+Carro Fogón `a69483b` + `fc6854e`. **No hubo push, despliegue, cobro ni escritura de
+pedidos en producción durante esta implementación.** El recetario y la fórmula con redondeo
+hacia arriba a $500 no se modificaron.
+
+- Las nueve fuentes críticas (productos y ocho de costeo) se validan; error SDK, rechazo de
+  promesa o `data:null` bloquea nuevas ventas. Una falla solo decorativa no las bloquea.
+- Una regla/receta individual defectuosa omite solo el producto afectado; no cae al precio
+  manual. Los productos sin regla siguen vendibles únicamente con precio manual positivo y
+  finito. Web y POS revalidan al guardar; un carrito antiguo no salta el bloqueo. Una caja
+  no usa precio de combo si un sabor tiene precio inválido.
+- Las rutas web devuelven 503 ante fuente caída antes de insertar o contactar a Mercado Pago.
+  El POS devuelve 503 por fuente y 409 por producto ya no vendible, conserva el carrito y
+  permite reintentar. GET del POS indica omisiones por precio.
+- Verificación local: suites completas, TypeScript, lint y build web; suite y build POS.
+  La suite POS existe ahora; la afirmación de la sección 7 describe el corte del 21/09.
+  **Pendiente** confirmar los SHA desplegados y hacer humo supervisado sin cobros reales.
+  A12 (idempotencia/conciliación ante cambios de precio) sigue separado y abierto.
+
 ## 1. Dictamen ejecutivo
 
 **No recomiendo habilitar una operación plena y sin supervisión con los tres sistemas en su estado actual.** Las aplicaciones están disponibles, hay protección de acceso y muchas correcciones anteriores funcionan. Sin embargo, quedan fallas importantes en reintentos de cobro, conciliación de pagos, interpretación de pedidos entre aplicaciones y cálculo de ganancias.
@@ -327,7 +348,7 @@ Acción: número asignado de forma segura en base o reintento controlado; no usa
 | Disponibilidad HTTP y acceso anónimo | Resultados en sección 4 |
 | RLS, políticas, helper e índices | Consultas de lectura exitosas |
 
-Pasar las pruebas existentes no demuestra que los flujos cruzados estén cubiertos. El POS no expone script `test` en el `package.json` inspeccionado; no se atribuye una suite integrada que no existe allí.
+Pasar las pruebas existentes no demuestra que los flujos cruzados estén cubiertos. En el corte del 21/09 el POS no exponía script `test`; la actualización A09 del 23/09 agrega una suite integrada.
 
 No realizado / no acreditado:
 
@@ -350,7 +371,7 @@ Este es un orden de trabajo propuesto, no autorización para implementar ni desp
 - [ ] Decidir responsables de cocina, caja y cierre, y panel operativo principal.
 - [ ] Restringir usuarios POS (A03).
 - [ ] Unificar estado de preparación, medio de pago, acreditaciones parciales, reembolsos e ítems (A04/A05).
-- [ ] Evitar precios a partir de fuentes incompletas; confirmar disponibilidad al guardar (A09/A12).
+- [ ] Evitar precios a partir de fuentes incompletas; confirmar disponibilidad al guardar (A09 implementado en código local; A12 y humo operativo pendientes).
 - [ ] Definir política de aprobación manual de transferencias y excepción de tarjetas (A11).
 - [ ] Rotar de forma coordinada la clave administrativa compartida en la conversación y cualquier otra que siga expuesta; actualizar consumidores y verificar continuidad antes de revocar. No se rotó durante esta auditoría.
 

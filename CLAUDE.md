@@ -6,7 +6,7 @@ Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Me
 Deploy en Netlify: **https://www.impastopizzas.com** (dominio propio desde el 19/09/2026; el
 subdominio `vocal-naiad-861a2c.netlify.app` sigue respondiendo). Ver "Dominio propio".
 
-Última actualización: 22 de septiembre de 2026.
+Última actualización: 23 de septiembre de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -83,12 +83,26 @@ Faltan pruebas con pedidos reales y la corrección contable del recetario (A06/A
 
 ### A09 — precios ante fallas de costos
 
-El dueño eligió bloquear ventas cuando falla una fuente necesaria de precios, sin usar el
-último precio ni asumir costo cero. Una receta individual inválida bloqueará solo sus productos.
-El diseño aprobado está en `docs/superpowers/specs/2026-09-22-precios-fail-closed-design.md`
-y el plan en `docs/superpowers/plans/2026-09-22-precios-fail-closed.md`. **Todavía no está
-implementado ni probado en producción.** El siguiente paso es revisar el plan y elegir el
-método de ejecución antes de tocar los proyectos.
+Implementado en código local el 23/09/2026: web `037fe19` y `7b5183c`; POS `a69483b` y
+`fc6854e`. **No pusheado, desplegado ni probado en producción.** El dueño eligió bloquear toda
+venta cuando falla una fuente necesaria de precios, sin usar el último precio ni asumir costo
+cero. Una receta/regla individual inválida bloquea solo ese producto, incluso si el precio
+manual guardado es positivo. Los productos sin regla usan `productos.precio` solo si es finito
+y positivo. El redondeo sigue hacia arriba a $500; no se tocó el recetario.
+
+`getCatalogData()` verifica las nueve fuentes críticas (productos y ocho tablas de costos);
+promociones, testimonios y etiquetas siguen siendo decorativas. La carta omite productos
+con precio inválido y muestra aviso. Checkout recotiza pizzas, bebidas, mitades y cajas;
+una caja no usa el precio del combo para ocultar un sabor inválido. Las rutas de cotización,
+pedido y tarjeta responden 503 si falla una fuente crítica; el pedido se valida antes del
+INSERT y antes de contactar a Mercado Pago. En el POS, GET/POST usan la misma resolución;
+el POST responde 409 por un ítem ya no vendible y 503 por una fuente caída.
+
+Pruebas locales: `pnpm test`, TypeScript, lint (0 errores; 11 advertencias previas) y build
+de Impasto; `npm test` y build de Carro Fogón. Falta confirmar SHA desplegado y hacer humo
+controlado de web/POS antes de declarar A09 operativo. Diseño y plan:
+`docs/superpowers/specs/2026-09-22-precios-fail-closed-design.md` y
+`docs/superpowers/plans/2026-09-22-precios-fail-closed.md`.
 
 ## Los tres proyectos que comparten esta base
 
@@ -152,8 +166,8 @@ La base InsForge `3agqcygs.us-east.insforge.app` la usan **tres aplicaciones coo
 —que lee `proyecto_id`— nunca se encontró sin la columna. Se verificó en producción: el sitio
 sigue sirviendo la carta completa. Si alguna vez hay que rehacerlo en otro entorno, ese orden
 es obligatorio. Desde el endurecimiento del 17/09, una falla al leer `productos` hace fallar
-`getCatalogData()`; las fuentes auxiliares de costos todavía pueden degradarse a listas vacías,
-riesgo A09 que debe cerrarse antes de considerar el precio a prueba de fallas parciales.
+`getCatalogData()`. Desde A09 (23/09), las fuentes de costo son críticas: un error o
+`data:null` bloquea la venta; solo promociones, testimonios y etiquetas pueden degradarse.
 
 ## Historial de funcionalidades terminadas
 
@@ -533,13 +547,9 @@ carrito es siempre el cliente.
   `getCatalogData()` consulta doce tablas y no puede correr en cada mensaje. Un precio recién
   editado tarda hasta cinco minutos en llegarle al bot; **no afecta lo que se cobra**, que
   sigue siendo server-side.
-- **Esa foto nunca cachea una carta vacía.** `getCatalogData()` no distingue "la base falló" de
-  "la carta está legítimamente vacía": su único `catch` (`lib/catalog.ts`) devuelve un catálogo
-  sin productos pero perfectamente válido. Si se cacheara esa foto, un corte de base justo
-  cuando el TTL vence dejaría al bot negándole la carta entera a cada cliente durante los cinco
-  minutos siguientes. La contrapartida asumida a propósito: si la carta llegara a estar
-  legítimamente vacía, cada mensaje repetiría las doce consultas en vez de aprovechar la caché
-  — lo acota el rate limit de `chat` (40 mensajes cada 10 minutos por IP).
+- **Esa foto nunca cachea una carta vacía.** `getCatalogData()` lanza cuando falla una fuente
+  crítica. Una carta legítimamente vacía tampoco se cachea; cada mensaje vuelve a consultar
+  (rate limit de `chat`: 40 mensajes cada 10 minutos por IP).
 - **El widget tiene dos plazos de espera, no uno** (`ChatWidget.tsx`): uno hasta que llega el
   primer fragmento del stream y otro entre fragmentos una vez que ya arrancó, que se reinicia
   con cada fragmento nuevo. **El primero tiene que ser mayor que el timeout del servidor**
@@ -658,9 +668,9 @@ Tanda de arreglos posterior al review de los tres proyectos. Todo mergeado y des
 - **`getBusinessConfig()` falla cerrado**: ante error de base o fila faltante devuelve
   `ventasActivas: false`. Antes caía a los defaults del código con `ventasActivas: true` y podía
   aceptar pedidos sin poder confirmar que el local esté abierto.
-- **`getCatalogData()` lanza** si no puede leer `productos` (antes devolvía un catálogo vacío
-  "válido": una caída de base se veía como una carta sin productos). Los errores de las consultas
-  auxiliares ahora se registran todos; si fallan, se degrada (precios guardados, sin promos).
+- **`getCatalogData()` lanza** si no puede leer `productos` (endurecimiento del 17/09). Desde
+  A09 también lanza por cualquier fuente de costeo fallida; solo consultas decorativas pueden
+  degradarse (sin promos, testimonios o etiquetas).
 - **Chat**: si el catálogo no está disponible responde 502; se agregó `app/error.tsx` con mensaje
   reintentable.
 - **Migración `20260917210103_uniques-pedidos.sql`** (aplicada): `pedidos_numero_uidx` unique
