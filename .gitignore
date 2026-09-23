@@ -61,3 +61,7 @@ next-env.d.ts
 
 # Isolated development workspaces
 /.worktrees/
+
+# Local thermal printer agent
+/printer-agent/bin/
+/printer-agent/config.local.json

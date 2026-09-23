@@ -720,3 +720,22 @@ Tanda de arreglos posterior al review de los tres proyectos. Todo mergeado y des
   carro: a pesar del nombre, guarda la `ik_` de backend, solo del lado del servidor)**, los
   `.env.local` y `.insforge/project.json`. El recetario no: usa la anon key de verdad. La hace el
   dueño, porque implica manejar la key nueva. Después, reconstruir Impasto y el carro.
+
+## Impresión térmica directa — avance 23/09/2026
+
+Implementación en rama `feat/impresion-termica`, worktree
+`.worktrees/impresion-termica`. Plan: `docs/superpowers/plans/2026-09-23-impresion-termica-directa.md`.
+
+- Agente C#/.NET Framework sin dependencias: ESC/POS 42 columnas, WPC1252,
+  Winspool RAW, servidor 127.0.0.1:8765, CORS y secreto, registro durable anti-duplicados.
+- Ticket corto ficticio enviado a la Epson TM-T20II; dueño confirmó salida correcta,
+  corte y ausencia de papel sobrante. Medidas exactas, comprobación explícita de
+  acentos y ticket largo todavía pendientes.
+- 27 pruebas del agente aprobadas y health local 200. Secreto en archivo local
+  ignorado; nunca copiar su valor a esta memoria.
+- Pendiente obligatorio: HTTPS → loopback en Edge desde ambas URLs reales. No
+  integrar ni desplegar las webs antes de esa prueba. El navegador de esta sesión
+  no tiene Edge disponible; prueba presencial solicitada.
+- Impasto y Carro Fogón siguen con sus flujos actuales. No se modificaron pedidos,
+  pagos ni base de datos. Un resultado `queued` solo significa enviado a cola.
+- Para continuar: `printer-agent/README.md` y ledger del plan en `.superpowers/sdd/`.

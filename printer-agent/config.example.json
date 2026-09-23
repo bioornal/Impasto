@@ -1,0 +1,5 @@
+{
+  "queueName": "EPSON TM-T20II Receipt",
+  "token": "",
+  "allowedOrigins": ["https://www.impastopizzas.com", "https://carro-fogon.vercel.app"]
+}
