@@ -53,6 +53,7 @@ export interface CatalogData {
   promos: Promo[];
   reviews: Review[];
   preciosNoDisponibles?: string[];
+  empanadaBoxNoDisponibles?: Array<6 | 12 | 24>;
 }
 
 export interface CartItem {

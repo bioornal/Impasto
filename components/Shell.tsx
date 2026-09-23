@@ -132,7 +132,8 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
   const [seccionActiva, setSeccionActiva] = useState("");
   const [headerOculto, setHeaderOculto] = useState(false);
   const [empSelection, setEmpSelection] = useState<Record<string, number>>({});
-  const [empTier, setEmpTier] = useState<6 | 12 | 24>(12);
+  const [empTier, setEmpTier] = useState<6 | 12 | 24>(() =>
+    ([12, 6, 24] as const).find((size) => !data.empanadaBoxNoDisponibles?.includes(size)) ?? 12);
   const [cajaExpandida, setCajaExpandida] = useState(false);
 
   const desde = precioDesde(data.pizzas);
@@ -236,7 +237,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
     }, 0);
   };
   const empSelected = Object.values(empSelection).reduce((a, b) => a + b, 0);
-  const empComplete = empSelected === empTier;
+  const empComplete = empSelected === empTier && !data.empanadaBoxNoDisponibles?.includes(empTier);
   const empLines = Object.entries(empSelection).filter(([, n]) => n > 0);
   const empanadaName = (id: string) => data.empanadas.find((e) => e.id === id)?.nombre || id;
 
@@ -248,7 +249,10 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
       return next;
     });
 
-  const empChangeTier = (next: 6 | 12 | 24) => { setEmpTier(next); setEmpSelection({}); };
+  const empChangeTier = (next: 6 | 12 | 24) => {
+    if (data.empanadaBoxNoDisponibles?.includes(next)) return;
+    setEmpTier(next); setEmpSelection({});
+  };
 
   const empAddBox = () => {
     if (!empComplete) return;
@@ -342,6 +346,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
         <EmpanadasSection
           empanadas={data.empanadas}
           boxPrices={data.empanadaBoxPrices}
+          blockedSizes={data.empanadaBoxNoDisponibles ?? []}
           selection={empSelection}
           tier={empTier}
           onPick={empPick}
@@ -376,7 +381,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
             <button className="dock-box-top" onClick={() => setCajaExpandida((v) => !v)} aria-expanded={cajaExpandida}>
               <span>{empSelected} de {empTier} elegidas</span>
               <span className={`missing ${empComplete ? "done" : ""}`}>
-                {empComplete ? "Caja completa" : `Faltan ${empTier - empSelected}`}
+                {data.empanadaBoxNoDisponibles?.includes(empTier) ? "Precio no disponible" : empComplete ? "Caja completa" : `Faltan ${empTier - empSelected}`}
               </span>
             </button>
             <div className="dock-box-track">
@@ -394,10 +399,10 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
             <div className="dock-box-bottom">
               <div className="dock-box-total">
                 <div className="dock-box-label">Total caja</div>
-                <b>{fmt(empPriceFor(empTier, empSelection))}</b>
+                <b>{data.empanadaBoxNoDisponibles?.includes(empTier) ? "Precio no disponible" : fmt(empPriceFor(empTier, empSelection))}</b>
               </div>
               <button className={`dock-box-cta ${empComplete ? "ready" : ""}`} disabled={!empComplete} onClick={empAddBox}>
-                {empComplete ? "Agregar caja" : `Elegí ${empTier - empSelected} más`}
+                {data.empanadaBoxNoDisponibles?.includes(empTier) ? "Precio no disponible" : empComplete ? "Agregar caja" : `Elegí ${empTier - empSelected} más`}
               </button>
             </div>
           </div>

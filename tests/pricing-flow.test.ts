@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { assembleCatalogFromResults, settleCatalogQuery } from "../lib/catalog-source";
+import { assembleCatalogFromResults, publicSaleProducts, settleCatalogQuery } from "../lib/catalog-source";
 import { quoteItemsWithCatalog } from "../lib/order-quote";
 import { PricingUnavailableError } from "../lib/pricing-safety";
 import type { CartItem } from "../types";
@@ -68,4 +68,31 @@ test("ningún combo puede ocultar un sabor con precio cero", () => {
   catalog.empanadaBoxPrices[6] = 15000;
   const item: CartItem = { key: "emp-6-e", cartId: "4", type: "empanadas", name: "Caja x6", price: 15000, qty: 1, variant: { kind: "empanadas-box", size: 6, selections: { e: 6 } } };
   assert.throws(() => quoteItemsWithCatalog([item], catalog), /precio no disponible/i);
+});
+test("una caja con regla propia rota no se vende aunque sus sabores tengan precio", () => {
+  const input = ok();
+  input.productos.data.push({ id: "c6", nombre: "Caja x6", categoria: "empanadas", precio: 15000, disponible: true });
+  input.precios_venta = rows([{ receta_id: "ausente", nombre: "Caja x6", markup: 2, subcategoria: "Empanadas" }]);
+  const catalog = assembleCatalogFromResults(input);
+  assert.deepEqual(catalog.empanadaBoxNoDisponibles, [6]);
+  const item: CartItem = { key: "emp-6-e", cartId: "viejo", type: "empanadas", name: "Caja x6", price: 15000, qty: 1, variant: { kind: "empanadas-box", size: 6, selections: { e: 6 } } };
+  assert.throws(() => quoteItemsWithCatalog([item], catalog), /precio no disponible/i);
+});
+test("la API pública conserva campos pero publica solo precios seguros", () => {
+  const catalog = assembleCatalogFromResults(ok());
+  const rows = [
+    { id: "p", nombre: "Muzza", categoria: "pizzas", precio: 1000, disponible: true, desc: "original" },
+    { id: "e", nombre: "Palmito", categoria: "empanadas", precio: 2500, disponible: true, archivado: true },
+    { id: "mal", nombre: "Mala", categoria: "pizzas", precio: 0, disponible: true },
+  ];
+  assert.deepEqual(publicSaleProducts(rows, catalog), [
+    { id: "p", nombre: "Muzza", categoria: "pizzas", precio: 9000, disponible: true, desc: "original" },
+  ]);
+});
+test("la API pública conserva la caja válida con su precio de catálogo", () => {
+  const input = ok();
+  input.productos.data.push({ id: "c6", nombre: "Caja x6", categoria: "empanadas", precio: 15000, disponible: true });
+  const catalog = assembleCatalogFromResults(input);
+  const products = publicSaleProducts([{ id: "c6", nombre: "Caja x6", categoria: "empanadas", precio: 1000 }], catalog);
+  assert.equal(products[0]?.precio, 15000);
 });

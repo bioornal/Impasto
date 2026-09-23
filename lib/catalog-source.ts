@@ -54,11 +54,14 @@ export function assembleCatalogFromResults(results: CatalogQueryResults): Catalo
   });
 
   const preciosNoDisponibles: string[] = [];
+  const empanadaBoxNoDisponibles = new Set<6 | 12 | 24>();
   const vendibles: DatabaseProduct[] = [];
   for (const product of products) {
     const price = sellablePrice(product, resolution);
     if (price == null) {
       preciosNoDisponibles.push(String(product.id ?? product.nombre ?? ""));
+      const box = String(product.nombre || "").match(/caja\s*(?:x|×)\s*(6|12|24)\b/i);
+      if (box) empanadaBoxNoDisponibles.add(Number(box[1]) as 6 | 12 | 24);
       continue;
     }
     vendibles.push({ ...product, precio: price });
@@ -73,5 +76,25 @@ export function assembleCatalogFromResults(results: CatalogQueryResults): Catalo
       decorations(results.etiquetas) as Etiqueta[],
     ),
     preciosNoDisponibles,
+    empanadaBoxNoDisponibles: [...empanadaBoxNoDisponibles],
   };
+}
+
+export function publicSaleProducts<T extends DatabaseProduct & { archivado?: boolean }>(
+  products: T[], catalog: CatalogData,
+): Array<T & { precio: number }> {
+  const prices = new Map(
+    [...catalog.pizzas, ...catalog.empanadas, ...catalog.bebidas]
+      .map((product) => [product.id, product.precio] as const),
+  );
+  return products.flatMap((product) => {
+    if (product.archivado === true) return [];
+    const id = String(product.id ?? product.nombre ?? "");
+    const box = String(product.nombre || "").match(/caja\s*(?:x|×)\s*(6|12|24)\b/i);
+    const size = box ? Number(box[1]) as 6 | 12 | 24 : null;
+    const price = size != null
+      ? catalog.empanadaBoxNoDisponibles?.includes(size) ? null : catalog.empanadaBoxPrices[size]
+      : prices.get(id);
+    return price != null && Number.isFinite(price) && price > 0 ? [{ ...product, precio: price }] : [];
+  });
 }

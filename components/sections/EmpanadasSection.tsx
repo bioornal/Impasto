@@ -15,6 +15,7 @@ const REPULGUE = argumento("repulgue");
 interface EmpanadasSectionProps {
   empanadas: Empanada[];
   boxPrices: Record<6 | 12 | 24, number>;
+  blockedSizes: Array<6 | 12 | 24>;
   selection: Record<string, number>;
   tier: 6 | 12 | 24;
   onPick: (id: string, delta: number) => void;
@@ -23,11 +24,12 @@ interface EmpanadasSectionProps {
   priceFor: (size: 6 | 12 | 24, current: Record<string, number>) => number;
 }
 
-export function EmpanadasSection({ empanadas, boxPrices, selection, tier, onPick, onChangeTier, onAddBox, priceFor }: EmpanadasSectionProps) {
+export function EmpanadasSection({ empanadas, boxPrices, blockedSizes, selection, tier, onPick, onChangeTier, onAddBox, priceFor }: EmpanadasSectionProps) {
   if (empanadas.length === 0) return null;
 
   const selected = Object.values(selection).reduce((a, b) => a + b, 0);
-  const complete = selected === tier;
+  const blocked = blockedSizes.includes(tier);
+  const complete = selected === tier && !blocked;
   const hasUnitPrices = empanadas.some((e) => Number(e.precio) > 0);
 
   const lines = Object.entries(selection).filter(([, amount]) => amount > 0);
@@ -37,7 +39,7 @@ export function EmpanadasSection({ empanadas, boxPrices, selection, tier, onPick
       {/* Selector de tamaño mobile: pegado bajo el header. */}
       <div className="emp-size" role="group" aria-label="Tamaño de la caja">
         {TIERS.map((size) => (
-          <button key={size} className={`emp-size-btn ${tier === size ? "on" : ""}`} onClick={() => onChangeTier(size)} aria-pressed={tier === size}>
+          <button key={size} className={`emp-size-btn ${tier === size ? "on" : ""}`} onClick={() => onChangeTier(size)} aria-pressed={tier === size} disabled={blockedSizes.includes(size)} title={blockedSizes.includes(size) ? "Precio no disponible" : undefined}>
             {size} unidades
           </button>
         ))}
@@ -93,7 +95,7 @@ export function EmpanadasSection({ empanadas, boxPrices, selection, tier, onPick
               <span className="box-label" id="box-tiers-label">Unidades</span>
               <div className="box-tiers" role="group" aria-labelledby="box-tiers-label">
                 {TIERS.map((size) => (
-                  <button key={size} className={`tier ${tier === size ? "on" : ""}`} onClick={() => onChangeTier(size)} aria-pressed={tier === size}>
+                  <button key={size} className={`tier ${tier === size ? "on" : ""}`} onClick={() => onChangeTier(size)} aria-pressed={tier === size} disabled={blockedSizes.includes(size)} title={blockedSizes.includes(size) ? "Precio no disponible" : undefined}>
                     <b>{size}</b>
                     {/* Con precio por unidad el total depende de los gustos: no hay un precio fijo que mostrar. */}
                     {!hasUnitPrices && <small>{fmt(boxPrices[size])}</small>}
@@ -105,7 +107,7 @@ export function EmpanadasSection({ empanadas, boxPrices, selection, tier, onPick
             <div>
               <div className="box-progress-top">
                 <span>{selected} de {tier} elegidas</span>
-                <span className={`remain ${complete ? "done" : ""}`}>{complete ? "Caja completa" : `Faltan ${tier - selected}`}</span>
+                <span className={`remain ${complete ? "done" : ""}`}>{blocked ? "Precio no disponible" : complete ? "Caja completa" : `Faltan ${tier - selected}`}</span>
               </div>
               <div className="box-track">
                 <div className={`box-bar ${complete ? "done" : ""}`} style={{ width: `${Math.min(100, (selected / tier) * 100)}%` }} />
@@ -125,11 +127,11 @@ export function EmpanadasSection({ empanadas, boxPrices, selection, tier, onPick
 
             <div className="box-total">
               <span className="box-total-label">Total caja</span>
-              <b>{fmt(priceFor(tier, selection))}</b>
+              <b>{blocked ? "Precio no disponible" : fmt(priceFor(tier, selection))}</b>
             </div>
 
             <button className={`box-cta ${complete ? "ready" : ""}`} onClick={onAddBox} disabled={!complete}>
-              {complete ? "Agregar caja al carrito" : `Elegí ${tier - selected} más`}
+              {blocked ? "Precio no disponible" : complete ? "Agregar caja al carrito" : `Elegí ${tier - selected} más`}
             </button>
           </aside>
         </div>

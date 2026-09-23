@@ -87,6 +87,7 @@ function quoteItem(rawItem: CartItem, data: CatalogData): CartItem {
       throw new Error("La caja de empanadas necesita volver a armarse");
     }
 
+    if (data.empanadaBoxNoDisponibles?.includes(variant.size)) throw new Error(PRICE_ERROR);
     const selections = variant.selections;
     const selected = Object.entries(selections).reduce((sum, [id, amount]) => {
       ensureListed(data, id);

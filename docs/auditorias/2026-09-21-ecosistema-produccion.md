@@ -22,11 +22,16 @@ pedidos en producción durante esta implementación.** El recetario y la fórmul
 hacia arriba a $500 no se modificaron.
 
 - Las nueve fuentes críticas (productos y ocho de costeo) se validan; error SDK, rechazo de
-  promesa o `data:null` bloquea nuevas ventas. Una falla solo decorativa no las bloquea.
+  promesa o `data:null` bloquea nuevas ventas. Una falla solo decorativa no las bloquea. La
+  revisión independiente encontró y se corrigieron costos propios de pizza negativos/no
+  finitos y rendimiento ausente: ya no pueden producir un precio positivo aparente.
 - Una regla/receta individual defectuosa omite solo el producto afectado; no cae al precio
   manual. Los productos sin regla siguen vendibles únicamente con precio manual positivo y
   finito. Web y POS revalidan al guardar; un carrito antiguo no salta el bloqueo. Una caja
   no usa precio de combo si un sabor tiene precio inválido.
+- La API pública `/api/productos` usa ahora el catálogo validado y excluye archivados;
+  una regla propia de caja rota bloquea ese tamaño incluso con sabores válidos. El panel
+  administrativo del POS conserva un modo protegido para editar productos omitidos.
 - Las rutas web devuelven 503 ante fuente caída antes de insertar o contactar a Mercado Pago.
   El POS devuelve 503 por fuente y 409 por producto ya no vendible, conserva el carrito y
   permite reintentar. GET del POS indica omisiones por precio.

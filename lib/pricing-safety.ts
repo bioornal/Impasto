@@ -73,18 +73,23 @@ export function resolveValidatedPrices(input: PricingInput): PriceResolution {
     const recipe = recipes.get(String(rule.receta_id));
     const parts = components.get(String(rule.receta_id)) ?? [];
     const markup = finite(rule.markup);
+    const usesBase = rule.subcategoria !== "Empanadas" && rule.subcategoria !== "Bebidas";
+    const prepizza = finite(recipe?.precio_prepizza ?? input.defaults?.precio_prepizza_default);
+    const salsa = finite(recipe?.precio_salsa ?? input.defaults?.precio_salsa_default);
+    const invalidBase = usesBase && (prepizza == null || prepizza < 0 || salsa == null || salsa < 0);
     const broken =
       (counts.get(rule.nombre) ?? 0) !== 1 ||
       !rule.receta_id ||
       !recipe ||
       markup == null || markup <= 0 ||
+      invalidBase ||
       parts.length === 0 ||
       (input.totalOperativo > 0 && (validDenominator == null || validDenominator <= 0)) ||
       parts.some((part) => {
         const ingredient = ingredients.get(String(part.ingrediente_id));
         const quantity = finite(part.cantidad_kg);
         const price = finite(ingredient?.precio_kg);
-        const multiplier = finite(ingredient?.multiplo_rendimiento ?? 1);
+        const multiplier = finite(ingredient?.multiplo_rendimiento);
         return !ingredient || quantity == null || quantity <= 0 ||
           price == null || price < 0 || multiplier == null || multiplier <= 0;
       });

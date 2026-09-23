@@ -57,3 +57,24 @@ test("una regla rota solo invalida su producto", () => {
   assert.equal(sellablePrice({ nombre: "Palmito", precio: 9000 }, resolution), null);
   assert.equal(sellablePrice({ nombre: "Agua", precio: 2500 }, resolution), 2500);
 });
+test("costos propios de pizza inválidos no producen precio vendible", () => {
+  const pizza = () => ({
+    recipes: [{ id: "p", nombre: "Pizza", precio_prepizza: 500, precio_salsa: 200 }],
+    recipeIngredients: [{ receta_id: "p", ingrediente_id: "i", cantidad_kg: 1 }],
+    ingredients: [{ id: "i", precio_kg: 1000, multiplo_rendimiento: 1 }],
+    rules: [{ receta_id: "p", nombre: "Pizza", markup: 2, subcategoria: "Pizzas" }],
+    defaults: { pizzas_objetivo_mes: 800 },
+    totalOperativo: 0,
+  });
+  for (const change of [
+    (input: ReturnType<typeof pizza>) => { input.recipes[0].precio_prepizza = -100; },
+    (input: ReturnType<typeof pizza>) => { input.recipes[0].precio_salsa = Number.NaN; },
+    (input: ReturnType<typeof pizza>) => { input.ingredients[0].multiplo_rendimiento = null as unknown as number; },
+    (input: ReturnType<typeof pizza>) => { input.recipes[0].precio_prepizza = undefined as unknown as number; },
+    (input: ReturnType<typeof pizza>) => { input.recipes[0].precio_salsa = undefined as unknown as number; }
+  ]) {
+    const input = pizza();
+    change(input);
+    assert.equal(sellablePrice({ nombre: "Pizza", precio: 9000 }, resolveValidatedPrices(input)), null);
+  }
+});

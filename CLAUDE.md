@@ -26,8 +26,9 @@ subdominio `vocal-naiad-861a2c.netlify.app` sigue respondiendo). Ver "Dominio pr
 - El deploy de Netlify se dispara solo al pushear a `main`. **Cambiar una variable de entorno
   no afecta a los deploys ya publicados**: hay que reconstruir aunque la variable se lee en runtime.
   También se puede disparar manualmente con `npx netlify deploy --trigger`.
-- `app/api/productos/route.ts` no lo consume nadie en el repo. Se conservó por si algún
-  cliente externo lo llama. Si se confirma que no, borrarlo es un cambio de un archivo.
+- `app/api/productos/route.ts` no lo consume nadie en el repo, pero podría tener clientes
+  externos: desde A09 también entrega solo productos/precios validados y responde 503 si falla
+  una fuente crítica. No volver a publicar allí `productos.precio` crudo.
 - **Al verificar con `grep` que no quedan literales duplicados, incluí `.tsx`.** Un grep con
   solo `--include=*.ts` dio un falso negativo y dejó pasar una cuarta copia de la allowlist
   de categorías en `StoreProvider.tsx`.
@@ -93,10 +94,14 @@ y positivo. El redondeo sigue hacia arriba a $500; no se tocó el recetario.
 `getCatalogData()` verifica las nueve fuentes críticas (productos y ocho tablas de costos);
 promociones, testimonios y etiquetas siguen siendo decorativas. La carta omite productos
 con precio inválido y muestra aviso. Checkout recotiza pizzas, bebidas, mitades y cajas;
-una caja no usa el precio del combo para ocultar un sabor inválido. Las rutas de cotización,
+una caja no usa el precio del combo para ocultar un sabor inválido y el tamaño se bloquea si
+su propia regla es inválida. La API pública `/api/productos` también usa los precios seguros.
+Las rutas de cotización,
 pedido y tarjeta responden 503 si falla una fuente crítica; el pedido se valida antes del
 INSERT y antes de contactar a Mercado Pago. En el POS, GET/POST usan la misma resolución;
-el POST responde 409 por un ítem ya no vendible y 503 por una fuente caída.
+el POST responde 409 por un ítem ya no vendible y 503 por una fuente caída. El panel
+administrativo del POS consulta `/api/productos?admin=1` para conservar la posibilidad de
+editar productos que la carta vendible oculta.
 
 Pruebas locales: `pnpm test`, TypeScript, lint (0 errores; 11 advertencias previas) y build
 de Impasto; `npm test` y build de Carro Fogón. Falta confirmar SHA desplegado y hacer humo
