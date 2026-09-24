@@ -3,7 +3,7 @@
  * `db` ni React, para poder testearlo con `tsx` (`tests/contacto.test.ts`).
  */
 
-/** "(03757) 42-1840" → "tel:+543757421840". Sin dígitos, null. */
+/** "(03757) 65-2003" → "tel:+543757652003". Sin dígitos, null. */
 export function enlaceTelefono(telefono: string): string | null {
   const digitos = String(telefono || "").replace(/\D/g, "");
   if (!digitos) return null;

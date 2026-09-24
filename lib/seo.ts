@@ -32,7 +32,7 @@ const hhmm = (valor: string) => /^\d{1,2}:\d{2}$/.test(valor) ? valor.padStart(5
 /**
  * El teléfono en formato internacional, que es el que Google entiende.
  * `whatsappPhone` ya viene solo con dígitos y con el código de país; el campo
- * `phone` está escrito para leer ("(03757) 42-1840") y no sirve para esto.
+ * `phone` está escrito para leer ("(03757) 65-2003") y no sirve para esto.
  */
 function telefonoInternacional(business: BusinessConfig): string {
   const digitos = String(business.whatsappPhone || "").replace(/\D/g, "");

@@ -19,7 +19,7 @@ values (
   'Impasto - Pizzeria y Empanadas',
   'Puerto Iguazú, Misiones',
   'Santa María esq. Obispo Angelelli',
-  '(03757) 42-1840',
+  '(03757) 65-2003',
   'hola@impastoiguazu.com.ar',
   '543757652003',
   'Martes a Domingo · 19:30 — 00:00',

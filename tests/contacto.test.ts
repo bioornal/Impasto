@@ -14,6 +14,7 @@ function chequear(nombre: string, real: unknown, esperado: unknown) {
 /* ── teléfono: el que muestra el footer tiene que poder tocarse ── */
 
 chequear("fijo con 0 de larga distancia → +54 sin el 0", enlaceTelefono("(03757) 42-1840"), "tel:+543757421840");
+chequear("teléfono actual de Impasto (03757) 65-2003 → formato tel:+543757652003", enlaceTelefono("(03757) 65-2003"), "tel:+543757652003");
 chequear("ya en formato internacional", enlaceTelefono("+54 3757 42-1840"), "tel:+543757421840");
 chequear("diez dígitos sin 0 → se le agrega +54", enlaceTelefono("3757 421840"), "tel:+543757421840");
 chequear("sin dígitos no arma un enlace", enlaceTelefono(""), null);
