@@ -9,7 +9,7 @@ Estado al 24/09/2026: código publicado en `main` de Impasto y Carro Fogón. `qu
 - Ticket ficticio corto: legible, cortó, sin papel sobrante (confirmación del dueño).
 - Ticket ficticio largo: completo, cortó y acentos correctos (confirmación del dueño). No se midió su largo exacto.
 - Desde Edge, `https://www.impastopizzas.com` y `https://carro-fogon.vercel.app` alcanzaron el agente por HTTP loopback: `403 pairing_required` con token de prueba incorrecto.
-- 27 pruebas C# aprobadas. Ninguna prueba guardó ni imprimió un pedido real.
+- 30 pruebas C# aprobadas. Ninguna prueba guardó ni imprimió un pedido real.
 - `GET /health` con el origen Impasto respondió `available`, cola correcta y `paired:false` sin token, tras reactivar el agente el 24/09.
 
 ## Instalación en la PC de la impresora
@@ -22,7 +22,7 @@ powershell -NoProfile -File printer-agent/build.ps1
 Copy-Item printer-agent/config.example.json printer-agent/config.local.json
 ```
 
-En una PC nueva, editar `printer-agent/config.local.json`: mantener el nombre exacto de la cola Epson en `queueName`, configurar el nombre exacto de la cola 3nStar en `secondaryQueueName` y conservar los dos orígenes HTTPS; completar `token` con una cadena aleatoria de al menos 32 caracteres. El [controlador RPT oficial de 3nStar](https://3nstar.com/printers-download/) incluye Windows 7/10/11. Su paquete exige ejecutar `Setup.exe` (el MSI directo falla); en esta instalación Windows rechazó el INF `POS-80` sin firma y se creó la cola con `Generic / Text Only` para RAW. En esta PC ya existe una copia estable en `%LOCALAPPDATA%\ImpastoPrinter\config.local.json`: **no sobrescribirla**. La cola 3nStar existe, pero `secondaryQueueName` se dejó sin activar mientras se confirma el corte corregido. Agregar allí solo `secondaryQueueName` después de validar el papel. La clave sigue siendo la misma hasta que se rote deliberadamente. Cada navegador recuerda la clave por separado para Impasto y Carro Fogón. `config.local.json` y `bin/` están ignorados por Git. No poner el secreto en código, logs, capturas, variables `NEXT_PUBLIC_*` ni InsForge.
+En una PC nueva, editar `printer-agent/config.local.json`: mantener el nombre exacto de la cola Epson en `queueName`, configurar el nombre exacto de la cola 3nStar en `secondaryQueueName` y conservar los dos orígenes HTTPS; completar `token` con una cadena aleatoria de al menos 32 caracteres. El [controlador RPT oficial de 3nStar](https://3nstar.com/printers-download/) incluye Windows 7/10/11. Su paquete exige ejecutar `Setup.exe` (el MSI directo falla); en esta instalación Windows rechazó el INF `POS-80` sin firma y se creó la cola con `Generic / Text Only` para RAW. En esta PC ya existe una copia estable en `%LOCALAPPDATA%\ImpastoPrinter\config.local.json`: **no sobrescribirla**. La cola 3nStar está configurada allí y el agente informa ambas colas disponibles, con Epson seleccionada por defecto en ambas webs. Falta la confirmación física de la segunda prueba larga después de aumentar el margen de corte. La clave sigue siendo la misma hasta que se rote deliberadamente. Cada navegador recuerda la clave por separado para Impasto y Carro Fogón. `config.local.json` y `bin/` están ignorados por Git. No poner el secreto en código, logs, capturas, variables `NEXT_PUBLIC_*` ni InsForge.
 
 ```powershell
 powershell -NoProfile -File "$env:LOCALAPPDATA\ImpastoPrinter\agent\start.ps1" -ConfigPath "$env:LOCALAPPDATA\ImpastoPrinter\config.local.json"

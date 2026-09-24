@@ -760,5 +760,7 @@ Implementación publicada en `main`; desarrollo conservado en la rama
   sin firma; no se desactivó esa protección. Ticket corto confirmado con
   acentos/corte. El primero largo se cortó atravesando Pago; el perfil 3nStar
   ahora avanza tres líneas adicionales antes del corte y espera confirmación
-  física. `secondaryQueueName` local sigue desactivado hasta confirmarla. No
-  copiar ni rotar el token al actualizar.
+  física. `secondaryQueueName` local está activado; ambos orígenes informan
+  las dos colas disponibles. Se comprobó por HTTP que elegir 3nStar en una web
+  no cambia la otra y se restauró Epson en ambas. No copiar ni rotar el token
+  al actualizar.
