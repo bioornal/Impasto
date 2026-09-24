@@ -3,7 +3,7 @@ set informacion = case categoria
   when 'nombre' then 'Impasto - Pizzeria y Empanadas'
   when 'direccion' then 'Santa María esq. Obispo Angelelli, Puerto Iguazú'
   when 'horarios' then 'Martes a Domingo de 19:30 a 00:00. Cerrado los lunes.'
-  when 'whatsapp' then '(03757) 42-1840'
+  when 'whatsapp' then '3757 652003'
   when 'instagram' then '@impasto.iguazu'
   when 'delivery' then 'Costo de delivery: 3000 pesos. Retiro en local: sin cargo.'
   else informacion

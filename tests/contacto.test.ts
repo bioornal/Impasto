@@ -34,6 +34,8 @@ chequear(
   "https://wa.me/543757421840?text=%C2%A1Hola!%20Quiero%20hacer%20un%20pedido.",
 );
 chequear("limpia lo que no es dígito", enlaceWhatsapp("+54 3757 42-1840"), "https://wa.me/543757421840");
+chequear("diez dígitos sin 54 → se le agrega 54", enlaceWhatsapp("3757 652003"), "https://wa.me/543757652003");
+chequear("diez dígitos con 0 → se quita el 0 y agrega 54", enlaceWhatsapp("(03757) 652003"), "https://wa.me/543757652003");
 
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
 process.exit(fallos === 0 ? 0 : 1);

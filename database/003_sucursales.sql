@@ -21,7 +21,7 @@ values (
   'Santa María esq. Obispo Angelelli',
   '(03757) 42-1840',
   'hola@impastoiguazu.com.ar',
-  '543757421840',
+  '543757652003',
   'Martes a Domingo · 19:30 — 00:00',
   3000
 )

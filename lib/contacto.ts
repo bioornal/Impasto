@@ -26,6 +26,9 @@ export const MENSAJE_PEDIDO_WHATSAPP = "¡Hola! Quiero hacer un pedido.";
 
 /** wa.me con el número internacional y, si se pasa, el mensaje ya escrito. */
 export function enlaceWhatsapp(numero: string, mensaje?: string): string {
-  const digitos = String(numero || "").replace(/\D/g, "");
+  let digitos = String(numero || "").replace(/\D/g, "");
+  if (!digitos) return "";
+  if (digitos.startsWith("0")) digitos = digitos.slice(1);
+  if (digitos.length === 10) digitos = `54${digitos}`;
   return `https://wa.me/${digitos}${mensaje ? `?text=${encodeURIComponent(mensaje)}` : ""}`;
 }
