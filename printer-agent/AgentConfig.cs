@@ -6,6 +6,7 @@ using System.Web.Script.Serialization;
 namespace PrinterAgent {
     public sealed class AgentConfig {
         public string queueName { get; set; }
+        public string secondaryQueueName { get; set; }
         public string token { get; set; }
         public string[] allowedOrigins { get; set; }
         public static AgentConfig Load(string path) {
@@ -15,6 +16,8 @@ namespace PrinterAgent {
         }
         public void Validate() {
             if (string.IsNullOrWhiteSpace(queueName) || queueName.Length > 256) throw new ArgumentException("Falta nombre exacto de cola.");
+            if (secondaryQueueName != null && (string.IsNullOrWhiteSpace(secondaryQueueName) || secondaryQueueName.Length > 256 || secondaryQueueName == queueName))
+                throw new ArgumentException("Cola secundaria inválida.");
             if (token == null || token.Length < 32 || token.Length > 256 || token.Any(c => c < 33 || c > 126)) throw new ArgumentException("Secreto local inválido.");
             if (allowedOrigins == null || allowedOrigins.Length != 2 || allowedOrigins.Distinct(StringComparer.Ordinal).Count() != 2)
                 throw new ArgumentException("Configurar los dos orígenes exactos.");

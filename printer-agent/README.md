@@ -5,6 +5,7 @@ Estado al 24/09/2026: código publicado en `main` de Impasto y Carro Fogón. `qu
 ## Equipo y pruebas realizadas
 
 - Epson TM-T20II USB, cola exacta `EPSON TM-T20II Receipt`, papel de 80 mm, ESC/POS RAW, 42 columnas, WPC1252 (`ESC t 16`) y corte `GS V 0`.
+- 3nStar RPT006B: conexión USB detectada como `Printer POS-80` el 24/09, pero requiere instalar su controlador y crear la cola de Windows. La ficha oficial indica 80 mm, ESC/POS y cortador; el resultado físico de esta impresora se documentará después de una prueba ficticia.
 - Ticket ficticio corto: legible, cortó, sin papel sobrante (confirmación del dueño).
 - Ticket ficticio largo: completo, cortó y acentos correctos (confirmación del dueño). No se midió su largo exacto.
 - Desde Edge, `https://www.impastopizzas.com` y `https://carro-fogon.vercel.app` alcanzaron el agente por HTTP loopback: `403 pairing_required` con token de prueba incorrecto.
@@ -21,13 +22,15 @@ powershell -NoProfile -File printer-agent/build.ps1
 Copy-Item printer-agent/config.example.json printer-agent/config.local.json
 ```
 
-En una PC nueva, editar `printer-agent/config.local.json`: mantener el nombre exacto de la cola y los dos orígenes HTTPS; completar `token` con una cadena aleatoria de al menos 32 caracteres. En esta PC ya existe una copia estable en `%LOCALAPPDATA%\ImpastoPrinter\config.local.json`: **no sobrescribirla**. Allí queda la misma clave hasta que se rote deliberadamente. Cada navegador recuerda la clave por separado para Impasto y Carro Fogón. `config.local.json` y `bin/` están ignorados por Git. No poner el secreto en código, logs, capturas, variables `NEXT_PUBLIC_*` ni InsForge.
+En una PC nueva, editar `printer-agent/config.local.json`: mantener el nombre exacto de la cola Epson en `queueName`, configurar el nombre exacto de la cola 3nStar en `secondaryQueueName` y conservar los dos orígenes HTTPS; completar `token` con una cadena aleatoria de al menos 32 caracteres. El [controlador RPT oficial de 3nStar](https://3nstar.com/printers-download/) incluye Windows 7/10/11. En esta PC ya existe una copia estable en `%LOCALAPPDATA%\ImpastoPrinter\config.local.json`: **no sobrescribirla**; agregar allí solo `secondaryQueueName` cuando exista la cola. La clave sigue siendo la misma hasta que se rote deliberadamente. Cada navegador recuerda la clave por separado para Impasto y Carro Fogón. `config.local.json` y `bin/` están ignorados por Git. No poner el secreto en código, logs, capturas, variables `NEXT_PUBLIC_*` ni InsForge.
 
 ```powershell
 powershell -NoProfile -File "$env:LOCALAPPDATA\ImpastoPrinter\agent\start.ps1" -ConfigPath "$env:LOCALAPPDATA\ImpastoPrinter\config.local.json"
 ```
 
 `start.ps1` verifica la cola y arranca el servidor solo en `127.0.0.1:8765`. En esta PC se copiaron el ejecutable y el script a `%LOCALAPPDATA%\ImpastoPrinter\agent\`; el acceso directo `Impasto Printer Agent.lnk` en Inicio de Windows apunta allí. El acceso directo del escritorio **Clave impresora Impasto y Carro Fogón** abre la configuración en Notepad para copiar `token` cuando haga falta. Si se actualiza el agente, recompilar y copiar de nuevo `bin/PrinterAgent.exe` y `start.ps1` a esa carpeta estable, con el agente detenido; conservar `config.local.json` y `attempts.json`. No abrir el puerto en la LAN ni agregar reglas de firewall.
+
+En **Pedidos** de Impasto y **Comandas** de Carro Fogón, cada web muestra su selector de impresora después de emparejar. Epson es la elección inicial en ambas. Cambiar el selector guarda en esta PC una elección independiente por aplicación en `%LOCALAPPDATA%\ImpastoPrinter\printer-selection.json`, sin cambiar el secreto ni preguntar en cada comanda. Una cola no instalada aparece deshabilitada y el agente rechaza elegirla. El selector indica colas instaladas; una impresora desconectada o sin papel todavía puede aceptar trabajos en la cola de Windows. No borrar `printer-selection.json` salvo para restaurar Epson en ambas webs. `GET /printers` consulta la selección y `POST /printers` acepta solo `epson` o `3nstar` desde los dos orígenes permitidos y con el token local.
 
 Para verificar sin imprimir:
 

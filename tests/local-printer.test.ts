@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { configurePrinter, newAttemptId, printLocal, printerHealth } from '../lib/local-printer';
+import { configurePrinter, getPrinterSelection, newAttemptId, printLocal, printerHealth, selectPrinter } from '../lib/local-printer';
 
 async function main() {
 const memory = new Map<string, string>();
@@ -27,6 +27,19 @@ assert.equal(healthUrl, 'http://127.0.0.1:8765/health');
 assert.equal(memory.size, 1, 'token stored only after pairing');
 assert.equal(await printerHealth(async () => reply(200, { paired: true })), true);
 assert.equal(await printerHealth(async () => reply(200, { paired: false })), false);
+const selectionCalls: Array<{ url: string; init: RequestInit }> = [];
+const selectionFetcher = async (url: RequestInfo | URL, init?: RequestInit) => {
+  selectionCalls.push({ url: String(url), init: init! });
+  return reply(200, init?.method === 'POST'
+    ? { selected: '3nstar' }
+    : { selected: 'epson', epsonAvailable: true, threeNStarAvailable: true });
+};
+assert.deepEqual(await getPrinterSelection(selectionFetcher), { selected: 'epson', epsonAvailable: true, threeNStarAvailable: true });
+assert.deepEqual(await selectPrinter('3nstar', selectionFetcher), { selected: '3nstar' });
+assert.equal(selectionCalls[0].url, 'http://127.0.0.1:8765/printers');
+assert.equal(selectionCalls[1].init.method, 'POST');
+assert.equal(JSON.parse(selectionCalls[1].init.body as string).printer, '3nstar');
+await assert.rejects(selectPrinter('3nstar', async () => reply(409, { error: 'printer_unavailable' })), /disponible/i);
 
 const sent: Array<{ url: string; init: RequestInit }> = [];
 const queued = async (url: RequestInfo | URL, init?: RequestInit) => {

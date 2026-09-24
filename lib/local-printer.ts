@@ -1,5 +1,7 @@
 export const PRINTER_URL = "http://127.0.0.1:8765";
 const STORAGE_KEY = "impasto-printer-token";
+export type PrinterId = "epson" | "3nstar";
+export interface PrinterSelection { selected: PrinterId; epsonAvailable: boolean; threeNStarAvailable: boolean }
 
 export interface PrintJob {
   readonly attemptId: string;
@@ -35,18 +37,18 @@ async function request(
   path: string,
   token: string,
   fetcher: typeof fetch,
-  body?: PrintJob,
+  body?: unknown,
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 4000);
   try {
     return await fetcher(PRINTER_URL + path, {
-      method: body ? "POST" : "GET",
+      method: body === undefined ? "GET" : "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Printer-Token": token,
       },
-      ...(body ? { body: JSON.stringify(body) } : {}),
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       signal: controller.signal,
     });
   } catch {
@@ -78,6 +80,30 @@ export async function printerHealth(fetcher: typeof fetch = fetch): Promise<bool
   } catch {
     return false;
   }
+}
+
+export async function getPrinterSelection(fetcher: typeof fetch = fetch): Promise<PrinterSelection> {
+  const token = storedToken();
+  if (!token) throw new Error("Emparejá la impresora local para configurar la selección.");
+  const response = await request("/printers", token, fetcher);
+  if (response.status === 403) throw new Error("Se perdió el emparejamiento de la impresora local.");
+  if (!response.ok) throw new Error("No se pudo consultar la impresora de esta PC.");
+  const result = await response.json() as PrinterSelection;
+  if ((result.selected !== "epson" && result.selected !== "3nstar") || typeof result.epsonAvailable !== "boolean" || typeof result.threeNStarAvailable !== "boolean")
+    throw new Error("Respuesta inválida del agente local.");
+  return result;
+}
+
+export async function selectPrinter(printer: PrinterId, fetcher: typeof fetch = fetch): Promise<{ selected: PrinterId }> {
+  const token = storedToken();
+  if (!token) throw new Error("Emparejá la impresora local para configurar la selección.");
+  const response = await request("/printers", token, fetcher, { printer });
+  if (response.status === 403) throw new Error("Se perdió el emparejamiento de la impresora local.");
+  if (response.status === 409) throw new Error("La impresora elegida no está disponible en esta PC.");
+  if (!response.ok) throw new Error("No se pudo guardar la impresora elegida.");
+  const result = await response.json() as { selected?: PrinterId };
+  if (result.selected !== printer) throw new Error("Respuesta inválida del agente local.");
+  return { selected: printer };
 }
 
 export async function printLocal(

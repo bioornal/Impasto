@@ -750,3 +750,11 @@ Implementación publicada en `main`; desarrollo conservado en la rama
   comprobar `/health` con `Origin` permitido y revisar cola/papel antes de
   reimprimir. No borrar el
   ledger. Para volver manualmente, usar `Imprimir con navegador` en Impasto.
+
+- Selección dual (24/09/2026, en curso): Impasto y Carro Fogón muestran un
+  selector independiente en Pedidos/Comandas. El agente acepta solo IDs
+  `epson` y `3nstar`, vinculados a colas locales configuradas, y guarda las
+  elecciones en `%LOCALAPPDATA%\ImpastoPrinter\printer-selection.json`.
+  Epson sigue como predeterminada. El USB 3nStar RPT006B se detecta como
+  `Printer POS-80`; instalar la cola de Windows y verificar ticket/corte antes
+  de declarar aceptación física. No copiar ni rotar el token al actualizar.

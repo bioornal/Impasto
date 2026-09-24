@@ -133,6 +133,43 @@ namespace PrinterAgent {
                         Check(calls == 1, "no print without durable reservation");
                     }
                 });
+                test("printer selection is saved separately for each site and routes later jobs", delegate {
+                    string selectionPath = Path.Combine(directory, "selection.json");
+                    var twoPrinters = new AgentConfig { queueName = "test-queue", secondaryQueueName = "test-3nstar", token = Token,
+                        allowedOrigins = new[] { Origin, "https://carro-fogon.vercel.app" } };
+                    string lastQueue = null;
+                    using (var ledger = new AttemptLedger(Path.Combine(directory, "two-printers.json")))
+                    using (var server = new LocalServer(twoPrinters, delegate(string queue, byte[] bytes) { lastQueue = queue; }, ledger, Port(), selectionPath,
+                        delegate(string queue) { return queue == "test-queue" || queue == "test-3nstar"; })) {
+                        server.Start();
+                        Check(Send(server.Port, "/printers", "GET", Origin, Token, null).body.Contains("\"selected\":\"epson\""), "Epson is default");
+                        Check(Send(server.Port, "/printers", "POST", Origin, "wrong", "{\"printer\":\"3nstar\"}").status == 403, "wrong token cannot select");
+                        Check(Send(server.Port, "/printers", "POST", Origin, Token, "{\"printer\":\"arbitrary-queue\"}").status == 400, "arbitrary queue rejected");
+                        Check(Send(server.Port, "/printers", "POST", Origin, Token, "{\"printer\":\"3nstar\"}").status == 200, "3nStar selected");
+                        Check(Send(server.Port, "/printers", "GET", Origin, Token, null).body.Contains("\"selected\":\"3nstar\""), "Impasto selection updated");
+                        Check(Send(server.Port, "/printers", "GET", "https://carro-fogon.vercel.app", Token, null).body.Contains("\"selected\":\"epson\""), "Carro selection unchanged");
+                        string impastoJob = Tests.Fixture().Replace("test-attempt-1", "selection-impasto-1");
+                        Check(Send(server.Port, "/print", "POST", Origin, Token, impastoJob).status == 200 && lastQueue == "test-3nstar", "Impasto routed to 3nStar");
+                        string carroJob = Tests.Fixture().Replace("test-attempt-1", "selection-carro-1").Replace("\"source\":\"impasto\"", "\"source\":\"carro-fogon\"");
+                        Check(Send(server.Port, "/print", "POST", "https://carro-fogon.vercel.app", Token, carroJob).status == 200 && lastQueue == "test-queue", "Carro routed to Epson");
+                    }
+                    using (var ledger = new AttemptLedger(Path.Combine(directory, "two-printers-restart.json")))
+                    using (var server = new LocalServer(twoPrinters, delegate { }, ledger, Port(), selectionPath, delegate { return true; })) {
+                        server.Start();
+                        Check(Send(server.Port, "/printers", "GET", Origin, Token, null).body.Contains("\"selected\":\"3nstar\""), "selection survives restart");
+                    }
+                });
+                test("missing secondary Windows queue cannot become the active printer", delegate {
+                    var twoPrinters = new AgentConfig { queueName = "test-queue", secondaryQueueName = "missing-3nstar", token = Token,
+                        allowedOrigins = new[] { Origin, "https://carro-fogon.vercel.app" } };
+                    using (var ledger = new AttemptLedger(Path.Combine(directory, "unavailable.json")))
+                    using (var server = new LocalServer(twoPrinters, delegate { throw new Exception("Must not print"); }, ledger, Port(),
+                        Path.Combine(directory, "unavailable-selection.json"), delegate(string queue) { return queue == "test-queue"; })) {
+                        server.Start();
+                        Check(Send(server.Port, "/printers", "POST", Origin, Token, "{\"printer\":\"3nstar\"}").status == 409, "missing queue rejected");
+                        Check(Send(server.Port, "/printers", "GET", Origin, Token, null).body.Contains("\"selected\":\"epson\""), "Epson remains selected");
+                    }
+                });
             } finally { Directory.Delete(directory, true); }
         }
     }

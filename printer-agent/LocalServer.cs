@@ -12,13 +12,18 @@ namespace PrinterAgent {
         readonly AgentConfig config;
         readonly Action<string, byte[]> spool;
         readonly AttemptLedger ledger;
+        readonly PrinterSelection selection;
+        readonly Func<string, bool> queueExists;
         readonly HttpListener listener = new HttpListener();
         readonly JavaScriptSerializer json = new JavaScriptSerializer();
         Thread worker;
         volatile bool stopping;
         public int Port { get; private set; }
-        public LocalServer(AgentConfig config, Action<string, byte[]> spool, AttemptLedger ledger, int port = 8765) {
+        public LocalServer(AgentConfig config, Action<string, byte[]> spool, AttemptLedger ledger, int port = 8765,
+            string selectionPath = null, Func<string, bool> queueExists = null) {
             config.Validate(); this.config = config; this.spool = spool; this.ledger = ledger; Port = port;
+            selection = new PrinterSelection(config, selectionPath);
+            this.queueExists = queueExists ?? RawSpooler.Exists;
             listener.Prefixes.Add("http://127.0.0.1:" + port + "/");
             listener.TimeoutManager.EntityBody = TimeSpan.FromSeconds(5);
             listener.TimeoutManager.HeaderWait = TimeSpan.FromSeconds(5);
@@ -27,8 +32,8 @@ namespace PrinterAgent {
             listener.Start();
             worker = new Thread(Loop) { IsBackground = true }; worker.Start();
         }
-        public static void Run(AgentConfig config, Action<string, byte[]> spool, AttemptLedger ledger) {
-            using (var server = new LocalServer(config, spool, ledger)) {
+        public static void Run(AgentConfig config, Action<string, byte[]> spool, AttemptLedger ledger, string selectionPath) {
+            using (var server = new LocalServer(config, spool, ledger, 8765, selectionPath)) {
                 server.Start();
                 Console.WriteLine("Agente disponible en 127.0.0.1:8765. En cola no significa impreso.");
                 server.worker.Join();
@@ -66,7 +71,7 @@ namespace PrinterAgent {
             response.Headers["Access-Control-Allow-Origin"] = origin;
             response.Headers["Vary"] = "Origin";
             response.Headers["Cache-Control"] = "no-store";
-            if (request.Url.AbsolutePath != "/health" && request.Url.AbsolutePath != "/print") { Reply(response, 404, new { error = "not_found" }); return; }
+            if (request.Url.AbsolutePath != "/health" && request.Url.AbsolutePath != "/print" && request.Url.AbsolutePath != "/printers") { Reply(response, 404, new { error = "not_found" }); return; }
             if (request.HttpMethod == "OPTIONS") {
                 string method = request.Headers["Access-Control-Request-Method"];
                 string[] headers = (request.Headers["Access-Control-Request-Headers"] ?? "").Split(',');
@@ -79,26 +84,45 @@ namespace PrinterAgent {
                 response.StatusCode = 204; return;
             }
             string token = request.Headers["X-Printer-Token"];
+            string source = origin == config.allowedOrigins[0] ? "impasto" : "carro-fogon";
             if (request.Url.AbsolutePath == "/health" && request.HttpMethod == "GET") {
                 if (token != null && !TokenMatches(token)) { Reply(response, 403, new { error = "pairing_required" }); return; }
-                Reply(response, 200, new { status = "available", version = "1", queueName = config.queueName, paired = token != null }); return;
+                Reply(response, 200, new { status = "available", version = "2", queueName = selection.Queue(source), paired = token != null }); return;
+            }
+            if (request.Url.AbsolutePath == "/printers") {
+                if (!TokenMatches(token)) { Reply(response, 403, new { error = "pairing_required" }); return; }
+                if (request.HttpMethod == "GET") {
+                    Reply(response, 200, new { selected = selection.Selected(source), epsonAvailable = queueExists(config.queueName),
+                        threeNStarAvailable = config.secondaryQueueName != null && queueExists(config.secondaryQueueName) }); return;
+                }
+                if (request.HttpMethod != "POST") { Reply(response, 405, new { error = "method_not_allowed" }); return; }
+                if (request.ContentLength64 > 1024 || request.ContentType == null || !request.ContentType.Split(';')[0].Trim().Equals("application/json", StringComparison.OrdinalIgnoreCase)) {
+                    Reply(response, 400, new { error = "invalid_selection" }); return;
+                }
+                string requested;
+                try {
+                    byte[] data = ReadBody(request, 1024);
+                    var choice = json.Deserialize<PrinterChoice>(new UTF8Encoding(false, true).GetString(data));
+                    requested = choice == null ? null : choice.printer;
+                } catch (Exception) { Reply(response, 400, new { error = "invalid_selection" }); return; }
+                if (!selection.CanSelect(requested)) { Reply(response, 400, new { error = "invalid_selection" }); return; }
+                string chosenQueue = requested == "epson" ? config.queueName : config.secondaryQueueName;
+                if (!queueExists(chosenQueue)) { Reply(response, 409, new { error = "printer_unavailable" }); return; }
+                try { selection.Select(source, requested); }
+                catch (Exception) { Reply(response, 503, new { error = "selection_unavailable" }); return; }
+                Reply(response, 200, new { selected = requested }); return;
             }
             if (request.Url.AbsolutePath != "/print" || request.HttpMethod != "POST") { Reply(response, 405, new { error = "method_not_allowed" }); return; }
             if (!TokenMatches(token)) { Reply(response, 403, new { error = "pairing_required" }); return; }
             if (request.ContentLength64 > PrintRequest.MaxBodyBytes) { Reply(response, 413, new { error = "body_too_large" }); return; }
             if (request.ContentType == null || !request.ContentType.Split(';')[0].Trim().Equals("application/json", StringComparison.OrdinalIgnoreCase)) { Reply(response, 415, new { error = "json_required" }); return; }
             byte[] body;
-            using (var buffer = new MemoryStream()) {
-                byte[] chunk = new byte[4096]; int count;
-                while ((count = request.InputStream.Read(chunk, 0, chunk.Length)) > 0) {
-                    if (buffer.Length + count > PrintRequest.MaxBodyBytes) { Reply(response, 413, new { error = "body_too_large" }); return; }
-                    buffer.Write(chunk, 0, count);
-                }
-                body = buffer.ToArray();
-            }
+            try { body = ReadBody(request, PrintRequest.MaxBodyBytes); }
+            catch (ArgumentException) { Reply(response, 413, new { error = "body_too_large" }); return; }
             PrintRequest job; byte[] ticket;
             try { job = PrintRequest.Parse(new UTF8Encoding(false, true).GetString(body)); ticket = ReceiptEncoder.Encode(job, job.reprint); }
             catch (ArgumentException) { Reply(response, 400, new { error = "invalid_receipt" }); return; }
+            if (job.source != source) { Reply(response, 403, new { error = "source_forbidden" }); return; }
             string identity;
             using (var hash = SHA256.Create()) identity = Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(json.Serialize(job))));
             try {
@@ -109,9 +133,20 @@ namespace PrinterAgent {
                 }
             } catch (InvalidOperationException) { Reply(response, 409, new { error = "attempt_conflict" }); return; }
             catch (Exception) { Reply(response, 503, new { error = "ledger_unavailable" }); return; }
-            try { spool(config.queueName, ticket); ledger.MarkQueued(job.attemptId); }
+            try { spool(selection.Queue(source), ticket); ledger.MarkQueued(job.attemptId); }
             catch (Exception) { Reply(response, 503, new { error = "outcome_unknown" }); return; }
             Reply(response, 200, new { status = "queued", duplicate = false });
+        }
+        sealed class PrinterChoice { public string printer { get; set; } }
+        static byte[] ReadBody(HttpListenerRequest request, int maximum) {
+            using (var buffer = new MemoryStream()) {
+                byte[] chunk = new byte[4096]; int count;
+                while ((count = request.InputStream.Read(chunk, 0, chunk.Length)) > 0) {
+                    if (buffer.Length + count > maximum) throw new ArgumentException("Cuerpo demasiado largo.");
+                    buffer.Write(chunk, 0, count);
+                }
+                return buffer.ToArray();
+            }
         }
         void Reply(HttpListenerResponse response, int status, object payload) {
             byte[] bytes = Encoding.UTF8.GetBytes(json.Serialize(payload));

@@ -1,11 +1,11 @@
 "use client";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 import type { AdminOrder } from "./types";
 import { esPedidoParaCocina } from "@/lib/pedido-visible";
 import { sendAdminPrint } from "@/lib/admin-print-job";
-import { configurePrinter, newAttemptId, printLocal, type PrintJob } from "@/lib/local-printer";
+import { configurePrinter, getPrinterSelection, newAttemptId, printLocal, selectPrinter, type PrinterId, type PrinterSelection, type PrintJob } from "@/lib/local-printer";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 const timeAgo = (iso: string) => {
@@ -26,9 +26,12 @@ export function Orders() {
   const [selected, setSelected] = useState<AdminOrder | null>(null);
   const [printState, setPrintState] = useState<{ orderId: string; message: string; error: boolean } | null>(null);
   const [printing, setPrinting] = useState(false);
+  const [printerSelection, setPrinterSelection] = useState<PrinterSelection | null>(null);
+  const [printerBusy, setPrinterBusy] = useState(false);
   const printingRef = useRef(false);
   const failedAttempts = useRef(new Map<string, PrintJob>());
   const sentOrders = useRef(new Set<string>());
+  useEffect(() => { void getPrinterSelection().then(setPrinterSelection).catch(() => setPrinterSelection(null)); }, []);
 
   async function printOrder(order: AdminOrder) {
     if (printingRef.current) return;
@@ -58,10 +61,23 @@ export function Orders() {
     if (token === null) return;
     try {
       await configurePrinter(token);
+      setPrinterSelection(await getPrinterSelection());
       setPrintState({ orderId: '', message: 'Impresora local emparejada.', error: false });
     } catch (error) {
       setPrintState({ orderId: '', message: error instanceof Error ? error.message : 'No se pudo emparejar.', error: true });
     }
+  }
+
+  async function choosePrinter(printer: PrinterId) {
+    setPrinterBusy(true);
+    try {
+      await selectPrinter(printer);
+      setPrinterSelection(await getPrinterSelection());
+      setPrintState({ orderId: '', message: `Impasto usará ${printer === 'epson' ? 'Epson TM-T20II' : '3nStar RPT006B'} en las próximas comandas.`, error: false });
+    } catch (error) {
+      try { setPrinterSelection(await getPrinterSelection()); } catch { /* Keep the last confirmed choice. */ }
+      setPrintState({ orderId: '', message: error instanceof Error ? error.message : 'No se pudo guardar la impresora.', error: true });
+    } finally { setPrinterBusy(false); }
   }
 
   const filtered = useMemo(() => {
@@ -89,6 +105,17 @@ export function Orders() {
           </div>
           <div className="panel-head-spacer" />
           <button className="btn btn-ghost btn-sm" onClick={pairPrinter}>Emparejar impresora</button>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+            Impresora de Impasto
+            <select aria-label="Impresora de Impasto" value={printerSelection?.selected ?? ''}
+              style={{ padding: '7px 9px', borderRadius: 6, border: '1px solid var(--a-line)', background: 'var(--a-bg)', color: 'inherit' }}
+              disabled={!printerSelection || printerBusy}
+              onChange={e => void choosePrinter(e.target.value as PrinterId)}>
+              {!printerSelection && <option value="">Emparejá para elegir</option>}
+              <option value="epson" disabled={printerSelection?.epsonAvailable === false}>Epson TM-T20II</option>
+              <option value="3nstar" disabled={printerSelection?.threeNStarAvailable === false}>3nStar RPT006B</option>
+            </select>
+          </label>
           <div className="search-input">
             <Icon.Search />
             <input placeholder="Buscar N° de orden o cliente…" value={q} onChange={e => setQ(e.target.value)} />

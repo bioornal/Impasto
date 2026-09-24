@@ -1,5 +1,6 @@
 {
   "queueName": "EPSON TM-T20II Receipt",
+  "secondaryQueueName": "3nStar RPT006B",
   "token": "",
   "allowedOrigins": ["https://www.impastopizzas.com", "https://carro-fogon.vercel.app"]
 }

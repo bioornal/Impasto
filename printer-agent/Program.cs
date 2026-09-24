@@ -10,7 +10,8 @@ namespace PrinterAgent {
                 try {
                     var config = AgentConfig.Load(args[1]);
                     string ledgerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ImpastoPrinter", "attempts.json");
-                    using (var ledger = new AttemptLedger(ledgerPath)) LocalServer.Run(config, RawSpooler.Send, ledger);
+                    string selectionPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ImpastoPrinter", "printer-selection.json");
+                    using (var ledger = new AttemptLedger(ledgerPath)) LocalServer.Run(config, RawSpooler.Send, ledger, selectionPath);
                     return 0;
                 } catch (Exception error) {
                     Console.Error.WriteLine("No se pudo iniciar el agente (" + error.GetType().Name + "). Revisar configuración, cola o permisos locales.");

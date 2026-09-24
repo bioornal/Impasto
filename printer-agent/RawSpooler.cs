@@ -28,6 +28,13 @@ namespace PrinterAgent {
         [return: MarshalAs(UnmanagedType.Bool)] static extern bool ClosePrinter(IntPtr handle);
 
         static Win32Exception Failure(string operation) { return new Win32Exception(Marshal.GetLastWin32Error(), "Falló " + operation + "."); }
+        public static bool Exists(string queueName) {
+            if (string.IsNullOrWhiteSpace(queueName)) return false;
+            IntPtr printer;
+            if (!OpenPrinter(queueName, out printer, IntPtr.Zero)) return false;
+            ClosePrinter(printer);
+            return true;
+        }
         public static void Send(string queueName, byte[] bytes) {
             if (string.IsNullOrWhiteSpace(queueName) || bytes == null || bytes.Length == 0) throw new ArgumentException("Cola o trabajo vacío.");
             IntPtr printer;
