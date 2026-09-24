@@ -736,11 +736,15 @@ Implementación en rama `feat/impresion-termica`, worktree
 - El panel Impasto tiene envío manual al agente, reintento con la misma clave,
   emparejamiento por navegador y respaldo HTML. Carro Fogón guarda antes de
   imprimir, conserva el pedido si falla y ofrece reimpresión desde Comandas.
-  Ninguno de estos cambios se publicó todavía; falta aceptación física desde
-  las interfaces publicadas y verificar un solo registro por pedido en producción.
+  Ambos cambios se publicaron en `main` el 24/09. El dueño confirmó al menos
+  una comanda desde cada interfaz; faltan la matriz completa delivery/retiro,
+  fallo de agente y la verificación de un solo registro por pedido en producción.
 - `queued` solo significa enviado a cola; no equivale a papel impreso. Mercado
   Pago pendiente/rechazado no entra a cocina. No se cambiaron pagos ni la base.
 - Arranque y recuperación: `printer-agent/README.md`; ejecutar
-  `printer-agent/start.ps1` en la PC de la Epson. Si se cae, comprobar `/health`
+  el `start.ps1` instalado en `%LOCALAPPDATA%\ImpastoPrinter\agent\` en la PC
+  de la Epson. La clave estable está en `config.local.json` en la carpeta padre
+  y un acceso directo del escritorio abre ese archivo para copiarla. Si se cae,
+  comprobar `/health`
   con `Origin` permitido y revisar cola/papel antes de reimprimir. No borrar el
   ledger. Para volver manualmente, usar `Imprimir con navegador` en Impasto.

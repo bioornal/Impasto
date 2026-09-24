@@ -1,6 +1,6 @@
 # Agente de impresión térmica
 
-Estado al 24/09/2026: código local en `feat/impresion-termica`. Las webs con esta integración todavía no se publicaron. `queued` significa **enviado a la cola de Windows**, no papel impreso.
+Estado al 24/09/2026: código publicado en `main` de Impasto y Carro Fogón. `queued` significa **enviado a la cola de Windows**, no papel impreso.
 
 ## Equipo y pruebas realizadas
 
@@ -21,13 +21,13 @@ powershell -NoProfile -File printer-agent/build.ps1
 Copy-Item printer-agent/config.example.json printer-agent/config.local.json
 ```
 
-Editar **solo** `printer-agent/config.local.json`: mantener el nombre exacto de la cola y los dos orígenes HTTPS; completar `token` con una cadena aleatoria de al menos 32 caracteres. En esta PC el archivo local ya existe: no sobrescribirlo con la plantilla. `config.local.json` y `bin/` están ignorados por Git. No poner el secreto en código, logs, capturas, variables `NEXT_PUBLIC_*` ni InsForge.
+En una PC nueva, editar `printer-agent/config.local.json`: mantener el nombre exacto de la cola y los dos orígenes HTTPS; completar `token` con una cadena aleatoria de al menos 32 caracteres. En esta PC ya existe una copia estable en `%LOCALAPPDATA%\ImpastoPrinter\config.local.json`: **no sobrescribirla**. Allí queda la misma clave hasta que se rote deliberadamente. Cada navegador recuerda la clave por separado para Impasto y Carro Fogón. `config.local.json` y `bin/` están ignorados por Git. No poner el secreto en código, logs, capturas, variables `NEXT_PUBLIC_*` ni InsForge.
 
 ```powershell
-powershell -NoProfile -File printer-agent/start.ps1
+powershell -NoProfile -File "$env:LOCALAPPDATA\ImpastoPrinter\agent\start.ps1" -ConfigPath "$env:LOCALAPPDATA\ImpastoPrinter\config.local.json"
 ```
 
-`start.ps1` verifica la cola y arranca el servidor solo en `127.0.0.1:8765`. Se creó `Impasto Printer Agent.lnk` en el Inicio de Windows del operador, apuntando a este script en el worktree actual. Si se mueve o elimina el worktree, actualizar el acceso directo a la nueva ubicación. No abrir el puerto en la LAN ni agregar reglas de firewall.
+`start.ps1` verifica la cola y arranca el servidor solo en `127.0.0.1:8765`. En esta PC se copiaron el ejecutable y el script a `%LOCALAPPDATA%\ImpastoPrinter\agent\`; el acceso directo `Impasto Printer Agent.lnk` en Inicio de Windows apunta allí. El acceso directo del escritorio **Clave impresora Impasto y Carro Fogón** abre la configuración en Notepad para copiar `token` cuando haga falta. Si se actualiza el agente, recompilar y copiar de nuevo `bin/PrinterAgent.exe` y `start.ps1` a esa carpeta estable, con el agente detenido; conservar `config.local.json` y `attempts.json`. No abrir el puerto en la LAN ni agregar reglas de firewall.
 
 Para verificar sin imprimir:
 
@@ -50,7 +50,7 @@ Ese comando requiere consola elevada **solo para crear la reserva**. No ejecutar
 - Carro Fogón guarda una vez y luego intenta enviar la comanda. Si falla el agente, el pedido queda guardado: usar **Reintentar comanda** con el mismo intento o abrir **Comandas** y elegir una reimpresión deliberada.
 - Impasto envía manualmente desde el ícono de impresora o **Enviar a impresora térmica**. **Reintentar envío** reutiliza la clave fallida. **Imprimir con navegador** sigue como respaldo.
 - `duplicate:true` significa que esa clave ya quedó en cola. Revisar papel y cola antes de una nueva impresión. La reimpresión deliberada usa otra clave y muestra `REIMPRESIÓN` en el ticket.
-- Si el agente cae, ejecutar `start.ps1` y comprobar `/health`. Si falta la cola, revisar nombre, USB y servicio de impresión de Windows. No borrar `%LOCALAPPDATA%/ImpastoPrinter/attempts.json` para forzar reintentos.
+- Si el agente cae, ejecutar el `start.ps1` de la carpeta estable y comprobar `/health`. Si falta la cola, revisar nombre, USB y servicio de impresión de Windows. No borrar `%LOCALAPPDATA%/ImpastoPrinter/attempts.json` para forzar reintentos.
 - Si la impresora está apagada o sin papel, Windows puede aceptar el trabajo de todos modos. Revisar físicamente antes de reimprimir.
 - Para volver al flujo manual, usar **Imprimir con navegador** en Impasto y **Impresión navegador (respaldo)** en Carro Fogón. No volver a pulsar Guardar en el POS solo por un fallo de impresora.
 
@@ -63,7 +63,7 @@ El agente acepta solo dos orígenes exactos, token local y JSON validado de hast
 ./printer-agent/bin/PrinterAgent.exe --test-raw-long "EPSON TM-T20II Receipt"
 ```
 
-Consumen papel y llevan `NO PREPARAR`; no usan datos reales. La aceptación física desde las interfaces publicadas (delivery, retiro, MP pendiente, agente caído) queda pendiente de despliegue.
+Consumen papel y llevan `NO PREPARAR`; no usan datos reales. El dueño confirmó impresión desde Carro Fogón (tras emparejar y reintentar el pedido guardado) y desde Impasto web el 24/09. La matriz completa delivery/retiro, bloqueo MP y agente caído en producción no se ensayó todavía.
 
 ## Verificación de código (24/09/2026)
 
