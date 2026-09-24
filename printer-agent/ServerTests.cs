@@ -10,6 +10,11 @@ namespace PrinterAgent {
         const string Token = "test-token-not-a-real-secret-0123456789";
         sealed class Response { public int status; public string body; public WebHeaderCollection headers; }
         static void Check(bool value, string message) { if (!value) throw new Exception(message); }
+        static int TrailingFeeds(byte[] bytes) {
+            int cursor = bytes.Length - 4;
+            while (cursor >= 0 && bytes[cursor] == 10) cursor--;
+            return bytes.Length - 4 - cursor;
+        }
         static Response Send(int port, string path, string method, string origin, string token, string body) {
             var request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:" + port + path);
             request.Proxy = null; request.Method = method; request.Timeout = 5000;
@@ -138,8 +143,9 @@ namespace PrinterAgent {
                     var twoPrinters = new AgentConfig { queueName = "test-queue", secondaryQueueName = "test-3nstar", token = Token,
                         allowedOrigins = new[] { Origin, "https://carro-fogon.vercel.app" } };
                     string lastQueue = null;
+                    byte[] lastTicket = null;
                     using (var ledger = new AttemptLedger(Path.Combine(directory, "two-printers.json")))
-                    using (var server = new LocalServer(twoPrinters, delegate(string queue, byte[] bytes) { lastQueue = queue; }, ledger, Port(), selectionPath,
+                    using (var server = new LocalServer(twoPrinters, delegate(string queue, byte[] bytes) { lastQueue = queue; lastTicket = bytes; }, ledger, Port(), selectionPath,
                         delegate(string queue) { return queue == "test-queue" || queue == "test-3nstar"; })) {
                         server.Start();
                         Check(Send(server.Port, "/printers", "GET", Origin, Token, null).body.Contains("\"selected\":\"epson\""), "Epson is default");
@@ -150,8 +156,10 @@ namespace PrinterAgent {
                         Check(Send(server.Port, "/printers", "GET", "https://carro-fogon.vercel.app", Token, null).body.Contains("\"selected\":\"epson\""), "Carro selection unchanged");
                         string impastoJob = Tests.Fixture().Replace("test-attempt-1", "selection-impasto-1");
                         Check(Send(server.Port, "/print", "POST", Origin, Token, impastoJob).status == 200 && lastQueue == "test-3nstar", "Impasto routed to 3nStar");
+                        Check(TrailingFeeds(lastTicket) == 7, "3nStar gets the longer cutter feed");
                         string carroJob = Tests.Fixture().Replace("test-attempt-1", "selection-carro-1").Replace("\"source\":\"impasto\"", "\"source\":\"carro-fogon\"");
                         Check(Send(server.Port, "/print", "POST", "https://carro-fogon.vercel.app", Token, carroJob).status == 200 && lastQueue == "test-queue", "Carro routed to Epson");
+                        Check(TrailingFeeds(lastTicket) == 4, "Epson feed stays unchanged");
                     }
                     using (var ledger = new AttemptLedger(Path.Combine(directory, "two-printers-restart.json")))
                     using (var server = new LocalServer(twoPrinters, delegate { }, ledger, Port(), selectionPath, delegate { return true; })) {

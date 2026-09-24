@@ -755,6 +755,10 @@ Implementación publicada en `main`; desarrollo conservado en la rama
   selector independiente en Pedidos/Comandas. El agente acepta solo IDs
   `epson` y `3nstar`, vinculados a colas locales configuradas, y guarda las
   elecciones en `%LOCALAPPDATA%\ImpastoPrinter\printer-selection.json`.
-  Epson sigue como predeterminada. El USB 3nStar RPT006B se detecta como
-  `Printer POS-80`; instalar la cola de Windows y verificar ticket/corte antes
-  de declarar aceptación física. No copiar ni rotar el token al actualizar.
+  Epson sigue como predeterminada. La cola USB `3nStar RPT006B` existe sobre
+  `USB002` con `Generic / Text Only` para RAW. Windows rechazó el INF `POS-80`
+  sin firma; no se desactivó esa protección. Ticket corto confirmado con
+  acentos/corte. El primero largo se cortó atravesando Pago; el perfil 3nStar
+  ahora avanza tres líneas adicionales antes del corte y espera confirmación
+  física. `secondaryQueueName` local sigue desactivado hasta confirmarla. No
+  copiar ni rotar el token al actualizar.

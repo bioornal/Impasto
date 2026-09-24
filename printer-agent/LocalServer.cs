@@ -119,10 +119,13 @@ namespace PrinterAgent {
             byte[] body;
             try { body = ReadBody(request, PrintRequest.MaxBodyBytes); }
             catch (ArgumentException) { Reply(response, 413, new { error = "body_too_large" }); return; }
-            PrintRequest job; byte[] ticket;
-            try { job = PrintRequest.Parse(new UTF8Encoding(false, true).GetString(body)); ticket = ReceiptEncoder.Encode(job, job.reprint); }
+            PrintRequest job;
+            try { job = PrintRequest.Parse(new UTF8Encoding(false, true).GetString(body)); }
             catch (ArgumentException) { Reply(response, 400, new { error = "invalid_receipt" }); return; }
             if (job.source != source) { Reply(response, 403, new { error = "source_forbidden" }); return; }
+            string printerId = selection.Selected(source);
+            string queueName = selection.Queue(source);
+            byte[] ticket = ReceiptEncoder.Encode(job, job.reprint, printerId == "3nstar");
             string identity;
             using (var hash = SHA256.Create()) identity = Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(json.Serialize(job))));
             try {
@@ -133,7 +136,7 @@ namespace PrinterAgent {
                 }
             } catch (InvalidOperationException) { Reply(response, 409, new { error = "attempt_conflict" }); return; }
             catch (Exception) { Reply(response, 503, new { error = "ledger_unavailable" }); return; }
-            try { spool(selection.Queue(source), ticket); ledger.MarkQueued(job.attemptId); }
+            try { spool(queueName, ticket); ledger.MarkQueued(job.attemptId); }
             catch (Exception) { Reply(response, 503, new { error = "outcome_unknown" }); return; }
             Reply(response, 200, new { status = "queued", duplicate = false });
         }

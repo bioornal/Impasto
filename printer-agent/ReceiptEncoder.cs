@@ -8,7 +8,7 @@ namespace PrinterAgent {
     public static class ReceiptEncoder {
         static readonly Encoding Page = Encoding.GetEncoding(1252, new EncoderReplacementFallback("?"), new DecoderReplacementFallback("?"));
         static readonly CultureInfo Money = CultureInfo.GetCultureInfo("es-AR");
-        public static byte[] Encode(PrintRequest request, bool reprint) {
+        public static byte[] Encode(PrintRequest request, bool reprint, bool threeNStar = false) {
             if (request == null) throw new ArgumentException("Falta la comanda.");
             request.Validate();
             Receipt r = request.receipt;
@@ -39,6 +39,7 @@ namespace PrinterAgent {
                 Line(output, "TOTAL $ " + r.total.ToString("N2", Money), 42);
                 Line(output, "Pago: " + r.paymentMethod + " / " + r.paymentStatus, 42);
                 Command(output, 10,10,10); // four line feeds including final payment line
+                if (threeNStar) Command(output, 10,10,10); // observed cut through final payment line without this margin
                 Command(output, 29,86,0); // final cut; no page/form feed
                 return output.ToArray();
             }

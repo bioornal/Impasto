@@ -37,6 +37,14 @@ namespace PrinterAgent {
                 Check(bytes.Skip(bytes.Length - 3).SequenceEqual(new byte[] {29,86,0}), "GS V 0");
                 Check(bytes.Length < 1000, "short receipt");
             });
+            Run("3nStar profile advances the final payment past the cutter", delegate {
+                byte[] epson = ReceiptEncoder.Encode(PrintRequest.Parse(Fixture()), false);
+                byte[] threeNStar = ReceiptEncoder.Encode(PrintRequest.Parse(Fixture()), false, true);
+                Check(threeNStar.Length == epson.Length + 3, "only three extra feeds for 3nStar");
+                Check(threeNStar.Take(epson.Length - 3).SequenceEqual(epson.Take(epson.Length - 3)), "Epson content unchanged");
+                Check(threeNStar.Skip(threeNStar.Length - 6).Take(3).SequenceEqual(new byte[] { 10, 10, 10 }), "extra feed before cut");
+                Check(threeNStar.Skip(threeNStar.Length - 3).SequenceEqual(new byte[] { 29, 86, 0 }), "final cut retained");
+            });
             Run("Spanish characters use matching code page", delegate {
                 byte[] bytes = ReceiptEncoder.Encode(PrintRequest.Parse(Fixture()), false);
                 Check(Contains(bytes, new byte[] {27,116,16}), "WPC1252 selected");
