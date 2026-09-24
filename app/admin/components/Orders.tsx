@@ -5,7 +5,7 @@ import { Icon } from "./Icons";
 import type { AdminOrder } from "./types";
 import { esPedidoParaCocina } from "@/lib/pedido-visible";
 import { sendAdminPrint } from "@/lib/admin-print-job";
-import { configurePrinter, newAttemptId, printLocal } from "@/lib/local-printer";
+import { configurePrinter, newAttemptId, printLocal, type PrintJob } from "@/lib/local-printer";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 const timeAgo = (iso: string) => {
@@ -27,21 +27,25 @@ export function Orders() {
   const [printState, setPrintState] = useState<{ orderId: string; message: string; error: boolean } | null>(null);
   const [printing, setPrinting] = useState(false);
   const printingRef = useRef(false);
-  const failedAttempts = useRef(new Map<string, string>());
+  const failedAttempts = useRef(new Map<string, PrintJob>());
   const sentOrders = useRef(new Set<string>());
 
   async function printOrder(order: AdminOrder) {
     if (printingRef.current) return;
     printingRef.current = true;
     setPrinting(true);
-    const attemptId = failedAttempts.current.get(order._dbId) ?? newAttemptId();
+    const previousJob = failedAttempts.current.get(order._dbId);
+    const attemptId = previousJob?.attemptId ?? newAttemptId();
     try {
-      await sendAdminPrint(order, attemptId, printLocal, sentOrders.current.has(order._dbId));
+      await sendAdminPrint(order, attemptId, job => {
+        const stableJob = previousJob ?? job;
+        failedAttempts.current.set(order._dbId, stableJob);
+        return printLocal(stableJob);
+      }, sentOrders.current.has(order._dbId));
       failedAttempts.current.delete(order._dbId);
       sentOrders.current.add(order._dbId);
       setPrintState({ orderId: order._dbId, message: `Comanda ${order.id} enviada a la cola. Revisá el papel para confirmar la impresión.`, error: false });
     } catch (error) {
-      failedAttempts.current.set(order._dbId, attemptId);
       setPrintState({ orderId: order._dbId, message: error instanceof Error ? error.message : 'No se pudo enviar la comanda.', error: true });
     } finally {
       printingRef.current = false;
