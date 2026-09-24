@@ -1,9 +1,11 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 import type { AdminOrder } from "./types";
 import { esPedidoParaCocina } from "@/lib/pedido-visible";
+import { sendAdminPrint } from "@/lib/admin-print-job";
+import { configurePrinter, newAttemptId, printLocal } from "@/lib/local-printer";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 const timeAgo = (iso: string) => {
@@ -22,6 +24,41 @@ export function Orders() {
   const [filter, setFilter] = useState("todos");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<AdminOrder | null>(null);
+  const [printState, setPrintState] = useState<{ orderId: string; message: string; error: boolean } | null>(null);
+  const [printing, setPrinting] = useState(false);
+  const printingRef = useRef(false);
+  const failedAttempts = useRef(new Map<string, string>());
+  const sentOrders = useRef(new Set<string>());
+
+  async function printOrder(order: AdminOrder) {
+    if (printingRef.current) return;
+    printingRef.current = true;
+    setPrinting(true);
+    const attemptId = failedAttempts.current.get(order._dbId) ?? newAttemptId();
+    try {
+      await sendAdminPrint(order, attemptId, printLocal, sentOrders.current.has(order._dbId));
+      failedAttempts.current.delete(order._dbId);
+      sentOrders.current.add(order._dbId);
+      setPrintState({ orderId: order._dbId, message: `Comanda ${order.id} enviada a la cola. Revisá el papel para confirmar la impresión.`, error: false });
+    } catch (error) {
+      failedAttempts.current.set(order._dbId, attemptId);
+      setPrintState({ orderId: order._dbId, message: error instanceof Error ? error.message : 'No se pudo enviar la comanda.', error: true });
+    } finally {
+      printingRef.current = false;
+      setPrinting(false);
+    }
+  }
+
+  async function pairPrinter() {
+    const token = window.prompt('Pegá el secreto de la impresora local:');
+    if (token === null) return;
+    try {
+      await configurePrinter(token);
+      setPrintState({ orderId: '', message: 'Impresora local emparejada.', error: false });
+    } catch (error) {
+      setPrintState({ orderId: '', message: error instanceof Error ? error.message : 'No se pudo emparejar.', error: true });
+    }
+  }
 
   const filtered = useMemo(() => {
     let list = state.orders;
@@ -47,11 +84,22 @@ export function Orders() {
             </div>
           </div>
           <div className="panel-head-spacer" />
+          <button className="btn btn-ghost btn-sm" onClick={pairPrinter}>Emparejar impresora</button>
           <div className="search-input">
             <Icon.Search />
             <input placeholder="Buscar N° de orden o cliente…" value={q} onChange={e => setQ(e.target.value)} />
           </div>
         </div>
+        {printState && (
+          <div role="status" style={{ padding: '10px 16px', color: printState.error ? 'var(--a-warn)' : 'inherit' }}>
+            {printState.message}{printState.error && printState.orderId && (() => {
+              const retryOrder = state.orders.find(o => o._dbId === printState.orderId);
+              return retryOrder && esPedidoParaCocina(retryOrder)
+                ? <button className="btn btn-ghost btn-sm" disabled={printing} onClick={() => printOrder(retryOrder)}>Reintentar envío</button>
+                : null;
+            })()}
+          </div>
+        )}
         <div className="panel-body no-pad">
           <div className="tbl-wrap">
             <table className="tbl">
@@ -73,12 +121,10 @@ export function Orders() {
                       <button
                         className="btn btn-icon btn-ghost"
                         title={esPedidoParaCocina(o) ? "Imprimir comanda térmica" : "Pago sin acreditar: la comanda está bloqueada"}
-                        disabled={!esPedidoParaCocina(o)}
+                        disabled={!esPedidoParaCocina(o) || printing}
                         onClick={e => {
                           e.stopPropagation();
-                          if (!esPedidoParaCocina(o)) return;
-                          setSelected(o);
-                          setTimeout(() => window.print(), 150);
+                          void printOrder(o);
                         }}
                       >
                         <Icon.Printer />
@@ -103,6 +149,9 @@ export function Orders() {
       {selected && (
         <OrderDetail
           order={selected}
+          onPrint={() => printOrder(selected)}
+          printing={printing}
+          printMessage={printState?.orderId === selected._dbId ? printState.message : null}
           onClose={() => setSelected(null)}
           onUpdate={async (estado) => {
             if (await updateOrderStatus(selected._dbId, estado)) setSelected({ ...selected, estado });
@@ -159,7 +208,7 @@ function RefundBox({ total, onRefund }: { total: number; onRefund: (monto?: numb
   );
 }
 
-function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void; onRefund?: (monto?: number) => void }) {
+function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, printing, printMessage }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void; onRefund?: (monto?: number) => void; onPrint: () => void; printing: boolean; printMessage: string | null }) {
   const [now] = useState(() => Date.now());
   const steps = ["nuevo", "preparando", "en-camino", "entregado"];
   const currentIdx = steps.indexOf(order.estado);
@@ -254,15 +303,19 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund }: { order:
           )}
         </div>
         <div className="modal-foot">
+          {printMessage && <span role="status" style={{ fontSize: 12 }}>{printMessage}</span>}
           <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
+          <button className="btn btn-ghost btn-sm" disabled={!habilitadoCocina} onClick={() => window.print()}>
+            Imprimir con navegador
+          </button>
           <button
             className="btn btn-primary"
-            disabled={!habilitadoCocina}
-            title={habilitadoCocina ? "Imprimir comanda" : "Pago sin acreditar: la comanda está bloqueada"}
-            onClick={() => { if (habilitadoCocina) window.print(); }}
+            disabled={!habilitadoCocina || printing}
+            title={habilitadoCocina ? "Enviar comanda a la cola térmica" : "Pago sin acreditar: la comanda está bloqueada"}
+            onClick={onPrint}
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            <Icon.Printer /> Imprimir comanda
+            <Icon.Printer /> {printing ? 'Enviando…' : 'Enviar a impresora térmica'}
           </button>
         </div>
       </div>
