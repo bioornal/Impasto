@@ -751,16 +751,17 @@ Implementación publicada en `main`; desarrollo conservado en la rama
   reimprimir. No borrar el
   ledger. Para volver manualmente, usar `Imprimir con navegador` en Impasto.
 
-- Selección dual (24/09/2026, en curso): Impasto y Carro Fogón muestran un
+- Selección dual (24/09/2026, implementada): Impasto y Carro Fogón muestran un
   selector independiente en Pedidos/Comandas. El agente acepta solo IDs
   `epson` y `3nstar`, vinculados a colas locales configuradas, y guarda las
   elecciones en `%LOCALAPPDATA%\ImpastoPrinter\printer-selection.json`.
   Epson sigue como predeterminada. La cola USB `3nStar RPT006B` existe sobre
   `USB002` con `Generic / Text Only` para RAW. Windows rechazó el INF `POS-80`
   sin firma; no se desactivó esa protección. Ticket corto confirmado con
-  acentos/corte. El primero largo se cortó atravesando Pago; el perfil 3nStar
-  ahora avanza tres líneas adicionales antes del corte y espera confirmación
-  física. `secondaryQueueName` local está activado; ambos orígenes informan
+  acentos/corte. El primer ticket largo se cortó atravesando Pago; el perfil
+  3nStar ahora avanza tres líneas adicionales antes del corte. El dueño
+  confirmó que la segunda prueba larga cortó bien. `secondaryQueueName` local
+  está activado; ambos orígenes informan
   las dos colas disponibles. Se comprobó por HTTP que elegir 3nStar en una web
   no cambia la otra y se restauró Epson en ambas. No copiar ni rotar el token
   al actualizar.
