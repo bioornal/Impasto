@@ -9,6 +9,14 @@ function parseDias(valor: unknown): number[] | null {
   return dias.length > 0 ? dias : null;
 }
 
+function normalizarWhatsapp(valor: unknown): string {
+  let digitos = String(valor || "").replace(/\D/g, "");
+  if (!digitos) return BUSINESS.whatsappPhone;
+  if (digitos.startsWith("0")) digitos = digitos.slice(1);
+  if (digitos.length === 10) digitos = `54${digitos}`;
+  return digitos;
+}
+
 export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<BusinessConfig> {
   try {
     const { data, error } = await db.database
@@ -27,7 +35,7 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       city: String(branch.ciudad || BUSINESS.city),
       locationLabel: String(branch.ciudad || BUSINESS.locationLabel),
       phone: String(branch.telefono || BUSINESS.phone),
-      whatsappPhone: String(branch.whatsapp || BUSINESS.whatsappPhone),
+      whatsappPhone: normalizarWhatsapp(branch.whatsapp),
       email: String(branch.email || BUSINESS.email),
       address: String(branch.direccion || BUSINESS.address),
       instagram: BUSINESS.instagram,

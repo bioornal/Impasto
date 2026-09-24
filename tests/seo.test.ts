@@ -43,7 +43,7 @@ const sitio = grafo.find((nodo) => nodo["@type"] === "WebSite") as Nodo;
 /* ── el local ── */
 chequear("declara el negocio como Restaurant", Boolean(local));
 chequear("el WebSite apunta al local como publisher", sitio.publisher["@id"] === local["@id"]);
-chequear("el teléfono va en formato internacional", local.telephone === "+543757421840");
+chequear("el teléfono va en formato internacional", local.telephone === "+543757652003");
 chequear("la dirección lleva ciudad y provincia", local.address.addressLocality === "Puerto Iguazú" && local.address.addressRegion === "Misiones");
 
 // En la base, `ciudad` viene con la provincia pegada: así la muestra el sitio.

@@ -152,7 +152,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             <div className="logo-mark">I</div>
             <div className="logo-word">
               {business.name}
-              <small>checkout seguro</small>
+              <small>pedido seguro</small>
             </div>
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>

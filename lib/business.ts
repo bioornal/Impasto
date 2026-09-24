@@ -49,7 +49,7 @@ export const BUSINESS: BusinessConfig = {
   city: "Puerto Iguazú",
   locationLabel: "Puerto Iguazú, Misiones",
   phone: "(03757) 42-1840",
-  whatsappPhone: "543757421840",
+  whatsappPhone: "543757652003",
   email: "impastopizzas.pedidos@gmail.com",
   address: "Santa María esq. Obispo Angelelli",
   instagram: "@impasto.iguazu",
