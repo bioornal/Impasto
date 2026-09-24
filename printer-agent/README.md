@@ -1,91 +1,73 @@
 # Agente de impresión térmica
 
-## Estado (23/09/2026)
+Estado al 24/09/2026: código local en `feat/impresion-termica`. Las webs con esta integración todavía no se publicaron. `queued` significa **enviado a la cola de Windows**, no papel impreso.
 
-Primera etapa: codificador ESC/POS y envío RAW a Windows implementados.
-Las webs todavía no usan este agente. El servidor HTTP y el emparejamiento siguen pendientes.
+## Equipo y pruebas realizadas
 
-- Cola exacta: `EPSON TM-T20II Receipt`.
-- Controlador: `EPSON TM-T20II Receipt5`, puerto `ESDPRT001`.
-- Papel nominal: 80 mm; formato conservador de 42 columnas, 21 en título doble.
-- Página de códigos: WPC1252 (`ESC t 16`), bytes Windows-1252.
-- Final: cuatro avances de línea contando la última línea de pago y `GS V 0`.
-- Ticket ficticio corto enviado el 23/09/2026: trabajo 9, Windows indicó `Complete`.
-- Confirmación presencial del dueño: «Salió bien, cortó y sin papel sobrante».
-- Largo y ancho útil medidos, comprobación explícita de á/ñ y ticket largo: pendientes.
-- 17 pruebas automatizadas aprobadas; no imprimen pedidos reales ni registran datos de clientes.
+- Epson TM-T20II USB, cola exacta `EPSON TM-T20II Receipt`, papel de 80 mm, ESC/POS RAW, 42 columnas, WPC1252 (`ESC t 16`) y corte `GS V 0`.
+- Ticket ficticio corto: legible, cortó, sin papel sobrante (confirmación del dueño).
+- Ticket ficticio largo: completo, cortó y acentos correctos (confirmación del dueño). No se midió su largo exacto.
+- Desde Edge, `https://www.impastopizzas.com` y `https://carro-fogon.vercel.app` alcanzaron el agente por HTTP loopback: `403 pairing_required` con token de prueba incorrecto.
+- 27 pruebas C# aprobadas. Ninguna prueba guardó ni imprimió un pedido real.
+- `GET /health` con el origen Impasto respondió `available`, cola correcta y `paired:false` sin token, tras reactivar el agente el 24/09.
 
-## Compilar y probar
+## Instalación en la PC de la impresora
 
-Desde la raíz de esta rama, con .NET Framework 4.x de Windows (sin instalar paquetes):
+Desde la raíz del proyecto:
 
 ```powershell
 powershell -NoProfile -File printer-agent/build.ps1 -Test
 powershell -NoProfile -File printer-agent/build.ps1
+Copy-Item printer-agent/config.example.json printer-agent/config.local.json
+```
+
+Editar **solo** `printer-agent/config.local.json`: mantener el nombre exacto de la cola y los dos orígenes HTTPS; completar `token` con una cadena aleatoria de al menos 32 caracteres. En esta PC el archivo local ya existe: no sobrescribirlo con la plantilla. `config.local.json` y `bin/` están ignorados por Git. No poner el secreto en código, logs, capturas, variables `NEXT_PUBLIC_*` ni InsForge.
+
+```powershell
+powershell -NoProfile -File printer-agent/start.ps1
+```
+
+`start.ps1` verifica la cola y arranca el servidor solo en `127.0.0.1:8765`. Se creó `Impasto Printer Agent.lnk` en el Inicio de Windows del operador, apuntando a este script en el worktree actual. Si se mueve o elimina el worktree, actualizar el acceso directo a la nueva ubicación. No abrir el puerto en la LAN ni agregar reglas de firewall.
+
+Para verificar sin imprimir:
+
+```powershell
+Invoke-WebRequest http://127.0.0.1:8765/health -Headers @{Origin='https://www.impastopizzas.com'} -UseBasicParsing
+```
+
+Debe responder `available`. Sin `Origin`, el agente responde `origin_forbidden` por diseño. En Edge, cada operador pulsa **Emparejar impresora** en Impasto o Carro Fogón y pega el secreto local una vez por navegador y origen. Si Edge pide acceso a servicios del dispositivo, concederlo para esas webs. Un token incorrecto responde `pairing_required`.
+
+Si `HttpListener` informa acceso denegado, reservar la URL solo para el usuario Windows de esta PC (sustituir `EQUIPO\usuario` por su identidad exacta):
+
+```powershell
+netsh http add urlacl url=http://127.0.0.1:8765/ user=EQUIPO\usuario
+```
+
+Ese comando requiere consola elevada **solo para crear la reserva**. No ejecutar el agente habitualmente como administrador.
+
+## Uso y recuperación
+
+- Carro Fogón guarda una vez y luego intenta enviar la comanda. Si falla el agente, el pedido queda guardado: usar **Reintentar comanda** con el mismo intento o abrir **Comandas** y elegir una reimpresión deliberada.
+- Impasto envía manualmente desde el ícono de impresora o **Enviar a impresora térmica**. **Reintentar envío** reutiliza la clave fallida. **Imprimir con navegador** sigue como respaldo.
+- `duplicate:true` significa que esa clave ya quedó en cola. Revisar papel y cola antes de una nueva impresión. La reimpresión deliberada usa otra clave y muestra `REIMPRESIÓN` en el ticket.
+- Si el agente cae, ejecutar `start.ps1` y comprobar `/health`. Si falta la cola, revisar nombre, USB y servicio de impresión de Windows. No borrar `%LOCALAPPDATA%/ImpastoPrinter/attempts.json` para forzar reintentos.
+- Si la impresora está apagada o sin papel, Windows puede aceptar el trabajo de todos modos. Revisar físicamente antes de reimprimir.
+- Para volver al flujo manual, usar **Imprimir con navegador** en Impasto y **Impresión navegador (respaldo)** en Carro Fogón. No volver a pulsar Guardar en el POS solo por un fallo de impresora.
+
+El agente acepta solo dos orígenes exactos, token local y JSON validado de hasta 64 KiB. El registro durable guarda ID, hash, fecha y estado del intento, sin teléfonos, direcciones, notas ni texto de la comanda. Un fallo de registro impide imprimir y un resultado ambiguo no se reenvía automáticamente.
+
+## Pruebas ficticias opcionales
+
+```powershell
 ./printer-agent/bin/PrinterAgent.exe --test-raw "EPSON TM-T20II Receipt"
 ./printer-agent/bin/PrinterAgent.exe --test-raw-long "EPSON TM-T20II Receipt"
 ```
 
-Los últimos dos comandos consumen papel y generan únicamente comandas ficticias
-marcadas `NO PREPARAR`, sin pedidos, cobros ni datos personales.
-Una respuesta de éxito significa **enviado a la cola**, no confirmación del papel.
-No repetir automáticamente un envío ambiguo: comprobar antes la cola y el papel.
+Consumen papel y llevan `NO PREPARAR`; no usan datos reales. La aceptación física desde las interfaces publicadas (delivery, retiro, MP pendiente, agente caído) queda pendiente de despliegue.
 
-`bin/` y `config.local.json` quedan ignorados por Git.
+## Verificación de código (24/09/2026)
 
-## Referencias
-
-- [Comandos Epson TM-T20II](https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/tmt20ii.html).
-- [Corte GS V](https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/gs_cv.html).
-
-## Siguiente puerta de avance
-
-Validar HTTP/CORS, secreto y deduplicación, y después HTTPS → loopback desde
-`https://www.impastopizzas.com` y `https://carro-fogon.vercel.app` en Edge.
-No integrar las webs hasta superar esa prueba.
-
-## Servidor local (implementado; aceptación de navegador pendiente)
-
-`powershell -NoProfile -File printer-agent/start.ps1` valida la cola exacta y
-arranca `--serve`. Solo escucha `http://127.0.0.1:8765/`; no abrir firewall ni
-usar prefijos `+`/`*` o direcciones LAN. Si el usuario estándar recibe acceso
-denegado de HttpListener, revisar una reserva URL para **ese usuario exacto**;
-no crear reservas amplias ni ejecutar el agente permanentemente como administrador.
-
-La configuración contiene solo cola, secreto local aleatorio y los dos orígenes
-HTTPS exactos. La plantilla tiene token vacío para fallar hasta configurarse.
-El secreto ya fue generado en esta PC en `config.local.json`, ignorado por Git;
-no copiarlo a documentación, logs, capturas o variables `NEXT_PUBLIC_*`.
-
-- `GET /health`, con Origin permitido: estado del agente, versión, cola y `paired`.
-- Si health lleva `X-Printer-Token`, lo verifica; token incorrecto responde 403.
-- `POST /print`: Origin exacto y secreto obligatorios, JSON validado de hasta 64 KiB.
-- Preflight permite solo Content-Type y X-Printer-Token; soporta solicitud PNA.
-- `queued` y `duplicate:true` indican aceptación por Windows, nunca papel confirmado.
-- La misma clave con distinto contenido da conflicto (409).
-- Ante corte o error ambiguo se conserva `pending`: revisar papel/cola antes de una
-  reimpresión explícita con nueva clave. No borrar el registro para reintentar.
-- Registro en `%LOCALAPPDATA%/ImpastoPrinter/attempts.json`: hash de la comanda,
-  ID de intento, fecha y estado. No guarda el texto del cliente. Reserva durable
-  antes del envío, reemplazo atómico, exclusión de procesos y límite de 10.000
-  entradas. Las confirmadas expiran a 30 días; las inciertas no se podan solas.
-- Si falla el registro, no se imprime. Si falla después del envío, se informa
-  resultado incierto, sin afirmar que quedó en cola ni reenviarlo automáticamente.
-
-Prueba de navegador desde la consola de **cada sitio real**, sin imprimir:
-
-```js
-fetch('http://127.0.0.1:8765/health', {
-  headers: {'X-Printer-Token': 'prueba-conexion'}
-}).then(async r => console.log(r.status, await r.text())).catch(console.error)
-```
-
-Se espera HTTP 403 y `pairing_required`: el secreto de prueba es incorrecto
-intencionalmente. Poder leer esa respuesta prueba el acceso y CORS con preflight.
-Después se verificará el secreto local real al emparejar la interfaz.
-No desactivar protecciones del navegador si la solicitud queda bloqueada.
-
-Al 23/09: health local de PowerShell respondió 200, `available`, cola correcta;
-27 pruebas automáticas aprobadas. La prueba desde Edge está pendiente de respuesta
-presencial: Edge no está conectado a la herramienta de navegador de esta sesión,
-y el navegador integrado devolvió `ERR_BLOCKED_BY_CLIENT` al abrir Impasto.
+- Agente: 27/27 pruebas C#.
+- Impasto: `pnpm test`, `pnpm lint` (0 errores, 11 advertencias previas), `pnpm exec tsc --noEmit` y `pnpm build` aprobados.
+- Carro Fogón: `npm test`, `npm exec -- tsc --noEmit` y `npm run build` aprobados; el build conserva advertencias anteriores de imagen y hooks.
+- Las pruebas comprueban mapeo de delivery/retiro, detalle de sabores y mitades, bloqueo de Mercado Pago pendiente/rechazado, reintento con la misma clave, deduplicación y error de envío sin volver a guardar. La aceptación con pedidos reales sigue pendiente.

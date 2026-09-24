@@ -721,21 +721,26 @@ Tanda de arreglos posterior al review de los tres proyectos. Todo mergeado y des
   `.env.local` y `.insforge/project.json`. El recetario no: usa la anon key de verdad. La hace el
   dueño, porque implica manejar la key nueva. Después, reconstruir Impasto y el carro.
 
-## Impresión térmica directa — avance 23/09/2026
+## Impresión térmica directa — avance 24/09/2026
 
 Implementación en rama `feat/impresion-termica`, worktree
 `.worktrees/impresion-termica`. Plan: `docs/superpowers/plans/2026-09-23-impresion-termica-directa.md`.
 
 - Agente C#/.NET Framework sin dependencias: ESC/POS 42 columnas, WPC1252,
   Winspool RAW, servidor 127.0.0.1:8765, CORS y secreto, registro durable anti-duplicados.
-- Ticket corto ficticio enviado a la Epson TM-T20II; dueño confirmó salida correcta,
-  corte y ausencia de papel sobrante. Medidas exactas, comprobación explícita de
-  acentos y ticket largo todavía pendientes.
-- 27 pruebas del agente aprobadas y health local 200. Secreto en archivo local
-  ignorado; nunca copiar su valor a esta memoria.
-- Pendiente obligatorio: HTTPS → loopback en Edge desde ambas URLs reales. No
-  integrar ni desplegar las webs antes de esa prueba. El navegador de esta sesión
-  no tiene Edge disponible; prueba presencial solicitada.
-- Impasto y Carro Fogón siguen con sus flujos actuales. No se modificaron pedidos,
-  pagos ni base de datos. Un resultado `queued` solo significa enviado a cola.
-- Para continuar: `printer-agent/README.md` y ledger del plan en `.superpowers/sdd/`.
+- Ticket corto ficticio confirmado legible, cortado y sin papel sobrante; ticket
+  largo completo, cortado y con acentos correctos. Largo exacto no medido.
+- 27 pruebas del agente aprobadas. Secreto en archivo local ignorado; nunca
+  copiar su valor a esta memoria. Edge confirmó HTTPS → loopback desde ambas
+  URLs reales con `403 pairing_required` usando un token de prueba incorrecto.
+- El panel Impasto tiene envío manual al agente, reintento con la misma clave,
+  emparejamiento por navegador y respaldo HTML. Carro Fogón guarda antes de
+  imprimir, conserva el pedido si falla y ofrece reimpresión desde Comandas.
+  Ninguno de estos cambios se publicó todavía; falta aceptación física desde
+  las interfaces publicadas y verificar un solo registro por pedido en producción.
+- `queued` solo significa enviado a cola; no equivale a papel impreso. Mercado
+  Pago pendiente/rechazado no entra a cocina. No se cambiaron pagos ni la base.
+- Arranque y recuperación: `printer-agent/README.md`; ejecutar
+  `printer-agent/start.ps1` en la PC de la Epson. Si se cae, comprobar `/health`
+  con `Origin` permitido y revisar cola/papel antes de reimprimir. No borrar el
+  ledger. Para volver manualmente, usar `Imprimir con navegador` en Impasto.
