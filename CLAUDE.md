@@ -723,8 +723,8 @@ Tanda de arreglos posterior al review de los tres proyectos. Todo mergeado y des
 
 ## Impresión térmica directa — avance 24/09/2026
 
-Implementación en rama `feat/impresion-termica`, worktree
-`.worktrees/impresion-termica`. Plan: `docs/superpowers/plans/2026-09-23-impresion-termica-directa.md`.
+Implementación publicada en `main`; desarrollo conservado en la rama
+`feat/impresion-termica`. Plan: `docs/superpowers/plans/2026-09-23-impresion-termica-directa.md`.
 
 - Agente C#/.NET Framework sin dependencias: ESC/POS 42 columnas, WPC1252,
   Winspool RAW, servidor 127.0.0.1:8765, CORS y secreto, registro durable anti-duplicados.
@@ -744,7 +744,9 @@ Implementación en rama `feat/impresion-termica`, worktree
 - Arranque y recuperación: `printer-agent/README.md`; ejecutar
   el `start.ps1` instalado en `%LOCALAPPDATA%\ImpastoPrinter\agent\` en la PC
   de la Epson. La clave estable está en `config.local.json` en la carpeta padre
-  y un acceso directo del escritorio abre ese archivo para copiarla. Si se cae,
-  comprobar `/health`
-  con `Origin` permitido y revisar cola/papel antes de reimprimir. No borrar el
+  y el acceso directo del escritorio **Clave impresora Impasto y Carro Fogón**
+  abre ese archivo para copiarla. El secreto sigue siendo el mismo hasta que
+  se rote; cada sitio lo recuerda por navegador/perfil. Si se cae el agente,
+  comprobar `/health` con `Origin` permitido y revisar cola/papel antes de
+  reimprimir. No borrar el
   ledger. Para volver manualmente, usar `Imprimir con navegador` en Impasto.
