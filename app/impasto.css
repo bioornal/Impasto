@@ -149,6 +149,27 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 @media (max-width:980px){ .topbar-links span:nth-child(2){ display:none; } }
 @media (max-width:760px){ .topbar-links{ display:none; } }
 
+/* ============ AVISO: DELIVERY PAUSADO ============ */
+/* Lo prende el panel (Configuración → Delivery). Carbón y dorado, como la
+   píldora del asistente: informa sin alarmar. */
+.aviso-delivery{
+  background:var(--carbon); color:rgba(246,241,231,.78);
+  border-top:1px solid rgba(240,182,74,.22); border-bottom:1px solid rgba(240,182,74,.4);
+}
+.aviso-delivery-inner{ display:flex; align-items:center; justify-content:center; gap:14px; padding-block:12px; }
+.aviso-delivery-icon{
+  width:34px; height:34px; flex:none; border-radius:999px; display:grid; place-items:center;
+  border:1px solid rgba(240,182,74,.55); color:var(--gold);
+}
+.aviso-delivery p{ margin:0; font-size:13.5px; line-height:1.5; }
+.aviso-delivery b{ font-family:var(--font-display); font-size:15.5px; font-weight:600; color:var(--gold); margin-right:10px; }
+.aviso-delivery-dir{ color:rgba(246,241,231,.55); margin-left:6px; }
+@media (max-width:760px){
+  .aviso-delivery-inner{ justify-content:flex-start; align-items:flex-start; gap:12px; }
+  .aviso-delivery b, .aviso-delivery p span{ display:block; margin:0; }
+  .aviso-delivery b{ margin-bottom:2px; }
+}
+
 /* ============ HEADER ============ */
 .header{
   position:sticky; top:0; z-index:60;
@@ -1132,6 +1153,12 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 }
 .drawer-ship.is-free .drawer-ship-top{ margin-bottom:0; }
 .drawer-ship.is-free .ship-icon{ background:var(--green); color:#fff; }
+/* Delivery pausado: el aviso ocupa el lugar del envío gratis. */
+.drawer-ship.is-pickup{ background:var(--carbon); border-color:var(--carbon); }
+.drawer-ship.is-pickup .drawer-ship-top{ margin-bottom:0; }
+.drawer-ship.is-pickup .ship-icon{ background:transparent; border:1px solid rgba(240,182,74,.55); color:var(--gold); }
+.drawer-ship.is-pickup .ship-text b{ color:var(--gold); }
+.drawer-ship.is-pickup .ship-text small{ color:rgba(246,241,231,.72); }
 .ship-track{ height:8px; border-radius:999px; background:var(--line); overflow:hidden; }
 .ship-bar{ height:100%; border-radius:999px; background:var(--accent); transition:width .3s ease; }
 .was{ text-decoration:line-through; opacity:.55; font-weight:400; margin-right:6px; }
@@ -1393,6 +1420,14 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 .radio-card-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:10px; }
 .radio-card b{ font-size:15px; }
 .radio-card small{ color:var(--muted); font-size:12.5px; line-height:1.45; display:block; }
+.radio-card:disabled, .m-radio:disabled{ opacity:.5; cursor:not-allowed; }
+.radio-card:disabled:hover{ border-color:var(--line); }
+/* Delivery pausado: el motivo, arriba de las opciones de entrega. */
+.co-pickup-note{
+  margin-bottom:12px; padding:12px 14px; border-radius:13px;
+  background:var(--carbon); color:rgba(246,241,231,.78); font-size:13.5px; line-height:1.5;
+}
+.co-pickup-note b{ color:var(--gold); font-weight:600; }
 .dot{
   width:16px; height:16px; border-radius:999px; flex:none; display:inline-block;
   border:1px solid var(--line-2); background:var(--surface);

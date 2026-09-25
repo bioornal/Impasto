@@ -21,7 +21,7 @@ export async function PUT(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const updates: Record<string, unknown> = {};
 
-  for (const campo of ["nombre", "ciudad", "direccion", "telefono", "email", "whatsapp", "horarios", "mensaje_cierre", "cbu", "alias_cbu", "banco", "titular_cuenta"]) {
+  for (const campo of ["nombre", "ciudad", "direccion", "telefono", "email", "whatsapp", "horarios", "mensaje_cierre", "mensaje_delivery", "cbu", "alias_cbu", "banco", "titular_cuenta"]) {
     if (typeof body[campo] === "string") updates[campo] = body[campo].trim();
   }
 
@@ -55,6 +55,7 @@ export async function PUT(req: NextRequest) {
   }
 
   if (body.ventas_activas !== undefined) updates.ventas_activas = Boolean(body.ventas_activas);
+  if (body.delivery_activo !== undefined) updates.delivery_activo = Boolean(body.delivery_activo);
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ ok: false, error: "No hay cambios para guardar" }, { status: 400 });

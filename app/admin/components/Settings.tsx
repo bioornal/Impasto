@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useStore } from "./StoreProvider";
+import { MENSAJE_DELIVERY_DEFAULT } from "@/lib/hours";
 
 interface Sucursal {
   nombre: string;
@@ -17,6 +18,8 @@ interface Sucursal {
   envio_gratis_desde: number;
   ventas_activas: boolean;
   mensaje_cierre: string;
+  delivery_activo?: boolean;
+  mensaje_delivery?: string;
   cbu?: string;
   alias_cbu?: string;
   banco?: string;
@@ -52,6 +55,7 @@ export function Settings() {
     setConfig((c) => (c ? { ...c, [campo]: valor } : c));
 
   const diasActivos = String(config.dias_apertura || "").split(",").map(Number).filter((n) => !Number.isNaN(n));
+  const deliveryActivo = config.delivery_activo !== false;
 
   const alternarDia = (dia: number) => {
     const siguiente = diasActivos.includes(dia)
@@ -148,8 +152,31 @@ export function Settings() {
           </section>
 
           <section>
-            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 10 }}>Delivery</h4>
-            <div className="form-grid">
+            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 4 }}>Delivery</h4>
+            <div className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
+              Si hoy no podés hacer envíos, pausá el delivery: el sitio sigue vendiendo, pero solo
+              para retirar en el local, y el cliente ve el motivo antes de armar su pedido.
+            </div>
+            <button
+              className={`btn ${deliveryActivo ? "btn-success" : "btn-danger"}`}
+              onClick={() => set("delivery_activo", !deliveryActivo)}
+            >
+              {deliveryActivo ? "✓ Haciendo envíos" : "✕ Delivery pausado · solo retiro"}
+            </button>
+            {!deliveryActivo && (
+              <div className="field" style={{ marginTop: 12 }}>
+                <label>Motivo que ve el cliente</label>
+                <input
+                  placeholder={MENSAJE_DELIVERY_DEFAULT}
+                  value={config.mensaje_delivery || ""}
+                  onChange={(e) => set("mensaje_delivery", e.target.value)}
+                />
+                <div className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>
+                  Si lo dejás vacío, se muestra el texto de ejemplo.
+                </div>
+              </div>
+            )}
+            <div className="form-grid" style={{ marginTop: 16 }}>
               <div className="field">
                 <label>Tarifa de envío</label>
                 <input type="number" value={config.delivery_fee} onChange={(e) => set("delivery_fee", Number(e.target.value))} />
@@ -198,7 +225,7 @@ export function Settings() {
           </div>
 
           <div className="text-muted" style={{ fontSize: 12 }}>
-            Los cambios de horario y de venta se ven en el sitio en menos de un minuto.
+            Los cambios de horario, de venta y de delivery se ven en el sitio en menos de un minuto.
           </div>
         </div>
       </div>

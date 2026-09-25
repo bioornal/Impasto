@@ -87,6 +87,36 @@ export function proximaApertura(config: HorarioConfig, referencia = new Date()) 
   return `a las ${config.apertura}`;
 }
 
+export const MENSAJE_DELIVERY_DEFAULT =
+  "Por el momento no estamos haciendo envíos a domicilio. Podés pedir online y retirarlo en el local.";
+
+export interface EstadoDelivery {
+  activo: boolean;
+  /** Motivo para el cliente; vacío mientras el delivery funciona. */
+  motivo: string;
+}
+
+/**
+ * Estado del reparto, aparte del horario: el local puede estar abierto y sin
+ * delivery (lluvia, sin repartidor). Lo pausa el dueño desde el panel.
+ */
+export function estadoDelivery(business: BusinessConfig): EstadoDelivery {
+  if (business.deliveryActivo !== false) return { activo: true, motivo: "" };
+  return { activo: false, motivo: (business.mensajeDelivery || "").trim() || MENSAJE_DELIVERY_DEFAULT };
+}
+
+/**
+ * Rechaza un pedido con delivery mientras el reparto está pausado. La llama
+ * `createPedido`, el punto único por donde pasan los tres medios de pago.
+ */
+export function validarModalidad(business: BusinessConfig, mode: string): void {
+  if (mode !== "delivery") return;
+  const delivery = estadoDelivery(business);
+  if (delivery.activo) return;
+  const motivo = /[.!?…]$/.test(delivery.motivo) ? delivery.motivo : `${delivery.motivo}.`;
+  throw new Error(`${motivo} Elegí retiro en el local para completar tu pedido.`);
+}
+
 export interface EstadoTienda {
   abierto: boolean;
   /** Frase completa, para el carrito y los mensajes de error. */
@@ -95,6 +125,8 @@ export interface EstadoTienda {
   etiqueta: string;
   /** true si lo cortó el interruptor manual y no el horario. */
   cierreManual: boolean;
+  /** Viaja con el estado de venta para llegar al cliente por el mismo camino. */
+  delivery: EstadoDelivery;
 }
 
 /** "19:30" si abre hoy, "mañana 19:30" o "jue 19:30" si es otro día. */
@@ -118,18 +150,21 @@ function aperturaCorta(config: HorarioConfig, referencia: Date) {
  * si está apagado, no se vende aunque sea el horario de atención.
  */
 export function estadoTienda(business: BusinessConfig, referencia = new Date()): EstadoTienda {
+  const delivery = estadoDelivery(business);
+
   if (!business.ventasActivas) {
     return {
       abierto: false,
       motivo: business.mensajeCierre || "Estamos sin tomar pedidos por el momento.",
       etiqueta: "Cerrado por ahora",
       cierreManual: true,
+      delivery,
     };
   }
 
   const horario = horarioDe(business);
   if (estaAbierto(horario, referencia)) {
-    return { abierto: true, motivo: "", etiqueta: business.hours, cierreManual: false };
+    return { abierto: true, motivo: "", etiqueta: business.hours, cierreManual: false, delivery };
   }
 
   return {
@@ -137,6 +172,7 @@ export function estadoTienda(business: BusinessConfig, referencia = new Date()):
     motivo: `Ahora estamos cerrados. Abrimos ${proximaApertura(horario, referencia)}.`,
     etiqueta: `Cerrado · abre ${aperturaCorta(horario, referencia)}`,
     cierreManual: false,
+    delivery,
   };
 }
 

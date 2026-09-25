@@ -1,4 +1,5 @@
-import { estaAbierto, proximaApertura, fechaLocal, diasCerrados, type HorarioConfig } from "../lib/hours";
+import { estaAbierto, proximaApertura, fechaLocal, diasCerrados, estadoDelivery, validarModalidad, estadoTienda, MENSAJE_DELIVERY_DEFAULT, type HorarioConfig } from "../lib/hours";
+import { BUSINESS, type BusinessConfig } from "../lib/business";
 
 const cfg: HorarioConfig = {
   dias: [2, 3, 4, 5, 6, 0],       // martes a domingo; lunes cerrado
@@ -63,6 +64,44 @@ for (const [nombre, dias, esperado] of cerrados) {
   if (real !== esperado) { fallos++; console.log(`FALLA  diasCerrados · ${nombre}: esperado "${esperado}", obtuvo "${real}"`); }
   else console.log(`PASA   diasCerrados · ${nombre}`);
 }
+
+/* ── delivery pausado ── */
+function chequear(nombre: string, condicion: boolean) {
+  if (condicion) console.log(`PASA   ${nombre}`);
+  else { fallos++; console.log(`FALLA  ${nombre}`); }
+}
+const errorDe = (fn: () => void) => {
+  try { fn(); return ""; } catch (e) { return e instanceof Error ? e.message : String(e); }
+};
+
+const conDelivery: BusinessConfig = { ...BUSINESS };
+const sinDelivery: BusinessConfig = { ...BUSINESS, deliveryActivo: false, mensajeDelivery: "Por la lluvia pausamos el delivery." };
+const sinDeliverySinPunto: BusinessConfig = { ...BUSINESS, deliveryActivo: false, mensajeDelivery: "Sin repartidores esta noche" };
+const sinDeliveryNiMotivo: BusinessConfig = { ...BUSINESS, deliveryActivo: false, mensajeDelivery: "   " };
+
+const activo = estadoDelivery(conDelivery);
+chequear("estadoDelivery · activo, sin motivo", activo.activo === true && activo.motivo === "");
+const pausado = estadoDelivery(sinDelivery);
+chequear("estadoDelivery · pausado con el motivo del panel", pausado.activo === false && pausado.motivo === "Por la lluvia pausamos el delivery.");
+chequear("estadoDelivery · pausado sin motivo usa el texto por defecto", estadoDelivery(sinDeliveryNiMotivo).motivo === MENSAJE_DELIVERY_DEFAULT);
+
+chequear("validarModalidad · delivery activo acepta delivery", errorDe(() => validarModalidad(conDelivery, "delivery")) === "");
+chequear("validarModalidad · pausado acepta retiro", errorDe(() => validarModalidad(sinDelivery, "takeaway")) === "");
+chequear(
+  "validarModalidad · pausado rechaza delivery con el motivo",
+  errorDe(() => validarModalidad(sinDelivery, "delivery")) === "Por la lluvia pausamos el delivery. Elegí retiro en el local para completar tu pedido.",
+);
+chequear(
+  "validarModalidad · agrega el punto si el motivo no lo tiene",
+  errorDe(() => validarModalidad(sinDeliverySinPunto, "delivery")) === "Sin repartidores esta noche. Elegí retiro en el local para completar tu pedido.",
+);
+
+// Sábado 21:00 en Iguazú: abierto por horario.
+const sabado = new Date("2026-08-22T00:00:00Z");
+const tiendaSinDelivery = estadoTienda(sinDelivery, sabado);
+chequear("estadoTienda · abierto y sin delivery conviven", tiendaSinDelivery.abierto && !tiendaSinDelivery.delivery.activo);
+chequear("estadoTienda · la venta pausada también lleva el delivery", estadoTienda({ ...sinDelivery, ventasActivas: false }, sabado).delivery.activo === false);
+chequear("estadoTienda · cerrado por horario también lo lleva", estadoTienda(conDelivery, new Date("2026-08-25T00:00:00Z")).delivery.activo === true);
 
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
 process.exit(fallos === 0 ? 0 : 1);

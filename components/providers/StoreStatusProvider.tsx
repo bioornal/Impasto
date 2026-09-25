@@ -1,14 +1,18 @@
 "use client";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { EstadoDelivery } from "@/lib/hours";
 
 export interface EstadoTiendaCliente {
   abierto: boolean;
   motivo: string;
   etiqueta: string;
   cierreManual: boolean;
+  delivery: EstadoDelivery;
 }
 
-const StoreStatusContext = createContext<EstadoTiendaCliente>({ abierto: true, motivo: "", etiqueta: "", cierreManual: false });
+const DELIVERY_ACTIVO: EstadoDelivery = { activo: true, motivo: "" };
+
+const StoreStatusContext = createContext<EstadoTiendaCliente>({ abierto: true, motivo: "", etiqueta: "", cierreManual: false, delivery: DELIVERY_ACTIVO });
 
 export const useStoreStatus = () => useContext(StoreStatusContext);
 
@@ -28,7 +32,13 @@ export function StoreStatusProvider({ inicial, children }: { inicial: EstadoTien
         const respuesta = await fetch("/api/store-status", { cache: "no-store" });
         const datos = await respuesta.json();
         if (activo && datos?.ok) {
-          setEstado({ abierto: datos.abierto, motivo: datos.motivo, etiqueta: datos.etiqueta, cierreManual: datos.cierreManual });
+          setEstado({
+            abierto: datos.abierto,
+            motivo: datos.motivo,
+            etiqueta: datos.etiqueta,
+            cierreManual: datos.cierreManual,
+            delivery: datos.delivery ?? DELIVERY_ACTIVO,
+          });
         }
       } catch { /* si falla la consulta se conserva el último estado conocido */ }
     };

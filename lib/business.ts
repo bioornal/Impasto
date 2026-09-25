@@ -24,6 +24,13 @@ export interface BusinessConfig {
   ventasActivas: boolean;
   /** Motivo mostrado al cliente cuando las ventas están cortadas a mano. */
   mensajeCierre: string;
+  /**
+   * Interruptor manual del reparto. Apagado, el sitio sigue vendiendo pero solo
+   * para retirar en el local. Independiente de `ventasActivas`.
+   */
+  deliveryActivo: boolean;
+  /** Motivo mostrado al cliente cuando el delivery está pausado. */
+  mensajeDelivery: string;
   deliveryFee: number;
   /** Monto de subtotal a partir del cual el envío es gratis. */
   freeShippingFrom: number;
@@ -61,6 +68,8 @@ export const BUSINESS: BusinessConfig = {
   zonaHoraria: "America/Argentina/Buenos_Aires",
   ventasActivas: true,
   mensajeCierre: "",
+  deliveryActivo: true,
+  mensajeDelivery: "",
   deliveryFee: 3000,
   freeShippingFrom: 35000,
   deliveryEstimate: "30 a 50 min",

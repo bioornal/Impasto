@@ -158,5 +158,13 @@ const vacio = promptVendedor(
 chequear("con la carta vacía sigue devolviendo un prompt usable", vacio.length > 200);
 chequear("y no anuncia secciones que no existen", !vacio.includes("BEBIDAS"));
 
+/* ── delivery pausado: el bot no puede ofrecer lo que el checkout rechaza ── */
+const sinDelivery: BusinessConfig = { ...business, deliveryActivo: false, mensajeDelivery: "Por la lluvia pausamos el delivery." };
+const promptSinDelivery = promptVendedor(catalogo, sinDelivery, estadoTienda(sinDelivery, new Date("2026-08-26T00:00:00Z")));
+chequear("con el delivery activo ofrece el envío gratis", /Envío GRATIS a partir/.test(prompt));
+chequear("con el delivery pausado dice que solo hay retiro, con la dirección", /solo .*retir/i.test(promptSinDelivery) && promptSinDelivery.includes(business.address));
+chequear("y lleva el motivo que cargó el local", promptSinDelivery.includes("Por la lluvia pausamos el delivery."));
+chequear("y no ofrece envío gratis ni la tarifa", !/gratis a partir/i.test(promptSinDelivery) && !promptSinDelivery.includes("$3.000"));
+
 console.log(fallos === 0 ? "\nTodo en orden." : `\n${fallos} fallo(s).`);
 process.exit(fallos === 0 ? 0 : 1);

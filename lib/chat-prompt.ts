@@ -115,6 +115,20 @@ export function promptVendedor(
     ? `El local está ABIERTO ahora. Horario: ${business.hours}.`
     : `El local está CERRADO ahora. ${estado.motivo} Invitá igual a mirar la carta y a volver cuando abra.`;
 
+  // Con el reparto pausado el bot no puede ofrecer envío: el checkout lo rechaza.
+  const envio = estado.delivery.activo
+    ? `- Delivery: ${pesos(business.deliveryFee)}.
+- Envío GRATIS a partir de ${pesos(business.freeShippingFrom)} de subtotal. Si la persona está
+  cerca de ese monto, decíselo: es el argumento que más cierra.
+- También se puede retirar por el local: ${business.address}.
+- Tiempo estimado, tanto para delivery como para retiro: ${business.deliveryEstimate}. Es un
+  estimado y lo decís como estimado: nunca prometas una hora exacta de llegada.`
+    : `- HOY NO HAY DELIVERY. ${estado.delivery.motivo}
+- Solo se puede pedir para retirar por el local: ${business.address}. Si preguntan por el
+  envío, explicalo con amabilidad y ofrecé el retiro. No ofrezcas envío a domicilio.
+- Tiempo estimado para retirar: ${business.deliveryEstimate}. Es un estimado y lo decís como
+  estimado: nunca prometas una hora exacta.`;
+
   // La sección SOBRE EL PRODUCTO no siempre existe (ver `sobreElProducto()`):
   // si ARGUMENTOS_MARCA está vacío, no hay que mandarle al modelo a usar algo
   // que no está.
@@ -168,12 +182,7 @@ EL LOCAL
 ${local}
 
 EL ENVÍO
-- Delivery: ${pesos(business.deliveryFee)}.
-- Envío GRATIS a partir de ${pesos(business.freeShippingFrom)} de subtotal. Si la persona está
-  cerca de ese monto, decíselo: es el argumento que más cierra.
-- También se puede retirar por el local: ${business.address}.
-- Tiempo estimado, tanto para delivery como para retiro: ${business.deliveryEstimate}. Es un
-  estimado y lo decís como estimado: nunca prometas una hora exacta de llegada.
+${envio}
 ${sobreElProducto()}
 LA CARTA
 ${carta(data)}`;

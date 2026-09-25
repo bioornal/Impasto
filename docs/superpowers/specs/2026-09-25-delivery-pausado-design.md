@@ -70,20 +70,24 @@ sin naranjas ni marrones. Contenido:
 **Barra superior.** Con el delivery pausado, escritorio cambia "Envío gratis desde $X" por
 "Solo retiro en el local"; mobile cambia "Entrega {estimado}" por "Solo retiro".
 
-**Carrito (`CartDrawer`).** Con el delivery pausado: sin barra de progreso de envío gratis, la
-línea de envío dice "Retiro en el local · Sin cargo", el total no suma envío y debajo del botón
-aparece el motivo en letra chica.
+**Carrito (`CartDrawer`).** Con el delivery pausado, el bloque de envío gratis de arriba se
+reemplaza por el aviso ("Por ahora, solo retiro en el local" + motivo, en carbón y dorado), la
+línea de envío dice "Retiro en el local · Sin cargo", el total no suma envío y la nota de abajo
+dice "Listo para retirar en {estimado}". La barra inferior mobile (`Shell`) cambia
+"Entrega {estimado}" por "Listo en {estimado}".
 
 **Checkout (`Checkout.tsx`, bloques de escritorio y mobile).** El estado sale de
 `useStoreStatus().delivery`, no de la prop `business` (que viene de la página con ISR y puede
 tener un minuto). Con el delivery pausado:
 
-- `mode` arranca en `"takeaway"` y un efecto lo fuerza a `"takeaway"` si la pausa llega con el
-  checkout abierto.
+- `data.mode` arranca en `"takeaway"`. El modo efectivo se deriva
+  (`delivery.activo ? data.mode : "takeaway"`) y es el que usan la cotización, la validación y
+  el pedido enviado: si la pausa llega con el checkout abierto, pasa a retiro sin un efecto que
+  pise el estado.
 - La tarjeta de Delivery queda `disabled`, atenuada, con la leyenda "Pausado por el momento".
 - Una nota con el motivo sobre las opciones de entrega.
-- Si el delivery se reactiva con el checkout abierto, la opción vuelve a estar disponible y el
-  modo elegido no cambia.
+- Si el delivery se reactiva con el checkout abierto, vuelve la opción que el cliente tenía
+  elegida (retiro, si llegó con la pausa activa).
 
 **Panel (`Settings.tsx`, sección Delivery).** Botón igual al de Venta:
 "✓ Haciendo envíos" / "✕ Delivery pausado · solo retiro". Pausado, aparece el campo "Motivo que
@@ -91,8 +95,9 @@ ve el cliente" con la frase por defecto como placeholder. Se guarda con "Guardar
 
 ## Chatbot
 
-`promptVendedor()` no cambia de firma: calcula `estadoDelivery(business)` adentro. Si está
-pausado, la sección EL ENVÍO dice que
+`promptVendedor()` no cambia de firma: `EstadoTienda` suma `delivery: EstadoDelivery`, así que
+el prompt lo lee de `estado.delivery` (y `/api/store-status` y la página lo reciben sin cambios
+propios). Si está pausado, la sección EL ENVÍO dice que
 hoy solo hay retiro en el local, con el motivo y la dirección, y que no ofrezca envío ni hable
 del envío gratis. El bot usa una copia de `business` de hasta 5 minutos, el mismo desfase que ya
 tiene con "Venta pausada"; el servidor bloquea igual el pedido con delivery.

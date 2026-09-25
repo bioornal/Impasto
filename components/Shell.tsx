@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { CartProvider, useCart } from "@/components/providers/CartProvider";
 import { TweakProvider, useTweaks } from "@/components/providers/TweakProvider";
 import { ToastProvider, useToast } from "@/components/providers/ToastProvider";
-import { StoreStatusProvider, type EstadoTiendaCliente } from "@/components/providers/StoreStatusProvider";
+import { StoreStatusProvider, useStoreStatus, type EstadoTiendaCliente } from "@/components/providers/StoreStatusProvider";
 import { Header, Ticker } from "@/components/layout/Header";
 import { precioDesde } from "@/lib/reglas-carta";
 import { fmt } from "@/lib/utils";
@@ -95,6 +95,7 @@ function TweaksPanel() {
 function SiteContent({ data, business, chatDisponible, destacadaId }: { data: CatalogData; business: BusinessConfig; chatDisponible: boolean; destacadaId?: string }) {
   const { paletteClass, typeClass } = useTweaks();
   const { add, clear, subtotal, count } = useCart();
+  const { delivery } = useStoreStatus();
   const toast = useToast();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [halfOpen, setHalfOpen] = useState(false);
@@ -370,7 +371,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
             <span className="dock-order-count">{count}</span>
             <span className="dock-order-main">
               <b>Ver mi pedido</b>
-              <small>Entrega {business.deliveryEstimate}</small>
+              <small>{delivery.activo ? <>Entrega {business.deliveryEstimate}</> : <>Listo en {business.deliveryEstimate}</>}</small>
             </span>
             <span className="dock-order-total">{fmt(subtotal)}</span>
           </button>

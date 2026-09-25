@@ -50,6 +50,9 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       zonaHoraria: String(branch.zona_horaria || BUSINESS.zonaHoraria),
       ventasActivas: branch.ventas_activas !== false,
       mensajeCierre: String(branch.mensaje_cierre || ""),
+      // Sin la columna (antes de la migración) cuenta como delivery activo.
+      deliveryActivo: branch.delivery_activo !== false,
+      mensajeDelivery: String(branch.mensaje_delivery || ""),
       deliveryFee: Number(branch.delivery_fee || BUSINESS.deliveryFee),
       freeShippingFrom: Number(branch.envio_gratis_desde || BUSINESS.freeShippingFrom),
       deliveryEstimate: String(branch.tiempo_entrega || BUSINESS.deliveryEstimate),

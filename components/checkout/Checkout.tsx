@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/providers/CartProvider";
+import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { ItemMedia } from "@/components/ui/ItemMedia";
 import { CardPayment, type CardFormData } from "@/components/checkout/CardPayment";
 import { fmt } from "@/lib/utils";
@@ -57,8 +58,9 @@ const PAGOS: [string, string, string, string][] = [
 
 export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }: CheckoutProps) {
   const { items, count, subtotal: localSubtotal } = useCart();
+  const { delivery } = useStoreStatus();
   const [data, setData] = useState<CheckoutData>({
-    mode: "delivery", when: "asap", nombre: "", tel: "", email: "", dir: "", ref: "",
+    mode: delivery.activo ? "delivery" : "takeaway", when: "asap", nombre: "", tel: "", email: "", dir: "", ref: "",
     pago: "efectivo", cambio: "", notas: "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutData, string>>>({});
@@ -68,14 +70,17 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
   const [submitting, setSubmitting] = useState(false);
   const [brickOpen, setBrickOpen] = useState(false);
   const [resumenAbierto, setResumenAbierto] = useState(false);
-  const quoteKey = JSON.stringify({ items, mode: data.mode });
+  // Con el reparto pausado el pedido es para retirar aunque el cliente hubiera
+  // elegido delivery antes de la pausa. Derivado, no un efecto que pise el estado.
+  const mode: CheckoutData["mode"] = delivery.activo ? data.mode : "takeaway";
+  const quoteKey = JSON.stringify({ items, mode });
 
   useEffect(() => {
     let active = true;
     fetch("/api/orders/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items, mode: data.mode }),
+      body: JSON.stringify({ items, mode }),
     })
       .then(async (response) => {
         const result = await response.json();
@@ -87,17 +92,17 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
       })
       .catch(() => { if (active) { setQuote(null); setQuoteError("No se pudo actualizar el total. Intentá nuevamente."); } });
     return () => { active = false; };
-  }, [data.mode, items, quoteKey]);
+  }, [mode, items, quoteKey]);
 
   const quoteLoading = quote?.key !== quoteKey;
   const subtotal = quoteLoading ? localSubtotal : (quote?.subtotal ?? localSubtotal);
   const freeShipping = subtotal >= business.freeShippingFrom;
   const shipping = quoteLoading
-    ? (data.mode === "delivery" && !freeShipping ? business.deliveryFee : 0)
+    ? (mode === "delivery" && !freeShipping ? business.deliveryFee : 0)
     : (quote?.shipping ?? 0);
   const total = quoteLoading ? subtotal + shipping : (quote?.total ?? subtotal + shipping);
   const lineItems = quoteLoading || !quote?.items.length ? items : quote.items;
-  const isDelivery = data.mode === "delivery";
+  const isDelivery = mode === "delivery";
 
   const set = <K extends keyof CheckoutData>(key: K, value: CheckoutData[K]) =>
     setData((prev) => ({ ...prev, [key]: value }));
@@ -132,7 +137,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
 
     setSubmitting(true);
     try {
-      await onConfirm({ ...data, items: [...items] });
+      await onConfirm({ ...data, mode, items: [...items] });
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "No se pudo registrar el pedido");
     } finally {
@@ -141,7 +146,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
   };
 
   const payWithCard = async (card: CardFormData) => {
-    await onCardConfirm({ ...data, items: [...items] }, card);
+    await onCardConfirm({ ...data, mode, items: [...items] }, card);
   };
 
   return (
@@ -189,15 +194,26 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
               <span className="co-num">1</span>
               <h4>¿Cómo lo querés recibir?</h4>
             </div>
+            {!delivery.activo && (
+              <div className="co-pickup-note" role="status">
+                <b>Por ahora, solo retiro en el local.</b> {delivery.motivo}
+              </div>
+            )}
             <div className="co-modes">
-              <button className={`radio-card ${isDelivery ? "on" : ""}`} onClick={() => set("mode", "delivery")}>
+              <button className={`radio-card ${isDelivery ? "on" : ""}`} onClick={() => set("mode", "delivery")} disabled={!delivery.activo}>
                 <span className="radio-card-top">
                   <b>Delivery</b>
                   <span className={`dot ${isDelivery ? "on" : ""}`} />
                 </span>
                 <small>
-                  A domicilio en {business.deliveryEstimate} · {fmt(business.deliveryFee)}<br />
-                  Gratis desde {fmt(business.freeShippingFrom)}
+                  {delivery.activo ? (
+                    <>
+                      A domicilio en {business.deliveryEstimate} · {fmt(business.deliveryFee)}<br />
+                      Gratis desde {fmt(business.freeShippingFrom)}
+                    </>
+                  ) : (
+                    "Pausado por el momento"
+                  )}
                 </small>
               </button>
               <button className={`radio-card ${!isDelivery ? "on" : ""}`} onClick={() => set("mode", "takeaway")}>
@@ -414,12 +430,21 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             <span className="co-num">1</span>
             <h4>¿Cómo lo recibís?</h4>
           </div>
+          {!delivery.activo && (
+            <div className="co-pickup-note" role="status">
+              <b>Por ahora, solo retiro en el local.</b> {delivery.motivo}
+            </div>
+          )}
           <div className="co-modes">
-            <button className={`m-radio ${isDelivery ? "on" : ""}`} onClick={() => set("mode", "delivery")}>
+            <button className={`m-radio ${isDelivery ? "on" : ""}`} onClick={() => set("mode", "delivery")} disabled={!delivery.activo}>
               <span className="m-radio-dot" />
               <span className="m-radio-body">
                 <b>Delivery</b>
-                <small>A domicilio en {business.deliveryEstimate} · {fmt(business.deliveryFee)}. Gratis desde {fmt(business.freeShippingFrom)}.</small>
+                <small>
+                  {delivery.activo
+                    ? <>A domicilio en {business.deliveryEstimate} · {fmt(business.deliveryFee)}. Gratis desde {fmt(business.freeShippingFrom)}.</>
+                    : "Pausado por el momento"}
+                </small>
               </span>
             </button>
             <button className={`m-radio ${!isDelivery ? "on" : ""}`} onClick={() => set("mode", "takeaway")}>

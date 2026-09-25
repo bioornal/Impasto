@@ -58,9 +58,11 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
 
   if (!open) return null;
 
+  const sinDelivery = !tienda.delivery.activo;
   const freeShipping = subtotal >= business.freeShippingFrom;
   const progress = Math.min(100, (subtotal / business.freeShippingFrom) * 100);
-  const shipping = freeShipping ? 0 : business.deliveryFee;
+  // Sin reparto no hay envío que cobrar: el pedido es para retirar.
+  const shipping = sinDelivery || freeShipping ? 0 : business.deliveryFee;
 
   const inCart = new Set(items.map((i) => i.key));
   // Todas las bebidas que todavía no están en el pedido: el carrusel se desliza,
@@ -113,35 +115,49 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
             <button className="drawer-close" onClick={onClose} aria-label="Cerrar carrito">✕</button>
           </div>
 
-          <div className={`drawer-ship ${freeShipping ? "is-free" : ""}`}>
-            <div className="drawer-ship-top">
-              <span className="ship-icon" aria-hidden="true">
-                {freeShipping ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7" /><circle cx="7" cy="17.5" r="1.8" /><circle cx="17" cy="17.5" r="1.8" /></svg>
-                )}
-              </span>
-              <div className="ship-text">
-                {freeShipping ? (
-                  <>
-                    <b>¡Tu envío es GRATIS!</b>
-                    <small>Te ahorrás {fmt(business.deliveryFee)}</small>
-                  </>
-                ) : (
-                  <>
-                    <b>Sumá {fmt(business.freeShippingFrom - subtotal)} y el envío es GRATIS</b>
-                    <small>Envío gratis desde {fmt(business.freeShippingFrom)} · ahorrás {fmt(business.deliveryFee)}</small>
-                  </>
-                )}
+          {sinDelivery ? (
+            <div className="drawer-ship is-pickup">
+              <div className="drawer-ship-top">
+                <span className="ship-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 10l2-6h16l2 6" /><path d="M2 10h20" /><path d="M4 10v10h16V10" /><path d="M10 20v-5h4v5" /></svg>
+                </span>
+                <div className="ship-text">
+                  <b>Por ahora, solo retiro en el local</b>
+                  <small>{tienda.delivery.motivo}</small>
+                </div>
               </div>
             </div>
-            {!freeShipping && (
-              <div className="ship-track">
-                <div className="ship-bar" style={{ width: `${progress}%` }} />
+          ) : (
+            <div className={`drawer-ship ${freeShipping ? "is-free" : ""}`}>
+              <div className="drawer-ship-top">
+                <span className="ship-icon" aria-hidden="true">
+                  {freeShipping ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7" /><circle cx="7" cy="17.5" r="1.8" /><circle cx="17" cy="17.5" r="1.8" /></svg>
+                  )}
+                </span>
+                <div className="ship-text">
+                  {freeShipping ? (
+                    <>
+                      <b>¡Tu envío es GRATIS!</b>
+                      <small>Te ahorrás {fmt(business.deliveryFee)}</small>
+                    </>
+                  ) : (
+                    <>
+                      <b>Sumá {fmt(business.freeShippingFrom - subtotal)} y el envío es GRATIS</b>
+                      <small>Envío gratis desde {fmt(business.freeShippingFrom)} · ahorrás {fmt(business.deliveryFee)}</small>
+                    </>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
+              {!freeShipping && (
+                <div className="ship-track">
+                  <div className="ship-bar" style={{ width: `${progress}%` }} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="drawer-body">
@@ -227,8 +243,10 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
           <div className="drawer-foot">
             <div className="tot-row"><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
             <div className="tot-row">
-              <span>Envío</span>
-              {freeShipping ? (
+              <span>{sinDelivery ? "Retiro en el local" : "Envío"}</span>
+              {sinDelivery ? (
+                <span>Sin cargo</span>
+              ) : freeShipping ? (
                 <span className="free"><s className="was">{fmt(business.deliveryFee)}</s> Gratis</span>
               ) : (
                 <span>{fmt(business.deliveryFee)}</span>
@@ -243,7 +261,9 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14" /><path d="m13 5 7 7-7 7" /></svg>
             </button>
             {!tienda.abierto && <small className="drawer-closed">{tienda.motivo}</small>}
-            <small className="drawer-note">Sin costo de servicio · Entrega estimada {business.deliveryEstimate}</small>
+            <small className="drawer-note">
+              Sin costo de servicio · {sinDelivery ? "Listo para retirar en" : "Entrega estimada"} {business.deliveryEstimate}
+            </small>
           </div>
         )}
       </aside>

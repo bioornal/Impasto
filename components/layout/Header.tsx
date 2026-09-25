@@ -17,6 +17,7 @@ const NAV: [string, string][] = [
 
 function Topbar({ business }: { business: BusinessConfig }) {
   const tienda = useStoreStatus();
+  const sinDelivery = !tienda.delivery.activo;
 
   return (
     <>
@@ -29,7 +30,9 @@ function Topbar({ business }: { business: BusinessConfig }) {
           <div className="topbar-links">
             <span>{business.address} · {business.city}</span>
             <span>{business.phone}</span>
-            <span className="gold">Envío gratis desde {fmt(business.freeShippingFrom)}</span>
+            <span className="gold">
+              {sinDelivery ? "Solo retiro en el local" : <>Envío gratis desde {fmt(business.freeShippingFrom)}</>}
+            </span>
           </div>
         </div>
       </div>
@@ -41,12 +44,28 @@ function Topbar({ business }: { business: BusinessConfig }) {
           <>
             <span>Abierto hasta {business.horaCierre}</span>
             <span className="m-status-sep">·</span>
-            <span className="m-status-eta">Entrega {business.deliveryEstimate}</span>
+            <span className="m-status-eta">{sinDelivery ? "Solo retiro" : <>Entrega {business.deliveryEstimate}</>}</span>
           </>
         ) : (
           <span>{tienda.etiqueta}</span>
         )}
       </div>
+      {/* Delivery pausado desde el panel. Si la venta está cortada del todo, manda
+          ese aviso y esta franja sobra. */}
+      {sinDelivery && !tienda.cierreManual && (
+        <div className="aviso-delivery" role="status">
+          <div className="container aviso-delivery-inner">
+            <span className="aviso-delivery-icon" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 10l2-6h16l2 6" /><path d="M2 10h20" /><path d="M4 10v10h16V10" /><path d="M10 20v-5h4v5" /></svg>
+            </span>
+            <p>
+              <b>Por ahora, solo retiro en el local</b>
+              <span>{tienda.delivery.motivo}</span>
+              <span className="aviso-delivery-dir">Te esperamos en {business.address}.</span>
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

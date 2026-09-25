@@ -2,7 +2,7 @@ import { db } from "@/lib/insforge";
 import { quoteOrder } from "@/lib/order-quote";
 import { getBusinessConfig } from "@/lib/business-server";
 import { getCartSessionId } from "@/lib/cart-session";
-import { estadoTienda, fechaLocal } from "@/lib/hours";
+import { estadoTienda, fechaLocal, validarModalidad } from "@/lib/hours";
 import { validarCuando } from "@/lib/validar-cuando";
 import { SUCURSAL_ID } from "@/lib/business";
 import { nuevaReferencia } from "@/lib/referencia";
@@ -106,6 +106,9 @@ export async function createPedido(
   // interruptor manual de ventas.
   const estado = estadoTienda(business);
   if (!estado.abierto) throw new Error(estado.motivo);
+  // Con el reparto pausado solo se aceptan pedidos para retirar. Corre antes
+  // del INSERT y, con tarjeta, antes de contactar a Mercado Pago.
+  validarModalidad(business, order.mode);
 
   const quote = await quoteOrder(order.items, order.mode, business);
 

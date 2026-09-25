@@ -6,7 +6,7 @@ Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Me
 Deploy en Netlify: **https://www.impastopizzas.com** (dominio propio desde el 19/09/2026; el
 subdominio `vocal-naiad-861a2c.netlify.app` sigue respondiendo). Ver "Dominio propio".
 
-Última actualización: 23 de septiembre de 2026.
+Última actualización: 25 de septiembre de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -29,6 +29,10 @@ subdominio `vocal-naiad-861a2c.netlify.app` sigue respondiendo). Ver "Dominio pr
 - `app/api/productos/route.ts` no lo consume nadie en el repo, pero podría tener clientes
   externos: desde A09 también entrega solo productos/precios validados y responde 503 si falla
   una fuente crítica. No volver a publicar allí `productos.precio` crudo.
+- **`pnpm lint` también analiza `.worktrees/`** (al 25/09/2026 existe
+  `.worktrees/impresion-termica`), porque `eslint.config.mjs` no la ignora: da cientos de errores
+  ajenos al código de `main`. Para comparar contra el baseline, correr `pnpm exec eslint` sobre
+  los archivos tocados o agregar `.worktrees/**` a `globalIgnores`.
 - **Al verificar con `grep` que no quedan literales duplicados, incluí `.tsx`.** Un grep con
   solo `--include=*.ts` dio un falso negativo y dejó pasar una cuarta copia de la allowlist
   de categorías en `StoreProvider.tsx`.
@@ -232,6 +236,25 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   en `recetario-napolitano/ganancias.astro`.
 - **Módulo de email con Resend (19/09/2026)** — dominio verificado y envío aceptado por la API;
   falta ver el primer pedido real con `enviado` en `notificaciones`. Ver pendiente 1.
+
+- **Delivery pausado · solo retiro (25/09/2026)** — Panel → Configuración → Delivery tiene un
+  interruptor propio ("✓ Haciendo envíos" / "✕ Delivery pausado · solo retiro") y un motivo
+  libre; vacío, sale `MENSAJE_DELIVERY_DEFAULT` (`lib/hours.ts`). Columnas
+  `sucursales.delivery_activo` y `mensaje_delivery` (migración
+  `20260925133228_delivery-pausado.sql`, **aplicada y verificada**). Es independiente de
+  `ventas_activas`: con la venta pausada manda ese aviso y la franja no aparece.
+  `estadoDelivery()` viaja dentro de `EstadoTienda` (página y `/api/store-status`), así que el
+  sitio lo refleja en menos de un minuto. `createPedido` rechaza delivery con `validarModalidad()`
+  antes del INSERT y antes de Mercado Pago. El cliente ve la franja carbón/dorado bajo la barra
+  superior, el carrito sin envío y el checkout con Delivery deshabilitado; si la pausa llega con
+  el checkout abierto, el modo efectivo se deriva a retiro (no hay efecto que pise el estado). El
+  bot deja de ofrecer envío (con hasta 5 min de desfase por la foto del catálogo). No toca textos
+  de marca/SEO ni Carro Fogón. Verificado localmente: tests, TypeScript, eslint de los archivos
+  tocados, build, lectura real de la columna y capturas escritorio/mobile en Chrome headless con
+  `/api/store-status` interceptado. **Sin probar:** el botón del panel con sesión de admin y el
+  rechazo real de `/api/orders` (la venta estaba pausada en la base durante la prueba y no se
+  abrió). Spec y plan: `docs/superpowers/specs/2026-09-25-delivery-pausado-design.md` y
+  `docs/superpowers/plans/2026-09-25-delivery-pausado.md`.
 
 ### Distinción que se presta a confusión
 
