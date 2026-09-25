@@ -299,8 +299,10 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   Verificado localmente: tests, TypeScript, eslint de lo tocado, build; la ruta real con trampa,
   datos inválidos, pedido inexistente y no entregado (ninguna fila creada); y en Chrome headless la
   home vacía y con 6 opiniones ficticias (página temporal, borrada) y el seguimiento entregado,
-  escritorio y 375 px, con los envíos interceptados. Sin probar: una opinión real guardada, el
-  aviso de Telegram y la moderación en el panel. Spec y plan:
+  escritorio y 375 px, con los envíos interceptados. Publicado con `194febd` (Netlify `ready`
+  el 25/09): la home de producción muestra la invitación y `POST /api/opiniones` con el campo
+  trampa responde 200 sin crear filas. Sin probar: una opinión real guardada, el aviso de
+  Telegram y la moderación en el panel. Spec y plan:
   `docs/superpowers/specs/2026-09-25-opiniones-clientes-design.md` y
   `docs/superpowers/plans/2026-09-25-opiniones-clientes.md`.
 
