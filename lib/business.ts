@@ -1,3 +1,5 @@
+import type { DatosTransferencia } from "./cuentas-transferencia";
+
 export interface BusinessConfig {
   id: string;
   name: string;
@@ -41,11 +43,12 @@ export interface BusinessConfig {
    * y se contradecían entre sí.
    */
   deliveryEstimate: string;
-  /** Datos bancarios para transferencias directas */
-  cbu?: string;
-  aliasCbu?: string;
-  banco?: string;
-  titularCuenta?: string;
+  /**
+   * La cuenta activa para transferencias, o `null`. Es el único dato al que un
+   * cliente le manda plata: sin cuenta activa válida el sitio no muestra datos
+   * bancarios y ofrece pedirlos por WhatsApp. Ver `lib/cuentas-transferencia.ts`.
+   */
+  cuentaTransferencia: DatosTransferencia | null;
 }
 
 export const SUCURSAL_ID = "iguazu";
@@ -73,16 +76,13 @@ export const BUSINESS: BusinessConfig = {
   deliveryFee: 3000,
   freeShippingFrom: 35000,
   deliveryEstimate: "30 a 50 min",
-  // **Vacíos a propósito, y no tocar.** Son los únicos datos del negocio a los
-  // que un cliente le manda plata. `getBusinessConfig()` cae a este objeto ante
+  // **`null` a propósito, y no tocar.** Es el único dato del negocio al que un
+  // cliente le manda plata. `getBusinessConfig()` cae a este objeto ante
   // cualquier error de base, así que un valor de ejemplo acá se convierte, en
   // un mal momento, en un alias real mostrado a alguien que está por transferir.
-  // Los datos verdaderos viven en `sucursales` y se cargan desde el panel; si
-  // faltan, la pantalla de transferencia no se muestra.
-  cbu: "",
-  aliasCbu: "",
-  banco: "",
-  titularCuenta: "",
+  // Las cuentas verdaderas viven en `sucursales.cuentas_transferencia` y se
+  // cargan desde el panel; si no hay una activa, los datos no se muestran.
+  cuentaTransferencia: null,
 } as const;
 
 export const DELIVERY_FEE = BUSINESS.deliveryFee;

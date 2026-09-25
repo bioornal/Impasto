@@ -33,6 +33,8 @@ function createdFromExisting(existing: ExistingCardOrder): CreatedOrder {
     shipping: Number(existing.envio || 0),
     total: Number(existing.total || 0),
     freeShipping: Number(existing.envio || 0) === 0,
+    // Un pedido con tarjeta nunca muestra datos de transferencia.
+    cuentaTransferencia: null,
   };
 }
 

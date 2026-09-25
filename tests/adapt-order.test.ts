@@ -80,6 +80,18 @@ if (mpManual.pagoMpManual === true) {
   fallos++;
   console.log("FALLA  MP manual identificado como pago automático");
 }
+// Datos ficticios: el repo es público.
+const conCuenta = adaptOrder({
+  ...rawConDetalle,
+  metodo_pago: "transferencia",
+  cuenta_transferencia: { nombre: "Billetera A", alias: "PRUEBA.ALIAS.UNO", cbu: "", banco: "", titular: "" },
+});
+if (conCuenta.cuentaTransferencia === "Billetera A") {
+  console.log("PASA   el panel sabe en qué cuenta se pidió la transferencia");
+} else {
+  fallos++;
+  console.log("FALLA  cuenta de transferencia:", conCuenta.cuentaTransferencia);
+}
 
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
 process.exit(fallos === 0 ? 0 : 1);

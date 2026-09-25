@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "./StoreProvider";
 import { MENSAJE_DELIVERY_DEFAULT } from "@/lib/hours";
+import type { CuentaTransferencia } from "@/lib/cuentas-transferencia";
 
 interface Sucursal {
   nombre: string;
@@ -20,11 +21,10 @@ interface Sucursal {
   mensaje_cierre: string;
   delivery_activo?: boolean;
   mensaje_delivery?: string;
-  cbu?: string;
-  alias_cbu?: string;
-  banco?: string;
-  titular_cuenta?: string;
+  cuentas_transferencia?: CuentaTransferencia[];
 }
+
+type CampoCuenta = "nombre" | "alias" | "cbu" | "banco" | "titular";
 
 const DIAS: [number, string][] = [
   [1, "Lun"], [2, "Mar"], [3, "Mié"], [4, "Jue"], [5, "Vie"], [6, "Sáb"], [0, "Dom"],
@@ -56,6 +56,27 @@ export function Settings() {
 
   const diasActivos = String(config.dias_apertura || "").split(",").map(Number).filter((n) => !Number.isNaN(n));
   const deliveryActivo = config.delivery_activo !== false;
+
+  // El editor trabaja sobre la lista tal como está, sin filtrarla: una cuenta a
+  // medio tipear no puede desaparecer. La valida el servidor al guardar.
+  const cuentas = config.cuentas_transferencia ?? [];
+  const setCuentas = (siguiente: CuentaTransferencia[]) => set("cuentas_transferencia", siguiente);
+  const cambiarCuenta = (id: string, campo: CampoCuenta, valor: string) =>
+    setCuentas(cuentas.map((cuenta) => (cuenta.id === id ? { ...cuenta, [campo]: valor } : cuenta)));
+  const usarCuenta = (id: string) =>
+    setCuentas(cuentas.map((cuenta) => ({ ...cuenta, activa: cuenta.id === id })));
+  const quitarCuenta = (cuenta: CuentaTransferencia) => {
+    if (!confirm(`¿Quitar la cuenta ${cuenta.nombre || "sin nombre"}?`)) return;
+    const restantes = cuentas.filter((otra) => otra.id !== cuenta.id);
+    // Si se quita la activa, pasa a serlo la primera que quede: nunca sin cuenta por descuido.
+    if (cuenta.activa && restantes.length > 0) restantes[0] = { ...restantes[0], activa: true };
+    setCuentas(restantes);
+  };
+  const agregarCuenta = () =>
+    setCuentas([
+      ...cuentas,
+      { id: crypto.randomUUID(), nombre: "", alias: "", cbu: "", banco: "", titular: "", activa: cuentas.length === 0 },
+    ]);
 
   const alternarDia = (dia: number) => {
     const siguiente = diasActivos.includes(dia)
@@ -201,15 +222,50 @@ export function Settings() {
           </section>
 
           <section>
-            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 4 }}>Datos bancarios para transferencias</h4>
+            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 4 }}>Cuentas para transferencias</h4>
             <div className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
-              Se muestran al cliente en la pantalla de confirmación cuando elige pagar por transferencia.
+              Los clientes ven solo la cuenta <b>activa</b>, en la confirmación y en el seguimiento del pedido.
+              Cada pedido guarda la cuenta que se le mostró: si cambiás la activa, los pedidos anteriores no cambian.
             </div>
-            <div className="form-grid">
-              <div className="field"><label>Alias CBU</label><input placeholder="MI.ALIAS.BANCARIO" value={config.alias_cbu || ""} onChange={(e) => set("alias_cbu", e.target.value)} /></div>
-              <div className="field"><label>Banco / Billetera</label><input placeholder="Nombre del banco o billetera" value={config.banco || ""} onChange={(e) => set("banco", e.target.value)} /></div>
-              <div className="field full"><label>Titular de la cuenta</label><input placeholder="Nombre y apellido del titular" value={config.titular_cuenta || ""} onChange={(e) => set("titular_cuenta", e.target.value)} /></div>
-              <div className="field full"><label>CBU / CVU (22 dígitos)</label><input placeholder="00000031000..." value={config.cbu || ""} onChange={(e) => set("cbu", e.target.value)} /></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {cuentas.length === 0 && (
+                <div className="text-muted" style={{ fontSize: 13 }}>
+                  No hay cuentas cargadas: a quien elija transferencia se le pide que consulte los datos por WhatsApp.
+                </div>
+              )}
+              {cuentas.map((cuenta) => (
+                <div
+                  key={cuenta.id}
+                  style={{
+                    border: `1px solid ${cuenta.activa ? "var(--a-success)" : "var(--a-line)"}`,
+                    background: cuenta.activa ? "var(--a-success-soft)" : "var(--a-surface)",
+                    borderRadius: 12,
+                    padding: 14,
+                  }}
+                >
+                  <div className="flex gap-8" style={{ alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap" }}>
+                    <b style={{ fontSize: 15 }}>{cuenta.nombre || "Cuenta nueva"}</b>
+                    <div className="flex gap-8">
+                      {cuenta.activa ? (
+                        <span className="btn btn-sm btn-success" style={{ cursor: "default" }}>✓ Activa</span>
+                      ) : (
+                        <button className="btn btn-sm btn-primary" onClick={() => usarCuenta(cuenta.id)}>Usar esta</button>
+                      )}
+                      <button className="btn btn-sm btn-ghost" onClick={() => quitarCuenta(cuenta)}>Quitar</button>
+                    </div>
+                  </div>
+                  <div className="form-grid">
+                    <div className="field"><label>Nombre corto (lo ves vos)</label><input placeholder="ARQ, AstroPay, Galicia…" value={cuenta.nombre} onChange={(e) => cambiarCuenta(cuenta.id, "nombre", e.target.value)} /></div>
+                    <div className="field"><label>Alias</label><input placeholder="MI.ALIAS.BANCARIO" value={cuenta.alias} onChange={(e) => cambiarCuenta(cuenta.id, "alias", e.target.value)} /></div>
+                    <div className="field full"><label>CBU / CVU (22 dígitos)</label><input inputMode="numeric" placeholder="0000003100…" value={cuenta.cbu} onChange={(e) => cambiarCuenta(cuenta.id, "cbu", e.target.value)} /></div>
+                    <div className="field"><label>Banco / Billetera</label><input placeholder="Nombre del banco o billetera" value={cuenta.banco} onChange={(e) => cambiarCuenta(cuenta.id, "banco", e.target.value)} /></div>
+                    <div className="field"><label>Titular</label><input placeholder="Nombre y apellido del titular" value={cuenta.titular} onChange={(e) => cambiarCuenta(cuenta.id, "titular", e.target.value)} /></div>
+                  </div>
+                </div>
+              ))}
+              <div>
+                <button className="btn btn-ghost btn-sm" onClick={agregarCuenta}>+ Agregar cuenta</button>
+              </div>
             </div>
           </section>
 

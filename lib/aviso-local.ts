@@ -24,6 +24,8 @@ export interface AvisoPedido {
   shipping: number;
   total: number;
   metodoPago: string;
+  /** Nombre corto de la cuenta que se le mostró al cliente, si pagó por transferencia. */
+  cuentaTransferencia?: string;
 }
 
 /**
@@ -42,7 +44,11 @@ function lineaDePago(aviso: AvisoPedido, tipo: TipoAviso): string {
   if (aviso.metodoPago === "mercadopago") {
     return tipo === "pago_aprobado" ? "PAGADO CON TARJETA" : "PAGO SIN CONFIRMAR — revisar";
   }
-  if (aviso.metodoPago === "transferencia") return "PAGO SIN CONFIRMAR — revisar";
+  if (aviso.metodoPago === "transferencia") {
+    // Con varias cuentas, el local necesita saber en qué app buscar la plata.
+    const cuenta = unaLinea(aviso.cuentaTransferencia);
+    return `PAGO SIN CONFIRMAR — revisar${cuenta ? ` en ${cuenta}` : ""}`;
+  }
   return `PAGO: ${unaLinea(aviso.metodoPago)}`;
 }
 

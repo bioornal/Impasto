@@ -1,4 +1,5 @@
 ﻿import { DELIVERY_FEE } from "./business";
+import { datosDesdePedido } from "./cuentas-transferencia";
 import type { AdminOrder, OrderItem } from "../app/admin/components/types";
 
 export function adaptOrder(p: Record<string, unknown>): AdminOrder {
@@ -43,6 +44,8 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
       ? "aprobado" : String(p.estado_pago || "pendiente"),
     puedeDevolverMP: p.proveedor_pago === "mercadopago" && Boolean(p.mp_order_id),
     pagoMpManual: p.metodo_pago === "mercadopago" && !p.mp_order_id && !p.external_reference,
+    // En qué cuenta buscar la plata: la que se le mostró al cliente al pedir.
+    cuentaTransferencia: datosDesdePedido(p.cuenta_transferencia)?.nombre ?? "",
     cambio: String(p.cambio || ""),
     referencia: String(p.referencia || ""),
     cuando: String(p.cuando || "asap"),

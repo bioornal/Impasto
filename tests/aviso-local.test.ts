@@ -46,6 +46,8 @@ chequear("con tarjeta no aprobada pide revisar", tarjetaSinAprobar.includes("PAG
 
 const transferencia = plantillaLocal({ ...base, metodoPago: "transferencia" }, "pedido_recibido");
 chequear("la transferencia siempre pide revisar", transferencia.includes("PAGO SIN CONFIRMAR"));
+const transferenciaConCuenta = plantillaLocal({ ...base, metodoPago: "transferencia", cuentaTransferencia: "Billetera A" }, "pedido_recibido");
+chequear("la transferencia dice en qué cuenta revisar", transferenciaConCuenta.includes("PAGO SIN CONFIRMAR — revisar en Billetera A"));
 
 const otro = plantillaLocal({ ...base, metodoPago: "canje" }, "pedido_recibido");
 chequear("un método desconocido no rompe el aviso", otro.includes("PAGO: canje"));

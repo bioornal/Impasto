@@ -293,7 +293,7 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, p
           </div>
 
           <div style={{ padding: 14, background: "var(--a-bg)", borderRadius: 12, fontSize: 13.5, marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-            <div><b>Pago: </b><span style={{ textTransform: "capitalize" }}>{order.pago}</span><div className="text-muted" style={{ fontSize: 12 }}>Estado: {order.pagoEstado}</div></div>
+            <div><b>Pago: </b><span style={{ textTransform: "capitalize" }}>{order.pago}</span>{order.cuentaTransferencia ? <span> · {order.cuentaTransferencia}</span> : null}<div className="text-muted" style={{ fontSize: 12 }}>Estado: {order.pagoEstado}</div></div>
             {order.pagoEstado === "pendiente" && order.pago !== "mercadopago" && <button className="btn btn-success btn-sm" onClick={() => onPayment("aprobado")}>Marcar pago recibido</button>}
             {order.pagoEstado === "pendiente" && order.pago === "mercadopago" && <span className="text-muted" style={{ fontSize: 12 }}>{order.pagoMpManual ? "Verificar en MP y confirmar en Carro Fogón" : "Se actualiza automáticamente"}</span>}
           </div>
@@ -450,7 +450,7 @@ export function ComandaTicket({ order }: { order: AdminOrder }) {
         ) : order.pago === "transferencia" ? (
           <div className="c-payment-due">
             [!] COBRAR TRANSFERENCIA: {fmt(order.total)}
-            {"\n"}(Verificar comprobante)
+            {"\n"}(Verificar comprobante{order.cuentaTransferencia ? ` en ${order.cuentaTransferencia}` : ""})
           </div>
         ) : order.pago === "mercadopago" ? (
           <div className="c-payment-due">

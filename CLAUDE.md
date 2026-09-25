@@ -189,7 +189,8 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   y devoluciones totales y parciales desde el panel.
   **Credenciales de PRODUCCIÓN activas: cobra plata real.**
 - **Transferencias bancarias completas (06/09/2026)** — Datos bancarios (`cbu`, `alias_cbu`,
-  `banco`, `titular_cuenta`) en `sucursales` vía migración `20260906135520_datos-bancarios-sucursal.sql`.
+  `banco`, `titular_cuenta`) en `sucursales` vía migración `20260906135520_datos-bancarios-sucursal.sql`
+  (**desde el 25/09/2026 esas columnas ya no se leen: ver "Varias cuentas para transferencias"**).
   Configurables desde `/admin` (Configuración). En Checkout y Confirmation se visualiza tarjeta
   con CBU/Alias, botón de copiado en 1 clic y botón directo a WhatsApp con mensaje y comprobante prefirmado.
 - **Seguimiento en vivo de pedidos (06/09/2026)** — Endpoint público `/api/orders/[ref]` y pantalla
@@ -258,6 +259,27 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   con delivery no lo ejercitó ningún agente contra producción: lo cubren
   `tests/hours.test.ts` (`validarModalidad`). Spec y plan: `docs/superpowers/specs/2026-09-25-delivery-pausado-design.md` y
   `docs/superpowers/plans/2026-09-25-delivery-pausado.md`.
+
+- **Varias cuentas para transferencias (25/09/2026)** — Panel → Configuración → "Cuentas para
+  transferencias": lista de cuentas (nombre corto, alias, CBU/CVU, banco, titular) y una sola
+  **activa**, que es la única que ven los clientes. Vive en `sucursales.cuentas_transferencia`
+  (jsonb) y se valida en `lib/cuentas-transferencia.ts` (puro, con test): alias 6–20 sin
+  recortar, CBU/CVU de 22 dígitos, alias o CBU obligatorio, exactamente una activa. **Cada pedido
+  por transferencia guarda la cuenta que se le mostró** en `pedidos.cuenta_transferencia`
+  (jsonb, solo la escribe la web): confirmación, seguimiento, panel ("transferencia · ARQ") y
+  Telegram ("PAGO SIN CONFIRMAR — revisar en ARQ") usan esa foto; los pedidos anteriores caen a
+  la activa. Si la lista está dañada o hay cero/dos activas, no se muestran datos bancarios y se
+  ofrece WhatsApp: nunca un valor de ejemplo. Migración `20260925141945_cuentas-transferencia.sql`
+  (**aplicada**): copió la cuenta vieja dentro del SQL, sin literales. Las columnas `cbu`,
+  `alias_cbu`, `banco`, `titular_cuenta` quedan en la tabla sin uso (no se borraron para poder
+  volver atrás). Al 25/09 hay dos cuentas: **ARQ (activa)**, cargada por `db query` y no en el repo
+  (que es público), y AstroPay guardada. **Nunca escribir alias ni CBU reales en el repo**, ni
+  en tests ni en docs. Verificado localmente: tests, TypeScript, eslint de lo tocado, build,
+  `GET /api/orders/<ref>` real de un pedido viejo por transferencia (devuelve ARQ) y la
+  confirmación en Chrome headless con `/api/orders` interceptado (no se creó ningún pedido).
+  Sin probar: el editor del panel con sesión de admin y el guardado real de la foto en un pedido
+  nuevo. Spec y plan: `docs/superpowers/specs/2026-09-25-cuentas-transferencia-design.md` y
+  `docs/superpowers/plans/2026-09-25-cuentas-transferencia.md`.
 
 ### Distinción que se presta a confusión
 

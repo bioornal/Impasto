@@ -9,6 +9,7 @@ import { nuevaReferencia } from "@/lib/referencia";
 import { resolveOrderExternalReference } from "@/lib/card-attempt";
 import { requireUpdatedRow } from "@/lib/db-result";
 import type { EstadoPago } from "@/lib/mercadopago";
+import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
 import type { CartItem } from "@/types";
 
 export interface OrderPayload {
@@ -33,6 +34,8 @@ export interface CreatedOrder {
   shipping: number;
   total: number;
   freeShipping: boolean;
+  /** La cuenta que se le mostró al cliente; solo en transferencias. */
+  cuentaTransferencia: DatosTransferencia | null;
 }
 
 const text = (value: unknown) => (typeof value === "string" ? value.trim() : "");
@@ -123,6 +126,10 @@ export async function createPedido(
     () => nuevaReferencia(numero),
   );
 
+  // El pedido guarda la cuenta que ve el cliente: si después cambia la activa,
+  // la confirmación, el seguimiento y el panel siguen mostrando la misma.
+  const cuentaTransferencia = payment.metodoPago === "transferencia" ? business.cuentaTransferencia : null;
+
   const { data, error } = await db.database
     .from("pedidos")
     .insert({
@@ -140,6 +147,7 @@ export async function createPedido(
       modalidad: order.mode === "takeaway" ? "takeaway" : "delivery",
       cuando: order.when || "asap",
       metodo_pago: payment.metodoPago,
+      cuenta_transferencia: cuentaTransferencia,
       cambio: order.cambio || "",
       referencia: order.ref || "",
       notas: order.notas || "",
@@ -169,7 +177,7 @@ export async function createPedido(
     detalle: { metodo_pago: payment.metodoPago, estado_pago: payment.estadoPago },
   });
 
-  return { id, numero, referencia, ...quote };
+  return { id, numero, referencia, ...quote, cuentaTransferencia };
 }
 
 /** Deja rastro de cada cambio de estado, para el panel y el futuro chatbot. */

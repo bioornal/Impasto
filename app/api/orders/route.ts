@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
         shipping: created.shipping,
         total: created.total,
         metodoPago,
+        cuentaTransferencia: created.cuentaTransferencia?.nombre,
       }, "pedido_recibido");
     } catch { /* queda registrado como fallido en `notificaciones` */ }
 
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
       shipping: created.shipping,
       total: created.total,
       freeShipping: created.freeShipping,
+      cuentaTransferencia: created.cuentaTransferencia,
     });
   } catch (err: unknown) {
     const failure = pricingHttpError(err);

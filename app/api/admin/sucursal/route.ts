@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { SUCURSAL_ID } from "@/lib/business";
 import { requireAdmin } from "@/lib/admin-auth";
+import { validarCuentas } from "@/lib/cuentas-transferencia";
 
 const HORA = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -21,7 +22,7 @@ export async function PUT(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const updates: Record<string, unknown> = {};
 
-  for (const campo of ["nombre", "ciudad", "direccion", "telefono", "email", "whatsapp", "horarios", "mensaje_cierre", "mensaje_delivery", "cbu", "alias_cbu", "banco", "titular_cuenta"]) {
+  for (const campo of ["nombre", "ciudad", "direccion", "telefono", "email", "whatsapp", "horarios", "mensaje_cierre", "mensaje_delivery"]) {
     if (typeof body[campo] === "string") updates[campo] = body[campo].trim();
   }
 
@@ -56,6 +57,13 @@ export async function PUT(req: NextRequest) {
 
   if (body.ventas_activas !== undefined) updates.ventas_activas = Boolean(body.ventas_activas);
   if (body.delivery_activo !== undefined) updates.delivery_activo = Boolean(body.delivery_activo);
+
+  // Reemplaza a `cbu`, `alias_cbu`, `banco` y `titular_cuenta`, que ya no se escriben.
+  if (body.cuentas_transferencia !== undefined) {
+    const cuentas = validarCuentas(body.cuentas_transferencia);
+    if (!cuentas.ok) return NextResponse.json({ ok: false, error: cuentas.error }, { status: 400 });
+    updates.cuentas_transferencia = cuentas.cuentas;
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ ok: false, error: "No hay cambios para guardar" }, { status: 400 });

@@ -24,6 +24,7 @@ import { Confirmation } from "@/components/checkout/Confirmation";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { ActiveOrderBanner } from "@/components/layout/ActiveOrderBanner";
 import type { BusinessConfig } from "@/lib/business";
+import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
 import type { CheckoutOrder } from "@/components/checkout/Checkout";
 import type { CardFormData } from "@/components/checkout/CardPayment";
 import type { CatalogData, Pizza, CartItem } from "@/types";
@@ -42,6 +43,7 @@ interface ConfirmedOrder {
   numero: string; nombre: string; mode: string; dir?: string;
   tel: string; total: number; pago: string; estadoPago?: string;
   items: CartItem[]; subtotal: number; shipping: number; fecha: Date;
+  cuentaTransferencia?: DatosTransferencia | null;
 }
 
 function TweaksPanel() {
@@ -490,6 +492,8 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
               shipping: result.shipping,
               total: result.total,
               fecha: new Date(),
+              // La que guardó el pedido, no la activa de la página (que puede tener un minuto).
+              cuentaTransferencia: result.cuentaTransferencia ?? null,
             });
             setScreen("confirm");
           }}

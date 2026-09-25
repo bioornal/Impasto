@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { SUCURSAL_ID } from "@/lib/business";
 import { getBusinessConfig } from "@/lib/business-server";
+import { datosDesdePedido } from "@/lib/cuentas-transferencia";
 import { esReferenciaValida, normalizarReferencia } from "@/lib/referencia";
 import { limitar } from "@/lib/rate-limit";
 
@@ -32,7 +33,7 @@ export async function GET(
 
   const { data, error } = await db.database
     .from("pedidos")
-    .select("numero_pedido, external_reference, nombre_cliente, modalidad, direccion, productos, subtotal, envio, total, status, estado_pago, metodo_pago, cuando, notas, created_at")
+    .select("numero_pedido, external_reference, nombre_cliente, modalidad, direccion, productos, subtotal, envio, total, status, estado_pago, metodo_pago, cuenta_transferencia, cuando, notas, created_at")
     .eq("external_reference", cleanedRef)
     .eq("proyecto_id", "impasto")
     .eq("sucursal_id", SUCURSAL_ID)
@@ -48,6 +49,11 @@ export async function GET(
   }
 
   const business = await getBusinessConfig();
+  // La cuenta que se le mostró al cliente al pedir. Los pedidos anteriores a la
+  // lista de cuentas no la tienen: para esos, la activa, como antes.
+  const cuenta = pedido.metodo_pago === "transferencia"
+    ? datosDesdePedido(pedido.cuenta_transferencia) ?? business.cuentaTransferencia
+    : null;
 
   // Mapeo seguro para el cliente
   return NextResponse.json({
@@ -68,11 +74,11 @@ export async function GET(
       notas: String(pedido.notas || ""),
       fecha: pedido.created_at || new Date().toISOString(),
       deliveryEstimate: business.deliveryEstimate,
-      bancoInfo: pedido.metodo_pago === "transferencia" ? {
-        alias: business.aliasCbu,
-        cbu: business.cbu,
-        banco: business.banco,
-        titular: business.titularCuenta,
+      bancoInfo: cuenta ? {
+        alias: cuenta.alias,
+        cbu: cuenta.cbu,
+        banco: cuenta.banco,
+        titular: cuenta.titular,
       } : null,
       whatsappPhone: business.whatsappPhone,
       businessPhone: business.phone,

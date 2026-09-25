@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { fmt } from "@/lib/utils";
 import type { BusinessConfig } from "@/lib/business";
+import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
 
 interface Order {
   numero: string;
@@ -13,6 +14,8 @@ interface Order {
   total: number;
   pago: string;
   estadoPago?: string;
+  /** La cuenta que guardó el pedido al crearse; es la que se muestra, no la activa de ahora. */
+  cuentaTransferencia?: DatosTransferencia | null;
 }
 
 const PAGO_LABEL: Record<string, string> = {
@@ -24,9 +27,11 @@ const PAGO_LABEL: Record<string, string> = {
 
 export function Confirmation({ order, onClose, business }: { order: Order; onClose: () => void; business: BusinessConfig }) {
   const [copiado, setCopiado] = useState(false);
-  const alias = business.aliasCbu || "";
-  const titular = business.titularCuenta || "";
-  const banco = business.banco || "";
+  const cuenta = order.cuentaTransferencia ?? null;
+  const alias = cuenta?.alias || "";
+  const cbu = cuenta?.cbu || "";
+  const titular = cuenta?.titular || "";
+  const banco = cuenta?.banco || "";
   /**
    * Sin alias ni CBU no hay a dónde transferir. Antes acá había valores de
    * ejemplo como respaldo, y eso es lo peor que se puede hacer con este dato:
@@ -34,8 +39,8 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
    * configuración se muestra el pedido igual y se le dice que los pida por
    * WhatsApp.
    */
-  const hayDatosBancarios = Boolean(alias || business.cbu);
-  const paraCopiar = alias || business.cbu || "";
+  const hayDatosBancarios = Boolean(alias || cbu);
+  const paraCopiar = alias || cbu;
 
   const copiarAlias = async () => {
     try {
@@ -134,9 +139,9 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
               </div>
               {/* Solo como complemento del alias: si no hay alias, el CBU ya
                   ocupa el recuadro de arriba y repetirlo confunde. */}
-              {alias && business.cbu && (
+              {alias && cbu && (
                 <div style={{ fontSize: "11.5px", color: "#8a7a6b", marginTop: "2px" }}>
-                  CBU/CVU: <span style={{ fontFamily: "monospace" }}>{business.cbu}</span>
+                  CBU/CVU: <span style={{ fontFamily: "monospace" }}>{cbu}</span>
                 </div>
               )}
             </div>

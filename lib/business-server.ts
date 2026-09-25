@@ -1,5 +1,6 @@
 import { db } from "@/lib/insforge";
 import { BUSINESS, SUCURSAL_ID, type BusinessConfig } from "@/lib/business";
+import { cuentaActiva, leerCuentas } from "@/lib/cuentas-transferencia";
 
 function parseDias(valor: unknown): number[] | null {
   const dias = String(valor || "")
@@ -56,10 +57,9 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       deliveryFee: Number(branch.delivery_fee || BUSINESS.deliveryFee),
       freeShippingFrom: Number(branch.envio_gratis_desde || BUSINESS.freeShippingFrom),
       deliveryEstimate: String(branch.tiempo_entrega || BUSINESS.deliveryEstimate),
-      cbu: String(branch.cbu || BUSINESS.cbu || ""),
-      aliasCbu: String(branch.alias_cbu || BUSINESS.aliasCbu || ""),
-      banco: String(branch.banco || BUSINESS.banco || ""),
-      titularCuenta: String(branch.titular_cuenta || BUSINESS.titularCuenta || ""),
+      // Las columnas viejas (`cbu`, `alias_cbu`, `banco`, `titular_cuenta`) ya no
+      // se leen: la migración 20260925141945 las pasó a esta lista.
+      cuentaTransferencia: cuentaActiva(leerCuentas(branch.cuentas_transferencia)),
     };
   } catch {
     return { ...BUSINESS, ventasActivas: false };
