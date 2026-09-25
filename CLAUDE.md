@@ -278,8 +278,10 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   `GET /api/orders/<ref>` real de un pedido viejo por transferencia (devuelve ARQ) y la
   confirmación en Chrome headless con `/api/orders` interceptado (no se creó ningún pedido).
   Publicado con `f2b88fc`; Netlify `ready` el 25/09 y el seguimiento de un pedido por
-  transferencia en `www.impastopizzas.com` ya devuelve ARQ. Sin probar: el editor del panel con sesión de admin y el guardado real de la foto en un pedido
-  nuevo. Spec y plan: `docs/superpowers/specs/2026-09-25-cuentas-transferencia-design.md` y
+  transferencia en `www.impastopizzas.com` ya devuelve ARQ. **El dueño lo probó en producción
+  el 25/09/2026 y confirmó que funciona todo bien.** Ningún agente vio todavía la foto guardada
+  en un pedido nuevo real (`pedidos.cuenta_transferencia` no nulo); revisarlo con el próximo
+  pedido por transferencia. Spec y plan: `docs/superpowers/specs/2026-09-25-cuentas-transferencia-design.md` y
   `docs/superpowers/plans/2026-09-25-cuentas-transferencia.md`.
 
 ### Distinción que se presta a confusión
