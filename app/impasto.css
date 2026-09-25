@@ -941,6 +941,82 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 @media (max-width:1180px){ .reviews-grid{ grid-template-columns:repeat(2,1fr); } }
 @media (max-width:560px){ .reviews-grid{ grid-template-columns:1fr; } }
 
+/* Invitación a opinar: píldora carbón que despliega el formulario. */
+.reviews-invite{ margin-top:26px; display:flex; justify-content:center; }
+.reviews-invite .opinion{ width:100%; max-width:640px; }
+.reviews-invite-btn{
+  display:inline-flex; align-items:center; gap:14px; padding:14px 22px; border:0; border-radius:999px;
+  background:var(--carbon); color:rgba(246,241,231,.82); font:inherit; font-size:15px; cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.reviews-invite-btn:hover{ transform:translateY(-1px); box-shadow:0 10px 24px rgba(24,22,20,.18); }
+.reviews-invite-btn b{ color:var(--gold); font-weight:600; margin-right:4px; }
+.reviews-invite-estrellas{ color:var(--gold); letter-spacing:.1em; font-size:12px; }
+.reviews-invite-flecha{ color:var(--gold); }
+.reviews.reviews-empty{ padding:40px 0; }
+.reviews-empty-inner{ display:flex; flex-direction:column; align-items:stretch; gap:20px; max-width:700px; margin:0 auto; }
+.reviews-empty-inner .reviews-invite{ margin-top:0; }
+
+/* ============ FORMULARIO DE OPINIÓN ============ */
+/* Lo usan la home y el seguimiento del pedido (components/opiniones/OpinionForm.tsx). */
+.opinion{
+  position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  padding:24px; display:flex; flex-direction:column; gap:14px; text-align:left; color:var(--ink);
+}
+.opinion-pregunta{ font-family:var(--font-display); font-size:22px; font-weight:600; letter-spacing:-.01em; line-height:1.2; margin:0; }
+.opinion-estrellas{ display:flex; gap:2px; }
+.opinion-estrellas button{
+  background:none; border:0; padding:2px 3px; font-size:30px; line-height:1; cursor:pointer;
+  color:var(--line-2); transition:color .12s ease, transform .12s ease;
+}
+.opinion-estrellas button.on{ color:var(--gold); }
+.opinion-estrellas button:hover{ transform:scale(1.1); }
+.opinion-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.opinion-chip{
+  border:1px solid var(--line); background:var(--bg); color:var(--ink-2); border-radius:999px;
+  padding:7px 13px; font:inherit; font-size:13.5px; cursor:pointer;
+}
+.opinion-chip.on{ background:var(--carbon); border-color:var(--carbon); color:var(--gold); }
+.opinion-campo{ display:flex; flex-direction:column; gap:6px; flex:1; min-width:0; }
+.opinion-campo > span{
+  font-family:var(--font-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+}
+.opinion-campo em{ font-family:var(--font-body); font-style:normal; letter-spacing:0; text-transform:none; }
+.opinion-campo textarea, .opinion-campo input, .opinion-campo select{
+  width:100%; border:1px solid var(--line); background:var(--bg); color:var(--ink); border-radius:11px;
+  padding:11px 13px; font:inherit; font-size:15px; resize:vertical;
+}
+.opinion-campo textarea:focus, .opinion-campo input:focus, .opinion-campo select:focus{
+  outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold);
+}
+.opinion-fila{ display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+.opinion-enviar{ flex:none; }
+.opinion-trampa{ position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
+.opinion-error{ margin:0; color:#b3261e; font-size:13.5px; }
+.opinion-nota{ color:var(--muted); font-size:12px; }
+.opinion-gracias{ align-items:center; text-align:center; gap:6px; }
+.opinion-gracias-estrellas{ color:var(--gold); letter-spacing:.14em; }
+.opinion-gracias b{ font-family:var(--font-display); font-size:21px; font-weight:600; }
+.opinion-gracias p{ margin:0; color:var(--muted); font-size:14px; }
+
+@media (max-width:760px){
+  /* Las opiniones pasan a un carrusel deslizable. */
+  .reviews-grid{
+    display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:12px;
+    margin:0 -18px; padding:0 18px 6px; scrollbar-width:none;
+  }
+  .reviews-grid::-webkit-scrollbar{ display:none; }
+  .review-card{ flex:0 0 84%; scroll-snap-align:start; padding:20px; }
+  .review-card p{ font-size:16.5px; }
+  .reviews-invite{ margin-top:18px; }
+  .reviews-invite-btn{ width:100%; justify-content:center; padding:14px 16px; font-size:14px; gap:10px; }
+  .reviews.reviews-empty{ padding:28px 0; }
+  .opinion{ padding:18px; }
+  .opinion-pregunta{ font-size:20px; }
+  .opinion-fila{ flex-direction:column; align-items:stretch; }
+  .opinion-enviar{ width:100%; justify-content:center; }
+}
+
 /* ============ PREGUNTAS FRECUENTES ============ */
 /* Acordeón con <details> nativo: la respuesta queda en el HTML aunque esté
    cerrado, que es lo que la vuelve indexable y citable por buscadores de IA. */
@@ -2040,7 +2116,8 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   }
   .wsp-strip-card b{ flex:1; min-width:0; font-family:var(--font-display); font-size:17px; font-weight:600; line-height:1.2; }
   .wsp-strip-card .btn{ flex:none; height:44px; padding:0 16px; }
-  .reviews-empty, .reviews .wsp-card{ display:none; }
+  /* La invitación a opinar sí se ve en mobile; WhatsApp ya está en PedidoWhatsapp. */
+  .reviews .wsp-card{ display:none; }
 
   /* ---- nosotros: foto más baja, sin las cifras que ya muestra el hero ni el
      botón que repite la barra de abajo. «A mano» queda: no está en otro lado. ---- */

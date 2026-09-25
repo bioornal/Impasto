@@ -43,6 +43,8 @@ export interface Review {
   nombre: string;
   texto: string;
   rating: number;
+  /** Sobre qué opinó ("Diavola al Miele", "Empanadas") o vacío. */
+  producto?: string;
 }
 
 export interface CatalogData {

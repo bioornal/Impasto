@@ -3,6 +3,7 @@ import { db } from "@/lib/insforge";
 import { SUCURSAL_ID } from "@/lib/business";
 import { getBusinessConfig } from "@/lib/business-server";
 import { datosDesdePedido } from "@/lib/cuentas-transferencia";
+import { productosDelPedido } from "@/lib/opiniones";
 import { esReferenciaValida, normalizarReferencia } from "@/lib/referencia";
 import { limitar } from "@/lib/rate-limit";
 
@@ -33,7 +34,7 @@ export async function GET(
 
   const { data, error } = await db.database
     .from("pedidos")
-    .select("numero_pedido, external_reference, nombre_cliente, modalidad, direccion, productos, subtotal, envio, total, status, estado_pago, metodo_pago, cuenta_transferencia, cuando, notas, created_at")
+    .select("id, numero_pedido, external_reference, nombre_cliente, modalidad, direccion, productos, subtotal, envio, total, status, estado_pago, metodo_pago, cuenta_transferencia, cuando, notas, created_at")
     .eq("external_reference", cleanedRef)
     .eq("proyecto_id", "impasto")
     .eq("sucursal_id", SUCURSAL_ID)
@@ -46,6 +47,17 @@ export async function GET(
   const pedido = Array.isArray(data) ? data[0] : null;
   if (!pedido) {
     return NextResponse.json({ ok: false, error: "Pedido no encontrado" }, { status: 404 });
+  }
+
+  // Entregado, el cliente puede opinar una vez. Esta consulta solo corre en ese
+  // estado, que además corta el refresco de la página.
+  let opinion: { productos: string[]; yaOpino: boolean } | null = null;
+  if (pedido.status === "entregado") {
+    const { data: previa } = await db.database.from("testimonios").select("id").eq("pedido_id", pedido.id).limit(1);
+    opinion = {
+      productos: productosDelPedido(pedido.productos),
+      yaOpino: Array.isArray(previa) && previa.length > 0,
+    };
   }
 
   const business = await getBusinessConfig();
@@ -80,6 +92,7 @@ export async function GET(
         banco: cuenta.banco,
         titular: cuenta.titular,
       } : null,
+      opinion,
       whatsappPhone: business.whatsappPhone,
       businessPhone: business.phone,
       businessAddress: business.address,

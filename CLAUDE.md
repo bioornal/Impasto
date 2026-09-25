@@ -284,6 +284,26 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   pedido por transferencia. Spec y plan: `docs/superpowers/specs/2026-09-25-cuentas-transferencia-design.md` y
   `docs/superpowers/plans/2026-09-25-cuentas-transferencia.md`.
 
+- **Opiniones de clientes (25/09/2026)** — Dos puertas: el seguimiento `/pedido/[ref]` pregunta
+  por lo que se pidió cuando el pedido figura *Entregado* ("¿Qué te pareció la X?"; con varios
+  productos, chips), y la home suma "¿Ya probaste Impasto? Contanos" abierto a cualquiera (sirve
+  para clientes del POS y del local, que no tienen seguimiento). `POST /api/opiniones` es pública:
+  límite `opinion` (8/h por IP), campo trampa `sitio` (lleno → 200 sin guardar), pedido
+  `impasto` + `entregado` + una sola opinión por pedido (índice único parcial en
+  `testimonios.pedido_id`); sin pedido, el producto tiene que ser una pizza no archivada o
+  "Empanadas". Todo entra `pendiente` y avisa por Telegram (sin formato). **Aprobar = publicar:**
+  la home muestra las 6 aprobadas más recientes (grilla / carrusel en mobile) con "Probó la X".
+  El panel muestra "Pedido IM-… · verificado" o "Desde la home". Lógica pura y testeada en
+  `lib/opiniones.ts`; formulario compartido en `components/opiniones/OpinionForm.tsx`. Migración
+  `20260925154155_opiniones-pedido.sql` (**aplicada**). Sin `aggregateRating` (decisión SEO).
+  Verificado localmente: tests, TypeScript, eslint de lo tocado, build; la ruta real con trampa,
+  datos inválidos, pedido inexistente y no entregado (ninguna fila creada); y en Chrome headless la
+  home vacía y con 6 opiniones ficticias (página temporal, borrada) y el seguimiento entregado,
+  escritorio y 375 px, con los envíos interceptados. Sin probar: una opinión real guardada, el
+  aviso de Telegram y la moderación en el panel. Spec y plan:
+  `docs/superpowers/specs/2026-09-25-opiniones-clientes-design.md` y
+  `docs/superpowers/plans/2026-09-25-opiniones-clientes.md`.
+
 ### Distinción que se presta a confusión
 
 `hours` es el horario de trabajo que ve el cliente (**hasta las 00:00**).

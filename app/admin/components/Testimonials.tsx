@@ -2,6 +2,7 @@
 import { useState, useMemo } from "react";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
+import { lineaProducto } from "@/lib/opiniones";
 
 const timeAgo = (iso: string) => {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -52,6 +53,10 @@ export function Testimonials() {
               </div>
               <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--a-ink-2)", lineHeight: 1.45 }}>&ldquo;{t.texto}&rdquo;</p>
               <div className="tbl-strong" style={{ fontSize: 13 }}>— {t.nombre}</div>
+              {t.producto && <div className="tbl-muted" style={{ fontSize: 12, marginTop: 2 }}>{lineaProducto(t.producto)}</div>}
+              <div className="tbl-muted text-mono" style={{ fontSize: 11, marginTop: 4 }}>
+                {t.pedidoRef ? `Pedido ${t.pedidoRef} · verificado` : "Desde la home"}
+              </div>
               <div className="flex gap-8 mt-12" style={{ justifyContent: "flex-end" }}>
                 {t.estado !== "aprobado" && <button className="btn btn-success btn-sm" onClick={() => updateTestimonial(t.id, "aprobado")}><Icon.Check /> Aprobar</button>}
                 {t.estado !== "rechazado" && <button className="btn btn-danger btn-sm" onClick={() => updateTestimonial(t.id, "rechazado")}><Icon.X /> Rechazar</button>}

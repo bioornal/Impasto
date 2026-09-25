@@ -66,6 +66,10 @@ export interface Testimonial {
   rating: number;
   estado: "pendiente" | "aprobado" | "rechazado";
   fecha: string;
+  /** Sobre qué opinó, o vacío. */
+  producto: string;
+  /** Referencia del pedido si vino del seguimiento (verificada); vacío si vino de la home. */
+  pedidoRef: string;
 }
 
 export interface AdminEtiqueta {

@@ -101,6 +101,7 @@ function mapReviews(value: unknown): Review[] {
     nombre: String(item.nombre || "Cliente"),
     texto: String(item.texto || item.comentario || ""),
     rating: Number(item.rating || 5),
+    producto: String(item.producto || ""),
   }));
 }
 

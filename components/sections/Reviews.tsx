@@ -1,25 +1,58 @@
+"use client";
+import { useState } from "react";
 import type { Review } from "@/types";
 import type { BusinessConfig } from "@/lib/business";
+import { lineaProducto } from "@/lib/opiniones";
+import { OpinionForm } from "@/components/opiniones/OpinionForm";
 
-export function Reviews({ reviews, business }: { reviews: Review[]; business: BusinessConfig }) {
+interface ReviewsProps {
+  reviews: Review[];
+  business: BusinessConfig;
+  /** Lo que se puede elegir en "¿Qué probaste?": pizzas de la carta y "Empanadas". */
+  productos: string[];
+}
+
+function WspCard({ business, texto }: { business: BusinessConfig; texto: string }) {
+  return (
+    <article className="wsp-card">
+      <div>
+        <b>Pedí por WhatsApp si preferís</b>
+        <small>{texto}</small>
+      </div>
+      <a className="btn btn-cream" href={`https://wa.me/${business.whatsappPhone}`} target="_blank" rel="noreferrer">
+        Abrir WhatsApp
+      </a>
+    </article>
+  );
+}
+
+/** La invitación a opinar: una píldora que despliega el formulario. */
+function Invitacion({ productos }: { productos: string[] }) {
+  const [abierta, setAbierta] = useState(false);
+  return (
+    <div className="reviews-invite">
+      {abierta ? (
+        <OpinionForm modo="home" productos={productos} />
+      ) : (
+        <button type="button" className="reviews-invite-btn" onClick={() => setAbierta(true)}>
+          <span className="reviews-invite-estrellas" aria-hidden="true">★★★★★</span>
+          <span><b>¿Ya probaste Impasto?</b> Contanos qué te pareció</span>
+          <span className="reviews-invite-flecha" aria-hidden="true">→</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function Reviews({ reviews, business, productos }: ReviewsProps) {
+  // Sin opiniones publicadas, la sección es solo la invitación (y WhatsApp en
+  // escritorio). Antes, en mobile, se ocultaba entera.
   if (reviews.length === 0) {
     return (
-      <section className="reviews reviews-empty" style={{ paddingTop: "20px", paddingBottom: "40px" }}>
-        <div className="container">
-          <article className="wsp-card" style={{ maxWidth: "700px", margin: "0 auto" }}>
-            <div>
-              <b>Pedí por WhatsApp si preferís</b>
-              <small>Te confirmamos el pedido y te preparamos la orden directamente.</small>
-            </div>
-            <a
-              className="btn btn-cream"
-              href={`https://wa.me/${business.whatsappPhone}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Abrir WhatsApp
-            </a>
-          </article>
+      <section className="reviews reviews-empty">
+        <div className="container reviews-empty-inner">
+          <Invitacion productos={productos} />
+          <WspCard business={business} texto="Te confirmamos el pedido y te preparamos la orden directamente." />
         </div>
       </section>
     );
@@ -37,7 +70,7 @@ export function Reviews({ reviews, business }: { reviews: Review[]; business: Bu
         </div>
 
         <div className="reviews-grid">
-          {reviews.slice(0, 3).map((review, index) => (
+          {reviews.slice(0, 6).map((review, index) => (
             <article className="review-card" key={`${review.nombre}-${index}`}>
               <div className="review-stars">{"★".repeat(Math.max(1, Math.min(5, review.rating)))}</div>
               <p>&ldquo;{review.texto}&rdquo;</p>
@@ -45,27 +78,16 @@ export function Reviews({ reviews, business }: { reviews: Review[]; business: Bu
                 <div className="review-avatar">{review.nombre.trim().charAt(0).toUpperCase()}</div>
                 <div>
                   <b>{review.nombre}</b>
-                  <small>Cliente de Impasto</small>
+                  <small>{lineaProducto(review.producto || "") || "Cliente de Impasto"}</small>
                 </div>
               </div>
             </article>
           ))}
 
-          <article className="wsp-card">
-            <div>
-              <b>Pedí por WhatsApp si preferís</b>
-              <small>Te confirmamos el pedido y te avisamos cuando sale del horno.</small>
-            </div>
-            <a
-              className="btn btn-cream"
-              href={`https://wa.me/${business.whatsappPhone}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Abrir WhatsApp
-            </a>
-          </article>
+          <WspCard business={business} texto="Te confirmamos el pedido y te avisamos cuando sale del horno." />
         </div>
+
+        <Invitacion productos={productos} />
       </div>
     </section>
   );

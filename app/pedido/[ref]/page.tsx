@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fmt } from "@/lib/utils";
 import { esRespuestaDefinitiva, esEstadoFinal } from "@/lib/seguimiento";
+import { OpinionForm } from "@/components/opiniones/OpinionForm";
 
 interface OrderItem {
   name?: string;
@@ -37,6 +38,8 @@ interface OrderData {
     banco?: string;
     titular?: string;
   } | null;
+  /** Solo con el pedido entregado: qué puede opinar y si ya lo hizo. */
+  opinion?: { productos: string[]; yaOpino: boolean } | null;
   whatsappPhone: string;
   businessPhone: string;
   businessAddress: string;
@@ -251,6 +254,19 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
             </div>
           )}
         </div>
+
+        {/* Entregado: le preguntamos qué le pareció lo que pidió. */}
+        {order.opinion && (
+          <div style={{ marginBottom: "20px" }}>
+            <OpinionForm
+              modo="pedido"
+              productos={order.opinion.productos}
+              referencia={order.numero}
+              nombreInicial={order.cliente.split(" ")[0]}
+              yaOpino={order.opinion.yaOpino}
+            />
+          </div>
+        )}
 
         {/* Datos de transferencia bancaria si corresponde */}
         {order.metodoPago === "transferencia" && order.estadoPago !== "aprobado" && !hayDatosBancarios && (

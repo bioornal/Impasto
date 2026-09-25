@@ -30,7 +30,9 @@ export async function getCatalogData(): Promise<CatalogData> {
         .not("archivado", "is", true)
         .in("categoria", [...CATEGORIAS_IMPASTO])),
       safeQuery(db.database.from("promociones").select("*").eq("activo", true).eq("sucursal_id", SUCURSAL_ID)),
-      safeQuery(db.database.from("testimonios").select("*").eq("estado", "aprobado").eq("sucursal_id", SUCURSAL_ID)),
+      // Aprobar = publicar: la home muestra las 6 aprobadas más recientes.
+      safeQuery(db.database.from("testimonios").select("nombre,texto,rating,producto").eq("estado", "aprobado").eq("sucursal_id", SUCURSAL_ID)
+        .order("created_at", { ascending: false }).limit(6)),
       safeQuery(db.database.from("etiquetas").select("*").eq("sucursal_id", SUCURSAL_ID).order("orden")),
       safeQuery(db.database.from("recetas").select("id,nombre,precio_prepizza,precio_salsa")),
       safeQuery(db.database.from("receta_ingredientes").select("receta_id,ingrediente_id,cantidad_kg")),

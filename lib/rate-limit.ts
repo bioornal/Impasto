@@ -28,6 +28,10 @@ export const LIMITES = {
   // profundidad: lo que de verdad protege los datos es el sufijo aleatorio de
   // `lib/referencia.ts`.
   seguimiento: { max: 120, ventana: 600 },
+  // Opinar es algo de una vez: 8 por hora por IP alcanza para una familia en el
+  // wifi de un hotel (y para corregir un par de errores del formulario) y corta
+  // a quien quiera llenar el panel de basura. Nada se publica sin aprobación.
+  opinion: { max: 8, ventana: 3600 },
 } satisfies Record<string, LimiteConfig>;
 
 /** Netlify expone la IP real acá; el resto son respaldos. */

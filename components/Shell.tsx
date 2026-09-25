@@ -25,6 +25,7 @@ import { ChatWidget } from "@/components/chat/ChatWidget";
 import { ActiveOrderBanner } from "@/components/layout/ActiveOrderBanner";
 import type { BusinessConfig } from "@/lib/business";
 import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
+import { EMPANADAS } from "@/lib/opiniones";
 import type { CheckoutOrder } from "@/components/checkout/Checkout";
 import type { CardFormData } from "@/components/checkout/CardPayment";
 import type { CatalogData, Pizza, CartItem } from "@/types";
@@ -106,6 +107,12 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
   const [nav, setNav] = useState("home");
   const [order, setOrder] = useState<ConfirmedOrder | null>(null);
   const lastCardRef = useRef<string>("");
+  // "¿Qué probaste?" de la invitación a opinar: las pizzas de la carta y las
+  // empanadas en general. El servidor acepta solo estos nombres.
+  const productosOpinables = useMemo(
+    () => [...data.pizzas.map((pizza) => pizza.nombre), ...(data.empanadas.length > 0 ? [EMPANADAS] : [])],
+    [data.pizzas, data.empanadas],
+  );
 
   const cardReference = () => {
     try {
@@ -360,7 +367,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
         <Bebidas bebidas={data.bebidas} />
         <PedidoWhatsapp business={business} />
         <Story onCta={goSection} />
-        <Reviews reviews={data.reviews} business={business} />
+        <Reviews reviews={data.reviews} business={business} productos={productosOpinables} />
         <Faq business={business} />
       </main>
 

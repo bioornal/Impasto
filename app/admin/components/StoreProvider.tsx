@@ -91,6 +91,8 @@ function adaptTestimonial(t: Record<string, unknown>): Testimonial {
     rating: Number(t.rating || 5),
     estado: (String(t.estado || "pendiente") as Testimonial["estado"]),
     fecha: String(t.created_at || t.updated_at || new Date().toISOString()),
+    producto: String(t.producto || ""),
+    pedidoRef: String(t.pedido_ref || ""),
   };
 }
 
