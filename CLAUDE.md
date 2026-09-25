@@ -251,7 +251,9 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   bot deja de ofrecer envío (con hasta 5 min de desfase por la foto del catálogo). No toca textos
   de marca/SEO ni Carro Fogón. Verificado localmente: tests, TypeScript, eslint de los archivos
   tocados, build, lectura real de la columna y capturas escritorio/mobile en Chrome headless con
-  `/api/store-status` interceptado. **Sin probar:** el botón del panel con sesión de admin y el
+  `/api/store-status` interceptado. Publicado en `main` con `43febe0`; Netlify lo desplegó
+  (`ready`) el 25/09 y `www.impastopizzas.com/api/store-status` ya devuelve `delivery`.
+  **Sin probar:** el botón del panel con sesión de admin y el
   rechazo real de `/api/orders` (la venta estaba pausada en la base durante la prueba y no se
   abrió). Spec y plan: `docs/superpowers/specs/2026-09-25-delivery-pausado-design.md` y
   `docs/superpowers/plans/2026-09-25-delivery-pausado.md`.
