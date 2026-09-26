@@ -373,11 +373,16 @@ descripción, y los tags están cargados. Falta todavía: **fotos reales** (hoy 
 ilustraciones generadas), alérgenos, tamaños y stock.
 
 **Fotos de producto:** no hay columna de imagen en `productos`. Cada foto se enlaza por uuid
-en `REAL_PRODUCT_PHOTOS` (`lib/stock-images.ts`), apuntando al bucket público `DB`. La carta
-usa `<img>` sin optimizar: si el dueño sube un PNG pesado, subir una copia JPG de 1200 px
-(~200 KB, se hizo con el `sharp` de `node_modules/.pnpm`) y enlazar esa. El 26/09/2026 se
-sumaron las dos blancas (Bianca ai Funghi y Bianca all'Aglio Confit, `a09adfb`), y la de
-ajo recibió su descripción, sacada de su receta. Verificado en `www.impastopizzas.com`.
+en `REAL_PRODUCT_PHOTOS` (`lib/stock-images.ts`), apuntando al bucket público `DB`, **al
+archivo que subió el dueño** (el 26/09 borró las copias JPG optimizadas que había subido un
+agente; no volver a crearlas sin preguntarle). **Reemplazar una foto con el mismo nombre no
+alcanza:** la URL de storage redirige a `cdn.insforge.dev` (CloudFront), que sigue sirviendo
+la versión vieja (`X-Cache: Hit`, sin `Cache-Control`) e ignora un `?v=` agregado. Una foto
+nueva va con nombre nuevo (`… v2.png`, como `napoletana-aglio-v2.jpg`). Para comparar, bajar
+con `npx -y @insforge/cli storage download`, que lee el original y no pasa por el CDN. El
+26/09/2026 se sumaron las dos blancas: Bianca ai Funghi (`Bianca ai Funghi v2.png`, la
+versión con champiñones) y Bianca all'Aglio Confit, que además recibió su descripción, sacada
+de su receta.
 
 Ojo con el conteo (18/09/2026): la tabla tiene 130 filas. **70 de Impasto** (53 pizzas,
 9 empanadas y 8 bebidas; parte de las pizzas están archivadas) y **60 del carro original**,
