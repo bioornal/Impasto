@@ -6,7 +6,7 @@ Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Me
 Deploy en Netlify: **https://www.impastopizzas.com** (dominio propio desde el 19/09/2026; el
 subdominio `vocal-naiad-861a2c.netlify.app` sigue respondiendo). Ver "Dominio propio".
 
-Última actualización: 25 de septiembre de 2026.
+Última actualización: 26 de septiembre de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -371,6 +371,13 @@ está disponible).
 **Descripciones y tags: hechos el 20/08/2026.** Las 41 pizzas y empanadas tienen
 descripción, y los tags están cargados. Falta todavía: **fotos reales** (hoy son
 ilustraciones generadas), alérgenos, tamaños y stock.
+
+**Fotos de producto:** no hay columna de imagen en `productos`. Cada foto se enlaza por uuid
+en `REAL_PRODUCT_PHOTOS` (`lib/stock-images.ts`), apuntando al bucket público `DB`. La carta
+usa `<img>` sin optimizar: si el dueño sube un PNG pesado, subir una copia JPG de 1200 px
+(~200 KB, se hizo con el `sharp` de `node_modules/.pnpm`) y enlazar esa. El 26/09/2026 se
+sumaron las dos blancas (Bianca ai Funghi y Bianca all'Aglio Confit, `a09adfb`), y la de
+ajo recibió su descripción, sacada de su receta. Verificado en `www.impastopizzas.com`.
 
 Ojo con el conteo (18/09/2026): la tabla tiene 130 filas. **70 de Impasto** (53 pizzas,
 9 empanadas y 8 bebidas; parte de las pizzas están archivadas) y **60 del carro original**,
