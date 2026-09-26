@@ -87,6 +87,10 @@ export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Cinque%20Formaggi%20%281%29.jpg",
   "7a52594e-ac5e-4d6d-b505-23bce62eea75": // Filetto Impasto
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Filetto%20Impasto.jpg",
+  "0d871df5-0e5c-4fe3-8450-5e63261de27a": // Bianca ai Funghi
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/bianca-ai-funghi.jpg",
+  "9ccd6a44-f962-43cc-bc99-d8a8ef7290a7": // Bianca all'Aglio Confit
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/bianca-aglio-confit.jpg",
   "548ea0b6-ef4c-4f0c-93ee-265f8a7baf83": // La Provoleta Impasto
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/La%20Provoleta%20Impasto.jpg",
   "6d9ee913-270d-4c56-98eb-9e0b30a663ad": // Prosciutto, Rucola e Parmigiano
