@@ -7,9 +7,11 @@ interface PizzaIllusProps {
   name?: string;
   tags?: string[];
   src?: string;
+  /** La ficha de producto carga la foto visible sin esperar. */
+  loading?: "lazy" | "eager";
 }
 
-export function PizzaIllus({ id = "p01", name = "", tags = [], src }: PizzaIllusProps) {
+export function PizzaIllus({ id = "p01", name = "", tags = [], src, loading = "lazy" }: PizzaIllusProps) {
   const [hasError, setHasError] = useState(false);
   const imageUrl = src || getPizzaImage(name, id, tags);
 
@@ -18,7 +20,7 @@ export function PizzaIllus({ id = "p01", name = "", tags = [], src }: PizzaIllus
       <img
         src={imageUrl}
         alt={name || "Pizza"}
-        loading="lazy"
+        loading={loading}
         decoding="async"
         onError={() => setHasError(true)}
         style={{

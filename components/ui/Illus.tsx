@@ -19,7 +19,7 @@ function randomizer(seed: number) {
 
 const fill: React.CSSProperties = { position: "absolute", inset: 0, width: "100%", height: "100%" };
 
-export function EmpanadaIllus({ id = "e01", name = "", src }: { id?: string; name?: string; src?: string }) {
+export function EmpanadaIllus({ id = "e01", name = "", src, loading = "lazy" }: { id?: string; name?: string; src?: string; loading?: "lazy" | "eager" }) {
   const [hasError, setHasError] = useState(false);
   const imageUrl = src || getEmpanadaImage(name, id);
 
@@ -28,7 +28,7 @@ export function EmpanadaIllus({ id = "e01", name = "", src }: { id?: string; nam
       <img
         src={imageUrl}
         alt={name || "Empanada"}
-        loading="lazy"
+        loading={loading}
         decoding="async"
         onError={() => setHasError(true)}
         style={{
@@ -84,7 +84,7 @@ export function EmpanadaIllus({ id = "e01", name = "", src }: { id?: string; nam
   );
 }
 
-export function DrinkIllus({ id = "b01", label = "", name = "", src }: { id?: string; label?: string; name?: string; src?: string }) {
+export function DrinkIllus({ id = "b01", label = "", name = "", src, loading = "lazy" }: { id?: string; label?: string; name?: string; src?: string; loading?: "lazy" | "eager" }) {
   const [hasError, setHasError] = useState(false);
   const drinkName = name || label;
   const imageUrl = src || getDrinkImage(drinkName, id);
@@ -94,7 +94,7 @@ export function DrinkIllus({ id = "b01", label = "", name = "", src }: { id?: st
       <img
         src={imageUrl}
         alt={drinkName || "Bebida"}
-        loading="lazy"
+        loading={loading}
         decoding="async"
         onError={() => setHasError(true)}
         style={{

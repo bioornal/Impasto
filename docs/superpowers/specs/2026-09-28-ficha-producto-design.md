@@ -29,9 +29,11 @@ pedirla no tiene cómo.
 Una hoja que sube desde abajo, sobre el fondo oscurecido:
 
 1. Manija arriba y contador `4 / 19` (posición dentro de la lista que se está recorriendo).
-2. La foto a todo el ancho, proporción 4:3, con los cartelitos que ya muestra la tarjeta
-   (★ Más pedida, Veggie, Picante; en empanadas, el badge de etiqueta).
-3. Nombre, precio y la descripción **completa** (en las filas se corta).
+2. La foto a todo el ancho, proporción 4:3.
+3. Los cartelitos que ya muestra la tarjeta (★ Más pedida, Veggie, Picante; en empanadas, la
+   etiqueta), nombre, precio y la descripción **completa** (en las filas se corta). Los
+   cartelitos van junto al nombre y no sobre la foto: la etiqueta de empanadas es de contorno,
+   pensada para fondo crema, y sobre una foto no se lee.
 4. Pie fijo con la acción, según el tipo (ver "Por tipo de producto").
 5. Botón ✕ visible para cerrar (no todos descubren el arrastre).
 

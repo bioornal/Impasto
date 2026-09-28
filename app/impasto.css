@@ -2424,3 +2424,125 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 @media (max-width:760px){
   .cart-btn .cart-badge:not(.filled){ display:none; }
 }
+
+/* ============ FICHA DE PRODUCTO ============ */
+/* components/ui/ProductSheet.tsx. Escritorio: ventana centrada, foto a la
+   izquierda. Mobile (≤760px): hoja desde abajo. z-index 105: por encima de la
+   barra de abajo (61), el chat (65/66) y el carrito (100); debajo del aviso
+   (200). La mitad y mitad (110) nunca convive: ½½ cierra la ficha antes. */
+.ficha-fondo{
+  position:fixed; inset:0; z-index:105;
+  background:rgba(18,16,13,.62); backdrop-filter:blur(5px);
+  display:flex; align-items:center; justify-content:center; padding:28px;
+  animation:imp-fade .18s ease;
+}
+.ficha-hoja{
+  position:relative; width:100%; max-width:980px; height:min(620px, calc(100vh - 56px));
+  background:var(--bg); border-radius:22px; overflow:hidden; outline:none;
+  box-shadow:0 40px 90px rgba(0,0,0,.4);
+  display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto;
+  grid-template-areas:"media info" "media pie";
+  animation:imp-slideup .26s cubic-bezier(.2,.8,.2,1);
+  transition:transform .22s ease;
+}
+.ficha-media{
+  grid-area:media; position:relative; overflow:hidden; background:var(--bg-2);
+  touch-action:none; user-select:none; -webkit-user-select:none;
+}
+.ficha-pista{ position:absolute; inset:0; will-change:transform; }
+.ficha-foto{ position:absolute; top:0; bottom:0; width:100%; overflow:hidden; }
+.ficha-foto img{ -webkit-user-drag:none; }
+/* Las bebidas son fotos de botella sobre blanco: enteras, sin recortar.
+   !important: la ilustración trae object-fit:cover en línea. */
+.ficha-hoja[data-tipo="bebida"] .ficha-media{ background:#fff; }
+.ficha-hoja[data-tipo="bebida"] .ficha-foto img{ object-fit:contain !important; padding:24px; }
+.ficha-manija{ display:none; }
+.ficha-contador{
+  position:absolute; left:14px; top:14px; z-index:2; pointer-events:none;
+  font-family:var(--font-mono); font-size:10.5px; letter-spacing:.16em; font-variant-numeric:tabular-nums;
+  padding:6px 10px; border-radius:999px; background:rgba(24,22,20,.62); color:#f6f1e7;
+}
+.ficha-flecha{
+  position:absolute; top:50%; z-index:2; width:44px; height:44px; margin-top:-22px; border-radius:999px;
+  background:rgba(255,250,240,.92); color:var(--ink); box-shadow:0 8px 20px rgba(0,0,0,.18);
+  display:grid; place-items:center; transition:transform .15s ease, background .15s ease;
+}
+.ficha-flecha:hover{ background:#fff; transform:scale(1.06); }
+.ficha-flecha.prev{ left:14px; }
+.ficha-flecha.next{ right:14px; }
+.ficha-cerrar{
+  position:absolute; top:14px; right:14px; z-index:3; width:40px; height:40px; border-radius:999px;
+  background:var(--surface); border:1px solid var(--line); color:var(--ink); display:grid; place-items:center;
+}
+.ficha-flecha:focus-visible, .ficha-cerrar:focus-visible,
+.ficha-pie button:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+.ficha-info{
+  grid-area:info; min-height:0; overflow-y:auto; overscroll-behavior:contain;
+  padding:34px 30px 12px; display:flex; flex-direction:column; align-items:flex-start; gap:10px;
+}
+.ficha-badges{ display:flex; gap:6px; flex-wrap:wrap; }
+.ficha-titulo{
+  font-family:var(--font-display); font-size:30px; font-weight:600; letter-spacing:-.025em;
+  line-height:1.1; margin:0; padding-right:44px;
+}
+.ficha-precio{ font-family:var(--font-display); font-size:24px; font-weight:600; font-variant-numeric:lining-nums tabular-nums; color:var(--ink); }
+.ficha-desc{ margin:4px 0 0; font-size:15px; line-height:1.6; color:var(--ink-2); text-wrap:pretty; }
+.ficha-pie{ grid-area:pie; padding:16px 30px 28px; border-top:1px solid var(--line); background:var(--bg); }
+.ficha-accion{ display:flex; gap:10px; align-items:center; }
+.ficha-agregar{
+  flex:1; height:52px; border-radius:14px; background:var(--accent); color:var(--accent-ink);
+  font-weight:600; font-size:15.5px; box-shadow:0 10px 22px rgba(178,71,42,.3); transition:background .15s;
+}
+.ficha-agregar:hover:not(:disabled){ background:var(--accent-hover); }
+.ficha-agregar:disabled{ background:var(--bg-2); color:var(--muted); box-shadow:none; cursor:not-allowed; }
+.ficha-half{
+  flex:none; width:64px; height:52px; border-radius:14px; border:1px solid var(--line);
+  background:var(--surface); color:var(--ink); font-weight:600; font-size:16px;
+}
+.ficha-half:disabled{ opacity:.5; cursor:not-allowed; }
+.ficha-step{
+  flex:1; display:flex; align-items:center; justify-content:space-between; height:52px;
+  padding:0 6px; border-radius:14px; background:var(--carbon); color:#f6f1e7;
+}
+.ficha-step button{ width:44px; height:44px; border-radius:999px; font-size:22px; line-height:1; color:#f6f1e7; }
+.ficha-step button:disabled{ opacity:.35; cursor:not-allowed; }
+.ficha-step span{ font-weight:600; font-size:15px; font-variant-numeric:tabular-nums; }
+.ficha-caja{
+  flex:1; min-width:0; font-family:var(--font-mono); font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted);
+}
+.ficha-caja + .ficha-step{ flex:0 0 150px; }
+.ficha-anuncio{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+/* Con la ficha abierta el aviso "X agregada" sube arriba: abajo taparía el pie. */
+html.ficha-abierta .toast{ top:calc(14px + env(safe-area-inset-top)); bottom:auto; }
+@keyframes ficha-sube{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
+@media (prefers-reduced-motion:reduce){
+  .ficha-fondo, .ficha-hoja{ animation:none; transition:none; }
+}
+
+@media (max-width:760px){
+  html.ficha-abierta{ overflow:hidden; }
+  .ficha-fondo{ align-items:flex-end; padding:0; }
+  .ficha-hoja{
+    display:flex; flex-direction:column; max-width:none; height:auto; max-height:calc(100dvh - 20px);
+    border-radius:22px 22px 0 0; animation:ficha-sube .3s cubic-bezier(.2,.8,.2,1);
+  }
+  /* En horizontal la foto se achica: el pie con el botón siempre queda a la vista. */
+  .ficha-media{ flex:none; width:100%; aspect-ratio:4/3; max-height:48dvh; }
+  .ficha-manija{
+    display:block; position:absolute; top:8px; left:50%; z-index:2; width:40px; height:5px; margin-left:-20px;
+    border-radius:999px; background:rgba(255,255,255,.88); box-shadow:0 1px 4px rgba(0,0,0,.25); pointer-events:none;
+  }
+  .ficha-contador{ top:12px; left:12px; }
+  .ficha-flecha{ display:none; }
+  .ficha-cerrar{ top:10px; right:10px; width:36px; height:36px; background:rgba(24,22,20,.62); border-color:transparent; color:#f6f1e7; }
+  .ficha-info{ flex:1; padding:16px 18px 8px; gap:8px; }
+  .ficha-titulo{ font-size:24px; padding-right:0; }
+  .ficha-precio{ font-size:20px; }
+  .ficha-desc{ font-size:14.5px; }
+  .ficha-pie{ flex:none; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); }
+  .ficha-agregar, .ficha-half, .ficha-step{ height:50px; }
+}
+@media (max-width:760px) and (prefers-reduced-motion:reduce){
+  .ficha-hoja{ animation:none; transition:none; }
+}
