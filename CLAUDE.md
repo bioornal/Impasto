@@ -335,8 +335,12 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   **Ojo al probar:** el panel del navegador con vista mobile emulada traduce mal las coordenadas
   de los clics (llegan a `<html>`); en `pnpm dev` el botón flotante de Next tapa el `−` del pie.
   No se probó una ficha de producto agotado en vivo (no había ninguno; lo cubren los tests).
-  Commits `8ed8c15`, `2c810df`, `f13532a`, `3c05964`, `ebeebaa`. **No pusheado ni probado en
-  producción.** Spec y plan: `docs/superpowers/specs/2026-09-28-ficha-producto-design.md` y
+  Commits `8ed8c15`, `2c810df`, `f13532a`, `3c05964`, `ebeebaa`. Publicado con `acec927`; Netlify
+  `ready` el 28/09. En `www.impastopizzas.com`, Chrome headless verificó: el HTML trae los
+  botones "Ver … en grande"; en 375 px la foto destacada abre la ficha, deslizar pasa a la
+  siguiente y Atrás la cierra sin salir del sitio; en 1280 px el clic abre, la flecha pasa y Esc
+  cierra; sin errores en la consola (no se agregó nada al carrito). **Falta que el dueño la pruebe
+  en su teléfono.** Spec y plan: `docs/superpowers/specs/2026-09-28-ficha-producto-design.md` y
   `docs/superpowers/plans/2026-09-28-ficha-producto.md`.
 
 ### Distinción que se presta a confusión
