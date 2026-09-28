@@ -48,10 +48,10 @@ check("el precio efectivo replica el gestor de costos", preciosEfectivos.get("Pi
 
 // La prepizza y la salsa son de la pizza. Las 9 recetas de empanadas llegaron a
 // tener 485 y 236 cargados, y eso le sumaba hasta $2.000 por unidad a la web.
-// Con los valores cargados: (700 + 485 + 236) / 7 unidades × 5 = 1.015 → $1.500.
+// Con los valores cargados: (700 / 7 + 2300 / 12) × 5 = 1.458,33 → $1.500.
 const sinPrepizza = buildEffectivePrices(
   [
-    { id: "e1", nombre: "Empanadas de Pollo", precio_prepizza: 485, precio_salsa: 236 },
+    { id: "e1", nombre: "Empanadas de Pollo", precio_prepizza: 485, precio_salsa: 236, rend_tipo: "peso", rend_valor: 65 },
     { id: "b1", nombre: "Agua Mineral", precio_prepizza: 485, precio_salsa: 236 },
   ],
   [
@@ -61,6 +61,7 @@ const sinPrepizza = buildEffectivePrices(
   [
     { id: "i1", precio_kg: 1400, multiplo_rendimiento: 1 },
     { id: "i2", precio_kg: 2000, multiplo_rendimiento: 1 },
+    { id: "tapa", nombre: "Tapa de empanada", unidad: "unidad", precio_kg: 2300 / 12, multiplo_rendimiento: 1 },
   ],
   [
     { receta_id: "e1", nombre: "Empanadas de Pollo", markup: 5, subcategoria: "Empanadas" },
@@ -69,8 +70,31 @@ const sinPrepizza = buildEffectivePrices(
   { pizzas_objetivo_mes: 0 },
   0,
 );
-check("la empanada no suma prepizza ni salsa aunque la receta los tenga", sinPrepizza.get("Empanadas de Pollo"), 500);
+check("la empanada suma una tapa por unidad, pero no prepizza ni salsa", sinPrepizza.get("Empanadas de Pollo"), 1500);
 check("la bebida no suma prepizza ni salsa aunque la receta los tenga", sinPrepizza.get("Agua Mineral"), 3000);
+
+const rendimientoDirecto = buildEffectivePrices(
+  [{ id: "e2", nombre: "Empanadas directas", rend_tipo: "directo", rend_valor: 2 }],
+  [{ receta_id: "e2", ingrediente_id: "carne", cantidad_kg: 0.78 }],
+  [
+    { id: "carne", precio_kg: 10000, multiplo_rendimiento: 1 },
+    { id: "tapa", nombre: "Tapa de empanada", unidad: "unidad", precio_kg: 2300 / 12, multiplo_rendimiento: 1 },
+  ],
+  [{ receta_id: "e2", nombre: "Empanadas directas", markup: 1.6, subcategoria: "Empanadas" }],
+  { pizzas_objetivo_mes: 0 },
+  0,
+);
+check("el rendimiento directo divide por unidades declaradas antes de sumar la tapa", rendimientoDirecto.get("Empanadas directas"), 7000);
+
+const pizzaDoble = buildEffectivePrices(
+  [{ id: "p2", nombre: "Pizza doble", rend_tipo: "directo", rend_valor: 2, precio_prepizza: 200, precio_salsa: 100 }],
+  [{ receta_id: "p2", ingrediente_id: "queso", cantidad_kg: 1 }],
+  [{ id: "queso", precio_kg: 1700, multiplo_rendimiento: 1 }],
+  [{ receta_id: "p2", nombre: "Pizza doble", markup: 2, subcategoria: "Pizzas" }],
+  { pizzas_objetivo_mes: 0 },
+  0,
+);
+check("una receta de pizza que rinde dos unidades divide el costo por dos", pizzaDoble.get("Pizza doble"), 2000);
 
 // El precio de venta es el del recetario (redondeado al peso, como lo muestra
 // la página de precios) subido al próximo múltiplo de $500. Con $1.000 los

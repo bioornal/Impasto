@@ -3,9 +3,12 @@ import { test } from "node:test";
 import { PricingUnavailableError, requirePricingRows, resolveValidatedPrices, sellablePrice } from "../lib/pricing-safety";
 
 const base = () => ({
-  recipes: [{ id: "r", nombre: "Empanada", precio_prepizza: 500, precio_salsa: 200 }],
+  recipes: [{ id: "r", nombre: "Empanada", precio_prepizza: 500, precio_salsa: 200, rend_tipo: "peso", rend_valor: 65 }],
   recipeIngredients: [{ receta_id: "r", ingrediente_id: "i", cantidad_kg: 0.65 }],
-  ingredients: [{ id: "i", precio_kg: 1000, multiplo_rendimiento: 1 }],
+  ingredients: [
+    { id: "i", precio_kg: 1000, multiplo_rendimiento: 1 },
+    { id: "tapa", nombre: "Tapa de empanada", unidad: "unidad", precio_kg: 2300 / 12, multiplo_rendimiento: 1 },
+  ],
   rules: [{ receta_id: "r", nombre: "Empanada", markup: 2, subcategoria: "Empanadas" }],
   defaults: { pizzas_objetivo_mes: 800 },
   totalOperativo: 0,
@@ -27,7 +30,13 @@ test("un producto sin regla usa solo precio manual positivo y finito", () => {
 
 test("una regla válida conserva el redondeo a $500 sin prepizza para empanadas", () => {
   const resolution = resolveValidatedPrices(base());
-  assert.equal(sellablePrice({ nombre: "Empanada", precio: 9000 }, resolution), 500);
+  assert.equal(sellablePrice({ nombre: "Empanada", precio: 9000 }, resolution), 1000);
+});
+
+test("sin precio de tapa no publica empanadas con costo incompleto", () => {
+  const input = base();
+  input.ingredients = input.ingredients.filter((i) => i.nombre !== "Tapa de empanada");
+  assert.equal(sellablePrice({ nombre: "Empanada", precio: 9000 }, resolveValidatedPrices(input)), null);
 });
 
 test("una regla rota no cae al precio manual", () => {
@@ -38,7 +47,7 @@ test("una regla rota no cae al precio manual", () => {
     { name: "precio inválido", change: (v: ReturnType<typeof base>) => { v.ingredients[0].precio_kg = Number.POSITIVE_INFINITY; } },
     { name: "markup inválido", change: (v: ReturnType<typeof base>) => { v.rules[0].markup = -1; } },
     { name: "receta ausente", change: (v: ReturnType<typeof base>) => { v.recipes = []; } },
-    { name: "costo cero", change: (v: ReturnType<typeof base>) => { v.ingredients[0].precio_kg = 0; } },
+    { name: "costo cero", change: (v: ReturnType<typeof base>) => { v.ingredients[0].precio_kg = 0; v.ingredients[1].precio_kg = 0; } },
     { name: "regla duplicada", change: (v: ReturnType<typeof base>) => { v.rules.push({ ...v.rules[0] }); } },
     { name: "sin denominador operativo", change: (v: ReturnType<typeof base>) => { v.totalOperativo = 1000; v.defaults.pizzas_objetivo_mes = 0; } },
   ];

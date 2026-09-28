@@ -3,10 +3,14 @@ export interface PricingRecipe {
   nombre?: string;
   precio_prepizza?: number | string;
   precio_salsa?: number | string;
+  rend_tipo?: string | null;
+  rend_valor?: number | string | null;
 }
 
 export interface PricingIngredient {
   id?: string;
+  nombre?: string;
+  unidad?: string;
   precio_kg?: number | string;
   multiplo_rendimiento?: number | string;
 }
@@ -33,6 +37,8 @@ export interface PricingDefaults {
 }
 
 const GRAMOS_POR_EMPANADA = 65;
+export const isEmpanadaShell = (ingredient: PricingIngredient): boolean =>
+  String(ingredient.nombre ?? '').trim().toLowerCase() === 'tapa de empanada' && ingredient.unidad === 'unidad';
 // El precio de venta sube al próximo múltiplo de $500. Con $1.000 los saltos
 // eran dispares: Pollo pasaba de $2.029 a $3.000 y Árabe de $2.993 a $3.000.
 const REDONDEO_PRECIO = 500;
@@ -62,8 +68,8 @@ function leerComisionPct(valor: unknown): number {
  *
  * Empanadas (sin prepizza ni salsa, igual que las bebidas):
  *   costoReceta = round(Σ(precio_kg * cantidad_kg * multiplo_rendimiento))
- *   unidades = floor(totalCantidadKg * 1000 / 65)
- *   costoUnit = costoReceta / unidades
+ *   unidades = según rend_tipo y rend_valor de la receta
+ *   costoUnit = costoReceta / unidades + precio de una tapa
  *   precioEfectivo = round(costoUnit * markup)
  */
 export function buildEffectivePrices(
@@ -83,6 +89,8 @@ export function buildEffectivePrices(
   for (const ingredient of ingredients) {
     if (ingredient.id) ingredientData.set(String(ingredient.id), ingredient);
   }
+  const tapa = ingredients.find(isEmpanadaShell);
+  const costoTapa = Number(tapa?.precio_kg) || 0;
 
   const riByRecipe = new Map<string, RecipeIngredient[]>();
   for (const ri of recipeIngredients) {
@@ -134,12 +142,12 @@ export function buildEffectivePrices(
 
       const costoReceta = Math.round(precioPrepizza + precioSalsa + costoIngredientes);
 
-      if (subcategoria === 'Empanadas') {
-        const unidades = Math.floor((totalCantidadKg * 1000) / GRAMOS_POR_EMPANADA);
-        costoUnit = unidades > 0 ? costoReceta / unidades : costoReceta;
-      } else {
-        costoUnit = costoReceta;
-      }
+      const rendValor = Number(recipe.rend_valor) || 0;
+      const unidades = recipe.rend_tipo === 'peso'
+        ? Math.floor((totalCantidadKg * 1000) / (rendValor || GRAMOS_POR_EMPANADA))
+        : (rendValor || 1);
+      costoUnit = (unidades > 0 ? costoReceta / unidades : costoReceta)
+        + (subcategoria === 'Empanadas' ? costoTapa : 0);
     }
 
     const costoOpUnit = subcategoria === 'Empanadas' ? Math.round(costoOpPorPizza / 12) : subcategoria === 'Bebidas' ? 0 : costoOpPorPizza;

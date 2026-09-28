@@ -1,5 +1,6 @@
 import {
   buildEffectivePrices,
+  isEmpanadaShell,
   type PricingDefaults,
   type PricingIngredient,
   type PricingRecipe,
@@ -67,6 +68,8 @@ export function resolveValidatedPrices(input: PricingInput): PriceResolution {
   );
   const invalid = new Set<string>();
   const validDenominator = finite(input.defaults?.pizzas_objetivo_mes);
+  const shell = input.ingredients.find(isEmpanadaShell);
+  const shellPrice = finite(shell?.precio_kg);
 
   for (const rule of input.rules) {
     if (!rule.nombre) continue;
@@ -77,12 +80,14 @@ export function resolveValidatedPrices(input: PricingInput): PriceResolution {
     const prepizza = finite(recipe?.precio_prepizza ?? input.defaults?.precio_prepizza_default);
     const salsa = finite(recipe?.precio_salsa ?? input.defaults?.precio_salsa_default);
     const invalidBase = usesBase && (prepizza == null || prepizza < 0 || salsa == null || salsa < 0);
+    const invalidShell = rule.subcategoria === 'Empanadas' && (shellPrice == null || shellPrice <= 0);
     const broken =
       (counts.get(rule.nombre) ?? 0) !== 1 ||
       !rule.receta_id ||
       !recipe ||
       markup == null || markup <= 0 ||
       invalidBase ||
+      invalidShell ||
       parts.length === 0 ||
       (input.totalOperativo > 0 && (validDenominator == null || validDenominator <= 0)) ||
       parts.some((part) => {
