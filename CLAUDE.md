@@ -6,7 +6,7 @@ Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Me
 Deploy en Netlify: **https://www.impastopizzas.com** (dominio propio desde el 19/09/2026; el
 subdominio `vocal-naiad-861a2c.netlify.app` sigue respondiendo). Ver "Dominio propio".
 
-Última actualización: 26 de septiembre de 2026.
+Última actualización: 28 de septiembre de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -305,6 +305,39 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   Telegram y la moderación en el panel. Spec y plan:
   `docs/superpowers/specs/2026-09-25-opiniones-clientes-design.md` y
   `docs/superpowers/plans/2026-09-25-opiniones-clientes.md`.
+
+- **Ficha de producto: la foto en grande (28/09/2026)** — Tocar la foto de cualquier pizza,
+  empanada o bebida abre una ficha con la foto grande, cartelitos, precio, descripción completa y
+  el pie para pedir (Agregar · $X → `− n en el pedido +`, ½½; en empanadas, el `− n +` de la caja
+  con "3 de 12 elegidas"). **Mobile:** hoja desde abajo; se cierra arrastrando hacia abajo, con ✕
+  o tocando el fondo; deslizando a los costados pasa al producto anterior/siguiente **de la lista
+  que el cliente está viendo** (respeta filtro y búsqueda; sin vuelta circular). En las filas de
+  pizzas y bebidas también abre tocando el nombre/descripción; la destacada lleva una lupa fija.
+  **Escritorio:** ventana centrada con flechas (pantalla y teclado), Esc y clic afuera; lupa y
+  cursor de acercar al pasar el mouse. **El botón Atrás cierra la ficha** en vez de salir del
+  sitio. Dónde vive: lógica pura en `lib/ficha.ts` (gestos, normalización y
+  `lineaDePizza`/`lineaDeBebida`, que ahora usan también las tarjetas), `components/ui/ProductSheet.tsx`
+  (ficha + hook `useCierreConAtras`), `components/cart/FichaAccion.tsx` (pie) y el estado en
+  `Shell` (ids + índice, no objetos). El disparador es un `<button class="media-zoom">`
+  transparente encima de cada foto: el contenedor no cambia. Decisiones: **sin pellizcar para
+  acercar** (las fotos miden 1200 px, lo que un teléfono ya muestra a todo el ancho); cartelitos
+  junto al nombre y no sobre la foto; el fondo se bloquea solo en mobile; el historial copia
+  `history.state` para no romper el router de Next, y el hook vive en `Shell` porque en desarrollo
+  React monta dos veces y un `pushState` en la ficha dejaría dos entradas. El umbral de gesto
+  rápido quedó en **0,3 px/ms** (con 0,5 no pasaba un deslizamiento real de 70 px en 163 ms).
+  Verificado localmente: `pnpm test` (suma `tests/ficha.test.ts`), TypeScript, eslint de lo
+  tocado y build; en Chrome headless con táctil emulado, 33 casos mobile (abrir, agregar/sumar/
+  restar, deslizar en medio y bordes, cerrar de cuatro formas, ½½, empanadas, bebidas, horizontal
+  740×360 y 812×375), 22 de escritorio y 27 de Atrás (sin recarga, sin salto de scroll, carrito
+  intacto, ✕/Esc/arrastre consumen la entrada), todos con el borrador del carrito interceptado.
+  Comparación de estilos calculados de escritorio (1280/1000/800; página, carrito y checkout)
+  contra la hoja de `8d7be50`: la única diferencia es `pointer-events:none` en `.p-price`.
+  **Ojo al probar:** el panel del navegador con vista mobile emulada traduce mal las coordenadas
+  de los clics (llegan a `<html>`); en `pnpm dev` el botón flotante de Next tapa el `−` del pie.
+  No se probó una ficha de producto agotado en vivo (no había ninguno; lo cubren los tests).
+  Commits `8ed8c15`, `2c810df`, `f13532a`, `3c05964`, `ebeebaa`. **No pusheado ni probado en
+  producción.** Spec y plan: `docs/superpowers/specs/2026-09-28-ficha-producto-design.md` y
+  `docs/superpowers/plans/2026-09-28-ficha-producto.md`.
 
 ### Distinción que se presta a confusión
 
