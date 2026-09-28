@@ -259,3 +259,13 @@ export function getDrinkImage(nombre = "", id = ""): string {
   const seed = [...(id || nombre)].reduce((a, c) => a + c.charCodeAt(0), 0);
   return pool[seed % pool.length];
 }
+
+/**
+ * La URL que muestra cada ilustración según el tipo. La usa la ficha de
+ * producto para precargar la foto del producto anterior y la del siguiente.
+ */
+export function imagenDeProducto(tipo: "pizza" | "empanada" | "bebida", nombre: string, id: string, tags: string[] = []): string {
+  if (tipo === "bebida") return getDrinkImage(nombre, id);
+  if (tipo === "empanada") return getEmpanadaImage(nombre, id);
+  return getPizzaImage(nombre, id, tags);
+}
