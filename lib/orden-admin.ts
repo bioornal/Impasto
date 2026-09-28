@@ -2,7 +2,9 @@
  * Orden de la tabla de Productos del admin.
  *
  * Arriba, fijas: las 20 pizzas de la carta (en el orden de
- * docs/prompts-imagenes-carta.md) y todas las empanadas. Debajo, las bebidas y,
+ * docs/prompts-imagenes-carta.md), las 2 blancas que se sumaron el 26/09
+ * (Bianca ai Funghi y Bianca all'Aglio Confit, con foto propia) y todas las
+ * empanadas. Debajo, las bebidas y,
  * al final, el resto (bajas, pruebas, cartas viejas). Es solo la vista del admin:
  * no toca `archivado` ni `disponible`, asi que no cambia lo que ve el cliente.
  *
@@ -30,6 +32,9 @@ export const PIZZAS_DE_LA_CARTA = [
   "Filetto Impasto",
   "Prosciutto, Rucola e Parmigiano",
   "Carbonada Criolla",
+  // Sumadas despues del documento de fotos.
+  "Bianca ai Funghi",
+  "Bianca all'Aglio Confit",
 ] as const;
 
 const clave = (nombre: string) => nombre.trim().toLowerCase();
