@@ -4,6 +4,7 @@ import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 import { ProductThumb } from "./ProductThumb";
 import type { AdminProduct } from "./types";
+import { ordenarProductosAdmin } from "@/lib/orden-admin";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 
@@ -114,7 +115,7 @@ export function Products() {
   const [creating, setCreating] = useState(false);
 
   const filtered = useMemo(() => {
-    let list = state.products;
+    let list = ordenarProductosAdmin(state.products);
     if (type !== "todos") list = list.filter(p => p.type === type);
     if (q.trim()) list = list.filter(p => p.nombre.toLowerCase().includes(q.toLowerCase()));
     return list;

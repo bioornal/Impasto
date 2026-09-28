@@ -26,6 +26,7 @@ function adaptProduct(p: Record<string, unknown>): AdminProduct {
     tags: Array.isArray(p.tags) ? p.tags : [],
     popular: Boolean(p.popular),
     stock: 24,
+    archivado: p.archivado === true,
   };
 }
 

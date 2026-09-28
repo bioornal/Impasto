@@ -10,6 +10,8 @@ export interface AdminProduct {
   tags: string[];
   popular: boolean;
   stock: number;
+  /** Baja de carta (la base lo llama archivado). Solo lo usa el orden del admin. */
+  archivado?: boolean;
 }
 
 export interface OrderItem {
