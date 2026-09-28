@@ -75,7 +75,7 @@ La ficha recorre **la misma lista que el cliente está viendo en esa sección**,
 | Sección | Lista que recorre | Acción del pie |
 |---|---|---|
 | Pizzas | La lista filtrada y buscada de `PizzaList` (incluida la destacada primero) | `Agregar` → `− n +` si ya está; `½½` al lado |
-| Empanadas | Todas las empanadas de la grilla | `− n +` de la caja, con el mismo tope (`selected >= tier`) y el texto "en la caja" |
+| Empanadas | Todas las empanadas de la grilla | `− n +` de la caja, con el mismo tope (`selected >= tier`) y el avance de la caja ("3 de 12 elegidas", como la barra de abajo) |
 | Bebidas | Todas las bebidas | `Agregar` → `− n +` si ya está |
 
 - La acción usa **las mismas funciones** que la tarjeta (`add`, `incKey`, `decKey`, `onPick`) y
@@ -97,9 +97,10 @@ La ficha recorre **la misma lista que el cliente está viendo en esa sección**,
 - `ejeDelGesto(dx, dy)`: `null` hasta que el dedo se mueve 10 px; después `"horizontal"` o
   `"vertical"` según qué desplazamiento domina. Una vez decidido, el eje queda fijo durante el
   gesto (así un deslizamiento en diagonal no mueve la foto en dos direcciones).
-- `resolverSoltar({ eje, dx, dy, velocidad, ancho, hayAnterior, haySiguiente })`:
+- `resolverSoltar({ eje, dx, dy, dt, ancho, hayAnterior, haySiguiente })`:
   `"anterior" | "siguiente" | "cerrar" | "quedarse"`. Umbrales: horizontal, un cuarto del ancho
-  o velocidad ≥ 0,5 px/ms; vertical hacia abajo, 120 px o velocidad ≥ 0,5 px/ms.
+  o velocidad ≥ 0,5 px/ms; vertical hacia abajo, 120 px o velocidad ≥ 0,5 px/ms. Un gesto rápido
+  cuenta solo si recorre al menos 30 px (si no, un toque nervioso cerraría la ficha).
 - `resistencia(dx, hayVecino)`: el desplazamiento visible (`dx`, o `dx / 3` en un borde).
 
 ### Imagen — una sola resolución
@@ -132,7 +133,9 @@ que el resto del sitio). Los gestos de arrastre y deslizamiento se activan solo 
 
 Accesibilidad: `role="dialog"`, `aria-modal="true"` y `aria-label` con el nombre del producto;
 foco atrapado mientras está abierta (mismo patrón que `CartDrawer`); al cerrar, el foco vuelve
-al elemento que la abrió; el fondo no se desplaza. El contador se anuncia con `aria-live="polite"`
+al elemento que la abrió. En mobile el fondo no se desplaza; en escritorio queda como con el
+carrito y la mitad y mitad (sin bloquear), porque ocultar la barra de desplazamiento correría el
+ancho de la página. El contador se anuncia con `aria-live="polite"`
 al pasar de producto. Las zonas de arrastre llevan `touch-action:none` (sin eso el navegador
 toma el gesto como scroll y lo cancela, como pasó con el carrito).
 
@@ -140,7 +143,8 @@ toma el gesto como scroll y lo cancela, como pasó con el carrito).
 
 - `Shell` guarda la ficha abierta: `{ seccion, ids, indice } | null`. Guarda **ids**, no
   objetos: cada render busca el producto vivo en `data`, así la cantidad en el carrito y el
-  estado agotado están siempre al día. Si un id deja de existir, la ficha se cierra.
+  estado agotado están siempre al día. El catálogo llega como props estáticas de la página: un id
+  no desaparece con la ficha abierta (si pasara, la ficha no se muestra).
 - `PizzaList`, `EmpanadasSection` y `Bebidas` reciben `onVerFicha(ids, indice)` y lo llaman con
   la lista que están mostrando.
 - Disparador: dentro de cada contenedor de foto (`.p-media`, `.lrow-media`, `.p-feat-media`,
