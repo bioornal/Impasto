@@ -5,6 +5,7 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useTweaks } from "@/components/providers/TweakProvider";
 import { fmt } from "@/lib/utils";
+import { lineaDePizza } from "@/lib/ficha";
 import type { Pizza } from "@/types";
 
 /**
@@ -60,7 +61,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco }: PizzaListProps)
   const qtyOf = (id: string) => items.find((i) => i.key === id && i.type === "pizza")?.qty || 0;
 
   const addPizza = (pizza: Pizza) => {
-    add({ key: pizza.id, type: "pizza", name: pizza.nombre, price: pizza.precio, illus: pizza.id, qty: 1 });
+    add(lineaDePizza(pizza));
     toast(`${pizza.nombre} agregada`);
   };
 

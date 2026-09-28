@@ -3,6 +3,7 @@ import { DrinkIllus } from "@/components/ui/Illus";
 import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { fmt } from "@/lib/utils";
+import { lineaDeBebida } from "@/lib/ficha";
 import type { Bebida } from "@/types";
 
 export function Bebidas({ bebidas }: { bebidas: Bebida[] }) {
@@ -12,7 +13,7 @@ export function Bebidas({ bebidas }: { bebidas: Bebida[] }) {
 
   const qtyOf = (id: string) => items.find((i) => i.key === id && i.type === "bebida")?.qty || 0;
   const agregar = (bebida: Bebida) => {
-    add({ key: bebida.id, type: "bebida", name: bebida.nombre, price: bebida.precio, qty: 1 });
+    add(lineaDeBebida(bebida));
     toast(`${bebida.nombre} agregada`);
   };
 
