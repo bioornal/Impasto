@@ -339,8 +339,9 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   `ready` el 28/09. En `www.impastopizzas.com`, Chrome headless verificó: el HTML trae los
   botones "Ver … en grande"; en 375 px la foto destacada abre la ficha, deslizar pasa a la
   siguiente y Atrás la cierra sin salir del sitio; en 1280 px el clic abre, la flecha pasa y Esc
-  cierra; sin errores en la consola (no se agregó nada al carrito). **Falta que el dueño la pruebe
-  en su teléfono.** Spec y plan: `docs/superpowers/specs/2026-09-28-ficha-producto-design.md` y
+  cierra; sin errores en la consola (no se agregó nada al carrito). **El dueño la probó en su
+  teléfono en producción el 28/09/2026 y confirmó que funciona bien.** Ningún agente vio todavía
+  la ficha de un producto agotado en vivo (no había ninguno). Spec y plan: `docs/superpowers/specs/2026-09-28-ficha-producto-design.md` y
   `docs/superpowers/plans/2026-09-28-ficha-producto.md`.
 
 ### Distinción que se presta a confusión
