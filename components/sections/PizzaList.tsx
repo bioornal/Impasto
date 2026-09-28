@@ -30,9 +30,11 @@ interface PizzaListProps {
   destacadaId?: string;
   /** Mobile: pizza elegida en la búsqueda. Limpia filtros y la resalta un momento. */
   foco?: { id: string; vez: number } | null;
+  /** Abre la ficha de producto recorriendo la lista que se está viendo. */
+  onVerFicha: (ids: string[], indice: number) => void;
 }
 
-export function PizzaList({ pizzas, onHalf, destacadaId, foco }: PizzaListProps) {
+export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: PizzaListProps) {
   const [cat, setCat] = useState("todas");
   const [q, setQ] = useState("");
   // Ajuste de estado al cambiar la prop (patrón de React, sin efecto): la pizza
@@ -64,6 +66,12 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco }: PizzaListProps)
     add(lineaDePizza(pizza));
     toast(`${pizza.nombre} agregada`);
   };
+
+  // La ficha recorre `list`: respeta el filtro y la búsqueda, con la destacada primero.
+  const verFicha = (id: string) => onVerFicha(list.map((p) => p.id), list.findIndex((p) => p.id === id));
+  const botonFoto = (pizza: Pizza) => (
+    <button type="button" className="media-zoom" onClick={() => verFicha(pizza.id)} aria-label={`Ver ${pizza.nombre} en grande`} />
+  );
 
   const emptyState = (
     <p className="empty-state">Sin resultados — probá con otro filtro o buscá otro ingrediente.</p>
@@ -123,6 +131,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco }: PizzaListProps)
                 <article className={`p-card ${wide ? "wide" : ""} ${agotado ? "is-agotado" : ""}`} key={pizza.id}>
                   <div className="p-media">
                     <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
+                    {botonFoto(pizza)}
                     {agotado && <div className="media-agotado-bar">Agotado</div>}
                     <div className="p-badges">
                       {pizza.popular && !agotado && <span className="p-badge top">★ Más pedida</span>}
@@ -173,6 +182,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco }: PizzaListProps)
                 <div className={`lrow ${agotado ? "is-agotado" : ""}`} key={pizza.id}>
                   <div className="lrow-media">
                     <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
+                    {botonFoto(pizza)}
                     {agotado && <div className="media-agotado-bar">Agotado</div>}
                   </div>
                   <div className="lrow-main">
@@ -205,6 +215,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco }: PizzaListProps)
               <article className={`p-feat ${foco?.id === pizza.id ? "is-foco" : ""}`} data-pizza={pizza.id}>
                 <div className="p-feat-media">
                   <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
+                  {botonFoto(pizza)}
                   {pizza.popular && !agotado && <span className="p-feat-badge">★ Más pedida</span>}
                   {agotado && <div className="media-agotado-bar">Agotado</div>}
                   <span className="p-feat-price">{fmt(pizza.precio)}</span>
@@ -237,9 +248,10 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco }: PizzaListProps)
               <article className={`p-row ${agotado ? "is-agotado" : ""} ${foco?.id === pizza.id ? "is-foco" : ""}`} key={pizza.id} data-pizza={pizza.id}>
                 <div className="p-row-media">
                   <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
+                  {botonFoto(pizza)}
                   {agotado && <div className="media-agotado-bar">Agotado</div>}
                 </div>
-                <div className="p-row-main">
+                <div className="p-row-main" onClick={() => verFicha(pizza.id)}>
                   <div className="p-row-title">
                     <h3>{pizza.nombre}</h3>
                     {pizza.tags.includes("vegetariana") && !agotado && <span className="p-row-flag">Veggie</span>}

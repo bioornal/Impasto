@@ -83,8 +83,12 @@ export type Eje = "horizontal" | "vertical";
 export const UMBRAL_EJE = 10;
 /** Mismo umbral que la hoja del carrito (CartDrawer). */
 export const UMBRAL_CIERRE = 120;
-/** px/ms. Un gesto más rápido que esto cuenta aunque sea corto… */
-export const VELOCIDAD_RAPIDA = 0.5;
+/**
+ * px/ms, promedio de todo el gesto. Un gesto más rápido que esto cuenta aunque
+ * sea corto… Con 0,5 no pasaba un deslizamiento corto y decidido medido en
+ * Chrome (70 px en 163 ms): el promedio incluye el instante en que se apoya el dedo.
+ */
+export const VELOCIDAD_RAPIDA = 0.3;
 /** …siempre que recorra al menos esto: si no, un toque nervioso cerraría la ficha. */
 export const DISTANCIA_MINIMA_RAPIDA = 30;
 

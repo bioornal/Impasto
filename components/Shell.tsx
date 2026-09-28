@@ -23,6 +23,10 @@ import { Checkout } from "@/components/checkout/Checkout";
 import { Confirmation } from "@/components/checkout/Confirmation";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { ActiveOrderBanner } from "@/components/layout/ActiveOrderBanner";
+import { ProductSheet } from "@/components/ui/ProductSheet";
+import { FichaAccion } from "@/components/cart/FichaAccion";
+import { fichaDeBebida, fichaDeEmpanada, fichaDePizza, type FichaItem } from "@/lib/ficha";
+import { argumento } from "@/lib/marca";
 import type { BusinessConfig } from "@/lib/business";
 import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
 import { EMPANADAS } from "@/lib/opiniones";
@@ -39,6 +43,11 @@ import {
 
 /** Mismo corte que `@media (max-width:760px)` en impasto.css. */
 const esMobile = () => typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches;
+
+/** Lo que muestra la tarjeta de una empanada sin precio unitario. */
+const EMPANADA_PESO = argumento("empanadas-peso").cifra ?? "";
+
+type SeccionFicha = "pizzas" | "empanadas" | "bebidas";
 
 interface ConfirmedOrder {
   numero: string; nombre: string; mode: string; dir?: string;
@@ -145,6 +154,28 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
   const [empTier, setEmpTier] = useState<6 | 12 | 24>(() =>
     ([12, 6, 24] as const).find((size) => !data.empanadaBoxNoDisponibles?.includes(size)) ?? 12);
   const [cajaExpandida, setCajaExpandida] = useState(false);
+
+  // Ficha de producto: se guardan ids y no objetos, así la cantidad en el
+  // carrito y el estado agotado se leen siempre de `data` y del carrito vivos.
+  const [ficha, setFicha] = useState<{ seccion: SeccionFicha; ids: string[]; indice: number } | null>(null);
+  const abrirFicha = (seccion: SeccionFicha) => (ids: string[], indice: number) => {
+    if (indice < 0) return;
+    setFicha({ seccion, ids, indice });
+  };
+  const cerrarFicha = () => setFicha(null);
+  const fichaItems = useMemo<FichaItem[]>(() => {
+    if (!ficha) return [];
+    if (ficha.seccion === "pizzas") {
+      return ficha.ids.flatMap((id) => { const p = data.pizzas.find((x) => x.id === id); return p ? [fichaDePizza(p)] : []; });
+    }
+    if (ficha.seccion === "empanadas") {
+      return ficha.ids.flatMap((id) => { const e = data.empanadas.find((x) => x.id === id); return e ? [fichaDeEmpanada(e, EMPANADA_PESO)] : []; });
+    }
+    return ficha.ids.flatMap((id) => { const b = data.bebidas.find((x) => x.id === id); return b ? [fichaDeBebida(b)] : []; });
+  }, [ficha, data.pizzas, data.empanadas, data.bebidas]);
+  // El catálogo llega como props estáticas de la página: un id no desaparece
+  // con la ficha abierta. Si pasara, no hay producto en el índice y no se muestra.
+  const fichaActual = ficha ? fichaItems[ficha.indice] : undefined;
 
   const desde = precioDesde(data.pizzas);
   const featured = data.pizzas.find((p) => p.disponible !== false && p.id === STOCK_IMAGES.hero.productoId)
@@ -352,7 +383,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
         <Hero onCta={goSection} onHalf={() => openHalf()} featured={featured} varieties={data.pizzas.length} />
         <Features freeShippingFrom={business.freeShippingFrom} desde={desde} />
         <Promos promos={data.promos} onNav={goSection} />
-        <PizzaList pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} foco={focoPizza} />
+        <PizzaList pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} foco={focoPizza} onVerFicha={abrirFicha("pizzas")} />
         <EmpanadasSection
           empanadas={data.empanadas}
           boxPrices={data.empanadaBoxPrices}
@@ -363,8 +394,9 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
           onChangeTier={empChangeTier}
           onAddBox={empAddBox}
           priceFor={empPriceFor}
+          onVerFicha={abrirFicha("empanadas")}
         />
-        <Bebidas bebidas={data.bebidas} />
+        <Bebidas bebidas={data.bebidas} onVerFicha={abrirFicha("bebidas")} />
         <PedidoWhatsapp business={business} />
         <Story onCta={goSection} />
         <Reviews reviews={data.reviews} business={business} productos={productosOpinables} />
@@ -455,6 +487,31 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
             ))}
           </div>
         </div>
+      )}
+
+      {ficha && fichaActual && (
+        <ProductSheet
+          items={fichaItems}
+          indice={ficha.indice}
+          onIndice={(indice) => setFicha((actual) => (actual ? { ...actual, indice } : actual))}
+          onClose={cerrarFicha}
+          accion={
+            <FichaAccion
+              item={fichaActual}
+              onHalf={fichaActual.tipo === "pizza" ? () => {
+                const pizza = data.pizzas.find((p) => p.id === fichaActual.id);
+                cerrarFicha();
+                if (pizza) openHalf(pizza);
+              } : undefined}
+              caja={fichaActual.tipo === "empanada" ? {
+                cantidad: empSelection[fichaActual.id] || 0,
+                elegidas: empSelected,
+                tamanio: empTier,
+                onPick: (delta) => empPick(fichaActual.id, delta),
+              } : undefined}
+            />
+          }
+        />
       )}
 
       <CartDrawer

@@ -3,10 +3,10 @@ import { DrinkIllus } from "@/components/ui/Illus";
 import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { fmt } from "@/lib/utils";
-import { lineaDeBebida } from "@/lib/ficha";
+import { esMobile, lineaDeBebida } from "@/lib/ficha";
 import type { Bebida } from "@/types";
 
-export function Bebidas({ bebidas }: { bebidas: Bebida[] }) {
+export function Bebidas({ bebidas, onVerFicha }: { bebidas: Bebida[]; onVerFicha: (ids: string[], indice: number) => void }) {
   const { items, add, incKey, decKey } = useCart();
   const toast = useToast();
   if (bebidas.length === 0) return null;
@@ -16,6 +16,7 @@ export function Bebidas({ bebidas }: { bebidas: Bebida[] }) {
     add(lineaDeBebida(bebida));
     toast(`${bebida.nombre} agregada`);
   };
+  const verFicha = (id: string) => onVerFicha(bebidas.map((b) => b.id), bebidas.findIndex((b) => b.id === id));
 
   return (
     <section className="section" id="bebidas">
@@ -35,9 +36,11 @@ export function Bebidas({ bebidas }: { bebidas: Bebida[] }) {
               <article className={`drink-card ${agotado ? "is-agotado" : ""}`} key={bebida.id}>
                 <div className="drink-media">
                   <DrinkIllus id={bebida.id} label={bebida.nombre} name={bebida.nombre} />
+                  <button type="button" className="media-zoom" onClick={() => verFicha(bebida.id)} aria-label={`Ver ${bebida.nombre} en grande`} />
                   {agotado && <div className="media-agotado-bar">Agotado</div>}
                 </div>
-                <div style={{ flex: 1 }}>
+                {/* Mobile: la miniatura es chica, así que el nombre también abre la ficha. */}
+                <div style={{ flex: 1 }} onClick={() => esMobile() && verFicha(bebida.id)}>
                   <h4>{bebida.nombre}</h4>
                   <small>{fmt(bebida.precio)}</small>
                 </div>

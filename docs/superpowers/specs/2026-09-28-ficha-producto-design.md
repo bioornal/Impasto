@@ -101,8 +101,10 @@ La ficha recorre **la misma lista que el cliente está viendo en esa sección**,
   gesto (así un deslizamiento en diagonal no mueve la foto en dos direcciones).
 - `resolverSoltar({ eje, dx, dy, dt, ancho, hayAnterior, haySiguiente })`:
   `"anterior" | "siguiente" | "cerrar" | "quedarse"`. Umbrales: horizontal, un cuarto del ancho
-  o velocidad ≥ 0,5 px/ms; vertical hacia abajo, 120 px o velocidad ≥ 0,5 px/ms. Un gesto rápido
-  cuenta solo si recorre al menos 30 px (si no, un toque nervioso cerraría la ficha).
+  o velocidad promedio ≥ 0,3 px/ms; vertical hacia abajo, 120 px o velocidad ≥ 0,3 px/ms. Un
+  gesto rápido cuenta solo si recorre al menos 30 px (si no, un toque nervioso cerraría la
+  ficha). La primera versión pedía 0,5 px/ms y no pasaba un deslizamiento corto y decidido
+  medido en Chrome (70 px en 163 ms).
 - `resistencia(dx, hayVecino)`: el desplazamiento visible (`dx`, o `dx / 3` en un borde).
 
 ### Imagen — una sola resolución

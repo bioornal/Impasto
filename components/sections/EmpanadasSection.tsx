@@ -22,9 +22,11 @@ interface EmpanadasSectionProps {
   onChangeTier: (tier: 6 | 12 | 24) => void;
   onAddBox: () => void;
   priceFor: (size: 6 | 12 | 24, current: Record<string, number>) => number;
+  /** Abre la ficha de producto recorriendo todas las empanadas. */
+  onVerFicha: (ids: string[], indice: number) => void;
 }
 
-export function EmpanadasSection({ empanadas, boxPrices, blockedSizes, selection, tier, onPick, onChangeTier, onAddBox, priceFor }: EmpanadasSectionProps) {
+export function EmpanadasSection({ empanadas, boxPrices, blockedSizes, selection, tier, onPick, onChangeTier, onAddBox, priceFor, onVerFicha }: EmpanadasSectionProps) {
   if (empanadas.length === 0) return null;
 
   const selected = Object.values(selection).reduce((a, b) => a + b, 0);
@@ -63,6 +65,12 @@ export function EmpanadasSection({ empanadas, boxPrices, blockedSizes, selection
                 <article className={`emp-card ${count > 0 ? "on" : ""} ${agotado ? "is-agotado" : ""}`} key={empanada.id}>
                   <div className="emp-media">
                     <EmpanadaIllus id={empanada.id} name={empanada.nombre} />
+                    <button
+                      type="button"
+                      className="media-zoom"
+                      onClick={() => onVerFicha(empanadas.map((e) => e.id), empanadas.indexOf(empanada))}
+                      aria-label={`Ver ${empanada.nombre} en grande`}
+                    />
                     {agotado && <div className="media-agotado-bar">Agotado</div>}
                   </div>
                   <div className="emp-head">

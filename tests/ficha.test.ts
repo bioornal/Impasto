@@ -39,6 +39,8 @@ chequear("soltar · izquierda lejos pasa al siguiente", resolverSoltar({ ...base
 chequear("soltar · derecha lejos vuelve al anterior", resolverSoltar({ ...base, eje: "horizontal", dx: 120, dy: 0 }) === "anterior");
 chequear("soltar · poco y lento se queda", resolverSoltar({ ...base, eje: "horizontal", dx: -60, dy: 0 }) === "quedarse");
 chequear("soltar · poco pero rápido pasa", resolverSoltar({ ...base, eje: "horizontal", dx: -60, dy: 0, dt: 80 }) === "siguiente");
+// Medido en Chrome con un deslizamiento corto y decidido: 70 px en 163 ms.
+chequear("soltar · deslizamiento corto y decidido pasa", resolverSoltar({ ...base, eje: "horizontal", dx: -70, dy: 0, dt: 163 }) === "siguiente");
 chequear("soltar · rápido pero cortito no pasa", resolverSoltar({ ...base, eje: "horizontal", dx: -20, dy: 0, dt: 20 }) === "quedarse");
 chequear("soltar · en el último no pasa", resolverSoltar({ ...base, eje: "horizontal", dx: -200, dy: 0, haySiguiente: false }) === "quedarse");
 chequear("soltar · en el primero no vuelve", resolverSoltar({ ...base, eje: "horizontal", dx: 200, dy: 0, hayAnterior: false }) === "quedarse");
