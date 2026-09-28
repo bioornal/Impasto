@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { PizzaIllus } from "@/components/ui/PizzaIllus";
 import { EmpanadaIllus, DrinkIllus } from "@/components/ui/Illus";
 import { imagenDeProducto } from "@/lib/stock-images";
@@ -239,4 +239,38 @@ export function ProductSheet({ items, indice, onIndice, onClose, accion }: Produ
       </div>
     </div>
   );
+}
+
+/**
+ * Atrás del teléfono (o del navegador) cierra la ficha en vez de sacar al
+ * cliente del sitio. Abrirla agrega una entrada al historial con la misma URL;
+ * pasar de producto no agrega nada, así que un Atrás siempre cierra. Cerrar
+ * desde la interfaz consume esa entrada, para no dejar un Atrás "vacío".
+ *
+ * Se usa en Shell y no dentro de la ficha: en desarrollo React monta dos veces
+ * cada componente nuevo, y un pushState en el montaje de la ficha dejaría dos
+ * entradas. Shell ya está montado cuando la ficha se abre.
+ *
+ * Se copia el estado que tenía la entrada (`...history.state`): el router de
+ * Next guarda ahí su árbol y lo necesita al volver.
+ */
+export function useCierreConAtras(abierta: boolean, alCerrar: () => void): () => void {
+  const alCerrarRef = useRef(alCerrar);
+  useEffect(() => { alCerrarRef.current = alCerrar; });
+
+  useEffect(() => {
+    if (!abierta) return;
+    window.history.pushState({ ...window.history.state, fichaImpasto: true }, "");
+    const alVolver = () => alCerrarRef.current();
+    window.addEventListener("popstate", alVolver);
+    return () => window.removeEventListener("popstate", alVolver);
+  }, [abierta]);
+
+  return useCallback(() => {
+    const conEntrada = window.history.state?.fichaImpasto === true;
+    // Primero se cierra (y se quita el listener); después se consume la entrada.
+    // El popstate de este back() ya no encuentra a quién cerrar.
+    alCerrarRef.current();
+    if (conEntrada) window.history.back();
+  }, []);
 }

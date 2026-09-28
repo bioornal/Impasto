@@ -23,7 +23,7 @@ import { Checkout } from "@/components/checkout/Checkout";
 import { Confirmation } from "@/components/checkout/Confirmation";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { ActiveOrderBanner } from "@/components/layout/ActiveOrderBanner";
-import { ProductSheet } from "@/components/ui/ProductSheet";
+import { ProductSheet, useCierreConAtras } from "@/components/ui/ProductSheet";
 import { FichaAccion } from "@/components/cart/FichaAccion";
 import { fichaDeBebida, fichaDeEmpanada, fichaDePizza, type FichaItem } from "@/lib/ficha";
 import { argumento } from "@/lib/marca";
@@ -162,7 +162,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
     if (indice < 0) return;
     setFicha({ seccion, ids, indice });
   };
-  const cerrarFicha = () => setFicha(null);
+  const cerrarFicha = useCierreConAtras(ficha !== null, () => setFicha(null));
   const fichaItems = useMemo<FichaItem[]>(() => {
     if (!ficha) return [];
     if (ficha.seccion === "pizzas") {
