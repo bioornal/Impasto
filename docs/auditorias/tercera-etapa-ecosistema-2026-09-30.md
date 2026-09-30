@@ -29,6 +29,7 @@ Impasto incorpora recuperación del intento existente de Mercado Pago y una cola
 - Revisión independiente detectó y se corrigieron clasificación de errores ambiguos, alcance de sucursal y omisión de nuevos tests en el script general.
 - Migración `20260930220253_cola-avisos.sql` aplicada al backend compartido; inspección de catálogo confirma trigger activo y permisos de las tres funciones. RLS existente conservado.
 - Proveedores falsos y fixtures PGlite; sin cobros, reembolsos, creación de pedidos de prueba ni avisos reales en producción.
+- Código publicado en GitHub main: `2f32ebbb54ee3c16dbc925cecc11c06cf13d9782`, confirmado idéntico a HEAD con `git ls-remote`. Los planes y esta evidencia se cierran en un commit documental posterior.
 
 ## Límites y próximos pasos
 
