@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 const MP_API = "https://api.mercadopago.com";
 
 /** Estados de pago que persistimos en `pedidos.estado_pago`. */
-export type EstadoPago = "pendiente" | "aprobado" | "rechazado" | "reembolsado";
+export type EstadoPago = "pendiente" | "aprobado" | "rechazado" | "reembolsado" | "parcialmente_reembolsado";
 
 export interface MpOrder {
   id: string;
@@ -15,6 +15,7 @@ export interface MpOrder {
   currency?: string;
   country_code?: string;
   transactions?: {
+    refunds?: { id: string; transaction_id?: string; status: string; amount?: string; }[];
     payments?: {
       id: string;
       status: string;
@@ -126,12 +127,12 @@ export async function searchOrders(externalReference:string,window:{begin_date:s
 export async function refundOrder(
   orderId: string,
   partial?: { transactionId: string; amount: number },
+  reservedKey?: string,
 ): Promise<MpOrder> {
-  return mpFetch(`/v1/orders/${orderId}/refund`, {
+  return mpFetch(`/v1/orders/${encodeURIComponent(orderId)}/refund`, {
     method: "POST",
-    // Distinta clave por monto: permite reintentar sin duplicar el reembolso,
-    // pero no bloquea un segundo parcial por otro importe.
-    idempotencyKey: `refund-${orderId}-${partial ? partial.amount : "total"}`,
+    // Preserve historical keys; the production route supplies its durable reservation key.
+    idempotencyKey: reservedKey ?? `refund-${orderId}-${partial ? partial.amount : "total"}`,
     ...(partial
       ? {
           body: JSON.stringify({

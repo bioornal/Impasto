@@ -13,3 +13,13 @@ test('matching pending attempt recovers approved but failed GET keeps pending',a
   const failed=await recoverMatchingCardAttempt(existing,request,async()=>{throw new Error('provider offline');});
   assert.equal(failed.decision,'wait-pending');assert.equal(failed.existing?.estado_pago,'pendiente');
 });
+
+test('approved retry repairs financial persistence before checkout can claim success',async()=>{
+ let lookups=0;
+ const approved={...existing,estado_pago:'aprobado'};
+ const result=await recoverMatchingCardAttempt(approved,request,async row=>{lookups++;return row;});
+ assert.equal(lookups,1);assert.equal(result.decision,'recover-approved');
+ await assert.rejects(recoverMatchingCardAttempt(approved,request,async()=>{throw new Error('ledger unavailable');}),/ledger unavailable/);
+ const partial=await recoverMatchingCardAttempt(approved,request,async row=>({...row,estado_pago:'parcialmente_reembolsado'}));
+ assert.equal(partial.decision,'closed');
+});

@@ -1,12 +1,12 @@
 import type {EstadoPago,MpOrder} from './mercadopago';
-import {mapOrderStatus} from './payment-status';
+import {providerMovimientos, type MovimientoPago} from './payment-ledger';
 export interface RecoveryPedido extends Record<string,unknown> {
   id:string; external_reference:string; total:number; estado_pago:string;
   mp_order_id?:string|null; id_pago?:string|null; created_at?:string;
 }
 export class PaymentRecoveryError extends Error {}
 export function canReconcilePayment(value:Record<string,unknown>):boolean {
-  return value.proveedor_pago==='mercadopago' && value.metodo_pago==='mercadopago' && value.estado_pago==='pendiente'
+  return value.proveedor_pago==='mercadopago' && value.metodo_pago==='mercadopago' && ['pendiente','aprobado','parcialmente_reembolsado','reembolsado'].includes(String(value.estado_pago))
     && typeof value.external_reference==='string' && value.external_reference.startsWith('IM-');
 }
 const fail = () => { throw new PaymentRecoveryError('No se pudo verificar el pago de este pedido. No vuelvas a pagar; requiere revisión.'); };
@@ -19,20 +19,12 @@ export function selectRecoveryOrder(page:unknown, reference:string): MpOrder|nul
   if(p.data[0].external_reference!==reference) return fail();
   return p.data[0];
 }
-function cents(value:unknown):number {
-  if((typeof value!=='string' && typeof value!=='number') || !/^\d+(\.\d{1,2})?$/.test(String(value))) return fail();
-  const amount=Number(value);if(!Number.isFinite(amount) || amount<=0 || !Number.isSafeInteger(Math.round(amount*100))) return fail();
-  return Math.round(amount*100);
-}
 export function paymentRecoveryValues(pedido:RecoveryPedido,order:MpOrder): {estado_pago:EstadoPago;mp_order_id:string;id_pago:string} {
-  if(!order || typeof order.id!=='string' || !order.id || order.external_reference!==pedido.external_reference
-    || (pedido.mp_order_id && pedido.mp_order_id!==order.id) || cents(order.total_amount)!==cents(pedido.total)) return fail();
-  if(order.currency!==undefined ? order.currency!=='ARS' : order.country_code!=='AR') return fail();
-  if(order.country_code!==undefined && order.country_code!=='AR') return fail();
-  let state=mapOrderStatus(order.status,order.status_detail);
-  if(state==='aprobado' && cents(order.total_paid_amount)!==cents(pedido.total)) return fail();
-  if(pedido.estado_pago==='reembolsado') state='reembolsado';
-  else if(pedido.estado_pago==='aprobado' && state!=='reembolsado') state='aprobado';
+  let state=providerMovimientos(pedido,order).estadoPago;
+  // A stale approval cannot erase a documented refund. Correct old full -> partial only with amounts.
+  if(pedido.estado_pago==='reembolsado' && state!=='parcialmente_reembolsado') state='reembolsado';
+  else if(pedido.estado_pago==='parcialmente_reembolsado' && !['parcialmente_reembolsado','reembolsado'].includes(state)) state='parcialmente_reembolsado';
+  else if(pedido.estado_pago==='aprobado' && !['parcialmente_reembolsado','reembolsado'].includes(state)) state='aprobado';
   else if(pedido.estado_pago==='rechazado' && state==='pendiente') state='rechazado';
   const payments=order.transactions?.payments ?? [];
   if(!Array.isArray(payments)) return fail();
@@ -51,6 +43,7 @@ export interface RecoveryDeps {
   searchOrders:(reference:string,window:{begin_date:string;end_date:string})=>Promise<unknown>;
   cas:(before:RecoveryPedido,values:Record<string,unknown>)=>Promise<RecoveryPedido|null>;
   reread:()=>Promise<RecoveryPedido>;
+  persistMovimientos:(order:MpOrder,movimientos:MovimientoPago[])=>Promise<void>;
 }
 /** Provider lookups never create/charge an order. Null means absence, not rejection. */
 export async function recoverPayment(pedido:RecoveryPedido,deps:RecoveryDeps,providerOrder?:MpOrder) {
@@ -58,8 +51,24 @@ export async function recoverPayment(pedido:RecoveryPedido,deps:RecoveryDeps,pro
     : selectRecoveryOrder(await deps.searchOrders(pedido.external_reference,recoverySearchWindow(pedido.created_at)),pedido.external_reference));
   if(!order) return {order:await deps.reread(),changed:false,found:false};
   const values=paymentRecoveryValues(pedido,order);
+  const proof=providerMovimientos(pedido,order);
+  if(proof.totales.devoluciones>0) {
+    // The RPC locks the order, rejects incomplete refund snapshots, and derives refund state atomically.
+    // Establish provider identifiers first if absent; never CAS a refund state outside that transaction.
+    if(values.mp_order_id!==(pedido.mp_order_id ?? '') || values.id_pago!==(pedido.id_pago ?? '')) {
+      await deps.cas(pedido,{mp_order_id:values.mp_order_id,id_pago:values.id_pago});
+    }
+    await deps.persistMovimientos(order,proof.movimientos);
+    const current=await deps.reread();
+    return {order:current,changed:current.estado_pago!==pedido.estado_pago || current.mp_order_id!==pedido.mp_order_id || current.id_pago!==pedido.id_pago,found:true};
+  }
   if(values.estado_pago===pedido.estado_pago && values.mp_order_id===(pedido.mp_order_id ?? '') && values.id_pago===(pedido.id_pago ?? ''))
+  {
+    if(proof.movimientos.length)await deps.persistMovimientos(order,proof.movimientos);
     return {order:await deps.reread(),changed:false,found:true};
+  }
   const updated=await deps.cas(pedido,{...values,...(values.estado_pago==='aprobado' && pedido.estado_pago!=='aprobado' ? {pagado_en:new Date().toISOString()} : {})});
-  return {order:updated ?? await deps.reread(),changed:updated!==null,found:true};
+  if(proof.movimientos.length)await deps.persistMovimientos(order,proof.movimientos);
+  const current=proof.movimientos.length ? await deps.reread() : updated ?? await deps.reread();
+  return {order:current,changed:updated!==null,found:true};
 }

@@ -23,6 +23,7 @@ const PAGO_LABEL: Record<string, string> = {
   pendiente: "Pago en revisión",
   rechazado: "Pago rechazado",
   reembolsado: "Pago reembolsado",
+  parcialmente_reembolsado: "Pago parcialmente reembolsado",
 };
 
 export function Confirmation({ order, onClose, business }: { order: Order; onClose: () => void; business: BusinessConfig }) {

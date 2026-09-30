@@ -41,7 +41,7 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
     shipping,
     total,
     pago: pagoMpHistorico ? "mercadopago" : String(p.metodo_pago || "n/d"),
-    pagoEstado: pagoMpHistorico && !["rechazado", "reembolsado"].includes(String(p.estado_pago))
+    pagoEstado: pagoMpHistorico && !["rechazado", "reembolsado", "parcialmente_reembolsado"].includes(String(p.estado_pago))
       ? "aprobado" : String(p.estado_pago || "pendiente"),
     puedeDevolverMP: p.proveedor_pago === "mercadopago" && Boolean(p.mp_order_id),
     puedeConsultarMP: canReconcilePayment(p),

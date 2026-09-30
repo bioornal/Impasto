@@ -15,6 +15,7 @@ import {
 } from "@/lib/card-attempt";
 import { DatabaseOperationError, requireDbRows } from "@/lib/db-result";
 import { PricingUnavailableError } from "@/lib/pricing-safety";
+import { PaymentLedgerError } from '@/lib/payment-ledger';
 import { QuoteChangedError } from "@/lib/stabilization";
 
 const TIPOS_TARJETA = ["credit_card", "debit_card"];
@@ -219,7 +220,7 @@ export async function POST(req: NextRequest) {
         ? (detalle.errors as { message?: string }[])[0]?.message
         : undefined;
 
-      if (estado==='aprobado' || estado==='reembolsado') return responseForExistingCardOrder(confirmed as unknown as ExistingCardOrder,order);
+      if (estado==='aprobado' || estado==='reembolsado' || estado==='parcialmente_reembolsado') return responseForExistingCardOrder(confirmed as unknown as ExistingCardOrder,order);
       return NextResponse.json(
         {
           ok: false,
@@ -243,7 +244,7 @@ export async function POST(req: NextRequest) {
       getOrder:async()=>{throw new Error('Unexpected lookup');},searchOrders:async()=>{throw new Error('Unexpected search');},...store,
     },mpOrder);
     const estadoPago = reconciled.order.estado_pago as EstadoPago;
-    if(estadoPago==='reembolsado') return responseForExistingCardOrder(reconciled.order as unknown as ExistingCardOrder,order);
+    if(estadoPago==='reembolsado' || estadoPago==='parcialmente_reembolsado') return responseForExistingCardOrder(reconciled.order as unknown as ExistingCardOrder,order);
 
     if (reconciled.changed) await registrarEvento({
       pedidoId,
@@ -288,7 +289,7 @@ export async function POST(req: NextRequest) {
       total: created.total,
     });
   } catch (err: unknown) {
-    const persistenceFailure = err instanceof DatabaseOperationError || err instanceof PaymentRecoveryError;
+    const persistenceFailure = err instanceof DatabaseOperationError || err instanceof PaymentRecoveryError || err instanceof PaymentLedgerError;
     const pricingFailure = err instanceof PricingUnavailableError;
     const quoteChanged = err instanceof QuoteChangedError;
     const msg = persistenceFailure

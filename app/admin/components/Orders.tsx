@@ -197,7 +197,7 @@ export function Orders() {
             if(!response.ok || !result.ok || !result.order) throw new Error(result.error || 'No se pudo consultar el pago');
             setSelected(result.order);
             await reload();
-            return result.order.pagoEstado==='pendiente' ? 'El pago sigue pendiente. No se realizó otro cobro.' : `Estado confirmado: ${result.order.pagoEstado}`;
+            return result.order.pagoEstado==='pendiente' ? 'El pago sigue pendiente. No se realizó otro cobro.' : `Estado e importes conciliados: ${result.order.pagoEstado}. Esta consulta no inició un cobro ni una devolución.`;
           }}
         />
       )}
@@ -251,6 +251,16 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, p
   const [now] = useState(() => Date.now());
   const [consulting,setConsulting]=useState(false);
   const [consultMessage,setConsultMessage]=useState('');
+  const [ledger,setLedger]=useState<{cobros:number;devoluciones:number;neto:number;cantidad:number;sinFecha:number}|null>(null);
+  const [ledgerError,setLedgerError]=useState('');
+  useEffect(()=>{
+    let active=true;setLedger(null);setLedgerError('');
+    fetch(`/api/admin/pedidos/${order._dbId}/movimientos`,{cache:'no-store'})
+      .then(async response=>{const result=await response.json();if(!response.ok || !result.ok)throw new Error(result.error || 'Movimientos no disponibles');if(active)setLedger(result.totales);})
+      .catch(error=>{if(active)setLedgerError(error instanceof Error?error.message:'Movimientos no disponibles');});
+    return ()=>{active=false;};
+  },[order._dbId,order.pagoEstado,consultMessage]);
+  const money=(cents:number)=>'$'+(cents/100).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const steps = ["nuevo", "preparando", "en-camino", "entregado"];
   const currentIdx = steps.indexOf(order.estado);
   const habilitadoCocina = esPedidoParaCocina(order);
@@ -313,7 +323,13 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, p
             {consultMessage && <div role="status" className="text-muted" style={{fontSize:12}}>{consultMessage}</div>}
           </div>
 
-          {order.pago === "mercadopago" && order.pagoEstado === "aprobado" && order.puedeDevolverMP && onRefund && (
+          <div role="status" className="text-muted" style={{padding:14,fontSize:12}}>
+            {ledgerError || (!ledger ? 'Cargando movimientos documentados…' : ledger.cantidad===0
+              ? 'Sin movimientos documentados: importes históricos no conciliados.'
+              : `Cobrado bruto ${money(ledger.cobros)} · Devuelto ${money(ledger.devoluciones)} · Neto ${money(ledger.neto)}. ${ledger.sinFecha} movimientos sin fecha; no se atribuyen a hoy.`)}
+            {['parcialmente_reembolsado','reembolsado'].includes(order.pagoEstado) && <p>Ya hay una devolución. Consultar Mercado Pago concilia importes; no inicia otra devolución.</p>}
+          </div>
+          {order.pago === "mercadopago" && order.pagoEstado === "aprobado" && order.puedeDevolverMP && onRefund && (!ledger || ledger.devoluciones===0) && (
             <RefundBox total={order.total} onRefund={onRefund} />
           )}
 

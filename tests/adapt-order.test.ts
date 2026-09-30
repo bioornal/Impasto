@@ -60,6 +60,8 @@ if (legadoMp.estado === "nuevo" && legadoMp.pago === "mercadopago" && legadoMp.p
   fallos++;
   console.log("FALLA  estado/pago histórico del POS:", legadoMp.estado, legadoMp.pago, legadoMp.pagoEstado);
 }
+const parcialHistorico=adaptOrder({...rawConDetalle,status:'pagado_mp',estado_pago:'parcialmente_reembolsado'});
+if(parcialHistorico.pagoEstado!=='parcialmente_reembolsado'){fallos++;console.log('FALLA parcial histórico convertido en aprobado');}
 const legadoReembolsado = adaptOrder({ ...rawConDetalle, status: "pagado_mp", metodo_pago: "efectivo", estado_pago: "reembolsado" });
 if (legadoReembolsado.pagoEstado === "reembolsado") {
   console.log("PASA   devolución explícita prevalece sobre estado MP histórico");

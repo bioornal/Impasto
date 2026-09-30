@@ -16,3 +16,15 @@ test('recovery transport sends only GET with exact external reference and requir
     for(const call of calls){assert.equal(call.init.method,'GET');assert.equal(call.init.body,undefined);assert.equal(call.init.redirect,'error');}
   } finally {globalThis.fetch=oldFetch;if(oldToken===undefined)delete process.env.MERCADOPAGO_AUTH_HEADER;else process.env.MERCADOPAGO_AUTH_HEADER=oldToken;}
 });
+
+// The journal is intentionally one refund intention per order, regardless of later requested amount.
+test('refund transport preserves historical key shape and uses the durable reserved key',async()=>{
+ const {refundOrder}=await import('../lib/mercadopago');
+ const oldFetch=globalThis.fetch,oldToken=process.env.MERCADOPAGO_AUTH_HEADER;const calls:any[]=[];
+ process.env.MERCADOPAGO_AUTH_HEADER='FAKE-TEST-TOKEN';globalThis.fetch=async(url,init)=>{calls.push({url:String(url),init});return new Response('{}',{status:200});};
+ try {
+  await refundOrder('ORD/id',{transactionId:'PAY',amount:30});await refundOrder('ORD/id',{transactionId:'PAY',amount:30},'refund-ORD/id-30');
+  assert.equal(calls[0].url,'https://api.mercadopago.com/v1/orders/ORD%2Fid/refund');
+  assert.equal(calls[0].init.headers['X-Idempotency-Key'],calls[1].init.headers['X-Idempotency-Key']);
+ }finally {globalThis.fetch=oldFetch;if(oldToken===undefined)delete process.env.MERCADOPAGO_AUTH_HEADER;else process.env.MERCADOPAGO_AUTH_HEADER=oldToken;}
+});

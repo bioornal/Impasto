@@ -119,5 +119,6 @@ chequear(
   decideCardAttempt({ ...existente, email_cliente: "otra@ejemplo.com" }, solicitud) === "conflict",
 );
 
+chequear("un parcial reembolsado conserva su intento cerrado sin volver a cobrar", decideCardAttempt({...existente,estado_pago:'parcialmente_reembolsado'},solicitud)==='closed');
 console.log(fallos === 0 ? "\nTodo en orden." : `\n${fallos} fallo(s).`);
 process.exit(fallos === 0 ? 0 : 1);

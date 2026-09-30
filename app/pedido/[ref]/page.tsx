@@ -26,7 +26,7 @@ interface OrderData {
   envio: number;
   total: number;
   estado: "nuevo" | "preparando" | "en-camino" | "entregado" | "cancelado";
-  estadoPago: "pendiente" | "aprobado" | "rechazado" | "reembolsado";
+  estadoPago: "pendiente" | "aprobado" | "rechazado" | "reembolsado" | "parcialmente_reembolsado";
   metodoPago: string;
   cuando: string;
   notas: string;
@@ -70,6 +70,7 @@ const ESTADO_PAGO_LABEL: Record<string, { label: string; color: string }> = {
   pendiente: { label: "Pago pendiente / en revisión", color: "#b2472a" },
   rechazado: { label: "Pago rechazado", color: "#c62828" },
   reembolsado: { label: "Pago reembolsado", color: "#616161" },
+  parcialmente_reembolsado: { label: "Pago parcialmente reembolsado", color: "#616161" },
 };
 
 export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: string }> }) {
