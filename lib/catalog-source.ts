@@ -3,6 +3,7 @@ import type { Etiqueta } from "./etiquetas";
 import type { CatalogData } from "../types";
 import type { PricingDefaults, PricingIngredient, PricingRecipe, RecipeIngredient, SalePriceRule } from "./effective-prices";
 import { PricingUnavailableError, requirePricingRows, resolveValidatedPrices, sellablePrice } from "./pricing-safety";
+import {presupuestoMensual} from './presupuesto-precios';
 
 type QueryResult = { data?: unknown; error?: unknown };
 
@@ -18,20 +19,10 @@ export interface CatalogQueryResults {
   config_negocio: QueryResult;
   costos_fijos: QueryResult;
   costos_variables: QueryResult;
-  gastos: QueryResult;
 }
 
 export function settleCatalogQuery(query: PromiseLike<QueryResult>): Promise<QueryResult> {
   return Promise.resolve(query).catch((error) => ({ data: null, error }));
-}
-
-function sumCosts(source: string, rows: Record<string, unknown>[], field: string): number {
-  return rows.reduce((total, row) => {
-    const raw = row?.[field];
-    const amount = raw == null || raw === "" ? Number.NaN : Number(raw);
-    if (!Number.isFinite(amount) || amount < 0) throw new PricingUnavailableError(source);
-    return total + amount;
-  }, 0);
 }
 
 export function assembleCatalogFromResults(results: CatalogQueryResults): CatalogData {
@@ -43,11 +34,8 @@ export function assembleCatalogFromResults(results: CatalogQueryResults): Catalo
   const defaultsRows = requirePricingRows<PricingDefaults>("config_negocio", results.config_negocio);
   const fixed = requirePricingRows<Record<string, unknown>>("costos_fijos", results.costos_fijos);
   const variable = requirePricingRows<Record<string, unknown>>("costos_variables", results.costos_variables);
-  const expenses = requirePricingRows<Record<string, unknown>>("gastos", results.gastos);
-
-  const totalOperativo = sumCosts("costos_fijos", fixed, "monto") +
-    sumCosts("costos_variables", variable, "monto_referencia") +
-    sumCosts("gastos", expenses, "monto");
+  let totalOperativo:number;
+  try{totalOperativo=presupuestoMensual(fixed,variable);}catch{throw new PricingUnavailableError('presupuesto mensual');}
   const resolution = resolveValidatedPrices({
     recipes, recipeIngredients, ingredients, rules,
     defaults: defaultsRows[0], totalOperativo,

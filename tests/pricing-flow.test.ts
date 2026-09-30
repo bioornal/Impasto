@@ -19,8 +19,25 @@ const ok = () => ({
   costos_fijos: rows(), costos_variables: rows(), gastos: rows(),
 });
 
+test('el precio usa presupuesto mensual y no depende de gastos históricos ni de su disponibilidad',()=>{
+  const input=ok();
+  input.recetas=rows([{id:'r',nombre:'Muzza',precio_prepizza:485,precio_salsa:236}]);
+  input.receta_ingredientes=rows([{receta_id:'r',ingrediente_id:'i',cantidad_kg:1}]);
+  input.ingredientes=rows([{id:'i',precio_kg:1000,multiplo_rendimiento:1}]);
+  input.precios_venta=rows([{receta_id:'r',nombre:'Muzza',markup:2,subcategoria:'Pizzas'}]);
+  input.costos_fijos=rows([{activo:true,monto:100000},{activo:false,monto:900000}]);
+  input.costos_variables=rows([{monto_referencia:30000}]);
+  for(const expenses of [rows(),rows([{monto:99999999}]),{data:null,error:new Error('expenses down')}]){
+    const catalog=assembleCatalogFromResults({...input,...{gastos:expenses}});
+    assert.equal(catalog.pizzas.find(p=>p.id==='p')?.precio,4000);
+  }
+  const changed=assembleCatalogFromResults({...input,costos_variables:rows([{monto_referencia:1000000}])});
+  assert.equal(changed.pizzas.find(p=>p.id==='p')?.precio,6500,'editar el presupuesto previsto sí cambia el precio');
+  assert.throws(()=>assembleCatalogFromResults({...input,costos_variables:rows([{monto_referencia:null}])}),PricingUnavailableError);
+});
+
 test("cada fuente crítica fallida o nula bloquea el catálogo", () => {
-  const critical = ["productos", "recetas", "receta_ingredientes", "ingredientes", "precios_venta", "config_negocio", "costos_fijos", "costos_variables", "gastos"] as const;
+  const critical = ["productos", "recetas", "receta_ingredientes", "ingredientes", "precios_venta", "config_negocio", "costos_fijos", "costos_variables"] as const;
   for (const source of critical) {
     for (const failure of [{ data: null, error: new Error("DB") }, { data: null, error: null }]) {
       assert.throws(() => assembleCatalogFromResults({ ...ok(), [source]: failure }), PricingUnavailableError, source);

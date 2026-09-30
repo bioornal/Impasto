@@ -20,7 +20,6 @@ export async function getCatalogData(): Promise<CatalogData> {
       defaultsResult,
       costosFijosResult,
       costosVariablesResult,
-      gastosResult,
     ] = await Promise.all([
       // `archivado` es la baja de carta: el producto sigue en la base (y en el
       // recetario, para costos históricos) pero no se muestra más al cliente.
@@ -39,9 +38,8 @@ export async function getCatalogData(): Promise<CatalogData> {
       safeQuery(db.database.from("ingredientes").select("id,nombre,unidad,precio_kg,multiplo_rendimiento,gramos_por_unidad")),
       safeQuery(db.database.from("precios_venta").select("receta_id,nombre,markup,subcategoria")),
       safeQuery(db.database.from("config_negocio").select("pizzas_objetivo_mes,precio_prepizza_default,precio_salsa_default,comision_tarjeta_pct,comision_en_precio").limit(1)),
-      safeQuery(db.database.from("costos_fijos").select("monto").eq("activo", true)),
+      safeQuery(db.database.from("costos_fijos").select("monto,activo").eq("activo", true)),
       safeQuery(db.database.from("costos_variables").select("monto_referencia")),
-      safeQuery(db.database.from("gastos").select("monto")),
     ]);
     for (const [source, result] of [
       ["promociones", promosResult], ["testimonios", reviewsResult], ["etiquetas", etiquetasResult],
@@ -52,7 +50,7 @@ export async function getCatalogData(): Promise<CatalogData> {
       productos: productsResult, promociones: promosResult, testimonios: reviewsResult, etiquetas: etiquetasResult,
       recetas: recipesResult, receta_ingredientes: recipeIngredientsResult, ingredientes: ingredientsResult,
       precios_venta: salePricesResult, config_negocio: defaultsResult, costos_fijos: costosFijosResult,
-      costos_variables: costosVariablesResult, gastos: gastosResult,
+      costos_variables: costosVariablesResult,
     });
   } catch (error) {
     if (error instanceof PricingUnavailableError) console.error(`[catalog] fuente crítica ${error.source} no disponible`);

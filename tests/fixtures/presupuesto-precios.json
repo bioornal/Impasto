@@ -1,0 +1,6 @@
+[
+  {"nombre":"fijos activos y variables previstos", "fijos":[{"activo":true,"monto":100000},{"activo":false,"monto":900000}], "variables":[{"monto_referencia":20000},{"monto_referencia":10000}], "gastos":[{"monto":99999999}], "objetivo":800, "total":130000, "porUnidad":163},
+  {"nombre":"presupuesto vacío legítimo", "fijos":[], "variables":[], "gastos":[{"monto":100000}], "objetivo":800, "total":0, "porUnidad":0},
+  {"nombre":"montos decimales y cero", "fijos":[{"activo":true,"monto":"1000.50"},{"activo":null,"monto":50000}], "variables":[{"monto_referencia":0},{"monto_referencia":"999.50"}], "gastos":[], "objetivo":100, "total":2000, "porUnidad":20},
+  {"nombre":"extra previsto explícito", "fijos":[{"activo":true,"monto":100000}], "variables":[{"nombre":"Extras previstos","monto_referencia":28000}], "gastos":[{"monto":1}], "objetivo":800, "total":128000, "porUnidad":160}
+]
