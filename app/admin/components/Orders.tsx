@@ -20,7 +20,7 @@ const fmtDateTime = (iso: string) => new Date(iso).toLocaleDateString("es-AR", {
 const FILTERS: [string, string][] = [["todos","Todos"],["nuevo","Nuevos"],["preparando","Preparando"],["en-camino","En camino"],["entregado","Entregados"],["cancelado","Cancelados"]];
 
 export function Orders() {
-  const { state, updateOrderStatus, updateOrderPayment, refundOrder } = useStore();
+  const { state, updateOrderStatus, updateOrderPayment, refundOrder, reload } = useStore();
   const [filter, setFilter] = useState("todos");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<AdminOrder | null>(null);
@@ -191,6 +191,14 @@ export function Orders() {
             if (await updateOrderPayment(selected._dbId, estado)) setSelected({ ...selected, pagoEstado: estado });
           }}
           onRefund={(monto) => { refundOrder(selected._dbId, monto); setSelected(null); }}
+          onReconcile={async () => {
+            const response=await fetch(`/api/admin/pedidos/${selected._dbId}/reconciliar`,{method:'POST'});
+            const result=await response.json();
+            if(!response.ok || !result.ok || !result.order) throw new Error(result.error || 'No se pudo consultar el pago');
+            setSelected(result.order);
+            await reload();
+            return result.order.pagoEstado==='pendiente' ? 'El pago sigue pendiente. No se realizó otro cobro.' : `Estado confirmado: ${result.order.pagoEstado}`;
+          }}
         />
       )}
     </>
@@ -239,8 +247,10 @@ function RefundBox({ total, onRefund }: { total: number; onRefund: (monto?: numb
   );
 }
 
-function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, printing, printMessage }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void; onRefund?: (monto?: number) => void; onPrint: () => void; printing: boolean; printMessage: string | null }) {
+function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, printing, printMessage, onReconcile }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void; onRefund?: (monto?: number) => void; onPrint: () => void; printing: boolean; printMessage: string | null; onReconcile:()=>Promise<string> }) {
   const [now] = useState(() => Date.now());
+  const [consulting,setConsulting]=useState(false);
+  const [consultMessage,setConsultMessage]=useState('');
   const steps = ["nuevo", "preparando", "en-camino", "entregado"];
   const currentIdx = steps.indexOf(order.estado);
   const habilitadoCocina = esPedidoParaCocina(order);
@@ -296,6 +306,11 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, p
             <div><b>Pago: </b><span style={{ textTransform: "capitalize" }}>{order.pago}</span>{order.cuentaTransferencia ? <span> · {order.cuentaTransferencia}</span> : null}<div className="text-muted" style={{ fontSize: 12 }}>Estado: {order.pagoEstado}</div></div>
             {order.pagoEstado === "pendiente" && order.pago !== "mercadopago" && <button className="btn btn-success btn-sm" onClick={() => onPayment("aprobado")}>Marcar pago recibido</button>}
             {order.pagoEstado === "pendiente" && order.pago === "mercadopago" && <span className="text-muted" style={{ fontSize: 12 }}>{order.pagoMpManual ? "Verificar en MP y confirmar en Carro Fogón" : "Se actualiza automáticamente"}</span>}
+            {order.puedeConsultarMP && <button className="btn btn-ghost btn-sm" disabled={consulting} onClick={async()=>{
+              setConsulting(true);setConsultMessage('');
+              try{setConsultMessage(await onReconcile());}catch(error){setConsultMessage(error instanceof Error ? error.message : 'No se pudo consultar el pago');}finally{setConsulting(false);}
+            }}>{consulting ? 'Consultando…' : 'Consultar Mercado Pago'}</button>}
+            {consultMessage && <div role="status" className="text-muted" style={{fontSize:12}}>{consultMessage}</div>}
           </div>
 
           {order.pago === "mercadopago" && order.pagoEstado === "aprobado" && order.puedeDevolverMP && onRefund && (

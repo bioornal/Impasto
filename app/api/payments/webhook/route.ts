@@ -1,121 +1,51 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/insforge";
-import { registrarEvento } from "@/lib/orders";
-import { notificarPedido, avisoDesdePedido } from "@/lib/notifications";
-import {
-  getOrder,
-  getPayment,
-  mapOrderStatus,
-  mapPaymentStatus,
-  verifyWebhookSignature,
-  type EstadoPago,
-} from "@/lib/mercadopago";
-import { requireDbRows, requireUpdatedRow } from "@/lib/db-result";
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/insforge';
+import { registrarEvento } from '@/lib/orders';
+import { notificarPedido,avisoDesdePedido } from '@/lib/notifications';
+import { getOrder,getPayment,verifyWebhookSignature,type MpOrder } from '@/lib/mercadopago';
+import { reconcilePayment } from '@/lib/payment-recovery-server';
+import { PAYMENT_COLUMNS } from '@/lib/payment-recovery-store';
+import type {RecoveryPedido} from '@/lib/payment-recovery';
 
-/** Resuelve la notificación contra la API de MP: nunca confiamos en el payload recibido. */
-async function resolverNotificacion(tipo: string, id: string) {
-  if (tipo.startsWith("payment")) {
-    const pago = await getPayment(id);
-    return {
-      externalReference: String(pago?.external_reference || ""),
-      estado: mapPaymentStatus(String(pago?.status || "")),
-      idPago: String(pago?.id || ""),
-      mpOrderId: String(pago?.order?.id || ""),
-      detalle: { status: pago?.status, status_detail: pago?.status_detail },
-    };
-  }
-
-  const orden = await getOrder(id);
-  const pago = orden.transactions?.payments?.[0];
-  return {
-    externalReference: String(orden.external_reference || ""),
-    estado: mapOrderStatus(orden.status, orden.status_detail),
-    idPago: String(pago?.id || ""),
-    mpOrderId: String(orden.id || ""),
-    detalle: { status: orden.status, status_detail: orden.status_detail },
-  };
-}
-
-export async function POST(req: NextRequest) {
-  const dataId = req.nextUrl.searchParams.get("data.id") || req.nextUrl.searchParams.get("id");
-
-  if (!verifyWebhookSignature({
-    signatureHeader: req.headers.get("x-signature"),
-    requestId: req.headers.get("x-request-id"),
-    dataId,
-  })) {
-    return NextResponse.json({ ok: false, error: "Firma inválida" }, { status: 401 });
-  }
-
-  let payload: Record<string, unknown> = {};
+export async function POST(req:NextRequest) {
+  const signedId=req.nextUrl.searchParams.get('data.id') || req.nextUrl.searchParams.get('id');
+  if(!verifyWebhookSignature({signatureHeader:req.headers.get('x-signature'),requestId:req.headers.get('x-request-id'),dataId:signedId}))
+    return NextResponse.json({ok:false,error:'Firma inválida'},{status:401});
+  let payload:Record<string,unknown>={};
+  try { payload=await req.json(); } catch { /* Query-only webhook is supported. */ }
+  const type=String(payload.type || req.nextUrl.searchParams.get('type') || '');
+  const bodyId=(payload.data as {id?:unknown}|undefined)?.id;
+  // Never resolve a resource different from the one covered by the signature.
+  if(bodyId!==undefined && String(bodyId).toLowerCase()!==String(signedId).toLowerCase()) return NextResponse.json({ok:false,error:'Recurso no firmado'},{status:401});
+  if(!signedId || (!type.startsWith('payment') && !type.startsWith('order'))) return NextResponse.json({ok:true,ignored:true});
   try {
-    payload = await req.json();
-  } catch {
-    // Mercado Pago también notifica sin cuerpo; los datos vienen en la query.
-  }
-
-  const tipo = String(payload.type || req.nextUrl.searchParams.get("type") || "");
-  const id = String((payload.data as { id?: string } | undefined)?.id || dataId || "");
-  if (!tipo || !id) return NextResponse.json({ ok: true, ignored: true });
-
-  try {
-    const resuelto = await resolverNotificacion(tipo, id);
-    if (!resuelto.externalReference) return NextResponse.json({ ok: true, ignored: true });
-
-    // Se traen los datos completos porque un pago que se aprueba acá puede ser
-    // la primera noticia que tenga el local de ese pedido: si la tarjeta quedó
-    // pendiente en el checkout, nunca se avisó.
-    const lookup = await db.database
-      .from("pedidos")
-      .select("id,estado_pago,numero_pedido,external_reference,nombre_cliente,telefono_cliente,email_cliente,direccion,modalidad,productos,subtotal,envio,total,metodo_pago")
-      .eq("external_reference", resuelto.externalReference)
-      .eq("proyecto_id", "impasto")
-      .limit(1);
-
-    const rows = requireDbRows(lookup as { data: Record<string, unknown>[] | null; error: unknown }, "leer el pedido del webhook");
-    const pedido = rows[0];
-    if (!pedido) return NextResponse.json({ ok: true, ignored: true });
-
-    // Idempotencia: si el estado no cambió, no volvemos a escribir ni a registrar evento.
-    if (pedido.estado_pago === resuelto.estado) return NextResponse.json({ ok: true, unchanged: true });
-
-    const estado = resuelto.estado as EstadoPago;
-    const persisted = await db.database
-      .from("pedidos")
-      .update({
-        estado_pago: estado,
-        id_pago: resuelto.idPago || "",
-        ...(resuelto.mpOrderId ? { mp_order_id: resuelto.mpOrderId } : {}),
-        ...(estado === "aprobado" ? { pagado_en: new Date().toISOString() } : {}),
-      })
-      .eq("id", pedido.id)
-      .eq("proyecto_id", "impasto")
-      .select("id,estado_pago");
-    requireUpdatedRow(
-      persisted as { data: { id: string; estado_pago: string }[] | null; error: unknown },
-      "guardar el pago recibido por webhook",
-    );
-
-    await registrarEvento({
-      pedidoId: String(pedido.id),
-      tipo: "pago",
-      valor: estado,
-      origen: "webhook",
-      detalle: { ...resuelto.detalle, notificacion: tipo, recurso: id },
-    });
-
-    if (estado === "aprobado") {
-      // Un fallo de aviso no puede devolver 500: Mercado Pago reintentaría la
-      // notificación de un pago que ya quedó bien registrado.
-      try {
-        await notificarPedido(avisoDesdePedido(pedido as Record<string, unknown>), "pago_aprobado");
-      } catch { /* queda registrado como fallido en `notificaciones` */ }
+    let providerOrder:MpOrder|undefined;
+    let reference:string;
+    if(type.startsWith('payment')) {
+      const payment=await getPayment(signedId);
+      if(String(payment?.id)!==signedId) throw new Error('El recurso de Mercado Pago no coincide');
+      reference=String(payment?.external_reference || '');
+      // payment.order.id can refer to a legacy merchant order. Do not treat it
+      // as an Orders API id or approve from a payment payload alone.
+    } else {
+      providerOrder=await getOrder(signedId);
+      if(providerOrder.id.toLowerCase()!==signedId.toLowerCase()) throw new Error('La orden de Mercado Pago no coincide');
+      reference=String(providerOrder.external_reference || '');
     }
-
-    return NextResponse.json({ ok: true });
-  } catch (err: unknown) {
-    // Un 500 hace que Mercado Pago reintente la notificación más tarde.
-    const msg = err instanceof Error ? err.message : "Error procesando la notificación";
-    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+    if(!reference) return NextResponse.json({ok:true,ignored:true});
+    const {data,error}=await db.database.from('pedidos').select(PAYMENT_COLUMNS).eq('external_reference',reference).eq('proyecto_id','impasto').limit(1);
+    if(error || !Array.isArray(data)) throw new Error('No se pudo leer el pedido del webhook');
+    const pedido=data[0] as RecoveryPedido|undefined;
+    if(!pedido || pedido.proveedor_pago!=='mercadopago' || pedido.metodo_pago!=='mercadopago') return NextResponse.json({ok:true,ignored:true});
+    const result=await reconcilePayment(pedido,providerOrder);
+    if(result.changed) await registrarEvento({pedidoId:pedido.id,tipo:'pago',valor:result.order.estado_pago,origen:'webhook',detalle:{notificacion:type,recurso:signedId}});
+    // Even unchanged approval can have a durable notification still pending.
+    // Use the confirmed row, including a reread after a lost CAS.
+    if(result.order.estado_pago==='aprobado') {
+      try { await notificarPedido(avisoDesdePedido(result.order),'pago_aprobado'); } catch { /* The notification queue retains failures. */ }
+    }
+    return NextResponse.json({ok:true,unchanged:!result.changed});
+  } catch {
+    return NextResponse.json({ok:false,error:'No se pudo verificar el pago; se reintentará la notificación'},{status:500});
   }
 }

@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { createPedido, validateOrderPayload, registrarEvento, clearCartDraft, type CreatedOrder, type OrderPayload } from "@/lib/orders";
-import { createCardOrder, mapOrderStatus, type EstadoPago, type MpOrder } from "@/lib/mercadopago";
-import { notificarPedido } from "@/lib/notifications";
+import { createCardOrder, type EstadoPago, type MpOrder } from "@/lib/mercadopago";
+import { notificarPedido, avisoDesdePedido } from "@/lib/notifications";
+import { reconcilePayment } from '@/lib/payment-recovery-server';
+import { recoverPayment, type RecoveryPedido, PaymentRecoveryError } from '@/lib/payment-recovery';
+import { PAYMENT_COLUMNS, paymentRecoveryStore } from '@/lib/payment-recovery-store';
+import {recoverMatchingCardAttempt} from '@/lib/payment-card-recovery';
+import {classifyPaymentCreateFailure} from '@/lib/payment-create-failure';
 import { limitar, limpiarIntentosViejos } from "@/lib/rate-limit";
 import {
-  decideCardAttempt,
   normalizeCardAttemptReference,
   type PersistedCardAttempt,
 } from "@/lib/card-attempt";
-import { DatabaseOperationError, requireDbRows, requireUpdatedRow } from "@/lib/db-result";
+import { DatabaseOperationError, requireDbRows } from "@/lib/db-result";
 import { PricingUnavailableError } from "@/lib/pricing-safety";
 import { QuoteChangedError } from "@/lib/stabilization";
 
@@ -22,6 +26,10 @@ interface ExistingCardOrder extends PersistedCardAttempt {
   subtotal: number;
   envio: number;
   mp_order_id?: string;
+  id_pago?: string;
+  created_at?: string;
+  proveedor_pago?: string;
+  metodo_pago?: string;
 }
 
 function createdFromExisting(existing: ExistingCardOrder): CreatedOrder {
@@ -42,7 +50,7 @@ function createdFromExisting(existing: ExistingCardOrder): CreatedOrder {
 async function findExistingCardOrder(reference: string): Promise<ExistingCardOrder | null> {
   const result = await db.database
     .from("pedidos")
-    .select("id,total,subtotal,envio,external_reference,productos,estado_pago,nombre_cliente,telefono_cliente,email_cliente,direccion,modalidad,mp_order_id")
+    .select(PAYMENT_COLUMNS)
     .eq("external_reference", reference)
     .eq("proyecto_id", "impasto")
     .limit(1);
@@ -51,7 +59,13 @@ async function findExistingCardOrder(reference: string): Promise<ExistingCardOrd
 }
 
 async function responseForExistingCardOrder(existing: ExistingCardOrder, order: OrderPayload) {
-  const decision = decideCardAttempt(existing, order);
+  const attempt = await recoverMatchingCardAttempt(existing,order,async row=>{
+    const recovered=await reconcilePayment(row as unknown as RecoveryPedido);
+    return {...row,...recovered.order} as ExistingCardOrder;
+  });
+  if (!attempt.existing) return NextResponse.json({ok:false,error:'La referencia de pago pertenece a otro carrito. Actualizá el checkout e intentá nuevamente.'},{status:409});
+  const decision=attempt.decision;
+  existing=attempt.existing;
   const created = createdFromExisting(existing);
   const common = {
     numero: created.referencia,
@@ -64,6 +78,7 @@ async function responseForExistingCardOrder(existing: ExistingCardOrder, order: 
 
   if (decision === "recover-approved") {
     await clearCartDraft();
+    try { await notificarPedido(avisoDesdePedido(existing as unknown as Record<string,unknown>),'pago_aprobado'); } catch { /* durable notification recovery */ }
     return NextResponse.json({ ok: true, recovered: true, ...common });
   }
   if (decision === "wait-pending") {
@@ -78,26 +93,10 @@ async function responseForExistingCardOrder(existing: ExistingCardOrder, order: 
       { status: 402 },
     );
   }
-  if (decision === "conflict") {
-    return NextResponse.json(
-      { ok: false, error: "La referencia de pago pertenece a otro carrito. Actualizá el checkout e intentá nuevamente." },
-      { status: 409 },
-    );
-  }
   return NextResponse.json(
     { ok: false, ...common, error: "Ese intento de pago ya está cerrado." },
     { status: 409 },
   );
-}
-
-async function persistPaymentState(pedidoId: string, values: Record<string, unknown>) {
-  const result = await db.database
-    .from("pedidos")
-    .update(values)
-    .eq("id", pedidoId)
-    .eq("proyecto_id", "impasto")
-    .select("id,estado_pago");
-  return requireUpdatedRow(result as { data: { id: string; estado_pago: string }[] | null; error: unknown }, "guardar el estado del pago");
 }
 
 /** Mensaje mostrable según por qué Mercado Pago no aprobó el pago. */
@@ -180,6 +179,9 @@ export async function POST(req: NextRequest) {
       throw createError;
     }
     pedidoId = created.id;
+    const store = paymentRecoveryStore(db,pedidoId);
+    const before = await store.reread();
+    if(before.estado_pago!=='pendiente' || before.mp_order_id || before.id_pago) return responseForExistingCardOrder(before as unknown as ExistingCardOrder,order);
 
     let mpOrder: MpOrder;
     try {
@@ -196,11 +198,13 @@ export async function POST(req: NextRequest) {
     } catch (mpError: unknown) {
       const detalle = (mpError as { body?: Record<string, unknown> }).body || {};
       const httpStatus = (mpError as { status?: number }).status || 0;
-      // 4xx es un rechazo definitivo; 5xx o red pueden haber cobrado igual,
-      // así que se dejan pendientes para que los resuelva el webhook.
-      const estado: EstadoPago = httpStatus >= 400 && httpStatus < 500 ? "rechazado" : "pendiente";
+      // 408/409/423/429, 5xx y red no descartan una aceptación anterior.
+      // Conservar pendiente y la misma referencia; nunca habilitar otro cobro
+      // a partir de timeout, conflicto o clave de idempotencia bloqueada.
+      let estado: EstadoPago = classifyPaymentCreateFailure(httpStatus);
 
-      await persistPaymentState(pedidoId, { estado_pago: estado });
+      const confirmed = await store.cas(before,{estado_pago:estado}) ?? await store.reread();
+      estado = confirmed.estado_pago as EstadoPago;
       await registrarEvento({
         pedidoId,
         tipo: "pago",
@@ -215,6 +219,7 @@ export async function POST(req: NextRequest) {
         ? (detalle.errors as { message?: string }[])[0]?.message
         : undefined;
 
+      if (estado==='aprobado' || estado==='reembolsado') return responseForExistingCardOrder(confirmed as unknown as ExistingCardOrder,order);
       return NextResponse.json(
         {
           ok: false,
@@ -234,16 +239,13 @@ export async function POST(req: NextRequest) {
     }
 
     const pago = mpOrder.transactions?.payments?.[0];
-    const estadoPago = mapOrderStatus(mpOrder.status, mpOrder.status_detail);
+    const reconciled = await recoverPayment(before,{
+      getOrder:async()=>{throw new Error('Unexpected lookup');},searchOrders:async()=>{throw new Error('Unexpected search');},...store,
+    },mpOrder);
+    const estadoPago = reconciled.order.estado_pago as EstadoPago;
+    if(estadoPago==='reembolsado') return responseForExistingCardOrder(reconciled.order as unknown as ExistingCardOrder,order);
 
-    await persistPaymentState(pedidoId, {
-      estado_pago: estadoPago,
-      mp_order_id: String(mpOrder.id || ""),
-      id_pago: String(pago?.id || ""),
-      ...(estadoPago === "aprobado" ? { pagado_en: new Date().toISOString() } : {}),
-    });
-
-    await registrarEvento({
+    if (reconciled.changed) await registrarEvento({
       pedidoId,
       tipo: "pago",
       valor: estadoPago,
@@ -260,20 +262,7 @@ export async function POST(req: NextRequest) {
     if (estadoPago === "aprobado") {
       await clearCartDraft();
       try {
-        await notificarPedido({
-          pedidoId,
-          referencia: created.referencia,
-          nombre: order.nombre,
-          email: order.email,
-          tel: order.tel,
-          mode: order.mode,
-          dir: order.dir,
-          items: created.items,
-          subtotal: created.subtotal,
-          shipping: created.shipping,
-          total: created.total,
-          metodoPago: "mercadopago",
-        }, "pago_aprobado");
+        await notificarPedido(avisoDesdePedido(reconciled.order), "pago_aprobado");
       } catch { /* queda registrado como fallido en `notificaciones` */ }
     }
 
@@ -299,7 +288,7 @@ export async function POST(req: NextRequest) {
       total: created.total,
     });
   } catch (err: unknown) {
-    const persistenceFailure = err instanceof DatabaseOperationError;
+    const persistenceFailure = err instanceof DatabaseOperationError || err instanceof PaymentRecoveryError;
     const pricingFailure = err instanceof PricingUnavailableError;
     const quoteChanged = err instanceof QuoteChangedError;
     const msg = persistenceFailure

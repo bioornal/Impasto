@@ -11,6 +11,9 @@ export interface MpOrder {
   status_detail: string;
   external_reference?: string;
   total_amount?: string;
+  total_paid_amount?: string;
+  currency?: string;
+  country_code?: string;
   transactions?: {
     payments?: {
       id: string;
@@ -51,6 +54,7 @@ async function mpFetch(path: string, init: RequestInit & { idempotencyKey?: stri
   const { idempotencyKey, ...rest } = init;
   const response = await fetch(`${MP_API}${path}`, {
     ...rest,
+    redirect: 'error',
     headers: {
       Authorization: `Bearer ${accessToken()}`,
       "Content-Type": "application/json",
@@ -106,7 +110,12 @@ export async function createCardOrder(input: CardPaymentInput): Promise<MpOrder>
 }
 
 export async function getOrder(orderId: string): Promise<MpOrder> {
-  return mpFetch(`/v1/orders/${orderId}`);
+  return mpFetch(`/v1/orders/${encodeURIComponent(orderId)}`,{method:'GET'});
+}
+
+export async function searchOrders(externalReference:string,window:{begin_date:string;end_date:string}):Promise<unknown> {
+  const query=new URLSearchParams({...window,external_reference:externalReference,limit:'2',offset:'0'});
+  return mpFetch(`/v1/orders?${query}`,{method:'GET'});
 }
 
 /**
@@ -135,7 +144,7 @@ export async function refundOrder(
 
 /** Las notificaciones de tipo `payment` traen el id del pago, no el de la orden. */
 export async function getPayment(paymentId: string) {
-  return mpFetch(`/v1/payments/${paymentId}`);
+  return mpFetch(`/v1/payments/${encodeURIComponent(paymentId)}`,{method:'GET'});
 }
 
 /**
@@ -143,22 +152,7 @@ export async function getPayment(paymentId: string) {
  * Referencia: estados `created`, `processed`, `processing`, `action_required`,
  * `canceled`, `charged_back`, `expired`, `failed`, `refunded`.
  */
-export function mapOrderStatus(status: string, statusDetail = ""): EstadoPago {
-  switch (status) {
-    case "processed":
-      return statusDetail === "partially_refunded" ? "reembolsado" : "aprobado";
-    case "refunded":
-    case "charged_back":
-      return "reembolsado";
-    case "canceled":
-    case "expired":
-    case "failed":
-      return "rechazado";
-    default:
-      // created, processing, action_required y cualquier estado nuevo.
-      return "pendiente";
-  }
-}
+export {mapOrderStatus} from './payment-status';
 
 /** Estados de la API de pagos v1, que llegan por webhook de tipo `payment`. */
 export function mapPaymentStatus(status: string): EstadoPago {

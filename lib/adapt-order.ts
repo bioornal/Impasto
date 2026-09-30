@@ -1,6 +1,7 @@
 ﻿import { DELIVERY_FEE } from "./business";
 import { datosDesdePedido } from "./cuentas-transferencia";
 import type { AdminOrder, OrderItem } from "../app/admin/components/types";
+import {canReconcilePayment} from './payment-recovery';
 
 export function adaptOrder(p: Record<string, unknown>): AdminOrder {
   const mode =
@@ -43,6 +44,7 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
     pagoEstado: pagoMpHistorico && !["rechazado", "reembolsado"].includes(String(p.estado_pago))
       ? "aprobado" : String(p.estado_pago || "pendiente"),
     puedeDevolverMP: p.proveedor_pago === "mercadopago" && Boolean(p.mp_order_id),
+    puedeConsultarMP: canReconcilePayment(p),
     pagoMpManual: p.metodo_pago === "mercadopago" && !p.mp_order_id && (!p.external_reference || String(p.external_reference).startsWith('POS-')),
     // En qué cuenta buscar la plata: la que se le mostró al cliente al pedir.
     cuentaTransferencia: datosDesdePedido(p.cuenta_transferencia)?.nombre ?? "",

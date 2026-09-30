@@ -1,9 +1,9 @@
-import { db } from "@/lib/insforge";
-import { sendEmail } from "@/lib/email";
-import { sendTelegram } from "@/lib/telegram";
-import { getBusinessConfig } from "@/lib/business-server";
+
+
+
+
 import { fmt } from "@/lib/utils";
-import { plantillaLocal } from "@/lib/aviso-local";
+
 import type { BusinessConfig } from "@/lib/business";
 import type { CartItem } from "@/types";
 
@@ -22,7 +22,7 @@ const METODO_LABEL: Record<string, string> = {
   mercadopago: "Tarjeta (Mercado Pago)",
 };
 
-function plantilla(aviso: AvisoPedido, business: BusinessConfig, tipo: TipoAviso) {
+export function plantilla(aviso: AvisoPedido, business: BusinessConfig, tipo: TipoAviso) {
   const esDelivery = aviso.mode === "delivery";
   const titulo = tipo === "pago_aprobado" ? "Tu pago se acreditó" : "Recibimos tu pedido";
   const bajada = tipo === "pago_aprobado"
@@ -72,77 +72,7 @@ function plantilla(aviso: AvisoPedido, business: BusinessConfig, tipo: TipoAviso
   return { subject: `${titulo} · ${aviso.referencia} · ${business.name}`, html };
 }
 
-/**
- * Envía un aviso y lo deja registrado. El índice único de `notificaciones`
- * garantiza que un mismo aviso no salga dos veces aunque se reintente.
- */
-async function notificarCliente(aviso: AvisoPedido, tipo: TipoAviso) {
-  if (!aviso.email) return;
-
-  // Reservar el aviso primero: si ya existe, otra ejecución lo mandó.
-  const { error: yaExiste } = await db.database.from("notificaciones").insert({
-    pedido_id: aviso.pedidoId,
-    canal: "email",
-    tipo,
-    destino: aviso.email,
-    estado: "pendiente",
-  });
-  if (yaExiste) return;
-
-  const business = await getBusinessConfig();
-  const { subject, html } = plantilla(aviso, business, tipo);
-  const resultado = await sendEmail({ to: aviso.email, subject, html });
-
-  await db.database
-    .from("notificaciones")
-    .update({
-      estado: resultado.estado,
-      detalle: resultado.estado === "enviado" ? { id: resultado.id } : { motivo: resultado.motivo },
-    })
-    .eq("pedido_id", aviso.pedidoId)
-    .eq("tipo", tipo)
-    .eq("canal", "email");
-}
-
-/**
- * El aviso que hace sonar el celular del local. No depende del email del
- * comprador: un pedido sin email igual hay que producirlo.
- */
-async function avisarAlLocal(aviso: AvisoPedido, tipo: TipoAviso) {
-  const destino = process.env.TELEGRAM_CHAT_IDS || "";
-
-  const { error: yaExiste } = await db.database.from("notificaciones").insert({
-    pedido_id: aviso.pedidoId,
-    canal: "telegram",
-    tipo,
-    destino,
-    estado: "pendiente",
-  });
-  if (yaExiste) return;
-
-  const resultado = await sendTelegram(plantillaLocal(aviso, tipo));
-
-  await db.database
-    .from("notificaciones")
-    .update({
-      estado: resultado.estado,
-      detalle: resultado.estado === "enviado" ? { ids: resultado.ids } : { motivo: resultado.motivo },
-    })
-    .eq("pedido_id", aviso.pedidoId)
-    .eq("tipo", tipo)
-    .eq("canal", "telegram");
-}
-
-/**
- * Fachada: avisa al cliente y al local. Cada canal va aislado — que falle el
- * mail no puede dejar al local sin enterarse del pedido, ni al revés.
- */
-export async function notificarPedido(aviso: AvisoPedido, tipo: TipoAviso) {
-  await Promise.allSettled([
-    notificarCliente(aviso, tipo),
-    avisarAlLocal(aviso, tipo),
-  ]);
-}
+export { notificarPedido } from "@/lib/notification-server";
 
 /** Traduce una fila de `pedidos` al aviso, para avisar desde el webhook. */
 export function avisoDesdePedido(fila: Record<string, unknown>): AvisoPedido {
@@ -160,5 +90,7 @@ export function avisoDesdePedido(fila: Record<string, unknown>): AvisoPedido {
     shipping: Number(fila.envio || 0),
     total: Number(fila.total || 0),
     metodoPago: String(fila.metodo_pago || ""),
+    cuentaTransferencia: fila.cuenta_transferencia && typeof fila.cuenta_transferencia === 'object'
+      ? String((fila.cuenta_transferencia as Record<string,unknown>).nombre || '') : undefined,
   };
 }

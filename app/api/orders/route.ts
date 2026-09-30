@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     // Un fallo de email nunca debe voltear un pedido ya registrado.
     try {
-      if (!created.recovered) await notificarPedido({
+      await notificarPedido({
         pedidoId: created.id,
         referencia: created.referencia,
         nombre: order.nombre,
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         metodoPago,
         cuentaTransferencia: created.cuentaTransferencia?.nombre,
       }, "pedido_recibido");
-    } catch { /* queda registrado como fallido en `notificaciones` */ }
+    } catch { /* el trigger conserva el aviso para recuperarlo desde administración */ }
 
     return NextResponse.json({
       ok: true,

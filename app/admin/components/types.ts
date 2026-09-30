@@ -36,6 +36,7 @@ export interface AdminOrder {
   pago: string;
   pagoEstado: string;
   puedeDevolverMP?: boolean;
+  puedeConsultarMP?: boolean;
   pagoMpManual?: boolean;
   /** Nombre corto de la cuenta que vio el cliente, si pagó por transferencia. */
   cuentaTransferencia?: string;

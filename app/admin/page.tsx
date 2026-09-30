@@ -4,6 +4,7 @@ import { StoreProvider } from "./components/StoreProvider";
 import { Sidebar } from "./components/Sidebar";
 import { Topbar, Dashboard } from "./components/Dashboard";
 import { Orders } from "./components/Orders";
+import { NotificationsRecovery } from './components/NotificationsRecovery';
 import { Products } from "./components/Products";
 import { Etiquetas } from "./components/Etiquetas";
 import { Customers } from "./components/Customers";
@@ -44,7 +45,7 @@ function AdminApp() {
         />
         <div className="content">
           {page === "dashboard"    && <Dashboard />}
-          {page === "orders"       && <Orders />}
+          {page === "orders"       && <><NotificationsRecovery /><Orders /></>}
           {page === "products"     && <Products />}
           {page === "etiquetas"    && <Etiquetas />}
           {page === "customers"    && <Customers />}
