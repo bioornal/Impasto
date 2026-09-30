@@ -13,6 +13,7 @@ export interface PricingIngredient {
   unidad?: string;
   precio_kg?: number | string;
   multiplo_rendimiento?: number | string;
+  gramos_por_unidad?: number | string | null;
 }
 
 export interface RecipeIngredient {
@@ -37,6 +38,17 @@ export interface PricingDefaults {
 }
 
 const GRAMOS_POR_EMPANADA = 65;
+/** Same conversion as the recetario: unit ingredients contribute their net mass. */
+export function pesoPorUnidadGramos(ingredient: { gramos_por_unidad?: number | string | null }): number {
+  const grams = Number(ingredient.gramos_por_unidad);
+  return Number.isFinite(grams) && grams > 0 ? grams : 0;
+}
+
+export function masaNetaKg(ingredient: { cantidad_kg: number; gramos_por_unidad?: number | string | null }): number {
+  const grams = pesoPorUnidadGramos(ingredient);
+  const quantity = Number(ingredient.cantidad_kg) || 0;
+  return grams > 0 ? quantity * grams / 1000 : quantity;
+}
 export const isEmpanadaShell = (ingredient: PricingIngredient): boolean =>
   String(ingredient.nombre ?? '').trim().toLowerCase() === 'tapa de empanada' && ingredient.unidad === 'unidad';
 // El precio de venta sube al próximo múltiplo de $500. Con $1.000 los saltos
@@ -137,7 +149,8 @@ export function buildEffectivePrices(
         const cantidad = Number(ri.cantidad_kg);
         const multiplo = Number(ing.multiplo_rendimiento ?? 1);
         costoIngredientes += precioKg * cantidad * multiplo;
-        totalCantidadKg += cantidad;
+        // MR affects purchase cost only, never net recipe yield.
+        totalCantidadKg += masaNetaKg({ cantidad_kg: cantidad, gramos_por_unidad: ing.gramos_por_unidad });
       }
 
       const costoReceta = Math.round(precioPrepizza + precioSalsa + costoIngredientes);
