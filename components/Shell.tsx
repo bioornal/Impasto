@@ -571,6 +571,12 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
               body: JSON.stringify({ ...submitted, ...card, externalReference }),
             });
             const result = await response.json();
+            if (result.quoteChanged) {
+              clearCardReference(externalReference);
+              const error = new Error(result.error || "El total cambió. Revisá el resumen antes de pagar.");
+              error.name = "QuoteChangedError";
+              throw error;
+            }
             if (shouldConfirmPendingCardAttempt(response.status, result)) {
               clearCardReference(externalReference);
               clear();

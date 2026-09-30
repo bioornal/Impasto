@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial, AdminOrder, AdminCustomer } from "./types";
 import { esCategoriaImpasto } from "@/lib/categorias";
 import { adaptOrder } from "@/lib/adapt-order";
+import { confirmAdminMutation } from "@/lib/stabilization";
 import {
   clavesDePedidosParaCocina,
   pedidosNuevosParaCocina,
@@ -346,7 +347,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     toggleSound,
 
     updateProduct: async (id, patch) => {
-      setState(s => ({ ...s, products: s.products.map(p => p.id === id ? { ...p, ...patch } : p) }));
+      try {
       const prod = stateRef.current.products.find(p => p.id === id);
       if (prod) {
         const body: Record<string, unknown> = {};
@@ -358,17 +359,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (patch.desc !== undefined) body.desc = patch.desc;
         if (patch.tags !== undefined) body.tags = patch.tags;
         if (patch.popular !== undefined) body.popular = patch.popular;
-        await fetch(`/api/admin/productos/${prod._dbId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        await confirmAdminMutation(() => fetch(`/api/admin/productos/${prod._dbId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }));
+        setState(s => ({ ...s, products: s.products.map(p => p.id === id ? { ...p, ...patch } : p) }));
+      } else {
+        throw new Error("Producto no encontrado. Actualizá el panel.");
       }
       if (patch.active !== undefined && Object.keys(patch).length === 1) {
         showToast(patch.active ? "Producto marcado como Disponible" : "Producto marcado como Agotado");
       } else {
         showToast("Producto actualizado");
       }
+      } catch (error) { showToast(error instanceof Error ? error.message : "No se pudo actualizar el producto"); }
     },
 
     createProduct: async (p) => {
-      await fetch("/api/admin/productos", {
+      try {
+      await confirmAdminMutation(() => fetch("/api/admin/productos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -381,20 +387,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           tags: p.tags || [],
           popular: Boolean(p.popular),
         }),
-      });
+      }));
       await load();
       showToast("Producto creado");
+      } catch (error) { showToast(error instanceof Error ? error.message : "No se pudo crear el producto"); }
     },
 
     deleteProduct: async (id) => {
+      try {
       const prod = stateRef.current.products.find(p => p.id === id);
+      if (!prod) throw new Error("Producto no encontrado. Actualizá el panel.");
+      await confirmAdminMutation(() => fetch(`/api/admin/productos/${prod._dbId}`, { method: "DELETE" }));
       setState(s => ({ ...s, products: s.products.filter(p => p.id !== id) }));
-      if (prod) await fetch(`/api/admin/productos/${prod._dbId}`, { method: "DELETE" });
       showToast("Producto eliminado");
+      } catch (error) { showToast(error instanceof Error ? error.message : "No se pudo eliminar el producto"); }
     },
 
-    // Las tres miran el status de la respuesta, a diferencia de updateProduct,
-    // que toastea exito siempre: un 400 de la validacion tiene que verse.
+    // Un 400 de validación debe verse y conservar el estado confirmado.
     createEtiqueta: async (label, color, mostrar_badge) => {
       const orden = Math.max(0, ...stateRef.current.etiquetas.map(e => e.orden)) + 1;
       const r = await fetch("/api/admin/etiquetas", {
@@ -519,30 +528,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.ok) {
-        // No tocamos el estado local: la plata no se movió.
+        // MP may have refunded successfully while the local database failed.
+        if (result.refundCompleted) {
+          await load();
+          showToast(result.error || "Devolución confirmada por Mercado Pago; falta conciliar el estado local.");
+          return;
+        }
         showToast(result.error || "No se pudo procesar la devolución");
         return;
       }
       setState(s => ({ ...s, orders: s.orders.map(o => o._dbId === dbId ? { ...o, pagoEstado: result.estadoPago } : o) }));
-      showToast(result.parcial ? `Devolución parcial de ${order.id} realizada` : `Pedido ${order.id} devuelto por completo`);
+      showToast(result.recovered ? `Devolución existente de ${order.id} conciliada; no se realizó otra devolución` : result.parcial ? `Devolución parcial de ${order.id} realizada` : `Pedido ${order.id} devuelto por completo`);
     },
 
     updateTestimonial: async (id, estado) => {
-      const next = stateRef.current.testimonials.map(t => t.id === id ? { ...t, estado: estado as Testimonial["estado"] } : t);
-      setState(s => ({ ...s, testimonials: next }));
-      await fetch(`/api/admin/testimonios/${id}`, {
+      try {
+      await confirmAdminMutation(() => fetch(`/api/admin/testimonios/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado }),
-      }).catch(() => null);
+      }));
+      setState(s => ({ ...s, testimonials: s.testimonials.map(t => t.id === id ? { ...t, estado: estado as Testimonial["estado"] } : t) }));
       showToast("Testimonio actualizado");
+      } catch (error) { showToast(error instanceof Error ? error.message : "No se pudo actualizar el testimonio"); }
     },
 
     deleteTestimonial: async (id) => {
-      const next = stateRef.current.testimonials.filter(t => t.id !== id);
-      setState(s => ({ ...s, testimonials: next }));
-      await fetch(`/api/admin/testimonios/${id}`, { method: "DELETE" }).catch(() => null);
+      try {
+      await confirmAdminMutation(() => fetch(`/api/admin/testimonios/${id}`, { method: "DELETE" }));
+      setState(s => ({ ...s, testimonials: s.testimonials.filter(t => t.id !== id) }));
       showToast("Testimonio eliminado");
+      } catch (error) { showToast(error instanceof Error ? error.message : "No se pudo eliminar el testimonio"); }
     },
 
     reset: load,

@@ -1,6 +1,7 @@
 import { db } from "@/lib/insforge";
 import { BUSINESS, SUCURSAL_ID, type BusinessConfig } from "@/lib/business";
 import { cuentaActiva, leerCuentas } from "@/lib/cuentas-transferencia";
+import { nonNegativeRate } from "@/lib/stabilization";
 
 function parseDias(valor: unknown): number[] | null {
   const dias = String(valor || "")
@@ -54,8 +55,8 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       // Sin la columna (antes de la migración) cuenta como delivery activo.
       deliveryActivo: branch.delivery_activo !== false,
       mensajeDelivery: String(branch.mensaje_delivery || ""),
-      deliveryFee: Number(branch.delivery_fee || BUSINESS.deliveryFee),
-      freeShippingFrom: Number(branch.envio_gratis_desde || BUSINESS.freeShippingFrom),
+      deliveryFee: nonNegativeRate(branch.delivery_fee, BUSINESS.deliveryFee),
+      freeShippingFrom: nonNegativeRate(branch.envio_gratis_desde, BUSINESS.freeShippingFrom),
       deliveryEstimate: String(branch.tiempo_entrega || BUSINESS.deliveryEstimate),
       // Las columnas viejas (`cbu`, `alias_cbu`, `banco`, `titular_cuenta`) ya no
       // se leen: la migración 20260925141945 las pasó a esta lista.

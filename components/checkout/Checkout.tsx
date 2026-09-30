@@ -23,6 +23,7 @@ export interface CheckoutData {
 
 export interface CheckoutOrder extends CheckoutData {
   items: CartItem[];
+  expectedTotal?: number;
 }
 
 interface CheckoutProps {
@@ -70,6 +71,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
   const [submitting, setSubmitting] = useState(false);
   const [brickOpen, setBrickOpen] = useState(false);
   const [resumenAbierto, setResumenAbierto] = useState(false);
+  const [quoteRevision, setQuoteRevision] = useState(0);
   // Con el reparto pausado el pedido es para retirar aunque el cliente hubiera
   // elegido delivery antes de la pausa. Derivado, no un efecto que pise el estado.
   const mode: CheckoutData["mode"] = delivery.activo ? data.mode : "takeaway";
@@ -92,7 +94,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
       })
       .catch(() => { if (active) { setQuote(null); setQuoteError("No se pudo actualizar el total. Intentá nuevamente."); } });
     return () => { active = false; };
-  }, [mode, items, quoteKey]);
+  }, [mode, items, quoteKey, quoteRevision]);
 
   const quoteLoading = quote?.key !== quoteKey;
   const subtotal = quoteLoading ? localSubtotal : (quote?.subtotal ?? localSubtotal);
@@ -146,7 +148,17 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
   };
 
   const payWithCard = async (card: CardFormData) => {
-    await onCardConfirm({ ...data, mode, items: [...items] }, card);
+    try {
+      await onCardConfirm({ ...data, mode, items: [...items], expectedTotal: total }, card);
+    } catch (error) {
+      if (error instanceof Error && error.name === "QuoteChangedError") {
+        setBrickOpen(false);
+        setQuote(null);
+        setQuoteRevision(value => value + 1);
+        setSubmitError(error.message);
+      }
+      throw error;
+    }
   };
 
   return (

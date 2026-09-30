@@ -8,6 +8,7 @@ import { SUCURSAL_ID } from "@/lib/business";
 import { nuevaReferencia } from "@/lib/referencia";
 import { resolveOrderExternalReference } from "@/lib/card-attempt";
 import { requireUpdatedRow } from "@/lib/db-result";
+import { assertExpectedTotal } from "@/lib/stabilization";
 import type { EstadoPago } from "@/lib/mercadopago";
 import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
 import type { CartItem } from "@/types";
@@ -101,7 +102,7 @@ async function upsertCliente(order: OrderPayload) {
 export async function createPedido(
   order: OrderPayload,
   payment: { metodoPago: string; estadoPago: EstadoPago; proveedorPago: string },
-  options: { externalReference?: string } = {},
+  options: { externalReference?: string; expectedTotal?: number } = {},
 ): Promise<CreatedOrder> {
   const business = await getBusinessConfig();
 
@@ -114,6 +115,7 @@ export async function createPedido(
   validarModalidad(business, order.mode);
 
   const quote = await quoteOrder(order.items, order.mode, business);
+  if (payment.proveedorPago === "mercadopago") assertExpectedTotal(options.expectedTotal, quote.total);
 
   await upsertCliente(order);
 
