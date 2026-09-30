@@ -34,6 +34,8 @@ import type { CheckoutOrder } from "@/components/checkout/Checkout";
 import type { CardFormData } from "@/components/checkout/CardPayment";
 import type { CatalogData, Pizza, CartItem } from "@/types";
 import { STOCK_IMAGES } from "@/lib/stock-images";
+import { durableManualAttempt, completeManualAttempt } from '@/lib/manual-attempt';
+import { confirmManualResponse } from '@/lib/manual-order-data';
 import {
   clearCardAttemptReference,
   createCardAttemptReference,
@@ -116,6 +118,11 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
   const [nav, setNav] = useState("home");
   const [order, setOrder] = useState<ConfirmedOrder | null>(null);
   const lastCardRef = useRef<string>("");
+  const pendingManualAttempt = useRef<{key:string;payload:CheckoutOrder} | null>(null);
+  useEffect(() => {
+    // La recuperación sigue disponible aunque el local cierre o el carrito quede vacío.
+    try { if (localStorage.getItem('impasto_manual_attempt')) setScreen('checkout'); } catch { /* Checkout informa los fallos de persistencia. */ }
+  }, []);
   // "¿Qué probaste?" de la invitación a opinar: las pizzas de la carta y las
   // empanadas en general. El servidor acepta solo estos nombres.
   const productosOpinables = useMemo(
@@ -538,19 +545,26 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
           onBack={() => { setScreen("home"); setDrawerOpen(true); }}
           business={business}
           onConfirm={async (submitted: CheckoutOrder) => {
+            const attempt = pendingManualAttempt.current ?? durableManualAttempt(localStorage,'impasto_manual_attempt',submitted);
+            pendingManualAttempt.current = attempt;
+            const original = attempt.payload;
             const response = await fetch("/api/orders", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(submitted),
+              body: JSON.stringify({...original,attemptKey:attempt.key}),
             });
             const result = await response.json();
             if (!response.ok || !result.ok) throw new Error(result.error || "No se pudo registrar el pedido");
+            confirmManualResponse(result, attempt.key);
+            completeManualAttempt(localStorage,'impasto_manual_attempt',attempt.key);
+            pendingManualAttempt.current = null;
             clear();
             try {
               localStorage.setItem("impasto_active_order", JSON.stringify({ ref: result.numero, at: Date.now() }));
             } catch {}
             setOrder({
-              ...submitted,
+              ...original,
+              items: result.items,
               numero: result.numero,
               subtotal: result.subtotal,
               shipping: result.shipping,

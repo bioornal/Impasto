@@ -12,6 +12,8 @@ import { assertExpectedTotal } from "@/lib/stabilization";
 import type { EstadoPago } from "@/lib/mercadopago";
 import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
 import type { CartItem } from "@/types";
+import { executeManualAttempt, manualAttemptKey, ManualAttemptConflict } from './manual-attempt';
+import { matchesManualOrder, restoredManualOrder } from './manual-order-data';
 
 export interface OrderPayload {
   nombre: string;
@@ -27,6 +29,7 @@ export interface OrderPayload {
 }
 
 export interface CreatedOrder {
+  recovered?: boolean;
   id: string;
   numero: number;
   referencia: string;
@@ -102,6 +105,34 @@ async function upsertCliente(order: OrderPayload) {
 export async function createPedido(
   order: OrderPayload,
   payment: { metodoPago: string; estadoPago: EstadoPago; proveedorPago: string },
+  options: { externalReference?: string; expectedTotal?: number; attemptKey?: string } = {},
+): Promise<CreatedOrder> {
+  if (payment.proveedorPago !== 'manual') return createPedidoNew(order, payment, options);
+  const key = manualAttemptKey(options.attemptKey);
+  if (!key) throw new Error('Actualizá la página antes de enviar el pedido');
+  const reference = `IM-MAN-${key}`;
+  const result = await executeManualAttempt<CreatedOrder>({
+    lookup: async () => {
+      const {data,error} = await db.database.from('pedidos')
+        .select('id,numero_pedido,external_reference,nombre_cliente,telefono_cliente,email_cliente,direccion,modalidad,cuando,notas,referencia,cambio,metodo_pago,productos,subtotal,envio,total,cuenta_transferencia')
+        .eq('external_reference', reference).eq('proyecto_id','impasto').limit(1);
+      if (error || !Array.isArray(data)) throw new Error('No se pudo verificar el intento pendiente. Reintentá el mismo pedido.');
+      const row = data[0] as Record<string,unknown> | undefined;
+      if (!row) return null;
+      if (!matchesManualOrder(row, order as unknown as Record<string,unknown>, payment.metodoPago)) {
+        throw new ManualAttemptConflict();
+      }
+      return restoredManualOrder(row);
+    },
+    matches: () => true, // The row is checked before any customer data is returned.
+    create: () => createPedidoNew(order, payment, { ...options, externalReference:reference }),
+  });
+  return { ...result.order,recovered:result.recovered };
+}
+
+async function createPedidoNew(
+  order: OrderPayload,
+  payment: { metodoPago: string; estadoPago: EstadoPago; proveedorPago: string },
   options: { externalReference?: string; expectedTotal?: number } = {},
 ): Promise<CreatedOrder> {
   const business = await getBusinessConfig();
@@ -117,13 +148,11 @@ export async function createPedido(
   const quote = await quoteOrder(order.items, order.mode, business);
   if (payment.proveedorPago === "mercadopago") assertExpectedTotal(options.expectedTotal, quote.total);
 
-  await upsertCliente(order);
-
   // El número sigue siendo el que ve el local en la comanda; la referencia
   // lleva además un sufijo aleatorio. Ver `lib/referencia.ts`: sin él la
   // referencia se repetía cada 15 minutos y era adivinable desde afuera.
   const numero = (Date.now() % 900000) + 100000;
-  const referencia = resolveOrderExternalReference(
+  const referencia = payment.proveedorPago === 'manual' ? options.externalReference! : resolveOrderExternalReference(
     options.externalReference,
     () => nuevaReferencia(numero),
   );
@@ -134,7 +163,7 @@ export async function createPedido(
 
   const { data, error } = await db.database
     .from("pedidos")
-    .insert({
+    .insert([{
       numero_pedido: numero,
       proyecto_id: "impasto",
       nombre_cliente: order.nombre,
@@ -161,7 +190,7 @@ export async function createPedido(
       mp_order_id: "",
       external_reference: referencia,
       fecha: fechaLocal(),
-    })
+    }])
     .select("id");
 
   const inserted = requireUpdatedRow(
@@ -170,6 +199,8 @@ export async function createPedido(
   );
   const id = String((inserted as { id?: unknown }).id || "");
   if (!id) throw new Error("El pedido se guardó sin identificador");
+
+  await upsertCliente(order);
 
   await registrarEvento({
     pedidoId: id,

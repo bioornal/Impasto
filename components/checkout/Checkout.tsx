@@ -72,6 +72,13 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
   const [brickOpen, setBrickOpen] = useState(false);
   const [resumenAbierto, setResumenAbierto] = useState(false);
   const [quoteRevision, setQuoteRevision] = useState(0);
+  const [pendingManual, setPendingManual] = useState<CheckoutOrder | null>(null);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('impasto_manual_attempt');
+      if (raw) { const pending = JSON.parse(raw).payload as CheckoutOrder; setPendingManual(pending); setData(pending); }
+    } catch { setSubmitError('No se pudo recuperar el intento pendiente. Revisá el pedido antes de enviar otro.'); }
+  }, []);
   // Con el reparto pausado el pedido es para retirar aunque el cliente hubiera
   // elegido delivery antes de la pausa. Derivado, no un efecto que pise el estado.
   const mode: CheckoutData["mode"] = delivery.activo ? data.mode : "takeaway";
@@ -120,6 +127,13 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
   };
 
   const confirm = async () => {
+    if (pendingManual) {
+      setSubmitting(true); setSubmitError('');
+      try { await onConfirm(pendingManual); }
+      catch (error) { setSubmitError(error instanceof Error ? error.message : 'No se pudo recuperar el pedido'); }
+      finally { setSubmitting(false); }
+      return;
+    }
     const next = validate();
     if (Object.keys(next).length > 0) {
       // Mobile: el foco va al primer campo con error. Escritorio sigue como estaba.
@@ -138,10 +152,15 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
     }
 
     setSubmitting(true);
+    setPendingManual({...data,mode,items:[...items]});
     try {
       await onConfirm({ ...data, mode, items: [...items] });
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "No se pudo registrar el pedido");
+      try {
+        const raw = localStorage.getItem('impasto_manual_attempt');
+        if (raw) setPendingManual(JSON.parse(raw).payload as CheckoutOrder);
+      } catch { /* Persistence errors are already surfaced by the submit. */ }
     } finally {
       setSubmitting(false);
     }
@@ -375,7 +394,8 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             {quoteError && <div className="co-error">{quoteError}</div>}
             {submitError && <div className="co-error">{submitError}</div>}
 
-            <button className="co-cta" onClick={confirm} disabled={submitting || quoteLoading || Boolean(quoteError)}>
+            {pendingManual && <div role="status">Hay un pedido pendiente de confirmación. Reintentá para recuperar el pedido original. Los cambios no se enviarán hasta confirmarlo; si no puede completarse, contactá al local antes de iniciar otro pedido.</div>}
+            <button className="co-cta" onClick={confirm} disabled={submitting || (!pendingManual && (quoteLoading || Boolean(quoteError)))}>
               {submitting
                 ? "Registrando pedido…"
                 : quoteLoading
@@ -545,12 +565,13 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
 
       <div className="co-footbar">
         {(quoteError || submitError) && <div className="co-error-card" role="alert">{quoteError || submitError}</div>}
+        {pendingManual && <div role="status">Hay un pedido pendiente. Reintentá para recuperar el original. Si no puede completarse, contactá al local antes de iniciar otro; los cambios no se enviarán.</div>}
         <div className="co-footbar-row">
           <div className="co-footbar-total">
             <div className="lbl">Total</div>
             <b>{fmt(total)}</b>
           </div>
-          <button className="co-footbar-cta" onClick={confirm} disabled={submitting || quoteLoading || Boolean(quoteError)}>
+          <button className="co-footbar-cta" onClick={confirm} disabled={submitting || (!pendingManual && (quoteLoading || Boolean(quoteError)))}>
             {submitting
               ? "Registrando pedido…"
               : quoteLoading

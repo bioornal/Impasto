@@ -58,7 +58,8 @@ const FORMATO = new RegExp(`^IM-\\d{6}-[${ALFABETO}]{${LARGO_SUFIJO}}$`);
  * anteriores a esto, esta es la línea que hay que aflojar.
  */
 export function esReferenciaValida(valor: string): boolean {
-  return FORMATO.test(String(valor || "").trim().toUpperCase());
+  const normalized = String(valor || "").trim().toUpperCase();
+  return FORMATO.test(normalized) || /^IM-MAN-[A-F0-9]{8}-[A-F0-9]{4}-4[A-F0-9]{3}-[89AB][A-F0-9]{3}-[A-F0-9]{12}$/.test(normalized);
 }
 
 /** Normaliza lo que llega por URL a la forma en que se guardó. */

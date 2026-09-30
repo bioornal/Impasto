@@ -3,6 +3,7 @@ import { createPedido, validateOrderPayload, clearCartDraft } from "@/lib/orders
 import { limitar } from "@/lib/rate-limit";
 import { notificarPedido } from "@/lib/notifications";
 import { pricingHttpError } from "@/lib/pricing-http";
+import { manualAttemptKey, ManualAttemptConflict } from '@/lib/manual-attempt';
 
 /** Métodos que se cobran al entregar: no pasan por Mercado Pago. */
 const METODOS_OFFLINE = ["efectivo", "transferencia"];
@@ -18,6 +19,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "JSON inválido" }, { status: 400 });
   }
 
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ok:false,error:'JSON inválido'},{status:400});
+  const attemptKey = manualAttemptKey(body.attemptKey);
+  if (!attemptKey) return NextResponse.json({ok:false,error:'Actualizá la página antes de enviar el pedido'}, {status:409});
   const metodoPago = String(body.pago || "efectivo");
   if (!METODOS_OFFLINE.includes(metodoPago)) {
     return NextResponse.json(
@@ -32,13 +36,13 @@ export async function POST(req: NextRequest) {
       metodoPago,
       estadoPago: "pendiente",
       proveedorPago: "manual",
-    });
+    }, {attemptKey});
 
     await clearCartDraft();
 
     // Un fallo de email nunca debe voltear un pedido ya registrado.
     try {
-      await notificarPedido({
+      if (!created.recovered) await notificarPedido({
         pedidoId: created.id,
         referencia: created.referencia,
         nombre: order.nombre,
@@ -66,6 +70,7 @@ export async function POST(req: NextRequest) {
       cuentaTransferencia: created.cuentaTransferencia,
     });
   } catch (err: unknown) {
+    if (err instanceof ManualAttemptConflict) return NextResponse.json({ok:false,error:err.message},{status:409});
     const failure = pricingHttpError(err);
     return NextResponse.json({ ok: false, error: failure.error }, { status: failure.status });
   }
