@@ -39,9 +39,9 @@ export interface ArgumentoMarca {
 export const ARGUMENTOS_MARCA: ArgumentoMarca[] = [
   {
     id: "fermentacion",
-    titulo: "Fermentación en frío",
-    detalle: "48 hs con harina de fuerza",
-    cifra: "48 hs",
+    titulo: "Masa madurada en frío",
+    detalle: "48 a 72 hs con harina de fuerza",
+    cifra: "48-72 hs",
   },
   {
     id: "estirado",
@@ -57,7 +57,7 @@ export const ARGUMENTOS_MARCA: ArgumentoMarca[] = [
   {
     id: "base",
     titulo: "Base fina y tierna",
-    detalle: "Al estilo napoletano, con el borde alto y aireado",
+    detalle: "Estilo napoletano, con buen cornicione: borde alto y aireado",
   },
   {
     id: "porciones",
@@ -66,8 +66,8 @@ export const ARGUMENTOS_MARCA: ArgumentoMarca[] = [
   },
   {
     id: "muzzarella",
-    titulo: "Muzzarella de primera calidad",
-    detalle: "Abundante en cada pizza",
+    titulo: "Mucha muzzarella",
+    detalle: "De primera calidad y abundante, con toppings generosos en cada pizza",
   },
   {
     // Salen de las recetas reales (tablas del recetario), no de una idea

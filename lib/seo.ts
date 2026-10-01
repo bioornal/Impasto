@@ -178,8 +178,8 @@ export function descripcionSitio(business: BusinessConfig): string {
   // template literal de abajo, y ahí un `cifra` faltante compilaría igual.
   const fermentacion = argumentoConCifra("fermentacion");
   const empanadaPeso = argumentoConCifra("empanadas-peso").cifra;
-  return `Pizza napoletana con alma argentina en ${business.city}: fermentación en frío de ${fermentacion.cifra}, `
-    + `horno de piedra y muzzarella abundante. Empanadas de ${empanadaPeso}, delivery propio y take away. Pedí online.`;
+  return `Pizza napoletana con alma argentina en ${business.city}: masa madurada en frío de ${fermentacion.cifra}, `
+    + `horno a la piedra, mucha muzzarella y toppings abundantes. Empanadas de ${empanadaPeso}, delivery propio y take away. Pedí online.`;
 }
 
 /** La ficha de Google Maps más cercana al domicilio, sin necesidad de un place_id. */
@@ -216,7 +216,7 @@ export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {
     "@id": `${SITE_URL}/#local`,
     name: business.name,
     alternateName: `${business.name} ${business.city}`,
-    slogan: "Pizza híbrida: técnica napoletana, alma argentina.",
+    slogan: "Pizza a la piedra: técnica napoletana, alma argentina.",
     description: descripcionSitio(business),
     url: SITE_URL,
     image: [STOCK_IMAGES.hero.main, `${SITE_URL}/opengraph-image`],

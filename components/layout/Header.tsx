@@ -78,17 +78,17 @@ const EMPANADA_PESO = argumentoConCifra("empanadas-peso");
 const PORCIONES = argumento("porciones");
 
 const TICKER = [
-  "Pizza Híbrida: técnica napoletana y alma argentina",
+  "Pizza a la piedra: técnica napoletana y alma argentina",
   "Delivery propio & Take away en Puerto Iguazú",
   `${FERMENTACION.titulo} ${FERMENTACION.cifra}`,
   `Horno de piedra a ${HORNO.cifra}`,
-  "Ingredientes premium y muzzarella abundante",
+  "Ingredientes premium, mucha muzzarella y toppings abundantes",
   "Último pedido 23:45",
   `Empanadas de ${EMPANADA_PESO.cifra} al horno`,
 ];
 
 export function Ticker({ desde }: { desde: number | null }) {
-  // El precio va segundo, después de la pizza híbrida. Sin "desde" no se muestra.
+  // El precio va segundo, después de la pizza a la piedra. Sin "desde" no se muestra.
   const items = desde === null
     ? TICKER
     : [TICKER[0], `${PORCIONES.titulo} desde ${fmt(desde)}`, ...TICKER.slice(1)];

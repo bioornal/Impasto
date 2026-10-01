@@ -37,10 +37,10 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroPro
         <div className="hero-content">
           <div className="hero-eyebrow">Pizzería artesanal · Delivery & Take away</div>
           <h1>
-            Pizza híbrida:<br />técnica napoletana,<br /><em>alma argentina.</em>
+            Pizza a la piedra:<br />técnica napoletana,<br /><em>alma argentina.</em>
           </h1>
           <p className="hero-lede">
-            Borde alto y aireado, base fina y tierna, muzzarella que se estira e ingredientes de primera que se reconocen de un bocado. Cada pizza se estira a mano en el momento y sale del horno a la piedra en minutos. Pedí online y recibila en tu casa, o pasá a retirar por el local.
+            Masa madurada en frío de 48 a 72 horas, buen cornicione, base fina y tierna, mucha muzzarella y toppings abundantes. Cada pizza se estira a mano en el momento y sale del horno a la piedra en minutos. Pedí online y recibila en tu casa, o pasá a retirar por el local.
           </p>
           <div className="hero-ctas">
             <button className="btn btn-primary btn-lg" onClick={() => onCta("pizzas")}>
@@ -79,13 +79,13 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroPro
 
 export function Features({ freeShippingFrom: _freeShippingFrom, desde }: { freeShippingFrom?: number; desde: number | null }) {
   const features: [string, string][] = [
-    // La tarjeta de la pizza híbrida repetía el título del hero, que está justo
+    // La tarjeta de la pizza a la piedra repetía el título del hero, que está justo
     // arriba: su lugar lo ocupa el precio. Solo vuelve si no hay "desde".
     desde !== null
       // "mitad y mitad sin recargo" invitaba a comparar precios donde no hay
       // nada que comparar: el modal muestra el total antes de agregar.
       ? [`Pizzas desde ${fmt(desde)}`, `${PORCIONES.titulo}, con uno o dos gustos`]
-      : ["Pizza Híbrida", "Técnica napoletana y alma argentina"],
+      : ["Pizza a la piedra", "Técnica napoletana y alma argentina"],
     ["Delivery propio", "Envíos en Puerto Iguazú"],
     ["Take away", "Retiro en el local sin esperas"],
     [INGREDIENTES.titulo, INGREDIENTES.detalle],

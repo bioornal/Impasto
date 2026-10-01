@@ -46,10 +46,10 @@ export function preguntasFrecuentes(business: BusinessConfig): PreguntaFrecuente
         + "siempre como estimado: el clima, el tránsito y la cantidad de pedidos pueden variar la demora.",
     },
     {
-      pregunta: "¿Qué significa que la pizza sea híbrida?",
-      respuesta: `Es nuestra forma de decir "técnica napoletana, alma argentina": fermentación en frío ${fermentacion.detalle.toLowerCase()}, `
+      pregunta: "¿Qué es la pizza a la piedra de Impasto?",
+      respuesta: `Es la pizza a la piedra que conocés, hecha con técnica napoletana: masa madurada en frío ${fermentacion.detalle.toLowerCase()}, `
         + `estirado a mano sin moldes y horno a la piedra a ${horno.cifra}. `
-        + "El resultado es un borde alto y liviano y una base fina y tierna, como en Nápoles, con muzzarella abundante como nos gusta en Argentina.",
+        + "El resultado es un buen cornicione, alto y liviano, y una base fina y tierna, pero al gusto argentino: con mucha muzzarella y toppings abundantes.",
     },
     {
       pregunta: "¿Se puede pedir pizza mitad y mitad?",
