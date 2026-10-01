@@ -1,5 +1,6 @@
 import {
   buildEffectivePrices,
+  leerComisionPct,
   isEmpanadaShell,
   type PricingDefaults,
   type PricingIngredient,
@@ -23,6 +24,8 @@ export function requirePricingRows<T>(source: string, result: { data?: unknown; 
 export interface PriceResolution {
   calculated: Map<string, number>;
   invalid: Set<string>;
+  productionCosts?: Map<string,number>;
+  commissionPct?: number;
 }
 
 export interface PricingInput {
@@ -58,6 +61,7 @@ export function resolveValidatedPrices(input: PricingInput): PriceResolution {
     if (rule.nombre) counts.set(rule.nombre, (counts.get(rule.nombre) ?? 0) + 1);
   }
 
+  const productionCosts = new Map<string,number>();
   const calculated = buildEffectivePrices(
     input.recipes,
     input.recipeIngredients,
@@ -65,6 +69,7 @@ export function resolveValidatedPrices(input: PricingInput): PriceResolution {
     input.rules,
     input.defaults,
     input.totalOperativo,
+    productionCosts,
   );
   const invalid = new Set<string>();
   const validDenominator = finite(input.defaults?.pizzas_objetivo_mes);
@@ -102,10 +107,11 @@ export function resolveValidatedPrices(input: PricingInput): PriceResolution {
     if (broken || value == null || !Number.isFinite(value) || value <= 0) {
       invalid.add(rule.nombre);
       calculated.delete(rule.nombre);
+      productionCosts.delete(rule.nombre);
     }
   }
 
-  return { calculated, invalid };
+  return { calculated, invalid, productionCosts, commissionPct:leerComisionPct(input.defaults?.comision_tarjeta_pct) };
 }
 
 export function sellablePrice(

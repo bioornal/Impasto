@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "casos": [
+    {"nombre":"venta MP con devolución total", "productos":[{"nombre":"Pizza","cantidad":1,"precio":1000}], "costo_produccion_centavos":30000,"comision_pct":7.99,"cobros_centavos":100000,"cobros_mp_centavos":100000,"devoluciones_centavos":100000,"esperado":{"produccion":300,"comision":79.9,"neto":0}},
+    {"nombre":"venta parcial mixta", "productos":[{"name":"Pizza","qty":2,"price":1000}], "costo_produccion_centavos":60000,"comision_pct":10,"cobros_centavos":50000,"cobros_mp_centavos":20000,"devoluciones_centavos":0,"esperado":{"produccion":600,"comision":20,"neto":500}},
+    {"nombre":"costo desconocido", "productos":[{"nombre":"Extra","cantidad":1,"precio":1000}], "costo_produccion_centavos":null,"comision_pct":0,"cobros_centavos":100000,"cobros_mp_centavos":0,"devoluciones_centavos":0,"esperado":{"produccion":null,"comision":0,"neto":1000}},
+    {"nombre":"cero conocido", "productos":[{"nombre":"Cortesía","cantidad":1,"precio":1000}], "costo_produccion_centavos":0,"comision_pct":0,"cobros_centavos":100000,"cobros_mp_centavos":100000,"devoluciones_centavos":0,"esperado":{"produccion":0,"comision":0,"neto":1000}}
+  ]
+}

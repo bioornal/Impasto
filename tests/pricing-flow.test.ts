@@ -4,6 +4,7 @@ import { assembleCatalogFromResults, publicSaleProducts, settleCatalogQuery } fr
 import { quoteItemsWithCatalog } from "../lib/order-quote";
 import { PricingUnavailableError } from "../lib/pricing-safety";
 import type { CartItem } from "../types";
+import {catalogCosteo} from '../lib/catalog-costeo';
 
 const rows = (data: unknown[] = []) => ({ data, error: null });
 const ok = () => ({
@@ -30,6 +31,9 @@ test('el precio usa presupuesto mensual y no depende de gastos históricos ni de
   for(const expenses of [rows(),rows([{monto:99999999}]),{data:null,error:new Error('expenses down')}]){
     const catalog=assembleCatalogFromResults({...input,...{gastos:expenses}});
     assert.equal(catalog.pizzas.find(p=>p.id==='p')?.precio,4000);
+    assert.equal(catalogCosteo(catalog).costs.get('p'),1721);
+    assert.equal(JSON.stringify(catalog).includes('productionCosts'),false);
+    assert.equal(JSON.stringify(catalog).includes('commissionPct'),false);
   }
   const changed=assembleCatalogFromResults({...input,costos_variables:rows([{monto_referencia:1000000}])});
   assert.equal(changed.pizzas.find(p=>p.id==='p')?.precio,6500,'editar el presupuesto previsto sí cambia el precio');

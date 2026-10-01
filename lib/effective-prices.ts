@@ -61,7 +61,7 @@ const CATEGORIAS_PRECIO = ['Pizzas', 'Calzones', 'Empanadas', 'Hamburguesas', 'L
 const COMISION_TARJETA_DEFAULT = 7.99;
 
 /** Igual que leerComisionPct del recetario: si falta, vacío o no sirve, 7,99. */
-function leerComisionPct(valor: unknown): number {
+export function leerComisionPct(valor: unknown): number {
   if (valor === null || valor === undefined) return COMISION_TARJETA_DEFAULT;
   if (typeof valor === 'string' && valor.trim() === '') return COMISION_TARJETA_DEFAULT;
   const n = Number(valor);
@@ -91,6 +91,7 @@ export function buildEffectivePrices(
   salePriceRules: SalePriceRule[],
   defaults: PricingDefaults | undefined,
   totalOperativo: number,
+  productionCosts?: Map<string, number>,
 ): Map<string, number> {
   const recipeById = new Map<string, PricingRecipe>();
   for (const recipe of recipes) {
@@ -161,6 +162,7 @@ export function buildEffectivePrices(
         : (rendValor || 1);
       costoUnit = (unidades > 0 ? costoReceta / unidades : costoReceta)
         + (subcategoria === 'Empanadas' ? costoTapa : 0);
+      productionCosts?.set(rule.nombre, costoUnit);
     }
 
     const costoOpUnit = subcategoria === 'Empanadas' ? Math.round(costoOpPorPizza / 12) : subcategoria === 'Bebidas' ? 0 : costoOpPorPizza;

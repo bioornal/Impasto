@@ -1,5 +1,5 @@
 import { db } from "@/lib/insforge";
-import { quoteOrder } from "@/lib/order-quote";
+import { quoteOrder, quoteCosteo } from "@/lib/order-quote";
 import { getBusinessConfig } from "@/lib/business-server";
 import { getCartSessionId } from "@/lib/cart-session";
 import { estadoTienda, fechaLocal, validarModalidad } from "@/lib/hours";
@@ -14,6 +14,7 @@ import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
 import type { CartItem } from "@/types";
 import { executeManualAttempt, manualAttemptKey, ManualAttemptConflict } from './manual-attempt';
 import { matchesManualOrder, restoredManualOrder } from './manual-order-data';
+import {createCostedPedido} from './create-costed-pedido';
 
 export interface OrderPayload {
   nombre: string;
@@ -161,9 +162,7 @@ async function createPedidoNew(
   // la confirmación, el seguimiento y el panel siguen mostrando la misma.
   const cuentaTransferencia = payment.metodoPago === "transferencia" ? business.cuentaTransferencia : null;
 
-  const { data, error } = await db.database
-    .from("pedidos")
-    .insert([{
+  const { data, error } = await createCostedPedido((name,body)=>db.database.rpc(name,body),{
       numero_pedido: numero,
       proyecto_id: "impasto",
       nombre_cliente: order.nombre,
@@ -190,11 +189,10 @@ async function createPedidoNew(
       mp_order_id: "",
       external_reference: referencia,
       fecha: fechaLocal(),
-    }])
-    .select("id");
+    },quoteCosteo(quote));
 
   const inserted = requireUpdatedRow(
-    { data: Array.isArray(data) ? data : null, error },
+    { data, error },
     "crear el pedido",
   );
   const id = String((inserted as { id?: unknown }).id || "");

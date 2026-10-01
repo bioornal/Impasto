@@ -1,5 +1,7 @@
 import { DELIVERY_FEE, FREE_SHIPPING_FROM } from "@/lib/business";
 import type { CartItem, CatalogData } from "@/types";
+import {catalogCosteo} from './catalog-costeo';
+import {costeoCarrito} from './costeo-capture';
 
 interface QuoteResult {
   items: CartItem[];
@@ -8,6 +10,8 @@ interface QuoteResult {
   total: number;
   freeShipping: boolean;
 }
+const costeos=new WeakMap<QuoteResult,{costo_produccion_centavos:number|null;comision_pct:number}>();
+export function quoteCosteo(quote:QuoteResult){const costeo=costeos.get(quote);if(!costeo)throw new Error('Costeo no disponible');return costeo;}
 
 export interface QuoteRates {
   deliveryFee: number;
@@ -141,5 +145,8 @@ export async function quoteOrder(
   const freeShipping = subtotal >= applied.freeShippingFrom;
   const shipping = mode === "delivery" && !freeShipping ? applied.deliveryFee : 0;
 
-  return { items, subtotal, shipping, total: subtotal + shipping, freeShipping };
+  const context=catalogCosteo(data);
+  const quote={ items, subtotal, shipping, total: subtotal + shipping, freeShipping };
+  costeos.set(quote,{costo_produccion_centavos:costeoCarrito(items,context.costs),comision_pct:context.commissionPct});
+  return quote;
 }

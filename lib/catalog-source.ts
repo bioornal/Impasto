@@ -4,6 +4,7 @@ import type { CatalogData } from "../types";
 import type { PricingDefaults, PricingIngredient, PricingRecipe, RecipeIngredient, SalePriceRule } from "./effective-prices";
 import { PricingUnavailableError, requirePricingRows, resolveValidatedPrices, sellablePrice } from "./pricing-safety";
 import {presupuestoMensual} from './presupuesto-precios';
+import {rememberCatalogCosteo} from './catalog-costeo';
 
 type QueryResult = { data?: unknown; error?: unknown };
 
@@ -56,7 +57,7 @@ export function assembleCatalogFromResults(results: CatalogQueryResults): Catalo
   }
 
   const decorations = (result: QueryResult) => Array.isArray(result.data) && !result.error ? result.data : [];
-  return {
+  const catalog:CatalogData = {
     ...buildCatalog(
       vendibles,
       decorations(results.promociones),
@@ -66,6 +67,10 @@ export function assembleCatalogFromResults(results: CatalogQueryResults): Catalo
     preciosNoDisponibles,
     empanadaBoxNoDisponibles: [...empanadaBoxNoDisponibles],
   };
+  const costs=new Map<string,number>();
+  for(const product of vendibles){const cost=resolution.productionCosts?.get(String(product.nombre));if(cost!==undefined)costs.set(String(product.id??product.nombre),cost);}
+  rememberCatalogCosteo(catalog,{costs,commissionPct:resolution.commissionPct!});
+  return catalog;
 }
 
 export function publicSaleProducts<T extends DatabaseProduct & { archivado?: boolean }>(
