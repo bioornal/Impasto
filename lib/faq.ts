@@ -47,9 +47,9 @@ export function preguntasFrecuentes(business: BusinessConfig): PreguntaFrecuente
     },
     {
       pregunta: "¿Qué es la pizza a la piedra de Impasto?",
-      respuesta: `Es la pizza a la piedra que conocés, hecha con técnica napoletana: masa madurada en frío ${fermentacion.detalle.toLowerCase()}, `
+      respuesta: `Es la pizza a la piedra que conocés, con masa de técnica napoletana: madurada en frío ${fermentacion.detalle.toLowerCase()}, `
         + `estirado a mano sin moldes y horno a la piedra a ${horno.cifra}. `
-        + "El resultado es un buen cornicione, alto y liviano, y una base fina y tierna, pero al gusto argentino: con mucha muzzarella y toppings abundantes.",
+        + "El resultado es un borde alto y liviano, el cornicione, y una base fina y tierna. Y arriba, al gusto argentino: mucha muzzarella y toppings abundantes.",
     },
     {
       pregunta: "¿Se puede pedir pizza mitad y mitad?",

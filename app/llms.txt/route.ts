@@ -26,7 +26,7 @@ export function GET() {
 
   const contenido = `# ${BUSINESS.name}
 
-> Pizzería artesanal en ${BUSINESS.locationLabel}, Argentina. Pizza a la piedra: técnica napoletana y alma argentina. Delivery propio y take away.
+> Pizzería artesanal en ${BUSINESS.locationLabel}, Argentina. Pizza a la piedra con masa napoletana. Delivery propio y take away.
 
 ## Datos del local
 - Nombre: ${BUSINESS.name}

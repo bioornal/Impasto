@@ -78,7 +78,7 @@ const EMPANADA_PESO = argumentoConCifra("empanadas-peso");
 const PORCIONES = argumento("porciones");
 
 const TICKER = [
-  "Pizza a la piedra: técnica napoletana y alma argentina",
+  "Pizza a la piedra con masa napoletana",
   "Delivery propio & Take away en Puerto Iguazú",
   `${FERMENTACION.titulo} ${FERMENTACION.cifra}`,
   `Horno de piedra a ${HORNO.cifra}`,

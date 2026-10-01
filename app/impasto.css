@@ -301,7 +301,7 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 }
 .hero-grid{
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 1.25fr 0.75fr;
   gap: 48px;
   align-items: center;
   padding-block: 76px 84px;
@@ -320,7 +320,7 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 }
 .hero-eyebrow::before{ content: "●"; font-size: 7px; }
 .hero h1{
-  font-family: var(--font-display); font-size: clamp(46px, 6.6vw, 102px); line-height: .94;
+  font-family: var(--font-display); font-size: clamp(44px, 5.4vw, 80px); line-height: .98;
   letter-spacing: -.038em; font-weight: 600; margin: 0 0 26px; text-wrap: balance;
 }
 .hero h1 em{ font-style: italic; color: var(--gold); }
