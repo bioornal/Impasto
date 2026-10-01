@@ -40,7 +40,7 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroPro
             Pizza a la piedra:<br />técnica napoletana,<br /><em>alma argentina.</em>
           </h1>
           <p className="hero-lede">
-            Masa madurada en frío de 48 a 72 horas, buen cornicione, base fina y tierna, mucha muzzarella y toppings abundantes. Cada pizza se estira a mano en el momento y sale del horno a la piedra en minutos. Pedí online y recibila en tu casa, o pasá a retirar por el local.
+            Borde alto y aireado, base fina y tierna, muzzarella que se estira y toppings generosos en cada porción. Recién salida del horno y lista en minutos. Pedí online y recibila en tu casa, o pasá a retirar por el local.
           </p>
           <div className="hero-ctas">
             <button className="btn btn-primary btn-lg" onClick={() => onCta("pizzas")}>

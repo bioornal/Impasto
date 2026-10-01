@@ -871,6 +871,7 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   font-size:17.5px; color:rgba(246,241,231,.74); max-width:50ch;
   margin:0; line-height:1.65; text-wrap:pretty;
 }
+.story-lede + .story-lede{ margin-top:14px; }
 .story-cifras{
   display:grid; grid-template-columns:repeat(3,1fr) auto; align-items:end; gap:24px;
   margin-top:72px; padding-top:28px;
