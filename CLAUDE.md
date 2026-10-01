@@ -714,6 +714,15 @@ carrito es siempre el cliente.
 - **`BusinessConfig.deliveryEstimate`** es el único tiempo de entrega: lo usan siete lugares
   del sitio —tres en `Confirmation.tsx`, tres en `Checkout.tsx`, uno en `CartDrawer.tsx`— más
   el prompt del bot.
+- **Qué sabe además de la carta (01/10/2026).** Preguntado en producción, respondía "no lo tengo"
+  a medios de pago, horario (con el local cerrado el horario no viajaba), último pedido,
+  Instagram y teléfono. Ahora el prompt lleva **EL LOCAL** (estado, horario, último pedido y días
+  cerrados desde `diasApertura`, dirección, teléfono, WhatsApp, Instagram, mail), **QUIÉNES SOMOS**
+  (`LEMA` y `ORIGEN_DEL_NOMBRE` de `lib/marca.ts`) y las **PREGUNTAS FRECUENTES** del sitio
+  (`lib/faq.ts`, sin copiarlas). Con el delivery pausado omite la pregunta marcada
+  `soloConDelivery`, y si el FAQ choca con EL LOCAL o EL ENVÍO mandan estos. Nunca da CBU ni
+  alias. El FAQ de horarios dejó de tener "23:45" y "lunes" escritos a mano. Verificado con el
+  bot local (dev) y `tests/chat-prompt.test.ts`.
 - Lo que el bot **no** hace: no arma carrito, no toca la pantalla, no captura datos y no
   consulta el estado de pedidos. Nada de la conversación se guarda.
 

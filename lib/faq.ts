@@ -1,6 +1,7 @@
 import { argumentoConCifra } from "@/lib/marca";
 import { REGLA_MITAD_Y_MITAD, TAMANIOS_CAJA_EMPANADAS, listaConO } from "@/lib/reglas-carta";
 import { fmt } from "@/lib/utils";
+import { diasCerrados } from "@/lib/hours";
 import type { BusinessConfig } from "@/lib/business";
 
 /**
@@ -21,6 +22,13 @@ import type { BusinessConfig } from "@/lib/business";
 export interface PreguntaFrecuente {
   pregunta: string;
   respuesta: string;
+  /**
+   * Solo vale mientras haya reparto. El sitio la muestra siempre (es el FAQ
+   * estable, y el JSON-LD no cambia con una pausa del día), pero el chatbot
+   * la omite con el delivery pausado: si no, ofrecería un envío que el
+   * checkout rechaza.
+   */
+  soloConDelivery?: boolean;
 }
 
 export function preguntasFrecuentes(business: BusinessConfig): PreguntaFrecuente[] {
@@ -28,6 +36,7 @@ export function preguntasFrecuentes(business: BusinessConfig): PreguntaFrecuente
   const horno = argumentoConCifra("horno");
   const empanada = argumentoConCifra("empanadas-peso");
   const tamanios = listaConO(TAMANIOS_CAJA_EMPANADAS);
+  const cerrados = diasCerrados(business.diasApertura);
 
   return [
     {
@@ -37,10 +46,12 @@ export function preguntasFrecuentes(business: BusinessConfig): PreguntaFrecuente
     },
     {
       pregunta: "¿Cuáles son los horarios?",
-      respuesta: `Nuestro horario es ${business.hours}. El último pedido se toma a las 23:45 y los lunes permanecemos cerrados.`,
+      respuesta: `Nuestro horario es ${business.hours}. El último pedido se toma a las ${business.horaCierre}.`
+        + (cerrados ? ` ${cerrados}.` : ""),
     },
     {
       pregunta: "¿Hacen delivery en Puerto Iguazú?",
+      soloConDelivery: true,
       respuesta: `Sí, hacemos delivery propio en ${business.locationLabel}. El envío cuesta ${fmt(business.deliveryFee)} `
         + `y es gratis a partir de ${fmt(business.freeShippingFrom)} de subtotal. El tiempo estimado es de ${business.deliveryEstimate}, `
         + "siempre como estimado: el clima, el tránsito y la cantidad de pedidos pueden variar la demora.",

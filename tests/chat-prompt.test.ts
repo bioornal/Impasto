@@ -1,5 +1,6 @@
 import { promptVendedor } from "../lib/chat-prompt";
-import { ARGUMENTOS_MARCA } from "../lib/marca";
+import { ARGUMENTOS_MARCA, LEMA, ORIGEN_DEL_NOMBRE } from "../lib/marca";
+import { preguntasFrecuentes } from "../lib/faq";
 import { BUSINESS, type BusinessConfig } from "../lib/business";
 import { estadoTienda } from "../lib/hours";
 import type { CatalogData } from "../types";
@@ -165,6 +166,20 @@ chequear("con el delivery activo ofrece el envío gratis", /Envío GRATIS a part
 chequear("con el delivery pausado dice que solo hay retiro, con la dirección", /solo .*retir/i.test(promptSinDelivery) && promptSinDelivery.includes(business.address));
 chequear("y lleva el motivo que cargó el local", promptSinDelivery.includes("Por la lluvia pausamos el delivery."));
 chequear("y no ofrece envío gratis ni la tarifa", !/gratis a partir/i.test(promptSinDelivery) && !promptSinDelivery.includes("$3.000"));
+
+chequear("con el delivery pausado omite la pregunta frecuente de delivery", !promptSinDelivery.includes("¿Hacen delivery"));
+chequear("con el delivery activo sí la incluye", prompt.includes("¿Hacen delivery"));
+
+/* ── lo que el bot respondía "no lo tengo" (visto en producción el 01/10/2026) ── */
+chequear("sabe los medios de pago", /efectivo/i.test(prompt) && /transferencia/i.test(prompt) && /Mercado Pago/.test(prompt));
+chequear("no da datos bancarios", /nunca das datos bancarios/i.test(prompt));
+chequear("con el local cerrado igual sabe el horario", promptCerrado.includes(business.hours));
+chequear("sabe la hora del último pedido", promptCerrado.includes(`Último pedido: ${business.horaCierre}`));
+chequear("sabe qué días no abre, desde la configuración", promptCerrado.includes("Lunes cerrado"));
+chequear("sabe el teléfono y el Instagram", prompt.includes(business.phone) && prompt.includes(business.instagram));
+chequear("sabe el concepto de la marca", prompt.includes(LEMA));
+chequear("sabe por qué se llama así", prompt.includes(ORIGEN_DEL_NOMBRE));
+chequear("las preguntas frecuentes son las del sitio", preguntasFrecuentes(business).every((item) => prompt.includes(item.pregunta)));
 
 console.log(fallos === 0 ? "\nTodo en orden." : `\n${fallos} fallo(s).`);
 process.exit(fallos === 0 ? 0 : 1);

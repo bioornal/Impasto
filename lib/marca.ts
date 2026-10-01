@@ -20,6 +20,20 @@
  * recorrer el array entero. Eso es lo que evita que agregar un argumento
  * nuevo cambie, de rebote, lo que ya se veía en una sección que no lo pidió.
  */
+/**
+ * El concepto de la marca desde el 01/10/2026 (antes, "pizza híbrida"). Lo usan
+ * la cinta del header, el eslogan del JSON-LD y el prompt del chatbot. El título
+ * del hero lo escribe con su propio corte de línea y énfasis.
+ */
+export const LEMA = "Pizza a la piedra, técnica napoletana";
+
+/**
+ * Por qué se llama Impasto. La sección Nosotros lo cuenta con sus palabras;
+ * esta es la versión que sabe el chatbot.
+ */
+export const ORIGEN_DEL_NOMBRE = "En italiano, impasto es la masa, y por ella elegimos el nombre: "
+  + "es la base de todo lo que hacemos.";
+
 export interface ArgumentoMarca {
   /** Slug estable. No se muestra: es lo que usa un componente para pedir un
    *  argumento puntual con `argumento()`, sin depender del orden del array. */

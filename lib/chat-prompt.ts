@@ -1,4 +1,6 @@
-import { ARGUMENTOS_MARCA } from "@/lib/marca";
+import { ARGUMENTOS_MARCA, LEMA, ORIGEN_DEL_NOMBRE } from "@/lib/marca";
+import { preguntasFrecuentes } from "@/lib/faq";
+import { diasCerrados } from "@/lib/hours";
 import {
   REGLA_MITAD_Y_MITAD,
   TAMANIOS_CAJA_EMPANADAS,
@@ -106,14 +108,42 @@ function sobreElProducto(): string {
   return `\nSOBRE EL PRODUCTO\n${lista}\n`;
 }
 
+/**
+ * Las mismas preguntas frecuentes que muestra el sitio (`lib/faq.ts`): de ahí
+ * salen los medios de pago, los horarios y qué es la pizza, sin escribirlos dos
+ * veces. Con el reparto pausado se omite la de delivery, que promete un envío.
+ */
+function faq(business: BusinessConfig, estado: EstadoTienda): string {
+  // Varias respuestas citan cifras de ARGUMENTOS_MARCA (`argumentoConCifra`
+  // tira si falta una). Sin argumentos de marca, el bot sigue sin el FAQ en
+  // vez de caerse: igual que SOBRE EL PRODUCTO, la sección no se anuncia.
+  if (ARGUMENTOS_MARCA.length === 0) return "";
+  const lista = preguntasFrecuentes(business)
+    .filter((item) => estado.delivery.activo || !item.soloConDelivery)
+    .map((item) => `- ${item.pregunta} ${item.respuesta}`)
+    .join("\n");
+  return `\nPREGUNTAS FRECUENTES\n${lista}\n`;
+}
+
 export function promptVendedor(
   data: CatalogData,
   business: BusinessConfig,
   estado: EstadoTienda,
 ): string {
-  const local = estado.abierto
-    ? `El local está ABIERTO ahora. Horario: ${business.hours}.`
+  const ahora = estado.abierto
+    ? "El local está ABIERTO ahora."
     : `El local está CERRADO ahora. ${estado.motivo} Invitá igual a mirar la carta y a volver cuando abra.`;
+  const cerrados = diasCerrados(business.diasApertura);
+  // El horario va siempre, también con el local cerrado: es justo cuando más
+  // lo preguntan. Antes solo viajaba con el local abierto.
+  const local = [
+    `- ${ahora}`,
+    `- Horario: ${business.hours}. Último pedido: ${business.horaCierre}.${cerrados ? ` ${cerrados}.` : ""}`,
+    `- Dirección: ${business.address}, ${business.locationLabel}.`,
+    `- Teléfono: ${business.phone}. WhatsApp: ${business.whatsappPhone}.`,
+    business.instagram ? `- Instagram: ${business.instagram}.` : null,
+    business.email ? `- Mail: ${business.email}.` : null,
+  ].filter((linea): linea is string => linea !== null).join("\n");
 
   // Con el reparto pausado el bot no puede ofrecer envío: el checkout lo rechaza.
   const envio = estado.delivery.activo
@@ -149,11 +179,16 @@ export function promptVendedor(
     .join("\n");
 
   const fuentesPermitidas = haySobreElProducto
-    ? "LA CARTA, en EL ENVÍO y en SOBRE EL PRODUCTO"
-    : "LA CARTA y en EL ENVÍO";
+    ? "QUIÉNES SOMOS, EL LOCAL, EL ENVÍO, SOBRE EL PRODUCTO, PREGUNTAS FRECUENTES y LA CARTA"
+    : "QUIÉNES SOMOS, EL LOCAL, EL ENVÍO y LA CARTA";
 
   return `Sos el asistente de ${business.name}, una pizzería de ${business.locationLabel}.
 Tu único trabajo es ayudar a la persona a elegir qué pedir y entusiasmarla para que lo pida.
+
+QUIÉNES SOMOS
+- ${LEMA}: la pizza a la piedra que conocen los argentinos, con masa de técnica napoletana y,
+  arriba, mucha muzzarella y toppings abundantes.
+- ${ORIGEN_DEL_NOMBRE}
 
 CÓMO HABLÁS
 - Español rioplatense, de vos. Profesional y ameno, sin exagerar los modismos.
@@ -170,6 +205,9 @@ LO QUE NO HACÉS NUNCA
 - No tomás pedidos, no armás el carrito y no confirmás nada. El cliente agrega solo, con su
   propio click. Si te piden que confirmes un pedido, explicá con amabilidad cómo hacerlo en la página.
 - No inventás nada. Solo existe lo que está en ${fuentesPermitidas}.
+  Si una pregunta frecuente no coincide con EL LOCAL o EL ENVÍO, vale lo de EL LOCAL y EL ENVÍO:
+  es el estado de hoy.
+- Nunca das datos bancarios (CBU, alias, titular): aparecen en el checkout al elegir transferencia.
   Si te preguntan algo que no figura ahí, decí que no lo tenés y pasales el WhatsApp del local:
   ${business.whatsappPhone}.
 - No afirmás nada sobre cantidad de reseñas, puntajes ni años de trayectoria, aunque los veas
@@ -183,7 +221,7 @@ ${local}
 
 EL ENVÍO
 ${envio}
-${sobreElProducto()}
+${sobreElProducto()}${faq(business, estado)}
 LA CARTA
 ${carta(data)}`;
 }

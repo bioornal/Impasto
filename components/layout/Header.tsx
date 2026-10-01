@@ -4,7 +4,7 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { fmt } from "@/lib/utils";
 import { LOGO } from "@/lib/logo";
-import { argumento, argumentoConCifra } from "@/lib/marca";
+import { LEMA, argumento, argumentoConCifra } from "@/lib/marca";
 import type { BusinessConfig } from "@/lib/business";
 
 const NAV: [string, string][] = [
@@ -78,7 +78,7 @@ const EMPANADA_PESO = argumentoConCifra("empanadas-peso");
 const PORCIONES = argumento("porciones");
 
 const TICKER = [
-  "Pizza a la piedra, técnica napoletana",
+  LEMA,
   "Delivery propio & Take away en Puerto Iguazú",
   `${FERMENTACION.titulo} ${FERMENTACION.cifra}`,
   `Horno de piedra a ${HORNO.cifra}`,
@@ -139,11 +139,12 @@ export function Header({ onCartClick, onNav, onSearch, current, business, sectio
             />
           </button>
 
-          <nav className="nav">
+          <nav className="nav" aria-label="Navegación principal">
             {navItems.map(([key, label]) => (
               <button
                 key={key}
                 className={current === key ? "active" : ""}
+                aria-current={current === key ? "location" : undefined}
                 onClick={() => onNav(key)}
               >
                 {label}

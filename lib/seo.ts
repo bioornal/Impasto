@@ -1,7 +1,7 @@
 import type { BusinessConfig } from "@/lib/business";
 import type { CatalogData, Empanada, Pizza } from "@/types";
 import { SITE_URL } from "@/lib/site";
-import { argumentoConCifra } from "@/lib/marca";
+import { LEMA, argumentoConCifra } from "@/lib/marca";
 import { LOGO } from "@/lib/logo";
 import { STOCK_IMAGES, getDrinkImage, getEmpanadaImage, getPizzaImage } from "@/lib/stock-images";
 import { preguntasFrecuentes } from "@/lib/faq";
@@ -216,7 +216,7 @@ export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {
     "@id": `${SITE_URL}/#local`,
     name: business.name,
     alternateName: `${business.name} ${business.city}`,
-    slogan: "Pizza a la piedra, técnica napoletana.",
+    slogan: `${LEMA}.`,
     description: descripcionSitio(business),
     url: SITE_URL,
     image: [STOCK_IMAGES.hero.main, `${SITE_URL}/opengraph-image`],
