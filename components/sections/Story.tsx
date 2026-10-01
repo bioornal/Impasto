@@ -35,7 +35,7 @@ export function Story({ onCta }: { onCta: (section: string) => void }) {
           <h2>Impasto<br />significa <em>masa.</em></h2>
           <p className="story-sub">Y acá todo empieza ahí.</p>
           <p className="story-lede">
-            En italiano, <em>impasto</em> es la masa, y por ella elegimos el nombre. La nuestra madura en frío sin apuro, se estira a mano en el momento y se cocina sobre la piedra: técnica napoletana, con borde alto y aireado y base fina y tierna.
+            En italiano, <em>impasto</em> es la masa, y por ella elegimos el nombre. La nuestra madura en frío sin apuro, se estira a mano en el momento y se cocina sobre la piedra: de ahí sale una base fina y tierna.
           </p>
           <p className="story-lede">
             Sin atajos y con ingredientes de primera: una pizza para cerrar un día de Cataratas o armar una gran noche en casa.

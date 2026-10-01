@@ -178,7 +178,7 @@ export function descripcionSitio(business: BusinessConfig): string {
   // template literal de abajo, y ahí un `cifra` faltante compilaría igual.
   const fermentacion = argumentoConCifra("fermentacion");
   const empanadaPeso = argumentoConCifra("empanadas-peso").cifra;
-  return `Pizza a la piedra con masa napoletana en ${business.city}: madurada en frío ${fermentacion.cifra}, `
+  return `Pizza a la piedra con técnica napoletana en ${business.city}: masa madurada en frío ${fermentacion.cifra}, `
     + `con mucha muzzarella y toppings abundantes. Empanadas de ${empanadaPeso}, delivery propio y take away. Pedí online.`;
 }
 
@@ -216,7 +216,7 @@ export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {
     "@id": `${SITE_URL}/#local`,
     name: business.name,
     alternateName: `${business.name} ${business.city}`,
-    slogan: "Pizza a la piedra con masa napoletana.",
+    slogan: "Pizza a la piedra, técnica napoletana.",
     description: descripcionSitio(business),
     url: SITE_URL,
     image: [STOCK_IMAGES.hero.main, `${SITE_URL}/opengraph-image`],

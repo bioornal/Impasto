@@ -37,10 +37,10 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroPro
         <div className="hero-content">
           <div className="hero-eyebrow">Pizzería artesanal · Delivery & Take away</div>
           <h1>
-            Pizza a la piedra<br /><em>con masa napoletana.</em>
+            Pizza a la piedra,<br /><em>técnica napoletana.</em>
           </h1>
           <p className="hero-lede">
-            Con mucha muzzarella y toppings sin mezquinar, como nos gusta acá. Pedila online y recibila en tu casa, o pasá a buscarla por el local.
+            Harina de fuerza, un cornicione alto y aireado y apenas 2&nbsp;a&nbsp;5&nbsp;minutos sobre la piedra. Arriba, mucha muzzarella y toppings sin mezquinar, como nos gusta acá.
           </p>
           <div className="hero-ctas">
             <button className="btn btn-primary btn-lg" onClick={() => onCta("pizzas")}>
@@ -85,7 +85,7 @@ export function Features({ freeShippingFrom: _freeShippingFrom, desde }: { freeS
       // "mitad y mitad sin recargo" invitaba a comparar precios donde no hay
       // nada que comparar: el modal muestra el total antes de agregar.
       ? [`Pizzas desde ${fmt(desde)}`, `${PORCIONES.titulo}, con uno o dos gustos`]
-      : ["Pizza a la piedra", "Con masa napoletana"],
+      : ["Pizza a la piedra", "Técnica napoletana"],
     ["Delivery propio", "Envíos en Puerto Iguazú"],
     ["Take away", "Retiro en el local sin esperas"],
     [INGREDIENTES.titulo, INGREDIENTES.detalle],

@@ -24,7 +24,7 @@ export function Footer({ business }: { business: BusinessConfig }) {
               className="footer-logo"
             />
             <p>
-              Pizza a la piedra con masa napoletana. Delivery y Take away en {business.locationLabel}.
+              Pizza a la piedra con técnica napoletana. Delivery y Take away en {business.locationLabel}.
             </p>
           </div>
 
