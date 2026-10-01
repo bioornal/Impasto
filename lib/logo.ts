@@ -18,4 +18,4 @@ export const LOGO: VarianteLogo = { src: "/logo.png", ancho: 1200, alto: 383 };
  * Para fondos oscuros (footer sobre `--ink-deep`): todo en blanco, llama incluida.
  * El hueco de la llama es transparente, así que la espiga se lee contra el fondo.
  */
-export const LOGO_BLANCO: VarianteLogo = { src: "/logo-oscuro.png", ancho: 1200, alto: 383 };
+export const LOGO_BLANCO: VarianteLogo = { src: "/logo-blanco-v2.png", ancho: 1200, alto: 383 };
