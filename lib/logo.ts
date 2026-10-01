@@ -15,8 +15,7 @@ export type VarianteLogo = { src: string; ancho: number; alto: number };
 export const LOGO: VarianteLogo = { src: "/logo.png", ancho: 1200, alto: 383 };
 
 /**
- * Para fondos oscuros (footer sobre `--ink-deep`): la llama conserva su color
- * y el resto, que era marrón y no se vería, va en crema. El hueco de la llama
- * es transparente, así que la espiga se lee contra el fondo.
+ * Para fondos oscuros (footer sobre `--ink-deep`): todo en blanco, llama incluida.
+ * El hueco de la llama es transparente, así que la espiga se lee contra el fondo.
  */
 export const LOGO_BLANCO: VarianteLogo = { src: "/logo-oscuro.png", ancho: 1200, alto: 383 };
