@@ -462,6 +462,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
             <button
               key={t.key}
               className={`dock-tab ${seccionActiva === t.key ? "on" : ""}`}
+              aria-current={seccionActiva === t.key ? "location" : undefined}
               onClick={() => goSection(t.key)}
             >
               <span>{t.label}</span>

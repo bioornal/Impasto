@@ -69,36 +69,6 @@ export function validateOrderPayload(order: Record<string, unknown>): OrderPaylo
   };
 }
 
-async function upsertCliente(order: OrderPayload) {
-  const { data: existente } = await db.database
-    .from("clientes")
-    .select("cant_compras")
-    .eq("telefono", order.tel)
-    .limit(1);
-
-  if (existente && existente.length > 0) {
-    await db.database
-      .from("clientes")
-      .update({
-        nombre: order.nombre,
-        email: order.email,
-        direccion: order.dir || "",
-        cant_compras: (existente[0].cant_compras || 0) + 1,
-      })
-      .eq("telefono", order.tel);
-    return;
-  }
-
-  await db.database.from("clientes").insert({
-    nombre: order.nombre,
-    telefono: order.tel,
-    email: order.email,
-    direccion: order.dir || "",
-    detalles: "",
-    cant_compras: 1,
-  });
-}
-
 /**
  * Cotiza server-side, registra el cliente y persiste el pedido.
  * El total nunca sale del cliente: siempre se recalcula acá.
@@ -198,7 +168,7 @@ async function createPedidoNew(
   const id = String((inserted as { id?: unknown }).id || "");
   if (!id) throw new Error("El pedido se guardó sin identificador");
 
-  await upsertCliente(order);
+  // El perfil se guarda por trigger en la transacción del pedido; no incrementa compras.
 
   await registrarEvento({
     pedidoId: id,

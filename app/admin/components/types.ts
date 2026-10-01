@@ -58,8 +58,9 @@ export interface AdminCustomer {
   zona: string;
   pedidos: number;
   total: number;
-  fav: string;
-  ultimo: string;
+  notas: string;
+  ultimo: string | null;
+  comprasSinImporte: number;
 }
 
 export interface Testimonial {
@@ -92,6 +93,9 @@ export interface AdminState {
   products: AdminProduct[];
   orders: AdminOrder[];
   customers: AdminCustomer[];
+  customersError: string | null;
+  customersLoading: boolean;
+  customersUpdatedAt: string | null;
   testimonials: Testimonial[];
   etiquetas: AdminEtiqueta[];
 }

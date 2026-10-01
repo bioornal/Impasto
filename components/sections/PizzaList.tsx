@@ -98,7 +98,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
         <div className="container menubar-inner">
           <div className="chips">
             {FILTERS.map(([key, label]) => (
-              <button key={key} className={`chip ${cat === key ? "active" : ""}`} onClick={() => setCat(key)}>
+              <button key={key} className={`chip ${cat === key ? "active" : ""}`} onClick={() => setCat(key)} aria-pressed={cat === key}>
                 {label}
                 {key === "todas" && <span className="chip-count"> {pizzas.length}</span>}
               </button>
@@ -113,8 +113,8 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
           <div className="menubar-right">
             <span className="result-count">{list.length} de {pizzas.length}</span>
             <div className="segmented">
-              <button className={`seg ${layout === "mosaico" ? "active" : ""}`} onClick={() => setLayout("mosaico")}>Mosaico</button>
-              <button className={`seg ${layout === "lista" ? "active" : ""}`} onClick={() => setLayout("lista")}>Lista</button>
+              <button className={`seg ${layout === "mosaico" ? "active" : ""}`} onClick={() => setLayout("mosaico")} aria-pressed={layout === "mosaico"}>Mosaico</button>
+              <button className={`seg ${layout === "lista" ? "active" : ""}`} onClick={() => setLayout("lista")} aria-pressed={layout === "lista"}>Lista</button>
             </div>
           </div>
         </div>
@@ -159,12 +159,12 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
                             <span>{qty} en el carrito</span>
                             <button onClick={() => incKey(pizza.id)} aria-label={`Sumar una ${pizza.nombre}`}>+</button>
                           </div>
-                          <button className="p-half" title="Mitad y mitad" onClick={() => onHalf(pizza)}>½½</button>
+                          <button className="p-half" title="Mitad y mitad" aria-label={`Elegir pizza mitad y mitad con ${pizza.nombre}`} onClick={() => onHalf(pizza)}>½½</button>
                         </>
                       ) : (
                         <>
                           <button className="p-add" onClick={() => addPizza(pizza)}>Agregar</button>
-                          <button className="p-half" title="Mitad y mitad" onClick={() => onHalf(pizza)}>½½</button>
+                          <button className="p-half" title="Mitad y mitad" aria-label={`Elegir pizza mitad y mitad con ${pizza.nombre}`} onClick={() => onHalf(pizza)}>½½</button>
                         </>
                       )}
                     </div>
@@ -195,7 +195,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
                     <p>{pizza.desc}</p>
                   </div>
                   <div className="lrow-actions">
-                    <button className="btn btn-light btn-sm" disabled={agotado} onClick={() => !agotado && onHalf(pizza)} title={agotado ? "No disponible" : "Mitad y mitad"}>½½</button>
+                    <button className="btn btn-light btn-sm" disabled={agotado} onClick={() => !agotado && onHalf(pizza)} title={agotado ? "No disponible" : "Mitad y mitad"} aria-label={`Elegir pizza mitad y mitad con ${pizza.nombre}`}>½½</button>
                     <button className={`btn btn-sm ${agotado ? "btn-disabled" : "btn-primary"}`} disabled={agotado} onClick={() => !agotado && addPizza(pizza)}>
                       {agotado ? "Agotado" : qty > 0 ? `Agregada · ${qty}` : "Agregar"}
                     </button>
@@ -229,7 +229,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
                     ) : (
                       <button className="p-feat-add" onClick={() => addPizza(pizza)}>Agregar</button>
                     )}
-                    <button className="p-feat-half" disabled={agotado} title="Mitad y mitad" onClick={() => !agotado && onHalf(pizza)}>½½</button>
+                    <button className="p-feat-half" disabled={agotado} title="Mitad y mitad" aria-label={`Elegir pizza mitad y mitad con ${pizza.nombre}`} onClick={() => !agotado && onHalf(pizza)}>½½</button>
                   </div>
                 </div>
               </article>
@@ -261,14 +261,14 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
                   <span className="p-row-price">{fmt(pizza.precio)}</span>
                 </div>
                 <div className="p-row-side">
-                  <button className="p-row-half" disabled={agotado} title="Mitad y mitad" onClick={() => !agotado && onHalf(pizza)}>½½</button>
+                  <button className="p-row-half" disabled={agotado} title="Mitad y mitad" aria-label={`Elegir pizza mitad y mitad con ${pizza.nombre}`} onClick={() => !agotado && onHalf(pizza)}>½½</button>
                   {agotado ? (
                     <button className="p-row-add" disabled aria-label="Agotado">+</button>
                   ) : qty > 0 ? (
                     <div className="p-row-step">
-                      <button onClick={() => decKey(pizza.id)} aria-label="Quitar uno">−</button>
+                      <button onClick={() => decKey(pizza.id)} aria-label={`Quitar una unidad de ${pizza.nombre}`}>−</button>
                       <span>{qty}</span>
-                      <button onClick={() => incKey(pizza.id)} aria-label="Sumar uno">+</button>
+                      <button onClick={() => incKey(pizza.id)} aria-label={`Agregar una unidad de ${pizza.nombre}`}>+</button>
                     </div>
                   ) : (
                     <button className="p-row-add" onClick={() => addPizza(pizza)} aria-label={`Agregar ${pizza.nombre}`}>+</button>

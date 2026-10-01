@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial, AdminOrder, AdminCustomer } from "./types";
 import { esCategoriaImpasto } from "@/lib/categorias";
 import { adaptOrder } from "@/lib/adapt-order";
+import { loadAdminCustomers } from "@/lib/adapt-customer";
 import { confirmAdminMutation } from "@/lib/stabilization";
 import {
   clavesDePedidosParaCocina,
@@ -28,60 +29,6 @@ function adaptProduct(p: Record<string, unknown>): AdminProduct {
     popular: Boolean(p.popular),
     stock: 24,
     archivado: p.archivado === true,
-  };
-}
-
-function adaptCustomer(c: Record<string, unknown>, orders: AdminOrder[] = []): AdminCustomer {
-  const id = String(c.id || c.telefono || "");
-  const tel = String(c.telefono || "—");
-  const nombre = String(c.nombre || "—");
-  const normTel = tel.replace(/\D/g, "");
-
-  // Match orders by telephone (primary) or customer name (fallback)
-  const matchedOrders = orders.filter(o => {
-    const oTel = (o.tel || "").replace(/\D/g, "");
-    if (normTel.length >= 8 && oTel.length >= 8 && (oTel.endsWith(normTel.slice(-8)) || normTel.endsWith(oTel.slice(-8)))) {
-      return true;
-    }
-    return Boolean(o.cliente && nombre && o.cliente.trim().toLowerCase() === nombre.trim().toLowerCase());
-  });
-
-  const validOrders = matchedOrders.filter(o => o.estado !== "cancelado");
-  const calculatedTotal = validOrders.reduce((sum, o) => sum + o.total, 0);
-  const orderCount = Math.max(Number(c.cant_compras || 0), matchedOrders.length);
-
-  // Compute favorite item
-  let fav = String(c.detalles || "—");
-  if (matchedOrders.length > 0) {
-    const itemCounts: Record<string, number> = {};
-    matchedOrders.forEach(o => o.items.forEach(i => {
-      itemCounts[i.name] = (itemCounts[i.name] || 0) + i.qty;
-    }));
-    const sortedItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]);
-    if (sortedItems.length > 0) {
-      fav = `${sortedItems[0][0]} (×${sortedItems[0][1]})`;
-    }
-  }
-
-  // Compute last activity
-  let ultimo = String(c.updated_at || c.created_at || new Date().toISOString());
-  if (matchedOrders.length > 0) {
-    const latest = [...matchedOrders].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())[0];
-    if (latest) ultimo = latest.fecha;
-  }
-
-  return {
-    _dbId: id,
-    id,
-    nombre,
-    tel,
-    email: String(c.email || ""),
-    dir: String(c.direccion || ""),
-    zona: "",
-    pedidos: orderCount,
-    total: calculatedTotal,
-    fav,
-    ultimo,
   };
 }
 
@@ -155,24 +102,29 @@ async function loadAll(): Promise<{
   products: AdminProduct[];
   orders: AdminOrder[];
   customers: AdminCustomer[];
+  customersError: string | null;
+  customersLoading: boolean;
+  customersUpdatedAt: string | null;
   testimonials: Testimonial[];
   etiquetas: AdminEtiqueta[];
 }> {
-  const [prodRes, pedRes, cliRes, etiRes] = await Promise.all([
+  const [prodRes, pedRes, crm, etiRes] = await Promise.all([
     fetch("/api/admin/productos").then(r => r.json()).catch(() => ({ data: [] })),
     fetch("/api/admin/pedidos").then(r => r.json()).catch(() => ({ data: [] })),
-    fetch("/api/admin/clientes").then(r => r.json()).catch(() => ({ data: [] })),
+    loadAdminCustomers(() => fetch("/api/admin/clientes", { cache: "no-store" }))
+      .then(customers => ({ customers, customersError: null, customersUpdatedAt: new Date().toISOString() }))
+      .catch(error => ({ customers: [], customersError: error instanceof Error ? error.message : "No se pudo verificar el CRM", customersUpdatedAt: null })),
     fetch("/api/admin/etiquetas").then(r => r.json()).catch(() => ({ data: [] })),
   ]);
   const testiRes = await fetch("/api/admin/testimonios").then(r => r.json()).catch(() => ({ data: [] }));
   
   const orders = (pedRes.data || []).map(adaptOrder);
-  const customers = (cliRes.data || []).map((c: Record<string, unknown>) => adaptCustomer(c, orders));
 
   return {
     products: (prodRes.data || []).filter((p: Record<string, unknown>) => esCategoriaImpasto(String(p.categoria || ""))).map(adaptProduct),
     orders,
-    customers,
+    ...crm,
+    customersLoading: false,
     testimonials: Array.isArray(testiRes.data) ? testiRes.data.map(adaptTestimonial) : [],
     etiquetas: (etiRes.data || []).map(adaptEtiqueta),
   };
@@ -182,6 +134,7 @@ async function loadAll(): Promise<{
 interface StoreCtx {
   state: AdminState;
   reload: () => Promise<void>;
+  reloadCustomers: () => Promise<void>;
   showToast: (msg: string) => void;
   soundEnabled: boolean;
   toggleSound: () => void;
@@ -225,7 +178,7 @@ function LoadingScreen({ error }: { error: string | null }) {
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AdminState>({ loading: true, error: null, products: [], orders: [], customers: [], testimonials: [], etiquetas: [] });
+  const [state, setState] = useState<AdminState>({ loading: true, error: null, products: [], orders: [], customers: [], customersError: null, customersLoading: true, customersUpdatedAt: null, testimonials: [], etiquetas: [] });
   const [toast, setToast] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const soundEnabledRef = useRef(soundEnabled);
@@ -316,21 +269,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
         knownOrderIdsRef.current = registrarPedidosConocidosParaCocina(prevIds, newOrders);
 
-        setState(s => {
-          const updatedCustomers = s.customers.map(c =>
-            adaptCustomer({
-              id: c._dbId,
-              telefono: c.tel,
-              nombre: c.nombre,
-              email: c.email,
-              direccion: c.dir,
-              cant_compras: c.pedidos,
-              detalles: c.fav,
-              updated_at: c.ultimo,
-            }, newOrders)
-          );
-          return { ...s, orders: newOrders, customers: updatedCustomers };
-        });
+        setState(s => ({ ...s, orders: newOrders }));
       } catch {
         // Silently ignore polling hiccups
       }
@@ -339,9 +278,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(timer);
   }, []);
 
+  const customersRefreshRef = useRef(false);
+  const reloadCustomers = async () => {
+    if (customersRefreshRef.current) return;
+    customersRefreshRef.current = true;
+    setState(s => ({ ...s, customersLoading: true }));
+    try {
+      const customers = await loadAdminCustomers(() => fetch("/api/admin/clientes", { cache: "no-store" }));
+      setState(s => ({ ...s, customers, customersError: null, customersLoading: false, customersUpdatedAt: new Date().toISOString() }));
+    } catch (error) {
+      setState(s => ({ ...s, customers: [], customersError: error instanceof Error ? error.message : "No se pudo verificar el CRM", customersLoading: false, customersUpdatedAt: null }));
+    } finally {
+      customersRefreshRef.current = false;
+    }
+  };
+
   const api: StoreCtx = {
     state,
     reload: load,
+    reloadCustomers,
     showToast,
     soundEnabled,
     toggleSound,

@@ -231,7 +231,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
               </div>
             )}
             <div className="co-modes">
-              <button className={`radio-card ${isDelivery ? "on" : ""}`} onClick={() => set("mode", "delivery")} disabled={!delivery.activo}>
+              <button className={`radio-card ${isDelivery ? "on" : ""}`} aria-pressed={isDelivery} onClick={() => set("mode", "delivery")} disabled={!delivery.activo}>
                 <span className="radio-card-top">
                   <b>Delivery</b>
                   <span className={`dot ${isDelivery ? "on" : ""}`} />
@@ -247,7 +247,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
                   )}
                 </small>
               </button>
-              <button className={`radio-card ${!isDelivery ? "on" : ""}`} onClick={() => set("mode", "takeaway")}>
+              <button className={`radio-card ${!isDelivery ? "on" : ""}`} aria-pressed={!isDelivery} onClick={() => set("mode", "takeaway")}>
                 <span className="radio-card-top">
                   <b>Retiro en el local</b>
                   <span className={`dot ${!isDelivery ? "on" : ""}`} />
@@ -260,7 +260,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             </div>
             <div className="when-row">
               {WHEN_OPTIONS.map(([key, label]) => (
-                <button key={key} className={`when ${data.when === key ? "on" : ""}`} onClick={() => set("when", key)}>
+                <button key={key} className={`when ${data.when === key ? "on" : ""}`} aria-pressed={data.when === key} onClick={() => set("when", key)}>
                   {label}
                 </button>
               ))}
@@ -275,17 +275,17 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             <div className="form-grid">
               <div className={`field ${errors.nombre ? "error" : ""}`}>
                 <label htmlFor="co-nombre">Nombre y apellido</label>
-                <input id="co-nombre" placeholder="Juan Pérez" value={data.nombre} onChange={(e) => set("nombre", e.target.value)} />
+                <input id="co-nombre" aria-invalid={Boolean(errors.nombre)} autoComplete="name" placeholder="Juan Pérez" value={data.nombre} onChange={(e) => set("nombre", e.target.value)} />
                 {errors.nombre && <span className="err">{errors.nombre}</span>}
               </div>
               <div className={`field ${errors.tel ? "error" : ""}`}>
                 <label htmlFor="co-tel">WhatsApp</label>
-                <input id="co-tel" placeholder="3757 55 1234" value={data.tel} onChange={(e) => set("tel", e.target.value)} />
+                <input id="co-tel" aria-invalid={Boolean(errors.tel)} type="tel" inputMode="tel" autoComplete="tel" placeholder="3757 55 1234" value={data.tel} onChange={(e) => set("tel", e.target.value)} />
                 {errors.tel && <span className="err">{errors.tel}</span>}
               </div>
               <div className={`field ${errors.email ? "error" : ""}`}>
                 <label htmlFor="co-email">Email</label>
-                <input id="co-email" type="email" placeholder="vos@email.com" autoComplete="email" value={data.email} onChange={(e) => set("email", e.target.value)} />
+                <input id="co-email" aria-invalid={Boolean(errors.email)} type="email" placeholder="vos@email.com" autoComplete="email" value={data.email} onChange={(e) => set("email", e.target.value)} />
                 {errors.email ? <span className="err">{errors.email}</span> : <span className="hint">Te mandamos la confirmación del pedido acá.</span>}
               </div>
 
@@ -293,7 +293,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
                 <>
                   <div className={`field full ${errors.dir ? "error" : ""}`}>
                     <label htmlFor="co-dir">Dirección</label>
-                    <input id="co-dir" placeholder="Calle y altura" value={data.dir} onChange={(e) => set("dir", e.target.value)} />
+                    <input id="co-dir" aria-invalid={Boolean(errors.dir)} placeholder="Calle y altura" value={data.dir} onChange={(e) => set("dir", e.target.value)} />
                     {errors.dir && <span className="err">{errors.dir}</span>}
                   </div>
                   <div className="field full">
@@ -317,7 +317,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             </div>
             <div className="pay-list">
               {PAGOS.map(([key, title, sub, tag]) => (
-                <button key={key} className={`pay-row ${data.pago === key ? "on" : ""}`} onClick={() => set("pago", key)}>
+                <button key={key} className={`pay-row ${data.pago === key ? "on" : ""}`} aria-pressed={data.pago === key} onClick={() => set("pago", key)}>
                   <span className={`dot ${data.pago === key ? "on" : ""}`} />
                   <span style={{ flex: 1, textAlign: "left" }}>
                     <b>{title}</b>
@@ -468,7 +468,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             </div>
           )}
           <div className="co-modes">
-            <button className={`m-radio ${isDelivery ? "on" : ""}`} onClick={() => set("mode", "delivery")} disabled={!delivery.activo}>
+            <button className={`m-radio ${isDelivery ? "on" : ""}`} aria-pressed={isDelivery} onClick={() => set("mode", "delivery")} disabled={!delivery.activo}>
               <span className="m-radio-dot" />
               <span className="m-radio-body">
                 <b>Delivery</b>
@@ -479,7 +479,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
                 </small>
               </span>
             </button>
-            <button className={`m-radio ${!isDelivery ? "on" : ""}`} onClick={() => set("mode", "takeaway")}>
+            <button className={`m-radio ${!isDelivery ? "on" : ""}`} aria-pressed={!isDelivery} onClick={() => set("mode", "takeaway")}>
               <span className="m-radio-dot" />
               <span className="m-radio-body">
                 <b>Retiro en el local</b>
@@ -497,17 +497,17 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
           <div className="form-grid">
             <div className={`field ${errors.nombre ? "error" : ""}`}>
               <label htmlFor="co-m-nombre">Nombre y apellido</label>
-              <input id="co-m-nombre" autoComplete="name" placeholder="Juan Pérez" value={data.nombre} onChange={(e) => set("nombre", e.target.value)} />
+              <input id="co-m-nombre" aria-invalid={Boolean(errors.nombre)} autoComplete="name" placeholder="Juan Pérez" value={data.nombre} onChange={(e) => set("nombre", e.target.value)} />
               {errors.nombre && <span className="err">{errors.nombre}</span>}
             </div>
             <div className={`field ${errors.tel ? "error" : ""}`}>
               <label htmlFor="co-m-tel">WhatsApp</label>
-              <input id="co-m-tel" type="tel" inputMode="tel" autoComplete="tel" placeholder="3757 55 1234" value={data.tel} onChange={(e) => set("tel", e.target.value)} />
+              <input id="co-m-tel" aria-invalid={Boolean(errors.tel)} type="tel" inputMode="tel" autoComplete="tel" placeholder="3757 55 1234" value={data.tel} onChange={(e) => set("tel", e.target.value)} />
               {errors.tel && <span className="err">{errors.tel}</span>}
             </div>
             <div className={`field ${errors.email ? "error" : ""}`}>
               <label htmlFor="co-m-email">Email</label>
-              <input id="co-m-email" type="email" inputMode="email" autoComplete="email" placeholder="vos@email.com" value={data.email} onChange={(e) => set("email", e.target.value)} />
+              <input id="co-m-email" aria-invalid={Boolean(errors.email)} type="email" inputMode="email" autoComplete="email" placeholder="vos@email.com" value={data.email} onChange={(e) => set("email", e.target.value)} />
               {errors.email ? <span className="err">{errors.email}</span> : <span className="hint">Te mandamos la confirmación del pedido acá.</span>}
             </div>
 
@@ -515,7 +515,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
               <>
                 <div className={`field full ${errors.dir ? "error" : ""}`}>
                   <label htmlFor="co-m-dir">Dirección</label>
-                  <input id="co-m-dir" autoComplete="street-address" placeholder="Calle y altura" value={data.dir} onChange={(e) => set("dir", e.target.value)} />
+                  <input id="co-m-dir" aria-invalid={Boolean(errors.dir)} autoComplete="street-address" placeholder="Calle y altura" value={data.dir} onChange={(e) => set("dir", e.target.value)} />
                   {errors.dir && <span className="err">{errors.dir}</span>}
                 </div>
                 <div className="field full">
@@ -539,7 +539,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
           </div>
           <div className="pay-list">
             {PAGOS.map(([key, title, sub, tag]) => (
-              <button key={key} className={`pay-row ${data.pago === key ? "on" : ""}`} onClick={() => set("pago", key)}>
+              <button key={key} className={`pay-row ${data.pago === key ? "on" : ""}`} aria-pressed={data.pago === key} onClick={() => set("pago", key)}>
                 <span className={`dot ${data.pago === key ? "on" : ""}`} />
                 <span style={{ flex: 1, textAlign: "left" }}>
                   <b>{title}</b>

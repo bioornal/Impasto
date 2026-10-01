@@ -1,0 +1,54 @@
+name: Tests and build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: true
+      NEXT_TELEMETRY_DISABLED: 1
+      # Constructor-only values: no live backend or production credentials in CI.
+      INSFORGE_API_BASE_URL: http://127.0.0.1:9
+      INSFORGE_API_KEY: ci-offline-not-a-credential
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.20.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: pnpm
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Unit and database contract tests
+        run: pnpm test 2>&1 | tee ci-tests.log
+      - name: Production build without backend access
+        run: pnpm build 2>&1 | tee ci-build.log
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: impasto-ci-diagnostics
+          path: ci-*.log
+          if-no-files-found: ignore
+          retention-days: 7

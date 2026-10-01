@@ -180,11 +180,11 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
                     {item.detail && <small className="ci-detail">{item.detail}</small>}
                     <div className="ci-qty">
                       <div className="qty-pill">
-                        <button onClick={() => dec(item.cartId)} aria-label="Restar">−</button>
+                        <button onClick={() => dec(item.cartId)} aria-label={`Quitar una unidad de ${item.name}`}>−</button>
                         <span>{item.qty}</span>
-                        <button onClick={() => inc(item.cartId)} aria-label="Sumar">+</button>
+                        <button onClick={() => inc(item.cartId)} aria-label={`Agregar una unidad de ${item.name}`}>+</button>
                       </div>
-                      <button className="ci-remove" onClick={() => remove(item.cartId)}>Quitar</button>
+                      <button className="ci-remove" aria-label={`Quitar ${item.name} del pedido`} onClick={() => remove(item.cartId)}>Quitar</button>
                     </div>
                   </div>
                   <b className="ci-price">{fmt(item.price * item.qty)}</b>

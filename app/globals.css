@@ -1,2 +1,5 @@
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+
+/* Visible keyboard focus, including icon-only controls. */
+:where(a, button, input, select, textarea):focus-visible { outline: 3px solid var(--ink, #1f1a15); outline-offset: 3px; }
