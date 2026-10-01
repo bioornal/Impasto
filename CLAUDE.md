@@ -6,7 +6,7 @@ Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Me
 Deploy en Netlify: **https://www.impastopizzas.com** (dominio propio desde el 19/09/2026; el
 subdominio `vocal-naiad-861a2c.netlify.app` sigue respondiendo). Ver "Dominio propio".
 
-Última actualización: 28 de septiembre de 2026.
+Última actualización: 1 de octubre de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -343,6 +343,22 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   teléfono en producción el 28/09/2026 y confirmó que funciona bien.** Ningún agente vio todavía
   la ficha de un producto agotado en vivo (no había ninguno). Spec y plan: `docs/superpowers/specs/2026-09-28-ficha-producto-design.md` y
   `docs/superpowers/plans/2026-09-28-ficha-producto.md`.
+
+- **Logo y concepto "Pizza a la piedra, técnica napoletana" (01/10/2026)** — Reemplaza a
+  "pizza híbrida" en todo el sitio. **Logo:** el dueño subió `4.jpg` y `5.jpg` al bucket `DB`
+  (mismo dibujo; `5.jpg` trae el damero de "transparente" horneado, un JPG no tiene alfa). Se
+  derivaron dos PNG sin fondo desde `4.jpg`, en `public/`: `logo.png` (navbar) y
+  `logo-blanco-v2.png` (footer, **todo blanco**, pedido del dueño). Se renombró a `-v2` porque
+  el optimizador de `next/image` seguía sirviendo la versión anterior con el mismo nombre.
+  **Copy:** hero "Pizza a la piedra, *técnica napoletana.*" en dos líneas (h1 tope 80px,
+  columnas 1.25fr/0.75fr); la bajada lleva los datos técnicos que el resto del hero no muestra
+  (harina de fuerza, cornicione, 2 a 5 minutos) y el gusto argentino (mucha muzzarella y
+  toppings). Nosotros explica el nombre, el proceso y la base fina y tierna, sin repetir el
+  hero. **Regla del dueño: el hero y Nosotros se continúan, no repiten el mismo dato.**
+  `lib/marca.ts`: "Masa madurada en frío" 48 a 72 hs (cifra "48-72 hs") y "Mucha muzzarella".
+  Ticker, footer, FAQ, SEO (slogan y descripción) y `llms.txt` alineados; el `<title>` sigue
+  con "napolitana" a propósito. Verificado en localhost con Chrome headless (1440/1000/375 px),
+  tests y TypeScript. Commits `8ed1a22`…`9213e19`. Sin verificar todavía en producción.
 
 ### Distinción que se presta a confusión
 
