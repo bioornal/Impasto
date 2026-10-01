@@ -186,9 +186,9 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   flex:none;
 }
 /* El logo es un lockup horizontal que ya trae la llama, el nombre y la
-   bajada "pizza híbrida · puerto iguazú": por eso reemplaza a .logo-mark y
+   bajada "pizzas a la piedra · puerto iguazú": por eso reemplaza a .logo-mark y
    .logo-word juntos, y no se repite la bajada en texto.
-   Al ser 3.13:1, la altura manda: 72px de alto son ~225px de ancho. */
+   Al ser ~3.13:1, la altura manda: 72px de alto son ~225px de ancho. */
 .logo-img{
   height:72px; width:auto; display:block;
   /* Sin esto el flex del header lo comprime en pantallas angostas y el logo
