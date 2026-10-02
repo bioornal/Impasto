@@ -371,7 +371,9 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   8 "Próximamente", y 16 preparaciones. **Cada cambio de receta es un deploy.** Solo entra lo
   confirmado: las 3 pizzas nuevas con tomate (Pomodorini, Pesto Rosso, Puttanesca) y lo marcado
   "a probar" quedaron afuera. El pesto de morrón asado de la Porteña entró el 02/10 a pedido del
-  dueño (la dejé afuera por error al principio, por haberlo marcado "a probar"). Nada de costos, precios ni notas
+  dueño (la dejé afuera por error al principio, por haberlo marcado "a probar"). Con ese pesto la
+  Porteña lleva 120 g de morrón en tiras, no los 150 g que carga el recetario (decisión del dueño
+  del 02/10; el recetario sigue con 150 g). Nada de costos, precios ni notas
   internas: `tests/guia-cocina.test.ts` (en `pnpm test`) lo comprueba, además de fotos y
   preparaciones enlazadas. Las fotos son las de `REAL_PRODUCT_PHOTOS` y se muestran con `<img>`,
   como el resto del sitio (la URL del bucket redirige al CDN y `next/image` solo acepta el host

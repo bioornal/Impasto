@@ -143,7 +143,7 @@ export const PIZZAS: PizzaGuia[] = [
     ingredientes: [
       { nombre: "Muzzarella", cantidad: "250 g" },
       { nombre: "Jamón cocido", cantidad: "150 g" },
-      { nombre: "Morrón asado en tiras", cantidad: "150 g" },
+      { nombre: "Morrón asado en tiras", cantidad: "120 g" },
       { nombre: "Oliva", cantidad: "10 ml" },
     ],
     despues: "Provenzal en hilos (20 g) y un hilo de pesto de morrón asado (unos 25 g).",
@@ -375,7 +375,7 @@ export const PREPARACIONES: PreparacionGuia[] = [
   {
     nombre: "Morrones asados",
     para: "Porteña de Jamón y Morrones",
-    receta: "Asar, pelar y cortar en tiras. Porteña: 150 g por pizza.",
+    receta: "Asar, pelar y cortar en tiras. Porteña: 120 g por pizza.",
     conservacion: "Heladera, tapados.",
     proximamente: false,
   },
