@@ -70,7 +70,7 @@ export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
   "bfca7fb7-d9b4-4812-b1df-f4ba0378b8e0": // Mortazza al Pistacchio
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Mortazza%20al%20Pistacchio.jpg",
   "b4bc6819-1616-441b-8718-879744b8ffec": // Palmitos y Salsa Golf
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Palmitos%20y%20Salsa%20Golf.jpg",
+    "/images/cocina/palmitos-provenzal-limon-v2.webp",
   "83371dfd-08ec-41d5-a1b1-be09b475d7db": // Patate e Rosmarino
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Patate%20e%20Rosmarino.jpg",
   "e5a169af-104f-4f5e-a938-d02a0e02dd89": // Pepperoni e Panceta
