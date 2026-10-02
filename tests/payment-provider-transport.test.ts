@@ -17,7 +17,7 @@ test('recovery transport sends only GET with exact external reference and requir
   } finally {globalThis.fetch=oldFetch;if(oldToken===undefined)delete process.env.MERCADOPAGO_AUTH_HEADER;else process.env.MERCADOPAGO_AUTH_HEADER=oldToken;}
 });
 
-// The journal is intentionally one refund intention per order, regardless of later requested amount.
+// Legacy transport keeps its historical key; new operations use explicit frozen UUID keys.
 test('refund transport preserves historical key shape and uses the durable reserved key',async()=>{
  const {refundOrder}=await import('../lib/mercadopago');
  const oldFetch=globalThis.fetch,oldToken=process.env.MERCADOPAGO_AUTH_HEADER;const calls:any[]=[];
@@ -27,4 +27,15 @@ test('refund transport preserves historical key shape and uses the durable reser
   assert.equal(calls[0].url,'https://api.mercadopago.com/v1/orders/ORD%2Fid/refund');
   assert.equal(calls[0].init.headers['X-Idempotency-Key'],calls[1].init.headers['X-Idempotency-Key']);
  }finally {globalThis.fetch=oldFetch;if(oldToken===undefined)delete process.env.MERCADOPAGO_AUTH_HEADER;else process.env.MERCADOPAGO_AUTH_HEADER=oldToken;}
+});
+test('reserved refund transport freezes exact decimal body and UUID key across retries',async()=>{
+ const {refundReservedOperation}=await import('../lib/mercadopago');
+ const oldFetch=globalThis.fetch,oldToken=process.env.MERCADOPAGO_AUTH_HEADER;const calls:any[]=[];
+ process.env.MERCADOPAGO_AUTH_HEADER='FAKE-TEST-TOKEN';globalThis.fetch=async(url,init)=>{calls.push({url:String(url),init});throw Error('lost response');};
+ try{
+  const request={transaction_id:'PAY',amount_centavos:9007199254740991};
+  for(let i=0;i<2;i++)await assert.rejects(refundReservedOperation('ORD',request,'refund-operation-uuid'),/lost response/);
+  assert.equal(calls[0].init.body,JSON.stringify({transactions:[{id:'PAY',amount:'90071992547409.91'}]}));
+  assert.equal(calls[0].init.body,calls[1].init.body);assert.equal(calls[0].init.headers['X-Idempotency-Key'],'refund-operation-uuid');
+ }finally{globalThis.fetch=oldFetch;if(oldToken===undefined)delete process.env.MERCADOPAGO_AUTH_HEADER;else process.env.MERCADOPAGO_AUTH_HEADER=oldToken;}
 });

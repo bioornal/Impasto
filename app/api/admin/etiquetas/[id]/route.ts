@@ -1,3 +1,4 @@
+import { readPages } from "@/lib/read-pages";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -50,8 +51,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   // Quitar el slug de los productos que lo tengan: dejarlo huérfano lo volvería
   // invisible e imposible de rastrear desde el panel.
-  const { data: productos } = await db.database
-    .from("productos").select("id,tags").eq("proyecto_id", "impasto").in("categoria", [...CATEGORIAS_IMPASTO]);
+  const { data: productos, error: errorProductos } = await readPages((start, end) => db.database
+    .from("productos").select("id,tags").eq("proyecto_id", "impasto").in("categoria", [...CATEGORIAS_IMPASTO]).order("id", { ascending: true }).range(start, end));
+  if (errorProductos) return NextResponse.json({ ok: false, error: errorProductos.message }, { status: 500 });
   let limpiados = 0;
   for (const p of Array.isArray(productos) ? productos : []) {
     const fila = p as { id: string; tags?: unknown };

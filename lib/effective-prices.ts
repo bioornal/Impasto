@@ -40,8 +40,16 @@ export interface PricingDefaults {
 const GRAMOS_POR_EMPANADA = 65;
 /** Same conversion as the recetario: unit ingredients contribute their net mass. */
 export function pesoPorUnidadGramos(ingredient: { gramos_por_unidad?: number | string | null }): number {
-  const grams = Number(ingredient.gramos_por_unidad);
-  return Number.isFinite(grams) && grams > 0 ? grams : 0;
+  return positivoOAusente(ingredient.gramos_por_unidad, 0);
+}
+
+/** Only absent metadata uses legacy defaults; malformed explicit metadata blocks pricing. */
+function positivoOAusente(value: unknown, absent: number): number {
+  if (value === null || value === undefined) return absent;
+  if (typeof value !== 'number' && !(typeof value === 'string' && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value.trim()))) throw new Error('Rendimiento o gramaje inválido');
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) throw new Error('Rendimiento o gramaje inválido');
+  return n;
 }
 
 export function masaNetaKg(ingredient: { cantidad_kg: number; gramos_por_unidad?: number | string | null }): number {
@@ -156,12 +164,14 @@ export function buildEffectivePrices(
 
       const costoReceta = Math.round(precioPrepizza + precioSalsa + costoIngredientes);
 
-      const rendValor = Number(recipe.rend_valor) || 0;
+      const rendValor = positivoOAusente(recipe.rend_valor, recipe.rend_tipo === 'peso' ? GRAMOS_POR_EMPANADA : 1);
       const unidades = recipe.rend_tipo === 'peso'
-        ? Math.floor((totalCantidadKg * 1000) / (rendValor || GRAMOS_POR_EMPANADA))
-        : (rendValor || 1);
+        ? Math.floor((totalCantidadKg * 1000) / rendValor)
+        : rendValor;
+      if (!Number.isFinite(unidades) || unidades < 0) throw new Error('Rendimiento fuera de rango');
       costoUnit = (unidades > 0 ? costoReceta / unidades : costoReceta)
         + (subcategoria === 'Empanadas' ? costoTapa : 0);
+      if (!Number.isFinite(costoUnit)) throw new Error('Costo fuera de rango');
       productionCosts?.set(rule.nombre, costoUnit);
     }
 

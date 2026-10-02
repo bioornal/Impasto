@@ -1,4 +1,6 @@
 "use client";
+import { providerRefundConfirmed } from "@/lib/provider-refund-intent";
+import type { ManualRefund } from "@/lib/manual-refund";
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial, AdminOrder, AdminCustomer } from "./types";
 import { esCategoriaImpasto } from "@/lib/categorias";
@@ -149,7 +151,8 @@ interface StoreCtx {
   updateOrderStatus: (dbId: string, estado: string) => Promise<boolean>;
   updateOrderPayment: (dbId: string, estado: string) => Promise<boolean>;
   /** Sin `monto` devuelve el total; con `monto` hace una devolución parcial. */
-  refundOrder: (dbId: string, monto?: number) => Promise<void>;
+  recordManualRefund: (dbId: string, body: ManualRefund) => Promise<string>;
+  refundOrder: (dbId: string, monto?: number, operationId?: string) => Promise<boolean>;
   updateTestimonial: (id: string, estado: string) => Promise<void>;
   deleteTestimonial: (id: string) => Promise<void>;
   reset: () => Promise<void>;
@@ -473,27 +476,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return true;
     },
 
-    refundOrder: async (dbId, monto) => {
+    recordManualRefund: async (dbId, body) => {
+      const response=await fetch(`/api/admin/pedidos/${dbId}/devolucion-manual`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const result=await response.json();
+      if(!response.ok || !result.ok || result.operacion_id!==body.operacion_id || !['parcialmente_reembolsado','reembolsado'].includes(result.estado_pago))throw new Error(result.error || 'Registro no confirmado; reintentá la misma operación');
+      await load();
+      showToast('Devolución ya realizada registrada; no se movió dinero desde este panel');
+      return result.estado_pago;
+    },
+
+    refundOrder: async (dbId, monto, operationId) => {
       const order = stateRef.current.orders.find(o => o._dbId === dbId);
-      if (!order) return;
+      if (!order) return false;
       const response = await fetch(`/api/admin/pedidos/${order._dbId}/refund`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(monto === undefined ? {} : { amount: monto }),
+        body: JSON.stringify({ ...(monto === undefined ? {} : { amount: monto }), ...(operationId ? { operationId } : {}) }),
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.ok) {
+      if (!response.ok || !providerRefundConfirmed(result,operationId)) {
         // MP may have refunded successfully while the local database failed.
         if (result.refundCompleted) {
           await load();
           showToast(result.error || "Devolución confirmada por Mercado Pago; falta conciliar el estado local.");
-          return;
+          return false;
         }
         showToast(result.error || "No se pudo procesar la devolución");
-        return;
+        return false;
       }
       setState(s => ({ ...s, orders: s.orders.map(o => o._dbId === dbId ? { ...o, pagoEstado: result.estadoPago } : o) }));
       showToast(result.recovered ? `Devolución existente de ${order.id} conciliada; no se realizó otra devolución` : result.parcial ? `Devolución parcial de ${order.id} realizada` : `Pedido ${order.id} devuelto por completo`);
+      return true;
     },
 
     updateTestimonial: async (id, estado) => {

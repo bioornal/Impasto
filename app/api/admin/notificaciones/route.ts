@@ -1,3 +1,4 @@
+import { readPages } from "@/lib/read-pages";
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import { db } from '@/lib/insforge';
@@ -15,13 +16,13 @@ export async function GET(req: Request) {
   if(error || !Array.isArray(data)) return NextResponse.json({ok:false,error:'No se pudieron cargar los avisos'},{status:503});
   const ids = [...new Set(data.map(row=>String(row.pedido_id)))];
   if(!ids.length) return NextResponse.json({ok:true,data:[],nextOffset:null});
-  const pedidos = await db.database.from('pedidos').select('id,external_reference,status,estado_pago')
-    .eq('proyecto_id','impasto').eq('sucursal_id',SUCURSAL_ID).in('id',ids);
+  const pedidos = await readPages((start, end) => db.database.from('pedidos').select('id,external_reference,status,estado_pago')
+    .eq('proyecto_id','impasto').eq('sucursal_id',SUCURSAL_ID).in('id',ids).order('id',{ascending:true}).range(start,end));
   if(pedidos.error || !Array.isArray(pedidos.data)) return NextResponse.json({ok:false,error:'No se pudieron cargar los pedidos de los avisos'},{status:503});
   const allowed = new Map(pedidos.data.map(row=>[String(row.id),row]));
   return NextResponse.json({ok:true,data:data.filter(row=>allowed.has(String(row.pedido_id))).map(row=>({
     ...row,payload:undefined,referencia:allowed.get(String(row.pedido_id))?.external_reference,
     motivo: typeof row.detalle?.motivo === 'string' ? row.detalle.motivo : '',detalle:undefined,
     estado:row.payload === null || row.estado === 'procesando' && (!row.claimed_at || Date.parse(row.claimed_at) <= Date.now()-300_000) ? 'incierto' : row.estado,
-  })),nextOffset:data.length===100 ? offset+100 : null});
+  })),nextOffset:data.length ? offset+data.length : null});
 }

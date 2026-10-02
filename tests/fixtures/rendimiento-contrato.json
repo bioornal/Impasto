@@ -1,0 +1,4 @@
+{
+  "validos": [{"valor":null,"masa":2,"costoDirecto":1200,"costoPeso":120},{"valor":60,"masa":0.12,"costoDirecto":20,"costoPeso":120},{"valor":"60","masa":0.12,"costoDirecto":20,"costoPeso":120}],
+  "invalidos": [0,-1,""," ","roto","NaN","Infinity","0x10",true,false,{},[]]
+}

@@ -3,8 +3,8 @@ import { db } from "@/lib/insforge";
 import { SUCURSAL_ID } from "@/lib/business";
 import { requireAdmin } from "@/lib/admin-auth";
 import { registrarEvento } from "@/lib/orders";
-import { refundOrder, getOrder } from "@/lib/mercadopago";
-import { completeRefund } from "@/lib/refund-completion";
+import { refundReservedOperation, getOrder } from "@/lib/mercadopago";
+import { completeRefundOperation, reconcileRefundOnly, refundAuditAmount } from "@/lib/refund-completion";
 import { reconcilePayment } from '@/lib/payment-recovery-server';
 import { PAYMENT_COLUMNS, paymentRecoveryStore } from '@/lib/payment-recovery-store';
 import type { RecoveryPedido } from '@/lib/payment-recovery';
@@ -16,6 +16,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
+  const operationId = body.operationId;
+  if(operationId!==undefined && (typeof operationId!=='string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(operationId)))return NextResponse.json({ok:false,error:'Identificador de operación inválido'},{status:400});
   const montoPedido = body.amount === undefined ? null : Number(body.amount);
 
   if (montoPedido !== null && (!Number.isFinite(montoPedido) || montoPedido <= 0)) {
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     );
   }
 
-  const esParcial = montoPedido !== null && montoPedido < Number(pedido.total);
+  const esParcial = montoPedido !== null;
   if (esParcial && !pedido.id_pago) {
     return NextResponse.json(
       { ok: false, error: "Falta el id de pago para hacer una devolución parcial" },
@@ -64,14 +66,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     if(montoPedido !== null)pesosACentavos(body.amount);
-    const result = await completeRefund({
+    const store=paymentRecoveryStore(db,id);
+    const baseActions={
       pedido: pedido as unknown as RecoveryPedido,
       current: () => getOrder(String(pedido.mp_order_id)),
-      reserve: () => paymentRecoveryStore(db,id).reservarDevolucion(String(pedido.mp_order_id),esParcial
+      persist: async (orden:Awaited<ReturnType<typeof getOrder>>) => { await reconcilePayment(pedido as unknown as RecoveryPedido,orden); },
+    };
+    const result = operationId ? await completeRefundOperation({
+      ...baseActions,
+      reserve: () => store.reservarOperacion(String(pedido.mp_order_id),operationId,esParcial
         ? {transaction_id:String(pedido.id_pago),amount_centavos:pesosACentavos(body.amount)} : {total:true}),
-      refund: reservedKey => refundOrder(String(pedido.mp_order_id), esParcial ? { transactionId: String(pedido.id_pago), amount: montoPedido! } : undefined,reservedKey),
-      persist: async orden => { await reconcilePayment(pedido as unknown as RecoveryPedido,orden); },
-    });
+      refund: intent => refundReservedOperation(String(pedido.mp_order_id),intent.request,intent.key),
+      confirm: (intent,orden) => store.confirmarOperacion(pedido as unknown as RecoveryPedido,intent,orden),
+    }) : await reconcileRefundOnly(baseActions);
     const { order: orden, estadoPago, recovered, persistencePending } = result;
     // Failure of the local audit trail must not claim that MP failed to return money.
     try { await registrarEvento({
@@ -81,7 +88,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       origen: "panel",
       detalle: {
         accion: recovered ? "conciliacion_devolucion" : esParcial ? "devolucion_parcial" : "devolucion_total",
-        ...(recovered ? {} : { monto: esParcial ? montoPedido : Number(pedido.total) }),
+        ...refundAuditAmount(result),
         persistencia_pendiente: persistencePending,
         mp_status: orden.status,
         mp_status_detail: orden.status_detail,
@@ -93,6 +100,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       refundCompleted: true,
       persistencePending,
       recovered,
+      ...(operationId ? { operationId } : {}),
       estadoPago,
       parcial: estadoPago === "parcialmente_reembolsado",
       totales: result.totales,

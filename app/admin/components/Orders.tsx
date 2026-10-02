@@ -1,5 +1,8 @@
 "use client";
 import { useState, useMemo, useRef, useEffect } from "react";
+import { loadProviderRefundIntent, prepareProviderRefundIntent, completeProviderRefundIntent } from "@/lib/provider-refund-intent";
+import { ManualRefundBox } from "./ManualRefundBox";
+import type { ManualRefund } from "@/lib/manual-refund";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 import type { AdminOrder } from "./types";
@@ -20,7 +23,7 @@ const fmtDateTime = (iso: string) => new Date(iso).toLocaleDateString("es-AR", {
 const FILTERS: [string, string][] = [["todos","Todos"],["nuevo","Nuevos"],["preparando","Preparando"],["en-camino","En camino"],["entregado","Entregados"],["cancelado","Cancelados"]];
 
 export function Orders() {
-  const { state, updateOrderStatus, updateOrderPayment, refundOrder, reload } = useStore();
+  const { state, updateOrderStatus, updateOrderPayment, refundOrder, recordManualRefund, reload } = useStore();
   const [filter, setFilter] = useState("todos");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<AdminOrder | null>(null);
@@ -190,7 +193,8 @@ export function Orders() {
           onPayment={async (estado) => {
             if (await updateOrderPayment(selected._dbId, estado)) setSelected({ ...selected, pagoEstado: estado });
           }}
-          onRefund={(monto) => { refundOrder(selected._dbId, monto); setSelected(null); }}
+          onManualRefund={async body => { const pagoEstado=await recordManualRefund(selected._dbId,body);setSelected({...selected,pagoEstado});return pagoEstado; }}
+          onRefund={async (monto, operationId) => { const ok=await refundOrder(selected._dbId,monto,operationId);if(ok){await reload();setSelected(null);}return ok; }}
           onReconcile={async () => {
             const response=await fetch(`/api/admin/pedidos/${selected._dbId}/reconciliar`,{method:'POST'});
             const result=await response.json();
@@ -206,14 +210,20 @@ export function Orders() {
 }
 
 /** Devoluciones de Mercado Pago. Pide confirmación porque mueve plata real. */
-function RefundBox({ total, onRefund }: { total: number; onRefund: (monto?: number) => void }) {
+function RefundBox({ total, pedidoId, onRefund }: { total: number; pedidoId: string; onRefund: (monto?: number, operationId?: string) => Promise<boolean> }) {
   const [monto, setMonto] = useState("");
   const [confirmando, setConfirmando] = useState(false);
+  const [pending,setPending]=useState<ReturnType<typeof loadProviderRefundIntent>>(null);
+  const [busy,setBusy]=useState(false);const [error,setError]=useState('');
+  const intentName=`impasto_provider_refund_${pedidoId}`;
+  useEffect(()=>{try{setPending(loadProviderRefundIntent(localStorage,intentName));}catch(e){setError(e instanceof Error?e.message:'No se pudo recuperar el intento');}},[intentName]);
+  const submit=async()=>{setBusy(true);setError('');try{const intent=prepareProviderRefundIntent(localStorage,intentName,parcial?importe:undefined,()=>crypto.randomUUID());setPending(intent);if(await onRefund(intent.amount,intent.operationId)){completeProviderRefundIntent(localStorage,intentName,intent.operationId);setPending(null);setConfirmando(false);setMonto('');}else setError('Intento no confirmado. Reintentá la misma operación; no inicies otra devolución.');}catch(e){setError(e instanceof Error?e.message:'No se pudo confirmar');}finally{setBusy(false);}};
 
   const parcial = Number(monto) > 0 && Number(monto) < total;
   const importe = parcial ? Number(monto) : total;
   const invalido = monto !== "" && (!Number.isFinite(Number(monto)) || Number(monto) <= 0 || Number(monto) > total);
 
+  if(total<=0 && !pending && !error)return null;
   return (
     <div style={{ padding: 14, background: "var(--a-bg)", borderRadius: 12, fontSize: 13.5, marginTop: 12 }}>
       <b>Devolver dinero</b>
@@ -221,7 +231,7 @@ function RefundBox({ total, onRefund }: { total: number; onRefund: (monto?: numb
         Dejá el monto vacío para devolver el total ({fmt(total)}).
       </div>
 
-      {!confirmando ? (
+      {pending ? <div><p>Devolución pendiente de confirmación: {pending.amount===undefined?'saldo restante':fmt(pending.amount)}. Conservamos la misma operación.</p><button className="btn btn-danger btn-sm" disabled={busy} onClick={submit}>Reintentar la misma devolución</button></div> : !confirmando ? (
         <div className="flex gap-8" style={{ alignItems: "center", flexWrap: "wrap" }}>
           <input
             style={{ maxWidth: 140 }}
@@ -230,24 +240,25 @@ function RefundBox({ total, onRefund }: { total: number; onRefund: (monto?: numb
             value={monto}
             onChange={e => setMonto(e.target.value)}
           />
-          <button className="btn btn-danger btn-sm" disabled={invalido} onClick={() => setConfirmando(true)}>
+          <button className="btn btn-danger btn-sm" disabled={invalido || total<=0 || busy} onClick={() => setConfirmando(true)}>
             Devolver {invalido ? "" : fmt(importe)}
           </button>
         </div>
       ) : (
         <div className="flex gap-8" style={{ alignItems: "center", flexWrap: "wrap" }}>
           <span>¿Confirmás devolver <b>{fmt(importe)}</b>? Esto no se puede deshacer.</span>
-          <button className="btn btn-danger btn-sm" onClick={() => { onRefund(parcial ? importe : undefined); setConfirmando(false); setMonto(""); }}>
-            Sí, devolver
+          <button className="btn btn-danger btn-sm" disabled={busy} onClick={submit}>
+            Sí, iniciar nueva devolución
           </button>
           <button className="btn btn-ghost btn-sm" onClick={() => setConfirmando(false)}>Cancelar</button>
         </div>
       )}
+      {error && <p role="status">{error}</p>}
     </div>
   );
 }
 
-function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, printing, printMessage, onReconcile }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void; onRefund?: (monto?: number) => void; onPrint: () => void; printing: boolean; printMessage: string | null; onReconcile:()=>Promise<string> }) {
+function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, printing, printMessage, onReconcile, onManualRefund }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void; onRefund?: (monto?: number, operationId?: string) => Promise<boolean>; onPrint: () => void; printing: boolean; printMessage: string | null; onReconcile:()=>Promise<string>; onManualRefund:(body:ManualRefund)=>Promise<string> }) {
   const [now] = useState(() => Date.now());
   const [consulting,setConsulting]=useState(false);
   const [consultMessage,setConsultMessage]=useState('');
@@ -327,11 +338,13 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, p
             {ledgerError || (!ledger ? 'Cargando movimientos documentados…' : ledger.cantidad===0
               ? 'Sin movimientos documentados: importes históricos no conciliados.'
               : `Cobrado bruto ${money(ledger.cobros)} · Devuelto ${money(ledger.devoluciones)} · Neto ${money(ledger.neto)}. ${ledger.sinFecha} movimientos sin fecha; no se atribuyen a hoy.`)}
-            {['parcialmente_reembolsado','reembolsado'].includes(order.pagoEstado) && <p>Ya hay una devolución. Consultar Mercado Pago concilia importes; no inicia otra devolución.</p>}
+            {order.puedeConsultarMP && ['parcialmente_reembolsado','reembolsado'].includes(order.pagoEstado) && <p>Ya hay una devolución. Consultar Mercado Pago concilia importes; no inicia otra devolución.</p>}
           </div>
-          {order.pago === "mercadopago" && order.pagoEstado === "aprobado" && order.puedeDevolverMP && onRefund && (!ledger || ledger.devoluciones===0) && (
-            <RefundBox total={order.total} onRefund={onRefund} />
+          {order.pago === "mercadopago" && ["aprobado","parcialmente_reembolsado","reembolsado"].includes(order.pagoEstado) && order.puedeDevolverMP && onRefund && ledger && (
+            <RefundBox total={ledger!.neto/100} pedidoId={order._dbId} onRefund={onRefund} />
           )}
+
+          {order.puedeRegistrarDevolucionManual && <ManualRefundBox pedidoId={order._dbId} onRecord={onManualRefund} />}
 
           <div className="od-items">
             {order.items.map((i, idx) => (

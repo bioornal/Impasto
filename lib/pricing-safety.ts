@@ -62,15 +62,30 @@ export function resolveValidatedPrices(input: PricingInput): PriceResolution {
   }
 
   const productionCosts = new Map<string,number>();
-  const calculated = buildEffectivePrices(
+  let calculated: Map<string, number>;
+  const calculate = (rules: SalePriceRule[]) => buildEffectivePrices(
     input.recipes,
     input.recipeIngredients,
     input.ingredients,
-    input.rules,
+    rules,
     input.defaults,
     input.totalOperativo,
     productionCosts,
   );
+  try {
+    calculated = calculate(input.rules);
+  } catch {
+    // A malformed recipe blocks its own rule; unrelated products remain available.
+    calculated = new Map();
+    productionCosts.clear();
+    for (const rule of input.rules) {
+      try {
+        for (const [name, price] of calculate([rule])) calculated.set(name, price);
+      } catch {
+        if (rule.nombre) productionCosts.delete(rule.nombre);
+      }
+    }
+  }
   const invalid = new Set<string>();
   const validDenominator = finite(input.defaults?.pizzas_objetivo_mes);
   const shell = input.ingredients.find(isEmpanadaShell);

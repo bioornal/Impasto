@@ -1,3 +1,4 @@
+import { readPages } from "@/lib/read-pages";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -7,11 +8,12 @@ import { CATEGORIAS_IMPASTO } from "@/lib/categorias";
 
 /** Cuántos productos de Impasto usan cada slug. */
 async function conteoDeUso(): Promise<Record<string, number>> {
-  const { data } = await db.database
+  const { data, error } = await readPages((start, end) => db.database
     .from("productos")
-    .select("tags")
+    .select("id,tags")
     .eq("proyecto_id", "impasto")
-    .in("categoria", [...CATEGORIAS_IMPASTO]);
+    .in("categoria", [...CATEGORIAS_IMPASTO]).order("id", { ascending: true }).range(start, end));
+  if (error) throw error;
   const conteo: Record<string, number> = {};
   for (const fila of Array.isArray(data) ? data : []) {
     const tags = Array.isArray((fila as { tags?: unknown }).tags) ? (fila as { tags: unknown[] }).tags : [];
@@ -24,11 +26,12 @@ export async function GET() {
   const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
 
-  const { data, error } = await db.database
-    .from("etiquetas").select("*").eq("sucursal_id", SUCURSAL_ID).order("orden");
+  const { data, error } = await readPages((start, end) => db.database
+    .from("etiquetas").select("*").eq("sucursal_id", SUCURSAL_ID).order("orden").order("id", { ascending: true }).range(start, end));
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
 
-  const conteo = await conteoDeUso();
+  let conteo: Record<string, number>;
+  try { conteo = await conteoDeUso(); } catch { return NextResponse.json({ ok: false, error: "No se pudieron cargar los usos" }, { status: 500 }); }
   const conUso = (Array.isArray(data) ? data : []).map((e) => ({
     ...(e as Record<string, unknown>),
     usos: conteo[String((e as { slug: string }).slug)] || 0,

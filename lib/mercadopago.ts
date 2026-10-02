@@ -124,6 +124,14 @@ export async function searchOrders(externalReference:string,window:{begin_date:s
  * parcial sobre la transacción indicada. Mercado Pago acepta reembolsos
  * hasta 360 días después del pago.
  */
+/** Uses the reserved integer cents without a floating point round trip. */
+export async function refundReservedOperation(orderId:string,request:{transaction_id:string;amount_centavos:number},key:string):Promise<MpOrder> {
+  if(!Number.isSafeInteger(request.amount_centavos) || request.amount_centavos<=0 || !request.transaction_id || !key.startsWith('refund-operation-'))throw new Error('Reserva de devolución inválida');
+  const cents=BigInt(request.amount_centavos);
+  const amount=`${cents/BigInt(100)}.${String(cents%BigInt(100)).padStart(2,'0')}`;
+  return mpFetch(`/v1/orders/${encodeURIComponent(orderId)}/refund`,{method:'POST',idempotencyKey:key,body:JSON.stringify({transactions:[{id:request.transaction_id,amount}]})});
+}
+
 export async function refundOrder(
   orderId: string,
   partial?: { transactionId: string; amount: number },
