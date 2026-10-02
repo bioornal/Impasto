@@ -380,7 +380,11 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   localmente: tests, TypeScript, eslint de lo tocado, build (`/cocina` sale estática) y navegador
   (18 fotos cargan, sin desborde a 375 px, robots, sitemap, llms.txt y home sin referencias).
   Spec y plan: `docs/superpowers/specs/2026-10-02-guia-cocina-design.md` y
-  `docs/superpowers/plans/2026-10-02-guia-cocina.md`.
+  `docs/superpowers/plans/2026-10-02-guia-cocina.md`. Publicado con `127d87d`; Netlify lo
+  desplegó el 02/10. En `www.impastopizzas.com/cocina` se verificó: HTTP 200, 18 pizzas, 15
+  preparaciones y 18 fotos que responden 200, `noindex, nofollow`, y ninguna referencia en
+  `robots.txt`, `sitemap.xml`, `llms.txt` ni enlaces desde la home. **El dueño todavía no la
+  probó en la cocina ni en su teléfono.**
 
 ### Distinción que se presta a confusión
 
