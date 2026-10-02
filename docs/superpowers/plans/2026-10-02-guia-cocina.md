@@ -52,7 +52,7 @@
 
 - [ ] **Step 1: Escribir el test que falla** (`tests/guia-cocina.test.ts`), con el mismo estilo `chequear` de `tests/ficha.test.ts`. Comprueba: 18 pizzas, 10 en venta y 8 próximamente; cada pizza con al menos un ingrediente con cantidad; nombres únicos; cada `productoId` en `REAL_PRODUCT_PHOTOS`; cada preparación nombrada existe y cada preparación la usa alguna pizza; y que ningún texto visible contenga `$`, "costo", "precio", "recetario", "a probar" o "decime".
 - [ ] **Step 2: Correr y ver que falla** con `pnpm exec tsx tests/guia-cocina.test.ts` (no existe `lib/guia-cocina.ts`).
-- [ ] **Step 3: Escribir `lib/guia-cocina.ts`** con los tipos de arriba y los datos de las 18 pizzas y las 15 preparaciones de la sección "Contenido" del spec.
+- [ ] **Step 3: Escribir `lib/guia-cocina.ts`** con los tipos de arriba y los datos de las 18 pizzas y las 16 preparaciones de la sección "Contenido" del spec.
 - [ ] **Step 4: Correr el test y ver que pasa.**
 - [ ] **Step 5: Commit** `feat(cocina): datos de la guía de armado y su test`.
 

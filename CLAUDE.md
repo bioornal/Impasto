@@ -368,9 +368,10 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   escriba la dirección ve las recetas. La defensa es `noindex, nofollow` en `app/cocina/layout.tsx`;
   **`/cocina` no está en `robots.ts` ni en `sitemap.ts` a propósito** (nombrarla anunciaría que
   existe). Los datos viven en `lib/guia-cocina.ts` (sin base, sin React): 18 pizzas, 10 en venta y
-  8 "Próximamente", y 15 preparaciones. **Cada cambio de receta es un deploy.** Solo entra lo
-  confirmado: las 3 pizzas nuevas con tomate (Pomodorini, Pesto Rosso, Puttanesca), la salsa de
-  morrón asado y lo marcado "a probar" quedaron afuera. Nada de costos, precios ni notas
+  8 "Próximamente", y 16 preparaciones. **Cada cambio de receta es un deploy.** Solo entra lo
+  confirmado: las 3 pizzas nuevas con tomate (Pomodorini, Pesto Rosso, Puttanesca) y lo marcado
+  "a probar" quedaron afuera. El pesto de morrón asado de la Porteña entró el 02/10 a pedido del
+  dueño (la dejé afuera por error al principio, por haberlo marcado "a probar"). Nada de costos, precios ni notas
   internas: `tests/guia-cocina.test.ts` (en `pnpm test`) lo comprueba, además de fotos y
   preparaciones enlazadas. Las fotos son las de `REAL_PRODUCT_PHOTOS` y se muestran con `<img>`,
   como el resto del sitio (la URL del bucket redirige al CDN y `next/image` solo acepta el host

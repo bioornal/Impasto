@@ -51,9 +51,10 @@ probar. Nada de costos, precios, pendientes ni notas del dueño.
 
 Receta, para qué pizza va y conservación. Solo las que usan las 18 pizzas: miel picante,
 miel de ajo, crema de hongos secos, golf de la casa, pesto de albahaca, provenzal, ajo
-confitado, cebolla dorada, morrones asados, aceto reducido, almendras tostadas, cherry
-confitados, manteca de ajo confitado, pesto de pistacho y pesto de verdeo. La salsa de
-morrón asado, el pesto rosso, la olivada y el tomate seco quedan afuera. El chimichurri
+confitado, cebolla dorada, morrones asados, pesto de morrón asado, aceto reducido,
+almendras tostadas, cherry confitados, manteca de ajo confitado, pesto de pistacho y pesto
+de verdeo (16). El pesto de morrón asado entró el 2 de octubre, a pedido del dueño, para
+la Porteña. El pesto rosso, la olivada y el tomate seco quedan afuera. El chimichurri
 no tiene receta cargada: la pizza lo nombra y la página no inventa una.
 
 La base de todas: bollo y salsa de tomate (150 g por pizza). El agua del lote de masa no

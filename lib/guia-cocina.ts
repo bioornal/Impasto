@@ -146,8 +146,8 @@ export const PIZZAS: PizzaGuia[] = [
       { nombre: "Morrón asado en tiras", cantidad: "150 g" },
       { nombre: "Oliva", cantidad: "10 ml" },
     ],
-    despues: "Provenzal en hilos (20 g).",
-    preparaciones: ["Morrones asados", "Provenzal"],
+    despues: "Provenzal en hilos (20 g) y un hilo de pesto de morrón asado (unos 25 g).",
+    preparaciones: ["Morrones asados", "Pesto de morrón asado", "Provenzal"],
   },
   {
     nombre: "Palmitos y Salsa Golf",
@@ -377,6 +377,14 @@ export const PREPARACIONES: PreparacionGuia[] = [
     para: "Porteña de Jamón y Morrones",
     receta: "Asar, pelar y cortar en tiras. Porteña: 150 g por pizza.",
     conservacion: "Heladera, tapados.",
+    proximamente: false,
+  },
+  {
+    nombre: "Pesto de morrón asado",
+    para: "Porteña de Jamón y Morrones",
+    receta:
+      "Tanda para unas 6 pizzas: 1 morrón asado y pelado (120 g), 20 g de almendras tostadas, 1 cucharadita de limón o de vinagre, 20 ml de oliva, sal y pimentón ahumado. Procesar hasta que quede una pasta cremosa. Sobre la pizza, un hilo de unos 25 g después del horno.",
+    conservacion: "Heladera 4 días, o cubos congelados.",
     proximamente: false,
   },
   {
