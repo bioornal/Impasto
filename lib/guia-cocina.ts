@@ -276,8 +276,8 @@ export const PIZZAS: PizzaGuia[] = [
       { nombre: "Muzzarella", cantidad: "100 g" },
       { nombre: "Oliva", cantidad: "20 ml" },
     ],
-    despues: "Cucharadas de chimichurri (45 g) y cherry confitados (80 g) partidos al medio.",
-    preparaciones: ["Cherry confitados"],
+    despues: "Cucharadas de chimichurri (45 g) y cherry asados en mitades (80 g).",
+    preparaciones: ["Cherry asados"],
   },
   {
     nombre: "Filetto Impasto",
@@ -403,11 +403,11 @@ export const PREPARACIONES: PreparacionGuia[] = [
     proximamente: false,
   },
   {
-    nombre: "Cherry confitados",
+    nombre: "Cherry asados",
     para: "La Provoleta Impasto",
     receta:
-      "Cherry enteros con oliva, ajo, tomillo, sal y una pizca de azúcar, al horno a 120 o 130 °C durante 1 hora y media o 2. La Provoleta: 80 g por pizza, partidos al medio.",
-    conservacion: "Cubiertos de aceite, en la heladera, 4 días.",
+      "Cherry cortados al medio, con el corte hacia arriba en una placa. Por cada 250 g: 15 ml de oliva, 5 g de ajo granulado (o un diente en láminas), tomillo o hierbas provenzales y una pizca de sal. Horno a 180 °C, calor arriba y abajo, 30 minutos (o 200 °C durante 20), hasta que los bordes se caramelicen y el jugo espese. La Provoleta: 80 g cocidos por pizza. Se achican: calcular unos 110 a 120 g crudos y pesar la primera tanda para ajustar.",
+    conservacion: "Tapados en la heladera, sin cubrir de aceite, 3 días.",
     proximamente: true,
   },
   {
