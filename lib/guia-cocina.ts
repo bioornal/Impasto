@@ -216,9 +216,9 @@ export const PIZZAS: PizzaGuia[] = [
       { nombre: "Ricota", cantidad: "60 g" },
       { nombre: "Pangrattato", cantidad: "20 g" },
     ],
-    despues: "Láminas finas de bondiola, pangrattato dorado y crocante, y cucharadas de ricota batida.",
+    despues: "Láminas finas de bondiola, pangrattato dorado y crocante, cucharadas de ricota batida y unos hilos de miel y mostaza.",
     nota: "En el horno va solo la muzzarella.",
-    preparaciones: [],
+    preparaciones: ["Miel y mostaza"],
   },
   {
     nombre: "Patate e Rosmarino",
@@ -323,6 +323,14 @@ export const PREPARACIONES: PreparacionGuia[] = [
       "125 g de miel y 30 g de ajo fresco aplastado. Baño María unos 10 minutos, sin hervir. Dejar reposar 30 minutos y colar sacando todo el ajo. Antes del servicio, entibiar el pomo en agua tibia para que corra. Sobre la pizza, un hilo de unos 20 g.",
     conservacion: "Heladera. Hacer tandas que se usen en 4 días.",
     proximamente: false,
+  },
+  {
+    nombre: "Miel y mostaza",
+    para: "Bondiola al Pangrattato",
+    receta:
+      "60 g de miel, 40 g de mostaza antigua o de Dijon y 1 cucharadita de limón. Mezclar hasta que quede una salsa pareja. Sobre la pizza, unos hilos finos al salir del horno.",
+    conservacion: "Heladera, hasta una semana.",
+    proximamente: true,
   },
   {
     nombre: "Crema de hongos secos",

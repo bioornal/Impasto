@@ -368,7 +368,7 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   escriba la dirección ve las recetas. La defensa es `noindex, nofollow` en `app/cocina/layout.tsx`;
   **`/cocina` no está en `robots.ts` ni en `sitemap.ts` a propósito** (nombrarla anunciaría que
   existe). Los datos viven en `lib/guia-cocina.ts` (sin base, sin React): 18 pizzas, 10 en venta y
-  8 "Próximamente", y 16 preparaciones. **Cada cambio de receta es un deploy.** Solo entra lo
+  8 "Próximamente", y 17 preparaciones. **Cada cambio de receta es un deploy.** Solo entra lo
   confirmado: las 3 pizzas nuevas con tomate (Pomodorini, Pesto Rosso, Puttanesca) y lo marcado
   "a probar" quedaron afuera. El pesto de morrón asado de la Porteña entró el 02/10 a pedido del
   dueño (la dejé afuera por error al principio, por haberlo marcado "a probar"). Con ese pesto la
