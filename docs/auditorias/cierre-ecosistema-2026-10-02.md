@@ -14,7 +14,7 @@ Esta entrega cierra los cambios de código verificables de la auditoría. La ent
 
 ## Verificación local
 
-Los comandos completos de test y build de las tres webs finalizaron correctamente. Recetario web: 268 tests. Android: testDebugUnitTest, assembleDebug y assembleRelease aprobados; 366 tests en el árbol local, incluidos seis de Preparaciones de otro chat. Ese trabajo externo no se incluye en este commit: la suite propia contiene 360 tests y será validada por CI sobre el commit publicado.
+Los comandos completos de test y build de las tres webs finalizaron correctamente. Recetario web: 268 tests. Android: testDebugUnitTest, assembleDebug y assembleRelease aprobados; 366 tests en el árbol local, incluidos seis de Preparaciones de otro chat. Ese trabajo externo no se incluye en este commit: la suite propia contiene 360 tests y fue validada por CI sobre el commit publicado.
 
 Las tres pruebas de rollback Room se ejecutaron explícitamente con la instrumentación personalizada en el emulador sin conexión: compras, precios y borrado. Gradle informa cero tests porque ese runner no emite eventos JUnit; la instrumentación respondió «3 pruebas de rollback Room aprobadas». No hubo ventas, devoluciones, avisos ni modificaciones de negocio de prueba en producción.
 
@@ -39,3 +39,16 @@ La captura de datos utiliza un único snapshot SQL; los metadatos se consultan p
 5. Preparaciones: la web ya contiene commits de otro chat; sus cambios Android permanecen ajenos a este commit y deben publicarse desde ese trabajo antes de distribuir la app. Sus nuevas lecturas no se incluyen en la afirmación de paginación revisada.
 
 Los SHA, enlaces de CI y estados finales de producción se registran en la conversación después del push. Una compilación local no acredita despliegue efectivo.
+
+## Evidencia publicada
+
+| Proyecto | Commit de implementación | CI |
+|---|---|---|
+| Impasto | 5337f002ab49665da469dee9b21fcbe45e2e39d0 | [Aprobada](https://github.com/bioornal/Impasto/actions/runs/36993884687) |
+| Carro | 82879561e8480f38e8200dfdf9368b5f71260b2c | [Aprobada](https://github.com/bioornal/carroFogon/actions/runs/36993884136) |
+| Recetario web | fcdae8d5e09bd9637e8e3a66067f404a1ee454fa | [Aprobada](https://github.com/bioornal/recetario-napolitano/actions/runs/36993884490) |
+| Android | 80e80bb7a7c7e09664fd090e6bcbad2e1e63d97d | [Aprobada: tests y APK debug](https://github.com/bioornal/recetario-android/actions/runs/36993884091) |
+
+Netlify confirmó ambos SHA web publicados (`ready`); Vercel confirmó el SHA de Carro en Production con estado `success`. Comprobaciones posteriores: home Impasto/Carro HTTP 200, sus API administrativas HTTP 401 sin sesión; login y service worker de Recetario HTTP 200. El navegador redirige Inicio y Recetas a login sin sesión, con formulario visible y sin errores de consola observados. No se inició sesión ni se ejecutaron escrituras de prueba.
+
+Tras la verificación se cerraron el emulador y el daemon Gradle iniciados para las pruebas. Los cambios no publicados de Preparaciones en Android permanecen intactos en el árbol local.
