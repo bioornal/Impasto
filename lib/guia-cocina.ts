@@ -5,15 +5,16 @@
  * que guardarlos en otro lado no los protegía, y de esta forma la página
  * funciona aunque se caiga la base. Cada cambio de receta es un deploy.
  *
- * Solo entra lo confirmado por el dueño. Nada de costos, precios ni notas
- * internas: `tests/guia-cocina.test.ts` lo comprueba. Este módulo no importa la
+ * Solo entra lo confirmado por el dueño, salvo las pizzas en estado "prueba": son
+ * nuevas, con gramos de prueba y sin foto, y la página lo avisa. Nada de costos,
+ * precios ni notas internas: `tests/guia-cocina.test.ts` lo comprueba. Este módulo no importa la
  * base ni React, para poder testearse con `tsx`.
  *
  * El nombre de cada pizza es el de la carta. `productoId` es el id del producto
  * en `productos` y es la clave de su foto en `REAL_PRODUCT_PHOTOS`.
  */
 
-export type EstadoPizza = "venta" | "proximamente";
+export type EstadoPizza = "venta" | "proximamente" | "prueba";
 
 export interface Ingrediente {
   nombre: string;
@@ -22,7 +23,8 @@ export interface Ingrediente {
 
 export interface PizzaGuia {
   nombre: string;
-  productoId: string;
+  /** Sin id: la pizza todavía no existe en la carta ni tiene foto (estado "prueba"). */
+  productoId?: string;
   estado: EstadoPizza;
   /** Lo que va sobre la masa: salsa de tomate, crema de hongos, manteca de ajo o nada. */
   base: string;
@@ -305,6 +307,49 @@ export const PIZZAS: PizzaGuia[] = [
     nota: "La manteca de ajo confitado va como base sobre la masa, sin llegar al borde, y encima la muzzarella.",
     preparaciones: ["Manteca de ajo confitado", "Provenzal"],
   },
+
+  /* ── En prueba: nuevas, con gramos de prueba y sin foto ── */
+  {
+    nombre: "Pomodorini Confit e Ricotta",
+    estado: "prueba",
+    base: BLANCA,
+    ingredientes: [
+      { nombre: "Muzzarella", cantidad: "200 g" },
+      { nombre: "Cherry asados", cantidad: "90 g" },
+      { nombre: "Ricota fresca", cantidad: "70 g" },
+      { nombre: "Albahaca", cantidad: "a gusto" },
+    ],
+    despues: "Ricota, albahaca y un hilo del aceite de la placa de los cherry.",
+    preparaciones: ["Cherry asados"],
+  },
+  {
+    nombre: "Pesto Rosso e Ricotta",
+    estado: "prueba",
+    base: BLANCA,
+    ingredientes: [
+      { nombre: "Muzzarella", cantidad: "200 g" },
+      { nombre: "Ricota", cantidad: "60 g" },
+      { nombre: "Tomate seco", cantidad: "50 g" },
+      { nombre: "Albahaca", cantidad: "a gusto" },
+    ],
+    despues: "Pesto rosso, unos 20 g.",
+    nota: "El tomate seco se reseca arriba: ponerlo bajo la muzzarella o pincelarlo con aceite.",
+    preparaciones: ["Pesto rosso", "Tomate seco"],
+  },
+  {
+    nombre: "Puttanesca Impasto",
+    estado: "prueba",
+    base: TOMATE,
+    ingredientes: [
+      { nombre: "Muzzarella", cantidad: "220 g" },
+      { nombre: "Tomate seco", cantidad: "40 g" },
+      { nombre: "Aceitunas negras", cantidad: "30 g" },
+      { nombre: "Alcaparras", cantidad: "15 g" },
+      { nombre: "Orégano", cantidad: "a gusto" },
+    ],
+    despues: "Olivada, opcional.",
+    preparaciones: ["Tomate seco", "Olivada"],
+  },
 ];
 
 export const PREPARACIONES: PreparacionGuia[] = [
@@ -412,7 +457,7 @@ export const PREPARACIONES: PreparacionGuia[] = [
   },
   {
     nombre: "Cherry asados",
-    para: "La Provoleta Impasto",
+    para: "La Provoleta Impasto y Pomodorini Confit e Ricotta",
     receta:
       "Cherry cortados al medio, con el corte hacia arriba en una placa. Por cada 250 g: 15 ml de oliva, 5 g de ajo granulado (o un diente en láminas), tomillo o hierbas provenzales y una pizca de sal. Horno a 180 °C, calor arriba y abajo, 30 minutos (o 200 °C durante 20), hasta que los bordes se caramelicen y el jugo espese. La Provoleta: 80 g cocidos por pizza. Se achican: calcular unos 110 a 120 g crudos y pesar la primera tanda para ajustar.",
     conservacion: "Tapados en la heladera, sin cubrir de aceite, 3 días.",
@@ -441,6 +486,30 @@ export const PREPARACIONES: PreparacionGuia[] = [
     receta:
       "50 g de verdeo blanqueado 15 segundos y enfriado en agua con hielo, 20 g de almendras, 15 g de provolone rallado, 10 g de perejil, 60 ml de oliva, 1 cucharadita de limón y pimienta. Sin sal: la panceta y el parmesano ya aportan. Procesar. Sobre la pizza, unos 20 g en puntos.",
     conservacion: "Heladera 4 días, o cubos congelados.",
+    proximamente: true,
+  },
+  {
+    nombre: "Pesto rosso",
+    para: "Pesto Rosso e Ricotta",
+    receta:
+      "50 g de tomate seco, 20 g de albahaca, 30 g de almendras, 20 g de parmesano, ½ diente de ajo y 60 ml de oliva. Procesar. Sobre la pizza, unos 20 g.",
+    conservacion: "Heladera 4 días, o cubos congelados.",
+    proximamente: true,
+  },
+  {
+    nombre: "Olivada",
+    para: "Puttanesca Impasto, opcional",
+    receta:
+      "60 g de aceitunas negras sin carozo, 1 cucharadita de alcaparras, ½ diente de ajo, oliva y ralladura de limón. Procesar.",
+    conservacion: "Heladera 4 días.",
+    proximamente: true,
+  },
+  {
+    nombre: "Tomate seco",
+    para: "Pesto Rosso e Ricotta y Puttanesca Impasto",
+    receta:
+      "Comprarlo de frasco, en aceite, o deshidratado para hidratar. No conservarlo en aceite hecho en casa.",
+    conservacion: "Una vez abierto, en la heladera.",
     proximamente: true,
   },
 ];

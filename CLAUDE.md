@@ -367,10 +367,11 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   desde el sitio**: decisión del dueño por simpleza, aunque se le avisó dos veces que quien
   escriba la dirección ve las recetas. La defensa es `noindex, nofollow` en `app/cocina/layout.tsx`;
   **`/cocina` no está en `robots.ts` ni en `sitemap.ts` a propósito** (nombrarla anunciaría que
-  existe). Los datos viven en `lib/guia-cocina.ts` (sin base, sin React): 18 pizzas, 10 en venta y
-  8 "Próximamente", y 17 preparaciones. **Cada cambio de receta es un deploy.** Solo entra lo
-  confirmado: las 3 pizzas nuevas con tomate (Pomodorini, Pesto Rosso, Puttanesca) y lo marcado
-  "a probar" quedaron afuera. El pesto de morrón asado de la Porteña entró el 02/10 a pedido del
+  existe). Los datos viven en `lib/guia-cocina.ts` (sin base, sin React): 21 pizzas, 10 en venta,
+  8 "Próximamente" y 3 "En prueba", y 20 preparaciones. **Cada cambio de receta es un deploy.**
+  Solo entra lo confirmado, salvo las 3 pizzas nuevas con tomate (Pomodorini, Pesto Rosso,
+  Puttanesca), que el dueño pidió ver en una sección "En prueba" con aviso, gramos de prueba y
+  sin foto (las encontró a faltar y las agregué el 02/10); lo marcado "a probar" sigue afuera. El pesto de morrón asado de la Porteña entró el 02/10 a pedido del
   dueño (la dejé afuera por error al principio, por haberlo marcado "a probar"). Con ese pesto la
   Porteña lleva 120 g de morrón en tiras, no los 150 g que carga el recetario (decisión del dueño
   del 02/10; el recetario sigue con 150 g). Nada de costos, precios ni notas

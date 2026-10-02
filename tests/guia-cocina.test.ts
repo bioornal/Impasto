@@ -13,9 +13,10 @@ function chequear(nombre: string, condicion: boolean) {
 }
 
 /* ── cantidades ── */
-chequear("pizzas · son 18", PIZZAS.length === 18);
+chequear("pizzas · son 21", PIZZAS.length === 21);
 chequear("pizzas · 10 en venta", PIZZAS.filter((p) => p.estado === "venta").length === 10);
 chequear("pizzas · 8 próximamente", PIZZAS.filter((p) => p.estado === "proximamente").length === 8);
+chequear("pizzas · 3 en prueba", PIZZAS.filter((p) => p.estado === "prueba").length === 3);
 chequear("preparaciones · hay al menos una", PREPARACIONES.length > 0);
 
 /* ── integridad de cada pizza ── */
@@ -30,13 +31,15 @@ chequear(
   PIZZAS.every((p) => p.ingredientes.length > 0 && p.ingredientes.every((i) => i.nombre.trim() && /\d|[⅓½¼]|a gusto|1 unidad/.test(i.cantidad))),
 );
 chequear(
-  "pizzas · cada foto existe en REAL_PRODUCT_PHOTOS",
-  PIZZAS.every((p) => typeof REAL_PRODUCT_PHOTOS[p.productoId] === "string"),
+  "pizzas · las que no están en prueba tienen foto en REAL_PRODUCT_PHOTOS",
+  PIZZAS.filter((p) => p.estado !== "prueba").every((p) => !!p.productoId && typeof REAL_PRODUCT_PHOTOS[p.productoId] === "string"),
 );
 chequear(
-  "pizzas · los productoId no se repiten",
-  new Set(PIZZAS.map((p) => p.productoId)).size === PIZZAS.length,
+  "pizzas · las que están en prueba no tienen productoId",
+  PIZZAS.filter((p) => p.estado === "prueba").every((p) => p.productoId === undefined),
 );
+const ids = PIZZAS.flatMap((p) => (p.productoId ? [p.productoId] : []));
+chequear("pizzas · los productoId no se repiten", new Set(ids).size === ids.length);
 
 /* ── preparaciones enlazadas ── */
 const preps = new Set(PREPARACIONES.map((p) => p.nombre));

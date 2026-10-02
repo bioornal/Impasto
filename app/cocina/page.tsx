@@ -9,10 +9,10 @@ import {
 import { REAL_PRODUCT_PHOTOS } from "@/lib/stock-images";
 
 function TarjetaPizza({ p, primera }: { p: PizzaGuia; primera: boolean }) {
-  const foto = REAL_PRODUCT_PHOTOS[p.productoId];
+  const foto = p.productoId ? REAL_PRODUCT_PHOTOS[p.productoId] : undefined;
   return (
     <article className="ck-pizza">
-      {foto && (
+      {foto ? (
         // Las fotos del bucket redirigen al CDN: el sitio las muestra con <img>
         // y no con next/image, que solo acepta el host del bucket.
         // eslint-disable-next-line @next/next/no-img-element
@@ -25,6 +25,8 @@ function TarjetaPizza({ p, primera }: { p: PizzaGuia; primera: boolean }) {
           loading={primera ? "eager" : "lazy"}
           decoding="async"
         />
+      ) : (
+        <div className="ck-sinfoto">Sin foto todavía</div>
       )}
       <div className="ck-cuerpo">
         <h3>{p.nombre}</h3>
@@ -80,6 +82,7 @@ function TarjetaPreparacion({ p }: { p: PreparacionGuia }) {
 export default function CocinaPage() {
   const enVenta = PIZZAS.filter((p) => p.estado === "venta");
   const proximas = PIZZAS.filter((p) => p.estado === "proximamente");
+  const enPrueba = PIZZAS.filter((p) => p.estado === "prueba");
   const prepsHoy = PREPARACIONES.filter((p) => !p.proximamente);
   const prepsProximas = PREPARACIONES.filter((p) => p.proximamente);
 
@@ -98,6 +101,7 @@ export default function CocinaPage() {
       <nav className="ck-nav" aria-label="Secciones">
         <a href="#venta">En venta ({enVenta.length})</a>
         <a href="#proximamente">Próximamente ({proximas.length})</a>
+        <a href="#prueba">En prueba ({enPrueba.length})</a>
         <a href="#preparaciones">Preparaciones ({PREPARACIONES.length})</a>
       </nav>
 
@@ -120,6 +124,18 @@ export default function CocinaPage() {
         </div>
       </section>
 
+      <section id="prueba">
+        <h2>En prueba</h2>
+        <p className="ck-aviso">
+          Pizzas nuevas que todavía se están probando. Los gramos pueden cambiar y todavía no tienen foto.
+        </p>
+        <div className="ck-grid">
+          {enPrueba.map((p) => (
+            <TarjetaPizza key={p.nombre} p={p} primera={false} />
+          ))}
+        </div>
+      </section>
+
       <section id="preparaciones">
         <h2>Preparaciones</h2>
         <p className="ck-aviso">
@@ -132,7 +148,7 @@ export default function CocinaPage() {
             <TarjetaPreparacion key={p.nombre} p={p} />
           ))}
         </div>
-        <h3 className="ck-subtitulo">Para las que vienen</h3>
+        <h3 className="ck-subtitulo">Para las que todavía no están en la carta</h3>
         <div className="ck-grid ck-grid-preps">
           {prepsProximas.map((p) => (
             <TarjetaPreparacion key={p.nombre} p={p} />

@@ -18,8 +18,9 @@ preparaciones (mieles, pestos, provenzal, manteca de ajo).
 - **Contenido en el código**, no en la base. Con la ruta abierta, guardarlo en la base no
   protegía nada: el repo es público y la ruta es adivinable. A cambio, la página funciona
   aunque se caiga la base, y cada cambio de receta es un deploy.
-- **Solo lo confirmado.** Lo marcado "a probar" en la hoja de trabajo queda afuera hasta que
-  el dueño lo apruebe.
+- **Solo lo confirmado**, con una excepción: las 3 pizzas nuevas con tomate van en una
+  sección "En prueba", con aviso, gramos de prueba y sin foto, a pedido del dueño. Lo marcado
+  "a probar" en la hoja de trabajo sigue afuera hasta que lo apruebe.
 
 ## Qué incluye
 
@@ -36,26 +37,28 @@ base de datos, el recetario ni Carro Fogón.
 
 ## Contenido de cada pizza
 
-Nombre, estado (`venta` o `proximamente`), base (salsa de tomate, crema de hongos secos,
+Nombre, estado (`venta`, `proximamente` o `prueba`), base (salsa de tomate, crema de hongos secos,
 manteca de ajo confitado o sin base), ingredientes con cantidad, lo que va después del
 horno, nota de armado (solo si es una instrucción de armado) y los nombres de las
 preparaciones que usa. La foto sale de `REAL_PRODUCT_PHOTOS` por id de producto y se muestra
 con `<img>`, igual que el resto del sitio: la URL del bucket redirige al CDN y
 `next/image` solo acepta el host del bucket.
 
-Entran 18 pizzas: las 10 de la carta de hoy y 8 "Próximamente". Las 3 nuevas con tomate
-(Pomodorini, Pesto Rosso, Puttanesca) quedan afuera porque sus gramos son propuestas para
-probar. Nada de costos, precios, pendientes ni notas del dueño.
+Entran 21 pizzas: las 10 de la carta de hoy, 8 "Próximamente" y 3 "En prueba"
+(Pomodorini Confit e Ricotta, Pesto Rosso e Ricotta y Puttanesca Impasto). Las "En prueba" no
+tienen `productoId` ni foto: la página muestra un recuadro "Sin foto todavía" y avisa que los
+gramos pueden cambiar. Nada de costos, precios, pendientes ni notas del dueño.
 
 ## Preparaciones
 
-Receta, para qué pizza va y conservación. Solo las que usan las 18 pizzas: miel picante,
-miel de ajo, crema de hongos secos, golf de la casa, pesto de albahaca, provenzal, ajo
-confitado, cebolla dorada, morrones asados, pesto de morrón asado, aceto reducido,
-almendras tostadas, cherry confitados, manteca de ajo confitado, pesto de pistacho y pesto
-de verdeo, miel y mostaza (17). El pesto de morrón asado y la miel y mostaza entraron el
-2 de octubre, a pedido del dueño, para la Porteña y la Bondiola. El pesto rosso, la olivada y el tomate seco quedan afuera. El chimichurri
-no tiene receta cargada: la pizza lo nombra y la página no inventa una.
+Receta, para qué pizza va y conservación. Las que usan las 21 pizzas, 20 en total: miel
+picante, miel de ajo, miel y mostaza, crema de hongos secos, golf de la casa, pesto de
+albahaca, pesto de morrón asado, pesto de pistacho, pesto de verdeo, pesto rosso, olivada,
+provenzal, ajo confitado, manteca de ajo confitado, cebolla dorada, morrones asados, aceto
+reducido, almendras tostadas y panceta crocante, cherry asados y tomate seco. El pesto de
+morrón asado, la miel y mostaza y los cherry asados (que reemplazan al confit lento) entraron
+el 2 de octubre, a pedido del dueño. El chimichurri no tiene receta cargada: la pizza lo
+nombra y la página no inventa una.
 
 La base de todas: bollo y salsa de tomate (150 g por pizza). El agua del lote de masa no
 entra: en el audio del 1 de octubre estaba sin confirmar.
@@ -66,7 +69,7 @@ entra: en el audio del 1 de octubre estaba sin confirmar.
 
 1. Cada pizza tiene al menos un ingrediente con cantidad.
 2. Los nombres de pizza no se repiten.
-3. Cada `productoId` existe en `REAL_PRODUCT_PHOTOS`.
+3. Cada `productoId` existe en `REAL_PRODUCT_PHOTOS`, y las pizzas en prueba no tienen.
 4. Cada preparación que nombra una pizza existe, y cada preparación la usa alguna pizza.
 5. Ningún texto visible contiene `$` ni las palabras "costo", "precio", "recetario" o
    "a probar": evita filtrar cifras o notas internas.
@@ -83,5 +86,4 @@ en `robots.txt` ni en el sitemap.
 
 ## Fuera de alcance
 
-Código de acceso, login, editor de contenido, contenido en la base y las 3 pizzas nuevas
-con tomate. Si alguna vez se quiere cualquiera de eso, es un cambio aparte.
+Código de acceso, login, editor de contenido y contenido en la base. Si alguna vez se quiere cualquiera de eso, es un cambio aparte.

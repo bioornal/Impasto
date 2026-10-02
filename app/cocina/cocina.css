@@ -181,6 +181,16 @@
   background: var(--ck-line);
 }
 
+.ck-sinfoto {
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  background: var(--ck-bg);
+  border-bottom: 1px dashed var(--ck-line);
+  color: var(--ck-muted);
+  font-size: 0.95rem;
+}
+
 .ck-cuerpo {
   padding: 16px;
   display: flex;

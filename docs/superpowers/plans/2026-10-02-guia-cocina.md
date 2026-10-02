@@ -16,7 +16,7 @@
 - `noindex, nofollow` en el layout. No nombrar `/cocina` en `robots.ts` ni en `sitemap.ts`.
 - Contenido en el código, sin consultas a la base.
 - Solo lo confirmado: nada "a probar", nada de costos, precios ni notas internas.
-- Entran 18 pizzas (10 en venta, 8 próximamente). Las 3 nuevas con tomate no entran.
+- Entran 21 pizzas (10 en venta, 8 próximamente y 3 en prueba, estas sin foto y con aviso).
 - "Napoletana", no "napolitana"; "ingredientes", no "materia prima".
 - No tocar los archivos ajenos sin seguimiento: `.codex/`, `docs/impresion-termica.md`, `migrations/20260922153137_compras-items.sql`, `scripts/`.
 - `git add` siempre con rutas explícitas, nunca `-A`.
@@ -52,7 +52,7 @@
 
 - [ ] **Step 1: Escribir el test que falla** (`tests/guia-cocina.test.ts`), con el mismo estilo `chequear` de `tests/ficha.test.ts`. Comprueba: 18 pizzas, 10 en venta y 8 próximamente; cada pizza con al menos un ingrediente con cantidad; nombres únicos; cada `productoId` en `REAL_PRODUCT_PHOTOS`; cada preparación nombrada existe y cada preparación la usa alguna pizza; y que ningún texto visible contenga `$`, "costo", "precio", "recetario", "a probar" o "decime".
 - [ ] **Step 2: Correr y ver que falla** con `pnpm exec tsx tests/guia-cocina.test.ts` (no existe `lib/guia-cocina.ts`).
-- [ ] **Step 3: Escribir `lib/guia-cocina.ts`** con los tipos de arriba y los datos de las 18 pizzas y las 17 preparaciones de la sección "Contenido" del spec.
+- [ ] **Step 3: Escribir `lib/guia-cocina.ts`** con los tipos de arriba y los datos de las 21 pizzas y las 20 preparaciones de la sección "Contenido" del spec.
 - [ ] **Step 4: Correr el test y ver que pasa.**
 - [ ] **Step 5: Commit** `feat(cocina): datos de la guía de armado y su test`.
 
