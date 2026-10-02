@@ -40,7 +40,8 @@ Nombre, estado (`venta` o `proximamente`), base (salsa de tomate, crema de hongo
 manteca de ajo confitado o sin base), ingredientes con cantidad, lo que va después del
 horno, nota de armado (solo si es una instrucción de armado) y los nombres de las
 preparaciones que usa. La foto sale de `REAL_PRODUCT_PHOTOS` por id de producto y se muestra
-con `next/image`: el bucket ya está permitido en `next.config.ts` y en el CSP.
+con `<img>`, igual que el resto del sitio: la URL del bucket redirige al CDN y
+`next/image` solo acepta el host del bucket.
 
 Entran 18 pizzas: las 10 de la carta de hoy y 8 "Próximamente". Las 3 nuevas con tomate
 (Pomodorini, Pesto Rosso, Puttanesca) quedan afuera porque sus gramos son propuestas para

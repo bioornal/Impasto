@@ -6,7 +6,7 @@ Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Me
 Deploy en Netlify: **https://www.impastopizzas.com** (dominio propio desde el 19/09/2026; el
 subdominio `vocal-naiad-861a2c.netlify.app` sigue respondiendo). Ver "Dominio propio".
 
-Última actualización: 1 de octubre de 2026.
+Última actualización: 2 de octubre de 2026.
 
 ## Cómo trabajar en este repo
 
@@ -359,6 +359,28 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   Ticker, footer, FAQ, SEO (slogan y descripción) y `llms.txt` alineados; el `<title>` sigue
   con "napolitana" a propósito. Verificado en localhost con Chrome headless (1440/1000/375 px),
   tests y TypeScript. Commits `8ed1a22`…`9213e19`. Sin verificar todavía en producción.
+
+- **Guía de armado para la cocina: `/cocina` (02/10/2026)** — Página para los cocineros: por cada
+  pizza, foto, base (salsa de tomate, crema de hongos secos, manteca de ajo confitado o blanca),
+  ingredientes con gramos y lo que va después del horno, más las recetas de las preparaciones
+  (mieles, pestos, provenzal, manteca de ajo, etc.). **Sin login, sin código y sin ningún enlace
+  desde el sitio**: decisión del dueño por simpleza, aunque se le avisó dos veces que quien
+  escriba la dirección ve las recetas. La defensa es `noindex, nofollow` en `app/cocina/layout.tsx`;
+  **`/cocina` no está en `robots.ts` ni en `sitemap.ts` a propósito** (nombrarla anunciaría que
+  existe). Los datos viven en `lib/guia-cocina.ts` (sin base, sin React): 18 pizzas, 10 en venta y
+  8 "Próximamente", y 15 preparaciones. **Cada cambio de receta es un deploy.** Solo entra lo
+  confirmado: las 3 pizzas nuevas con tomate (Pomodorini, Pesto Rosso, Puttanesca), la salsa de
+  morrón asado y lo marcado "a probar" quedaron afuera. Nada de costos, precios ni notas
+  internas: `tests/guia-cocina.test.ts` (en `pnpm test`) lo comprueba, además de fotos y
+  preparaciones enlazadas. Las fotos son las de `REAL_PRODUCT_PHOTOS` y se muestran con `<img>`,
+  como el resto del sitio (la URL del bucket redirige al CDN y `next/image` solo acepta el host
+  del bucket). **Las recetas de la crema de hongos secos, el pesto de pistacho y el pesto de
+  verdeo las redactó Claude a partir de los gramos del recetario: el dueño tiene que
+  revisarlas.** La hoja de trabajo con costos y pendientes no está en el repo. Verificado
+  localmente: tests, TypeScript, eslint de lo tocado, build (`/cocina` sale estática) y navegador
+  (18 fotos cargan, sin desborde a 375 px, robots, sitemap, llms.txt y home sin referencias).
+  Spec y plan: `docs/superpowers/specs/2026-10-02-guia-cocina-design.md` y
+  `docs/superpowers/plans/2026-10-02-guia-cocina.md`.
 
 ### Distinción que se presta a confusión
 

@@ -1,0 +1,307 @@
+/* Guía de armado para la cocina. Todo con prefijo ck- para no tocar el sitio ni
+   el panel. Pensada para tablet y teléfono: letra grande, una columna en celular
+   y varias en pantalla ancha. Carbón y dorado, sin marrones ni naranjas. */
+
+.ck {
+  --ck-bg: #f4f5f4;
+  --ck-card: #ffffff;
+  --ck-fg: #1d2023;
+  --ck-muted: #565c60;
+  --ck-line: #d6d9d8;
+  --ck-gold: #86661a;
+  --ck-gold-soft: #f3ead2;
+  --ck-coal: #23272b;
+  --ck-coal-fg: #f4f5f4;
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--ck-bg);
+  color: var(--ck-fg);
+  font-family: "Manrope", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+  padding: 0 16px calc(48px + env(safe-area-inset-bottom, 0px));
+}
+
+.ck h1,
+.ck h2,
+.ck h3,
+.ck h4 {
+  font-family: "Manrope", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.ck p {
+  margin: 0;
+}
+
+.ck a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--ck-gold);
+  text-underline-offset: 3px;
+}
+
+.ck > * {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── Encabezado ── */
+.ck-top {
+  padding-top: calc(24px + env(safe-area-inset-top, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ck-kicker {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ck-gold);
+}
+
+.ck h1 {
+  font-size: clamp(2rem, 7vw, 3.2rem);
+  font-weight: 800;
+}
+
+.ck-base {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 14px 16px;
+  background: var(--ck-card);
+  border: 1px solid var(--ck-line);
+  border-left: 4px solid var(--ck-coal);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 62ch;
+}
+
+/* ── Atajos ── */
+.ck-nav {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  margin-top: 8px;
+  background: var(--ck-bg);
+  border-bottom: 1px solid var(--ck-line);
+}
+
+.ck-nav a {
+  text-decoration: none;
+  background: var(--ck-coal);
+  color: var(--ck-coal-fg);
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ck-nav a:focus-visible,
+.ck a:focus-visible {
+  outline: 3px solid var(--ck-gold);
+  outline-offset: 2px;
+}
+
+/* ── Secciones ── */
+.ck section {
+  padding-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scroll-margin-top: 72px;
+}
+
+.ck h2 {
+  font-size: 1.9rem;
+  font-weight: 800;
+  border-bottom: 3px solid var(--ck-coal);
+  padding-bottom: 8px;
+}
+
+.ck-aviso {
+  color: var(--ck-muted);
+  max-width: 70ch;
+}
+
+.ck-subtitulo {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-top: 8px;
+}
+
+.ck-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 720px) {
+  .ck-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .ck-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ── Tarjeta de pizza ── */
+.ck-pizza {
+  background: var(--ck-card);
+  border: 1px solid var(--ck-line);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ck-foto {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--ck-line);
+}
+
+.ck-cuerpo {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ck-cuerpo h3 {
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.ck-base-pizza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.ck-base-pizza span,
+.ck-cons span {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ck-gold);
+}
+
+.ck-ing {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ck-ing li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dotted var(--ck-line);
+}
+
+.ck-ing li:last-child {
+  border-bottom: 0;
+}
+
+.ck-ing b {
+  font-family: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-weight: 500;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ck-despues {
+  background: var(--ck-gold-soft);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ck-despues h4 {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--ck-gold);
+}
+
+.ck-nota {
+  font-weight: 700;
+}
+
+.ck-preps {
+  color: var(--ck-muted);
+  font-size: 0.95rem;
+}
+
+/* ── Tarjeta de preparación ── */
+.ck-prep {
+  background: var(--ck-card);
+  border: 1px solid var(--ck-line);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  scroll-margin-top: 72px;
+}
+
+.ck-prep h3 {
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.ck-para {
+  color: var(--ck-muted);
+  font-size: 0.95rem;
+}
+
+.ck-cons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 1px dotted var(--ck-line);
+  padding-top: 8px;
+  font-size: 0.95rem;
+}
+
+@media print {
+  .ck-nav {
+    display: none;
+  }
+
+  .ck-pizza,
+  .ck-prep {
+    break-inside: avoid;
+  }
+}
