@@ -62,7 +62,7 @@ export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
   "d36e95b3-243c-4dce-a2cc-4c3f0a52531c": // Americana Agridulce
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Americana%20Agridulce.png",
   "3a4abc9d-caa0-458e-aef3-d906fb2f7f2b": // Bondiola al Pangrattato
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Bondiola%20al%20Pangrattato.jpg",
+    "/images/cocina/bondiola-miel-mostaza-v2.webp",
   "4c2c7501-b7ff-4bee-8887-162fbb50b403": // Carbonara Impasto
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Carbonara%20Impasto.jpg",
   "d312b6ed-209f-4cff-8a37-36b515a12553": // Diavola al Miele Piccante
