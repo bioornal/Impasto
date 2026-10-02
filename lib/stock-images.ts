@@ -78,7 +78,7 @@ export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
   "3e987e20-d7ca-4166-9679-7559d7603d69": // Porro e Panceta Croccante
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Porro%20e%20Panceta%20Croccante.jpg",
   "8bfedca8-8bd9-4cb4-a677-491c3be4c667": // Porteña de Jamón y Morrones
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Porte%C3%B1a%20de%20Jam%C3%B3n%20y%20Morrones.jpg",
+    "/images/cocina/portena-pesto-morron-v2.webp",
   "c0ab17be-8cde-47fd-8be5-576abe4ccf3d": // Quattro Formaggi e Noci
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Quattro%20Formaggi%20e%20Noci.jpg",
   "bffd02f2-b069-45fa-9324-316a204f5447": // Choclo, Panceta y Salsa Criolla
