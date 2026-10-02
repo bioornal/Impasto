@@ -6,7 +6,7 @@
  * funciona aunque se caiga la base. Cada cambio de receta es un deploy.
  *
  * Solo entra lo confirmado por el dueño, salvo las pizzas en estado "prueba": son
- * nuevas, con gramos de prueba y sin foto, y la página lo avisa. Nada de costos,
+ * nuevas, con gramos de prueba, y la página lo avisa. Nada de costos,
  * precios ni notas internas: `tests/guia-cocina.test.ts` lo comprueba. Este módulo no importa la
  * base ni React, para poder testearse con `tsx`.
  *
@@ -23,8 +23,10 @@ export interface Ingrediente {
 
 export interface PizzaGuia {
   nombre: string;
-  /** Sin id: la pizza todavía no existe en la carta ni tiene foto (estado "prueba"). */
+  /** Sin id: la pizza todavía no existe en la carta (estado "prueba"). */
   productoId?: string;
+  /** Foto de la guía para pizzas que todavía no tienen producto en la carta. */
+  foto?: string;
   estado: EstadoPizza;
   /** Lo que va sobre la masa: salsa de tomate, crema de hongos, manteca de ajo o nada. */
   base: string;
@@ -308,9 +310,10 @@ export const PIZZAS: PizzaGuia[] = [
     preparaciones: ["Manteca de ajo confitado", "Provenzal"],
   },
 
-  /* ── En prueba: nuevas, con gramos de prueba y sin foto ── */
+  /* ── En prueba: nuevas, con gramos de prueba ── */
   {
     nombre: "Pomodorini Confit e Ricotta",
+    foto: "/images/cocina/pomodorini-confit-ricotta-v1.webp",
     estado: "prueba",
     base: BLANCA,
     ingredientes: [
@@ -324,6 +327,7 @@ export const PIZZAS: PizzaGuia[] = [
   },
   {
     nombre: "Pesto Rosso e Ricotta",
+    foto: "/images/cocina/pesto-rosso-ricotta-v1.webp",
     estado: "prueba",
     base: BLANCA,
     ingredientes: [
@@ -338,6 +342,7 @@ export const PIZZAS: PizzaGuia[] = [
   },
   {
     nombre: "Puttanesca Impasto",
+    foto: "/images/cocina/puttanesca-impasto-v1.webp",
     estado: "prueba",
     base: TOMATE,
     ingredientes: [

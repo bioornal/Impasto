@@ -9,7 +9,7 @@ import {
 import { REAL_PRODUCT_PHOTOS } from "@/lib/stock-images";
 
 function TarjetaPizza({ p, primera }: { p: PizzaGuia; primera: boolean }) {
-  const foto = p.productoId ? REAL_PRODUCT_PHOTOS[p.productoId] : undefined;
+  const foto = p.foto ?? (p.productoId ? REAL_PRODUCT_PHOTOS[p.productoId] : undefined);
   return (
     <article className="ck-pizza">
       {foto ? (
@@ -127,7 +127,7 @@ export default function CocinaPage() {
       <section id="prueba">
         <h2>En prueba</h2>
         <p className="ck-aviso">
-          Pizzas nuevas que todavía se están probando. Los gramos pueden cambiar y todavía no tienen foto.
+          Pizzas nuevas que todavía se están probando. Los gramos pueden cambiar. Las imágenes son ilustrativas.
         </p>
         <div className="ck-grid">
           {enPrueba.map((p) => (
