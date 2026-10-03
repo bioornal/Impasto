@@ -28,7 +28,7 @@ export interface PizzaGuia {
   /** Foto de la guía para pizzas que todavía no tienen producto en la carta. */
   foto?: string;
   estado: EstadoPizza;
-  /** Lo que va sobre la masa: salsa de tomate, crema de hongos, manteca de ajo o nada. */
+  /** Lo que va sobre la masa: salsa de tomate, manteca de ajo o nada. */
   base: string;
   ingredientes: Ingrediente[];
   /** Lo que se agrega al salir del horno. */
@@ -84,16 +84,14 @@ export const PIZZAS: PizzaGuia[] = [
     preparaciones: ["Ajo confitado", "Pesto de albahaca"],
   },
   {
-    nombre: "Fugazzetta al Provolone",
+    nombre: "Fugazzetta",
     productoId: "1ab8b31f-c5ef-443d-b024-0e3f7328d481",
     estado: "venta",
     base: BLANCA,
     ingredientes: [
       { nombre: "Muzzarella", cantidad: "250 g" },
       { nombre: "Cebolla (cruda, se dora)", cantidad: "200 g" },
-      { nombre: "Provolone", cantidad: "65 g" },
       { nombre: "Oliva", cantidad: "15 ml" },
-      { nombre: "Pimentón ahumado", cantidad: "5 g" },
       { nombre: "Pimienta", cantidad: "3 g" },
     ],
     preparaciones: ["Cebolla dorada"],
@@ -104,10 +102,10 @@ export const PIZZAS: PizzaGuia[] = [
     estado: "venta",
     base: BLANCA,
     ingredientes: [
-      { nombre: "Muzzarella", cantidad: "195 g" },
-      { nombre: "Provolone", cantidad: "40 g" },
-      { nombre: "Roquefort", cantidad: "25 g" },
-      { nombre: "Parmesano", cantidad: "20 g" },
+      { nombre: "Muzzarella", cantidad: "250 g" },
+      { nombre: "Provolone", cantidad: "30 g" },
+      { nombre: "Roquefort", cantidad: "30 g" },
+      { nombre: "Parmesano", cantidad: "30 g" },
       { nombre: "Almendras tostadas", cantidad: "30 g" },
     ],
     despues: "Hilo de miel de ajo.",
@@ -120,10 +118,10 @@ export const PIZZAS: PizzaGuia[] = [
     base: TOMATE,
     ingredientes: [
       { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Salame calabrés", cantidad: "150 g" },
+      { nombre: "Salame calabrés", cantidad: "100 g" },
     ],
-    despues: "Hilo de miel picante y puntos de pesto (20 g).",
-    preparaciones: ["Miel picante", "Pesto de albahaca"],
+    despues: "Hilo de miel picante.",
+    preparaciones: ["Miel picante"],
   },
   {
     nombre: "Prosciutto, Rucola e Parmigiano",
@@ -136,7 +134,7 @@ export const PIZZAS: PizzaGuia[] = [
       { nombre: "Parmesano en lascas", cantidad: "30 g" },
       { nombre: "Rúcula", cantidad: "⅓ de atado" },
     ],
-    despues: "Rúcula, jamón crudo, lascas de parmesano y aceto reducido (20 ml).",
+    despues: "Rúcula, jamón crudo, lascas de parmesano y aceto reducido (25 ml).",
     preparaciones: ["Aceto reducido"],
   },
   {
@@ -146,7 +144,7 @@ export const PIZZAS: PizzaGuia[] = [
     base: TOMATE,
     ingredientes: [
       { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Jamón cocido", cantidad: "150 g" },
+      { nombre: "Jamón cocido", cantidad: "100 g" },
       { nombre: "Morrón asado en tiras", cantidad: "120 g" },
       { nombre: "Oliva", cantidad: "10 ml" },
     ],
@@ -160,10 +158,10 @@ export const PIZZAS: PizzaGuia[] = [
     base: TOMATE,
     ingredientes: [
       { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Palmito", cantidad: "200 g" },
+      { nombre: "Palmito", cantidad: "150 g" },
     ],
-    despues: "Salsa golf en zigzag (30 g) y puntos de provenzal (5 g) con ralladura de limón.",
-    preparaciones: ["Golf de la casa", "Provenzal"],
+    despues: "Salsa golf en zigzag (30 g).",
+    preparaciones: ["Golf de la casa"],
   },
   {
     nombre: "Pepperoni e Panceta",
@@ -172,26 +170,12 @@ export const PIZZAS: PizzaGuia[] = [
     base: TOMATE,
     ingredientes: [
       { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Pepperoni", cantidad: "150 g" },
+      { nombre: "Pepperoni", cantidad: "100 g" },
       { nombre: "Panceta", cantidad: "100 g" },
       { nombre: "Orégano", cantidad: "5 g" },
-      { nombre: "Ají molido", cantidad: "5 g" },
     ],
     nota: "Dorar la panceta antes de armar, para que llegue crocante.",
     preparaciones: ["Almendras tostadas y panceta crocante"],
-  },
-  {
-    nombre: "Bianca ai Funghi",
-    productoId: "0d871df5-0e5c-4fe3-8450-5e63261de27a",
-    estado: "venta",
-    base: "Crema de hongos secos",
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Bondiola", cantidad: "120 g" },
-      { nombre: "Ricota en bochas", cantidad: "60 g" },
-      { nombre: "Champiñones en conserva", cantidad: "50 g" },
-    ],
-    preparaciones: ["Crema de hongos secos"],
   },
 
   /* ── Próximamente ── */
@@ -383,14 +367,6 @@ export const PREPARACIONES: PreparacionGuia[] = [
     proximamente: true,
   },
   {
-    nombre: "Crema de hongos secos",
-    para: "Bianca ai Funghi (base en lugar de la salsa de tomate)",
-    receta:
-      "Por pizza: 15 g de hongos de pino secos y 40 ml de crema de leche. Tanda para 6: 90 g de hongos y 240 ml de crema. Hidratar los hongos 20 minutos en agua tibia, escurrirlos y colar el agua para guardarla. Picarlos fino, saltearlos un momento, agregar la crema y reducir hasta que cubra una cuchara. Ajustar con un poco del agua de hidratación colada y salpimentar. Procesar si se quiere lisa.",
-    conservacion: "Heladera, 3 días.",
-    proximamente: false,
-  },
-  {
     nombre: "Golf de la casa",
     para: "Palmitos y Salsa Golf",
     receta:
@@ -400,7 +376,7 @@ export const PREPARACIONES: PreparacionGuia[] = [
   },
   {
     nombre: "Pesto de albahaca",
-    para: "Napoletana all'Aglio y Diavola al Miele Piccante",
+    para: "Napoletana all'Aglio",
     receta:
       "Tanda de unos 250 g: 3 atados de albahaca, 110 ml de aceite, 15 ml de oliva, 1 cabeza de ajo, 30 g de parmesano, sal y pimienta. Procesar. Sobre la pizza, puntos de unos 20 g en total.",
     conservacion: "Heladera 4 días, o cubos congelados.",
@@ -408,9 +384,9 @@ export const PREPARACIONES: PreparacionGuia[] = [
   },
   {
     nombre: "Provenzal",
-    para: "Porteña, Palmitos, Patate e Rosmarino y Bianca all'Aglio Confit",
+    para: "Porteña, Patate e Rosmarino y Bianca all'Aglio Confit",
     receta:
-      "Tanda de unos 300 g: 2 atados de perejil, 1 cabeza de ajo, 150 ml de aceite, sal y pimienta, todo picado fino y mezclado. Porteña: 20 g en hilos. Palmitos y Bianca all'Aglio Confit: 5 g en puntos. En Palmitos y Patate va con ralladura de limón.",
+      "Tanda de unos 300 g: 2 atados de perejil, 1 cabeza de ajo, 150 ml de aceite, sal y pimienta, todo picado fino y mezclado. Porteña: 20 g en hilos. Bianca all'Aglio Confit: 5 g en puntos. En Patate va con ralladura de limón.",
     conservacion: "Heladera 4 días.",
     proximamente: false,
   },
@@ -424,7 +400,7 @@ export const PREPARACIONES: PreparacionGuia[] = [
   },
   {
     nombre: "Cebolla dorada",
-    para: "Fugazzetta al Provolone",
+    para: "Fugazzetta",
     receta:
       "200 g de cebolla cruda por pizza, con oliva. Se reduce mucho al dorarse: hacerla en tanda y porcionar.",
     conservacion: "Heladera, del día o del día siguiente.",
@@ -448,7 +424,7 @@ export const PREPARACIONES: PreparacionGuia[] = [
   {
     nombre: "Aceto reducido",
     para: "Prosciutto, Rucola e Parmigiano",
-    receta: "20 ml de aceto balsámico por pizza, reducido hasta que quede como almíbar.",
+    receta: "25 ml de aceto balsámico por pizza, reducido hasta que quede como almíbar.",
     conservacion: "Tapado, a temperatura ambiente.",
     proximamente: false,
   },

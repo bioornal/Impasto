@@ -14,7 +14,7 @@
 export const PIZZAS_DE_LA_CARTA = [
   "Muzzarella Impasto",
   "Napoletana all'Aglio",
-  "Fugazzetta al Provolone",
+  "Fugazzetta",
   "Porteña de Jamón y Morrones",
   "Quattro Formaggi",
   "Palmitos y Salsa Golf",

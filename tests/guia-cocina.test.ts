@@ -13,8 +13,8 @@ function chequear(nombre: string, condicion: boolean) {
 }
 
 /* ── cantidades ── */
-chequear("pizzas · son 21", PIZZAS.length === 21);
-chequear("pizzas · 10 en venta", PIZZAS.filter((p) => p.estado === "venta").length === 10);
+chequear("pizzas · son 20", PIZZAS.length === 20);
+chequear("pizzas · 9 en venta", PIZZAS.filter((p) => p.estado === "venta").length === 9);
 chequear("pizzas · 8 próximamente", PIZZAS.filter((p) => p.estado === "proximamente").length === 8);
 chequear("pizzas · 3 en prueba", PIZZAS.filter((p) => p.estado === "prueba").length === 3);
 chequear("preparaciones · hay al menos una", PREPARACIONES.length > 0);

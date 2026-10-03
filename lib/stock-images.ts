@@ -57,7 +57,7 @@ export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Muzzarella%20Impasto.jpg",
   "9ee7b500-a31a-4e42-acbe-2b694cf67eb4": // Napoletana all'Aglio
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/napoletana-aglio-v2.jpg",
-  "1ab8b31f-c5ef-443d-b024-0e3f7328d481": // Fugazzetta al Provolone
+  "1ab8b31f-c5ef-443d-b024-0e3f7328d481": // Fugazzetta
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/fugazzetta-provolone-v2.jpg",
   "d36e95b3-243c-4dce-a2cc-4c3f0a52531c": // Americana Agridulce
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Americana%20Agridulce.png",

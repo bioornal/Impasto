@@ -361,14 +361,14 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   tests y TypeScript. Commits `8ed1a22`…`9213e19`. Sin verificar todavía en producción.
 
 - **Guía de armado para la cocina: `/cocina` (02/10/2026)** — Página para los cocineros: por cada
-  pizza, foto, base (salsa de tomate, crema de hongos secos, manteca de ajo confitado o blanca),
+  pizza, foto, base (salsa de tomate, manteca de ajo confitado o blanca),
   ingredientes con gramos y lo que va después del horno, más las recetas de las preparaciones
   (mieles, pestos, provenzal, manteca de ajo, etc.). **Sin login, sin código y sin ningún enlace
   desde el sitio**: decisión del dueño por simpleza, aunque se le avisó dos veces que quien
   escriba la dirección ve las recetas. La defensa es `noindex, nofollow` en `app/cocina/layout.tsx`;
   **`/cocina` no está en `robots.ts` ni en `sitemap.ts` a propósito** (nombrarla anunciaría que
-  existe). Los datos viven en `lib/guia-cocina.ts` (sin base, sin React): 21 pizzas, 10 en venta,
-  8 "Próximamente" y 3 "En prueba", y 20 preparaciones. **Cada cambio de receta es un deploy.**
+  existe). Los datos viven en `lib/guia-cocina.ts` (sin base, sin React): 20 pizzas, 9 en venta,
+  8 "Próximamente" y 3 "En prueba", y 19 preparaciones. **Cada cambio de receta es un deploy.**
   Solo entra lo confirmado, salvo las 3 pizzas nuevas con tomate (Pomodorini, Pesto Rosso,
   Puttanesca), que el dueño pidió ver en una sección "En prueba" con aviso, gramos de prueba y
   sin foto (las encontró a faltar y las agregué el 02/10); lo marcado "a probar" sigue afuera. El pesto de morrón asado de la Porteña entró el 02/10 a pedido del
@@ -389,6 +389,13 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   preparaciones y 18 fotos que responden 200, `noindex, nofollow`, y ninguna referencia en
   `robots.txt`, `sitemap.xml`, `llms.txt` ni enlaces desde la home. **El dueño todavía no la
   probó en la cocina ni en su teléfono.**
+  **03/10/2026:** alineada con el recetario a pedido del dueño. La Fugazzetta (antes "al Provolone") va
+  sin provolone ni pimentón; Diavola sin pesto y con 100 g de calabresa; Palmitos sin provenzal y con
+  150 g de palmito; Quattro con muzzarella 250 g y provolone, roquefort y parmesano a 30 g; Porteña con
+  100 g de jamón; Pepperoni con 100 g y sin ají molido; aceto de la Prosciutto a 25 ml. **Bianca ai
+  Funghi salió** (al dueño no le gustó; está archivada) junto con su crema de hongos. La miel picante
+  de la guía dice un hilo de ~8 g y el recetario costea 20 g de miel: no se tocó. `orden-admin.ts`
+  también pasó a "Fugazzetta".
 
 ### Distinción que se presta a confusión
 
