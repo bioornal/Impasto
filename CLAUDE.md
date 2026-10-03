@@ -394,7 +394,7 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   150 g de palmito; Quattro con muzzarella 250 g y provolone, roquefort y parmesano a 30 g; Porteña con
   100 g de jamón; Pepperoni con 100 g y sin ají molido; aceto de la Prosciutto a 25 ml. **Bianca ai
   Funghi salió** (al dueño no le gustó; está archivada) junto con su crema de hongos. La miel picante
-  de la guía dice un hilo de ~8 g y el recetario costea 20 g de miel: no se tocó. `orden-admin.ts`
+  va en un hilo de 20 g, como costea el recetario (confirmado por el dueño; antes decía ~8 g). `orden-admin.ts`
   también pasó a "Fugazzetta".
 
 ### Distinción que se presta a confusión

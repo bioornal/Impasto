@@ -120,7 +120,7 @@ export const PIZZAS: PizzaGuia[] = [
       { nombre: "Muzzarella", cantidad: "250 g" },
       { nombre: "Salame calabrés", cantidad: "100 g" },
     ],
-    despues: "Hilo de miel picante.",
+    despues: "Hilo de miel picante (20 g).",
     preparaciones: ["Miel picante"],
   },
   {
@@ -346,7 +346,7 @@ export const PREPARACIONES: PreparacionGuia[] = [
     nombre: "Miel picante",
     para: "Diavola al Miele Piccante",
     receta:
-      "125 g de miel y 5 g de ají molido. Baño María unos 5 minutos, sin hervir. Dejar reposar entre 30 y 60 minutos, probar y colar cuando el picor sea el justo: ya colada, el picor no sube más. Pasar a un pomo. Sobre la pizza, un hilo fino de unos 8 g.",
+      "125 g de miel y 5 g de ají molido. Baño María unos 5 minutos, sin hervir. Dejar reposar entre 30 y 60 minutos, probar y colar cuando el picor sea el justo: ya colada, el picor no sube más. Pasar a un pomo. Sobre la pizza, un hilo de unos 20 g.",
     conservacion: "Tapada, a temperatura ambiente, varias semanas.",
     proximamente: false,
   },
