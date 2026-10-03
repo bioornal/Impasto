@@ -118,14 +118,14 @@ function carta(data: CatalogData) {
       name: "Pizzas",
       items: data.pizzas.map((pizza) => ({
         producto: pizza,
-        imagen: getPizzaImage(pizza.nombre, pizza.id, pizza.tags),
+        imagen: pizza.foto ?? getPizzaImage(pizza.nombre, pizza.id, pizza.tags),
       })),
     },
     {
       name: "Empanadas",
       items: data.empanadas.map((empanada) => ({
         producto: empanada,
-        imagen: getEmpanadaImage(empanada.nombre, empanada.id),
+        imagen: empanada.foto ?? getEmpanadaImage(empanada.nombre, empanada.id),
       })),
     },
     // Las bebidas no tienen descripción ni etiquetas, pero en la carta se
@@ -134,7 +134,7 @@ function carta(data: CatalogData) {
       name: "Bebidas",
       items: data.bebidas.map((bebida) => ({
         producto: { ...bebida, desc: "", tags: [] },
-        imagen: getDrinkImage(bebida.nombre, bebida.id),
+        imagen: bebida.foto ?? getDrinkImage(bebida.nombre, bebida.id),
       })),
     },
   ].filter((seccion) => seccion.items.length > 0);

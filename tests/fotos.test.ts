@@ -1,4 +1,4 @@
-import { elegirFoto, type ObjetoFoto } from "../lib/fotos";
+import { agregarFotos, elegirFoto, type ObjetoFoto } from "../lib/fotos";
 
 let fallos = 0;
 function chequear(nombre: string, condicion: boolean) {
@@ -30,6 +30,11 @@ chequear("la carpeta de otro producto no cuenta", url({ id: "p-x", nombre: "Nada
 chequear("solo imágenes", url({ nombre: "Diavola al Miele Piccante" }) === encodeURIComponent("Diavola al Miele Piccante v3.jpg"));
 chequear("sin candidatas devuelve undefined", elegirFoto({ nombre: "Muzzarella Impasto" }, objetos) === undefined);
 chequear("fecha inválida no gana", elegirFoto({ nombre: "X" }, [o("X v2.jpg", "basura"), o("X.jpg", "2026-01-01T00:00:00Z")])?.endsWith("X.jpg") === true);
+
+type Producto = { id: string; nombre: string; foto?: string };
+const pizzasDeEjemplo: Producto[] = [{ id: "p-diavola", nombre: "Diavola al Miele Piccante" }, { id: "p-m", nombre: "Muzzarella Impasto" }];
+const cat = agregarFotos({ pizzas: pizzasDeEjemplo, empanadas: [] as Producto[], bebidas: [] as Producto[], extra: 1 }, objetos);
+chequear("catálogo · agrega la foto a quien tiene y conserva el resto", cat.pizzas[0].foto?.endsWith(encodeURIComponent("Diavola al Miele Piccante v3.jpg")) === true && !("foto" in cat.pizzas[1]) && cat.extra === 1);
 
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
 process.exit(fallos === 0 ? 0 : 1);

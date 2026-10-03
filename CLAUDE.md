@@ -408,6 +408,19 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   recetario". Las fotos siguen en `REAL_PRODUCT_PHOTOS` y `FOTOS_EN_PRUEBA` hasta el paso 4. Al publicarlo aparecieron
   solas tres pizzas que el dueño había activado y la guía vieja no tenía: Blue Bacon, Quattro Fratelli y Muzzarela
   y Jamon (sin foto). Blue Bacon tiene el huevo duro cargado como 0,002 unidades: se muestra así a propósito.
+  **Paso 4 (03/10/2026): fotos automáticas** (plan `docs/superpowers/plans/2026-10-03-cocina-paso-4-fotos-automaticas.md`).
+  `lib/fotos.ts` (puro, `tests/fotos.test.ts`) elige la foto más nueva (`uploadedAt`) entre los archivos de
+  `fotos/<id del producto>/` (paso 5) y los de la raíz del bucket `DB` que se llaman como el producto, solos o con
+  versión (`v4`, `(1)`), sin mayúsculas, tildes, guiones ni guiones bajos; un nombre más largo no cuenta.
+  `lib/fotos-bucket.ts` lista el bucket con `unstable_cache` (60 s, tag `fotos`) y si falla devuelve `[]`.
+  `getCatalogData` agrega `foto` a pizzas, empanadas y bebidas (`agregarFotos`); `PizzaIllus`, `EmpanadaIllus` y
+  `DrinkIllus` la reciben como `src` en la lista, la destacada, mitades, empanadas, bebidas y el carrito, y el SEO la
+  usa; sin `foto` siguen `REAL_PRODUCT_PHOTOS` y el stock. `/cocina` usa la misma regla, con `FOTOS_EN_PRUEBA` de
+  respaldo. **Regla para el dueño: subir con el nombre exacto del producto + versión nueva; nunca reemplazar un
+  archivo con el mismo nombre (el CDN sigue sirviendo el viejo).** Antes de publicar se comprobó que ninguno de
+  los 72 productos cambia de foto: Porteña y Bondiola usaban WebP del repo y el bucket tenía fotos más viejas con
+  su nombre, así que se subieron esos WebP como `… v2.webp` (mismos bytes). Las copias `Diavola… v2.jpg` y
+  `Palmitos… v2.jpg` del bucket son fotos viejas sin uso: el dueño las puede borrar.
 
 ### Distinción que se presta a confusión
 

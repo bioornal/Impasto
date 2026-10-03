@@ -130,7 +130,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
               return (
                 <article className={`p-card ${wide ? "wide" : ""} ${agotado ? "is-agotado" : ""}`} key={pizza.id}>
                   <div className="p-media">
-                    <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
+                    <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} src={pizza.foto} />
                     {botonFoto(pizza)}
                     {agotado && <div className="media-agotado-bar">Agotado</div>}
                     <div className="p-badges">
@@ -181,7 +181,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
               return (
                 <div className={`lrow ${agotado ? "is-agotado" : ""}`} key={pizza.id}>
                   <div className="lrow-media">
-                    <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
+                    <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} src={pizza.foto} />
                     {botonFoto(pizza)}
                     {agotado && <div className="media-agotado-bar">Agotado</div>}
                   </div>
@@ -214,7 +214,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
             return (
               <article className={`p-feat ${foco?.id === pizza.id ? "is-foco" : ""}`} data-pizza={pizza.id}>
                 <div className="p-feat-media">
-                  <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
+                  <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} src={pizza.foto} />
                   {botonFoto(pizza)}
                   {pizza.popular && !agotado && <span className="p-feat-badge">★ Más pedida</span>}
                   {agotado && <div className="media-agotado-bar">Agotado</div>}
@@ -247,7 +247,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
             return (
               <article className={`p-row ${agotado ? "is-agotado" : ""} ${foco?.id === pizza.id ? "is-foco" : ""}`} key={pizza.id} data-pizza={pizza.id}>
                 <div className="p-row-media">
-                  <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} />
+                  <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} src={pizza.foto} />
                   {botonFoto(pizza)}
                   {agotado && <div className="media-agotado-bar">Agotado</div>}
                 </div>

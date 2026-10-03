@@ -13,6 +13,8 @@ export interface Pizza {
   disponible: boolean;
   popular?: boolean;
   badge?: EtiquetaBadge;
+  /** Foto elegida en el servidor (`lib/fotos.ts`); sin ella, las ilustraciones usan el respaldo. */
+  foto?: string;
 }
 
 export interface Empanada {
@@ -23,6 +25,7 @@ export interface Empanada {
   tags: string[];
   disponible: boolean;
   badge?: EtiquetaBadge;
+  foto?: string;
 }
 
 export interface Bebida {
@@ -30,6 +33,7 @@ export interface Bebida {
   nombre: string;
   precio: number;
   disponible: boolean;
+  foto?: string;
 }
 
 export interface Promo {

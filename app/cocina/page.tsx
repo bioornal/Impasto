@@ -9,14 +9,20 @@ import {
   type PreparacionGuia,
 } from "@/lib/guia-cocina";
 import { leerFilasGuia } from "@/lib/guia-cocina-datos";
+import { elegirFoto, type ObjetoFoto } from "@/lib/fotos";
+import { listarFotos } from "@/lib/fotos-bucket";
 import { REAL_PRODUCT_PHOTOS } from "@/lib/stock-images";
 
 // Se arma con el recetario y se renueva cada minuto. Si la base falla al renovar,
 // Next sigue mostrando la última versión buena.
 export const revalidate = 60;
 
-const fotoDe = (productoId: string | undefined, nombre: string) =>
-  (productoId ? REAL_PRODUCT_PHOTOS[productoId] : undefined) ?? FOTOS_EN_PRUEBA[nombre];
+// La foto más nueva del bucket (por carpeta del producto o por nombre); si no hay,
+// la del mapa del código, y para las pizzas en prueba, la de la guía.
+const fotoDe = (objetos: ObjetoFoto[]) => (productoId: string | undefined, nombre: string) =>
+  elegirFoto({ id: productoId, nombre }, objetos)
+  ?? (productoId ? REAL_PRODUCT_PHOTOS[productoId] : undefined)
+  ?? FOTOS_EN_PRUEBA[nombre];
 
 function Nombre({ l }: { l: LineaGuia }) {
   return l.preparacion ? <a href={`#prep-${l.preparacion}`}>{l.nombre}</a> : <>{l.nombre}</>;
@@ -104,7 +110,8 @@ function TarjetaPreparacion({ p }: { p: PreparacionGuia }) {
 }
 
 export default async function CocinaPage() {
-  const { pizzas, preparaciones } = armarGuia(await leerFilasGuia(), fotoDe);
+  const [filas, objetos] = await Promise.all([leerFilasGuia(), listarFotos()]);
+  const { pizzas, preparaciones } = armarGuia(filas, fotoDe(objetos));
   const enVenta = pizzas.filter((p) => p.estado === "venta");
   const proximas = pizzas.filter((p) => p.estado === "proximamente");
   const enPrueba = pizzas.filter((p) => p.estado === "prueba");

@@ -37,3 +37,14 @@ export function elegirFoto(producto: { id?: string; nombre: string }, objetos: O
   }
   return mejor?.url;
 }
+
+/** Agrega `foto` a cada pizza, empanada y bebida que tenga una en el bucket. */
+export function agregarFotos<C extends { pizzas: P[]; empanadas: P[]; bebidas: P[] }, P extends { id: string; nombre: string; foto?: string }>(
+  catalogo: C, objetos: ObjetoFoto[],
+): C {
+  const conFoto = <T extends P>(p: T): T => {
+    const foto = elegirFoto(p, objetos);
+    return foto ? { ...p, foto } : p;
+  };
+  return { ...catalogo, pizzas: catalogo.pizzas.map(conFoto), empanadas: catalogo.empanadas.map(conFoto), bebidas: catalogo.bebidas.map(conFoto) };
+}

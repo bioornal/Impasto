@@ -63,7 +63,7 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroPro
           {featured && (
             <div className="hero-chip">
               <div className="hero-chip-media">
-                <PizzaIllus id={featured.id} name={featured.nombre} tags={featured.tags} />
+                <PizzaIllus id={featured.id} name={featured.nombre} tags={featured.tags} src={featured.foto} />
               </div>
               <div>
                 <b>{featured.nombre}</b>

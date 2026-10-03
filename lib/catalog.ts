@@ -5,9 +5,12 @@ import { SUCURSAL_ID } from "@/lib/business";
 import { CATEGORIAS_IMPASTO } from "@/lib/categorias";
 import { assembleCatalogFromResults, settleCatalogQuery } from "@/lib/catalog-source";
 import { PricingUnavailableError } from "@/lib/pricing-safety";
+import { agregarFotos } from "@/lib/fotos";
+import { listarFotos } from "@/lib/fotos-bucket";
 
 export async function getCatalogData(): Promise<CatalogData> {
   try {
+    const fotos = listarFotos(); // en paralelo con la base; nunca falla
     const safeQuery = settleCatalogQuery;
     const [
       productsResult,
@@ -47,12 +50,15 @@ export async function getCatalogData(): Promise<CatalogData> {
     ] as const) {
       if (result.error) console.error(`[catalog] fuente decorativa ${source}:`, result.error);
     }
-    return assembleCatalogFromResults({
+    const catalogo = assembleCatalogFromResults({
       productos: productsResult, promociones: promosResult, testimonios: reviewsResult, etiquetas: etiquetasResult,
       recetas: recipesResult, receta_ingredientes: recipeIngredientsResult, ingredientes: ingredientsResult,
       precios_venta: salePricesResult, config_negocio: defaultsResult, costos_fijos: costosFijosResult,
       costos_variables: costosVariablesResult,
     });
+    // La foto más nueva de cada producto en el bucket; si el listado falla, viene vacío
+    // y las ilustraciones usan el respaldo de siempre.
+    return agregarFotos(catalogo, await fotos);
   } catch (error) {
     if (error instanceof PricingUnavailableError) console.error(`[catalog] fuente crítica ${error.source} no disponible`);
     else console.error("[catalog] fallo al armar el catálogo:", error);

@@ -216,7 +216,7 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
                     {upsells.map((bebida) => (
                       <div className="upsell" key={bebida.id}>
                         <div className="upsell-top">
-                          <div className="upsell-media"><DrinkIllus id={bebida.id} label={bebida.nombre} name={bebida.nombre} /></div>
+                          <div className="upsell-media"><DrinkIllus id={bebida.id} label={bebida.nombre} name={bebida.nombre} src={bebida.foto} /></div>
                           <button
                             className="upsell-add"
                             aria-label={`Agregar ${bebida.nombre} al pedido`}

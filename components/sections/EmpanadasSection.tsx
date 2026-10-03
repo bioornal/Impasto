@@ -64,7 +64,7 @@ export function EmpanadasSection({ empanadas, boxPrices, blockedSizes, selection
               return (
                 <article className={`emp-card ${count > 0 ? "on" : ""} ${agotado ? "is-agotado" : ""}`} key={empanada.id}>
                   <div className="emp-media">
-                    <EmpanadaIllus id={empanada.id} name={empanada.nombre} />
+                    <EmpanadaIllus id={empanada.id} name={empanada.nombre} src={empanada.foto} />
                     <button
                       type="button"
                       className="media-zoom"
