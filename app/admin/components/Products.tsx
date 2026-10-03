@@ -208,6 +208,65 @@ const TYPE_TO_CATEGORIA: Record<AdminProduct["type"], string> = {
   bebida: "bebidas",
 };
 
+/**
+ * Foto del producto: se sube aparte del resto del formulario, a `fotos/<id>/` del bucket.
+ * Nunca reemplaza la anterior (queda guardada); la carta y /cocina toman la más nueva.
+ */
+function FotoProducto({ product, isNew }: { product?: AdminProduct; isNew?: boolean }) {
+  const { state, setProductPhoto } = useStore();
+  // La del store: así se ve la foto recién subida aunque el modal se haya abierto antes.
+  const actual = state.products.find(p => p._dbId === product?._dbId) ?? product;
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [vista, setVista] = useState<string | null>(null);
+  const [estado, setEstado] = useState<{ tipo: "ok" | "error" | "subiendo"; texto: string } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => () => { if (vista) URL.revokeObjectURL(vista); }, [vista]);
+  if (isNew || !actual) {
+    return <span className="text-muted" style={{ fontSize: 12.5 }}>Guardá el producto para poder agregarle la foto.</span>;
+  }
+
+  const elegir = (f: File | null) => {
+    setEstado(null);
+    setArchivo(f);
+    setVista(f ? URL.createObjectURL(f) : null);
+    if (!f && inputRef.current) inputRef.current.value = "";
+  };
+  const subir = async () => {
+    if (!archivo) return;
+    setEstado({ tipo: "subiendo", texto: "Subiendo…" });
+    const cuerpo = new FormData();
+    cuerpo.append("foto", archivo);
+    try {
+      const r = await fetch(`/api/admin/productos/${actual._dbId}/foto`, { method: "POST", body: cuerpo });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) throw new Error(j.error || "No se pudo subir la foto.");
+      setProductPhoto(actual._dbId, j.foto);
+      elegir(null);
+      setEstado({ tipo: "ok", texto: "Foto actualizada. Ya se ve en la carta y en /cocina." });
+    } catch (e) {
+      setEstado({ tipo: "error", texto: e instanceof Error ? e.message : "No se pudo subir la foto." });
+    }
+  };
+  const subiendo = estado?.tipo === "subiendo";
+  return (
+    <div className="foto-producto">
+      <ProductThumb item={vista ? { ...actual, foto: vista } : actual} size={96} />
+      <div className="foto-producto-acciones">
+        <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" aria-label={`Elegir foto de ${actual.nombre}`}
+          onChange={e => elegir(e.target.files?.[0] ?? null)} disabled={subiendo} />
+        {archivo && (
+          <div className="flex gap-8">
+            <button type="button" className="btn btn-primary btn-sm" onClick={subir} disabled={subiendo}>Subir foto</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => elegir(null)} disabled={subiendo}>Cancelar</button>
+          </div>
+        )}
+        <small className="hint">JPG, PNG o WebP, hasta 4 MB. La foto anterior queda guardada.</small>
+        {estado && <small role="status" className={estado.tipo === "error" ? "foto-producto-error" : "hint"}>{estado.texto}</small>}
+      </div>
+    </div>
+  );
+}
+
 function ProductEdit({ product, onClose, onSave, isNew }: { product?: AdminProduct; onClose: () => void; onSave: (p: Partial<AdminProduct>) => void; isNew?: boolean }) {
   const [data, setData] = useState<Partial<AdminProduct>>(product || { type: "pizza", nombre: "", desc: "", precio: 0, categoria: "pizzas", stock: 0, tags: [], active: true, popular: false });
   const set = <K extends keyof AdminProduct>(k: K, v: AdminProduct[K]) => setData(d => ({ ...d, [k]: v }));
@@ -228,6 +287,10 @@ function ProductEdit({ product, onClose, onSave, isNew }: { product?: AdminProdu
         </div>
         <div className="modal-body">
           <div className="form-grid">
+            <div className="field full">
+              <label>Foto</label>
+              <FotoProducto product={product} isNew={isNew} />
+            </div>
             <div className="field full"><label>Nombre</label><input value={data.nombre || ""} onChange={e => set("nombre", e.target.value)} placeholder="Ej: Margherita" /></div>
             <div className="field">
               <label>Tipo</label>

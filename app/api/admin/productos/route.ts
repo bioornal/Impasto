@@ -3,13 +3,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
 import { CATEGORIAS_IMPASTO, esCategoriaImpasto } from "@/lib/categorias";
+import { elegirFoto } from "@/lib/fotos";
+import { listarFotos } from "@/lib/fotos-bucket";
 
 export async function GET() {
   const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
-  const { data, error } = await readPages((start, end) => db.database.from("productos").select("*").eq("proyecto_id", "impasto").in("categoria", [...CATEGORIAS_IMPASTO]).order("id", { ascending: true }).range(start, end));
+  const [{ data, error }, objetos] = await Promise.all([
+    readPages((start, end) => db.database.from("productos").select("*").eq("proyecto_id", "impasto").in("categoria", [...CATEGORIAS_IMPASTO]).order("id", { ascending: true }).range(start, end)),
+    listarFotos(),
+  ]);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, data });
+  // La misma foto que ve el cliente (la más nueva del bucket); sin ella, la miniatura usa el respaldo.
+  const conFoto = (data ?? []).map((p: Record<string, unknown>) => {
+    const foto = elegirFoto({ id: String(p.id), nombre: String(p.nombre ?? "") }, objetos);
+    return foto ? { ...p, foto } : p;
+  });
+  return NextResponse.json({ ok: true, data: conFoto });
 }
 
 export async function POST(req: NextRequest) {

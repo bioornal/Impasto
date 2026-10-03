@@ -24,3 +24,24 @@ export async function listarFotos(): Promise<ObjetoFoto[]> {
     return [];
   }
 }
+
+/**
+ * Sube una foto con un PUT directo a la API de InsForge, como la CLI. La subida del SDK
+ * (`storage.upload`) usa un formulario prefirmado de S3 que no deja fijar el tipo, y el
+ * archivo quedaba como `binary/octet-stream` en vez de `image/webp` (comprobado el 03/10/2026).
+ * Devuelve la URL pública.
+ */
+export async function subirFoto(clave: string, bytes: Uint8Array, mime: string): Promise<string> {
+  const base = process.env.INSFORGE_API_BASE_URL;
+  const url = `${base}/api/storage/buckets/DB/objects/${encodeURIComponent(clave)}`;
+  const cuerpo = new FormData();
+  cuerpo.append("file", new Blob([bytes as BlobPart], { type: mime }), clave.split("/").pop());
+  const respuesta = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${process.env.INSFORGE_API_KEY}` },
+    body: cuerpo,
+  });
+  if (!respuesta.ok) throw new Error(`La subida respondió ${respuesta.status}`);
+  const datos = await respuesta.json().catch(() => ({}));
+  return typeof datos?.url === "string" ? datos.url : url;
+}

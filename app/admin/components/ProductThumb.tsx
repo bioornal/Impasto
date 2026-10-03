@@ -2,22 +2,24 @@ import { useState } from "react";
 import type { AdminProduct } from "./types";
 import { getPizzaImage, getEmpanadaImage, getDrinkImage } from "@/lib/stock-images";
 
-export function ProductThumb({ item }: { item: AdminProduct }) {
-  const [error, setError] = useState(false);
+export function ProductThumb({ item, size = 40 }: { item: AdminProduct; size?: number }) {
+  // Se recuerda qué dirección falló, así una foto nueva vuelve a intentarse.
+  const [fallida, setFallida] = useState<string | null>(null);
 
-  let imgSrc = "";
-  if (item.type === "pizza") imgSrc = getPizzaImage(item.nombre, item.id, item.tags);
-  else if (item.type === "empanada") imgSrc = getEmpanadaImage(item.nombre, item.id);
-  else imgSrc = getDrinkImage(item.nombre, item.id);
+  // Primero la foto que ve el cliente (o la vista previa de una nueva); si no hay, el respaldo de siempre.
+  let imgSrc = item.foto ?? "";
+  if (!imgSrc && item.type === "pizza") imgSrc = getPizzaImage(item.nombre, item.id, item.tags);
+  else if (!imgSrc && item.type === "empanada") imgSrc = getEmpanadaImage(item.nombre, item.id);
+  else if (!imgSrc) imgSrc = getDrinkImage(item.nombre, item.id);
 
-  if (!error && imgSrc) {
+  if (imgSrc && imgSrc !== fallida) {
     return (
       <img
         src={imgSrc}
         alt={item.nombre}
         loading="lazy"
-        onError={() => setError(true)}
-        style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", display: "block" }}
+        onError={() => setFallida(imgSrc)}
+        style={{ width: size, height: size, borderRadius: 8, objectFit: "cover", display: "block" }}
       />
     );
   }

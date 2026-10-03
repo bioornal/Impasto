@@ -12,6 +12,8 @@ export interface AdminProduct {
   stock: number;
   /** Baja de carta (la base lo llama archivado). Solo lo usa el orden del admin. */
   archivado?: boolean;
+  /** Foto que ve el cliente (la más nueva del bucket, `lib/fotos.ts`). Sin ella, la miniatura usa el respaldo. */
+  foto?: string;
 }
 
 export interface OrderItem {

@@ -31,6 +31,7 @@ function adaptProduct(p: Record<string, unknown>): AdminProduct {
     popular: Boolean(p.popular),
     stock: 24,
     archivado: p.archivado === true,
+    foto: typeof p.foto === "string" ? p.foto : undefined,
   };
 }
 
@@ -145,6 +146,8 @@ interface StoreCtx {
   deleteProduct: (id: string) => Promise<void>;
   /** Guarda las etiquetas de un producto y revierte si el PUT falla. */
   setProductTags: (id: string, tags: string[]) => Promise<void>;
+  /** Muestra la foto recién subida (la ruta ya la guardó en el bucket). */
+  setProductPhoto: (dbId: string, foto: string | undefined) => void;
   createEtiqueta: (label: string, color: string, mostrar_badge: string) => Promise<void>;
   updateEtiqueta: (id: string, patch: Partial<AdminEtiqueta>) => Promise<void>;
   deleteEtiqueta: (id: string) => Promise<void>;
@@ -304,6 +307,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     soundEnabled,
     toggleSound,
 
+    setProductPhoto: (dbId, foto) => {
+      setState(s => ({ ...s, products: s.products.map(p => p._dbId === dbId ? { ...p, foto } : p) }));
+    },
+
     updateProduct: async (id, patch) => {
       try {
       const prod = stateRef.current.products.find(p => p.id === id);
@@ -318,7 +325,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (patch.tags !== undefined) body.tags = patch.tags;
         if (patch.popular !== undefined) body.popular = patch.popular;
         await confirmAdminMutation(() => fetch(`/api/admin/productos/${prod._dbId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }));
-        setState(s => ({ ...s, products: s.products.map(p => p.id === id ? { ...p, ...patch } : p) }));
+        // La foto no viaja en el PUT: se conserva la que ya muestra el panel.
+        setState(s => ({ ...s, products: s.products.map(p => p.id === id ? { ...p, ...patch, foto: p.foto } : p) }));
       } else {
         throw new Error("Producto no encontrado. Actualizá el panel.");
       }

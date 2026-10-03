@@ -421,6 +421,20 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   los 72 productos cambia de foto: Porteña y Bondiola usaban WebP del repo y el bucket tenía fotos más viejas con
   su nombre, así que se subieron esos WebP como `… v2.webp` (mismos bytes). Las copias `Diavola… v2.jpg` y
   `Palmitos… v2.jpg` del bucket son fotos viejas sin uso: el dueño las puede borrar.
+  **Paso 5 (03/10/2026): foto desde el admin** (plan `docs/superpowers/plans/2026-10-03-cocina-paso-5-foto-desde-admin.md`).
+  Productos → Editar producto tiene el campo **Foto** (`FotoProducto` en `Products.tsx`): elegir, ver la vista previa,
+  "Subir foto". `POST /api/admin/productos/[id]/foto` (`requireAdmin`; id uuid; producto `impasto` de una categoría
+  de Impasto) valida JPG/PNG/WebP por sus primeros bytes y hasta **4 MB** (`lib/foto-subida.ts`; Netlify limita el
+  cuerpo a 6 MB en base64), sube a `fotos/<id>/<AAAAMMDDTHHMMSSmmmZ>.<ext>` (nunca pisa) y llama
+  `revalidateTag("fotos", { expire: 0 })` + `revalidatePath("/cocina")`: se ve al instante. **La subida usa un PUT
+  directo a la API de InsForge (`subirFoto` en `lib/fotos-bucket.ts`), como la CLI: `storage.upload` del SDK va por
+  un formulario prefirmado de S3 que no fija el tipo y el archivo quedaba `binary/octet-stream`.** El GET del admin
+  agrega `foto` (la misma regla del paso 4) y `ProductThumb` la usa primero. Productos nuevos: hay que guardarlos
+  antes. Verificado en el navegador con la sesión del dueño: rechazo de un archivo que no es imagen, subida a la
+  Bondiola (archivada) con la misma imagen, `image/webp` y mismos bytes, `/cocina` y la miniatura al instante.
+  En la carpeta de la Bondiola quedaron dos copias de esa imagen (una de la primera prueba, como
+  `binary/octet-stream`). El panel "Editar producto" ya se salía del ancho en celular (435 px en 375) antes de este
+  cambio: queda pendiente.
 
 ### Distinción que se presta a confusión
 
