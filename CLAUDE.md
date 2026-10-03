@@ -367,8 +367,9 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   desde el sitio**: decisión del dueño por simpleza, aunque se le avisó dos veces que quien
   escriba la dirección ve las recetas. La defensa es `noindex, nofollow` en `app/cocina/layout.tsx`;
   **`/cocina` no está en `robots.ts` ni en `sitemap.ts` a propósito** (nombrarla anunciaría que
-  existe). Los datos viven en `lib/guia-cocina.ts` (sin base, sin React): 20 pizzas, 9 en venta,
-  8 "Próximamente" y 3 "En prueba", y 19 preparaciones. **Cada cambio de receta es un deploy.**
+  existe). **Desde el 03/10/2026 (paso 3) la página se arma con el recetario y se renueva cada
+  minuto (`revalidate = 60`); ya no hace falta un deploy por cada receta** (ver el bloque "Paso 3"
+  al final de este punto; lo que sigue describe la versión del 02/10).
   Solo entra lo confirmado, salvo las 3 pizzas nuevas con tomate (Pomodorini, Pesto Rosso,
   Puttanesca), que el dueño pidió ver en una sección "En prueba" con aviso, gramos de prueba y
   sin foto (las encontró a faltar y las agregué el 02/10); lo marcado "a probar" sigue afuera. El pesto de morrón asado de la Porteña entró el 02/10 a pedido del
@@ -396,6 +397,17 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   Funghi salió** (al dueño no le gustó; está archivada) junto con su crema de hongos. La miel picante
   va en un hilo de 20 g, como costea el recetario (confirmado por el dueño; antes decía ~8 g). `orden-admin.ts`
   también pasó a "Fugazzetta".
+  **Paso 3 (03/10/2026): `/cocina` lee el recetario.** Diseño `docs/superpowers/specs/2026-10-03-cocina-y-fotos-automaticas-design.md`,
+  plan `docs/superpowers/plans/2026-10-03-cocina-paso-3-lee-el-recetario.md`. `lib/guia-cocina.ts` son funciones puras
+  (`armarGuia`, `formatearCantidad`, `idDePreparacion`) sobre filas que lee `lib/guia-cocina-datos.ts` con la clave de
+  backend (sin precios: solo `precio_salsa` para saber si lleva salsa). En venta = productos `impasto`, categoría
+  `pizzas`, no archivados, con receta por `precios_venta.nombre` exacto (la Chipa es categoría `otros` y no entra);
+  Próximamente / En prueba = `recetas.en_cocina`; base, horno y después = `receta_ingredientes.momento`; nota =
+  `recetas.indicaciones`; preparaciones (también las anidadas) con ingredientes, rinde, paso a paso y conservación.
+  Nombres de ingredientes tal como están en la base. Una pizza en venta sin receta muestra "Receta no cargada en el
+  recetario". Las fotos siguen en `REAL_PRODUCT_PHOTOS` y `FOTOS_EN_PRUEBA` hasta el paso 4. Al publicarlo aparecieron
+  solas tres pizzas que el dueño había activado y la guía vieja no tenía: Blue Bacon, Quattro Fratelli y Muzzarela
+  y Jamon (sin foto). Blue Bacon tiene el huevo duro cargado como 0,002 unidades: se muestra así a propósito.
 
 ### Distinción que se presta a confusión
 

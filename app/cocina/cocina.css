@@ -315,3 +315,11 @@
     break-inside: avoid;
   }
 }
+
+/* Las líneas de la base van como texto, no con el estilo de la etiqueta "Base". */
+.ck-base-pizza .ck-base-linea {
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  color: inherit;
+}

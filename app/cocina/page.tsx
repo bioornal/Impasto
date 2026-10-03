@@ -1,24 +1,50 @@
 import {
   BASE_DE_TODAS,
-  PIZZAS,
-  PREPARACIONES,
-  idDePreparacion,
+  BLANCA,
+  FOTOS_EN_PRUEBA,
+  SALSA,
+  armarGuia,
+  type LineaGuia,
   type PizzaGuia,
   type PreparacionGuia,
 } from "@/lib/guia-cocina";
+import { leerFilasGuia } from "@/lib/guia-cocina-datos";
 import { REAL_PRODUCT_PHOTOS } from "@/lib/stock-images";
 
+// Se arma con el recetario y se renueva cada minuto. Si la base falla al renovar,
+// Next sigue mostrando la última versión buena.
+export const revalidate = 60;
+
+const fotoDe = (productoId: string | undefined, nombre: string) =>
+  (productoId ? REAL_PRODUCT_PHOTOS[productoId] : undefined) ?? FOTOS_EN_PRUEBA[nombre];
+
+function Nombre({ l }: { l: LineaGuia }) {
+  return l.preparacion ? <a href={`#prep-${l.preparacion}`}>{l.nombre}</a> : <>{l.nombre}</>;
+}
+
+function Lista({ lineas }: { lineas: LineaGuia[] }) {
+  return (
+    <ul className="ck-ing">
+      {lineas.map((l) => (
+        <li key={l.nombre}>
+          <span><Nombre l={l} /></span>
+          <b>{l.cantidad}</b>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function TarjetaPizza({ p, primera }: { p: PizzaGuia; primera: boolean }) {
-  const foto = p.foto ?? (p.productoId ? REAL_PRODUCT_PHOTOS[p.productoId] : undefined);
   return (
     <article className="ck-pizza">
-      {foto ? (
+      {p.foto ? (
         // Las fotos del bucket redirigen al CDN: el sitio las muestra con <img>
         // y no con next/image, que solo acepta el host del bucket.
         // eslint-disable-next-line @next/next/no-img-element
         <img
           className="ck-foto"
-          src={foto}
+          src={p.foto}
           alt={`Foto de ${p.nombre}`}
           width={1200}
           height={896}
@@ -30,36 +56,31 @@ function TarjetaPizza({ p, primera }: { p: PizzaGuia; primera: boolean }) {
       )}
       <div className="ck-cuerpo">
         <h3>{p.nombre}</h3>
-        <p className="ck-base-pizza">
-          <span>Base</span>
-          {p.base}
-        </p>
-        <ul className="ck-ing">
-          {p.ingredientes.map((i) => (
-            <li key={i.nombre}>
-              <span>{i.nombre}</span>
-              <b>{i.cantidad}</b>
-            </li>
-          ))}
-        </ul>
-        {p.despues && (
-          <div className="ck-despues">
-            <h4>Después del horno</h4>
-            <p>{p.despues}</p>
-          </div>
+        {p.sinReceta ? (
+          <p className="ck-nota">Receta no cargada en el recetario.</p>
+        ) : (
+          <>
+            <p className="ck-base-pizza">
+              <span>Base</span>
+              {!p.salsa && p.base.length === 0 && BLANCA}
+              {p.salsa && SALSA}
+              {p.base.map((l, i) => (
+                <span key={l.nombre} className="ck-base-linea">
+                  {(p.salsa || i > 0) && " + "}
+                  <Nombre l={l} />, {l.cantidad}
+                </span>
+              ))}
+            </p>
+            {p.horno.length > 0 && <Lista lineas={p.horno} />}
+            {p.despues.length > 0 && (
+              <div className="ck-despues">
+                <h4>Después del horno</h4>
+                <Lista lineas={p.despues} />
+              </div>
+            )}
+          </>
         )}
         {p.nota && <p className="ck-nota">{p.nota}</p>}
-        {p.preparaciones.length > 0 && (
-          <p className="ck-preps">
-            Preparaciones:{" "}
-            {p.preparaciones.map((n, i) => (
-              <span key={n}>
-                {i > 0 && ", "}
-                <a href={`#prep-${idDePreparacion(n)}`}>{n}</a>
-              </span>
-            ))}
-          </p>
-        )}
       </div>
     </article>
   );
@@ -67,24 +88,28 @@ function TarjetaPizza({ p, primera }: { p: PizzaGuia; primera: boolean }) {
 
 function TarjetaPreparacion({ p }: { p: PreparacionGuia }) {
   return (
-    <article className="ck-prep" id={`prep-${idDePreparacion(p.nombre)}`}>
+    <article className="ck-prep" id={`prep-${p.id}`}>
       <h3>{p.nombre}</h3>
-      <p className="ck-para">Para: {p.para}</p>
-      <p>{p.receta}</p>
-      <p className="ck-cons">
-        <span>Se guarda</span>
-        {p.conservacion}
-      </p>
+      <p className="ck-para">Para: {p.para.join(", ")} · Tanda: rinde {p.rinde}</p>
+      <Lista lineas={p.ingredientes} />
+      {p.indicaciones && <p>{p.indicaciones}</p>}
+      {p.conservacion && (
+        <p className="ck-cons">
+          <span>Se guarda</span>
+          {p.conservacion}
+        </p>
+      )}
     </article>
   );
 }
 
-export default function CocinaPage() {
-  const enVenta = PIZZAS.filter((p) => p.estado === "venta");
-  const proximas = PIZZAS.filter((p) => p.estado === "proximamente");
-  const enPrueba = PIZZAS.filter((p) => p.estado === "prueba");
-  const prepsHoy = PREPARACIONES.filter((p) => !p.proximamente);
-  const prepsProximas = PREPARACIONES.filter((p) => p.proximamente);
+export default async function CocinaPage() {
+  const { pizzas, preparaciones } = armarGuia(await leerFilasGuia(), fotoDe);
+  const enVenta = pizzas.filter((p) => p.estado === "venta");
+  const proximas = pizzas.filter((p) => p.estado === "proximamente");
+  const enPrueba = pizzas.filter((p) => p.estado === "prueba");
+  const prepsHoy = preparaciones.filter((p) => !p.proximamente);
+  const prepsProximas = preparaciones.filter((p) => p.proximamente);
 
   return (
     <main className="ck">
@@ -100,9 +125,9 @@ export default function CocinaPage() {
 
       <nav className="ck-nav" aria-label="Secciones">
         <a href="#venta">En venta ({enVenta.length})</a>
-        <a href="#proximamente">Próximamente ({proximas.length})</a>
-        <a href="#prueba">En prueba ({enPrueba.length})</a>
-        <a href="#preparaciones">Preparaciones ({PREPARACIONES.length})</a>
+        {proximas.length > 0 && <a href="#proximamente">Próximamente ({proximas.length})</a>}
+        {enPrueba.length > 0 && <a href="#prueba">En prueba ({enPrueba.length})</a>}
+        <a href="#preparaciones">Preparaciones ({preparaciones.length})</a>
       </nav>
 
       <section id="venta">
@@ -114,27 +139,31 @@ export default function CocinaPage() {
         </div>
       </section>
 
-      <section id="proximamente">
-        <h2>Próximamente</h2>
-        <p className="ck-aviso">Todavía no están en la carta. Pueden cambiar antes de salir.</p>
-        <div className="ck-grid">
-          {proximas.map((p) => (
-            <TarjetaPizza key={p.nombre} p={p} primera={false} />
-          ))}
-        </div>
-      </section>
+      {proximas.length > 0 && (
+        <section id="proximamente">
+          <h2>Próximamente</h2>
+          <p className="ck-aviso">Todavía no están en la carta. Pueden cambiar antes de salir.</p>
+          <div className="ck-grid">
+            {proximas.map((p) => (
+              <TarjetaPizza key={p.nombre} p={p} primera={false} />
+            ))}
+          </div>
+        </section>
+      )}
 
-      <section id="prueba">
-        <h2>En prueba</h2>
-        <p className="ck-aviso">
-          Pizzas nuevas que todavía se están probando. Los gramos pueden cambiar. Las imágenes son ilustrativas.
-        </p>
-        <div className="ck-grid">
-          {enPrueba.map((p) => (
-            <TarjetaPizza key={p.nombre} p={p} primera={false} />
-          ))}
-        </div>
-      </section>
+      {enPrueba.length > 0 && (
+        <section id="prueba">
+          <h2>En prueba</h2>
+          <p className="ck-aviso">
+            Pizzas nuevas que todavía se están probando. Los gramos pueden cambiar. Las imágenes son ilustrativas.
+          </p>
+          <div className="ck-grid">
+            {enPrueba.map((p) => (
+              <TarjetaPizza key={p.nombre} p={p} primera={false} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section id="preparaciones">
         <h2>Preparaciones</h2>
@@ -145,15 +174,19 @@ export default function CocinaPage() {
         <h3 className="ck-subtitulo">Para las pizzas en venta</h3>
         <div className="ck-grid ck-grid-preps">
           {prepsHoy.map((p) => (
-            <TarjetaPreparacion key={p.nombre} p={p} />
+            <TarjetaPreparacion key={p.id} p={p} />
           ))}
         </div>
-        <h3 className="ck-subtitulo">Para las que todavía no están en la carta</h3>
-        <div className="ck-grid ck-grid-preps">
-          {prepsProximas.map((p) => (
-            <TarjetaPreparacion key={p.nombre} p={p} />
-          ))}
-        </div>
+        {prepsProximas.length > 0 && (
+          <>
+            <h3 className="ck-subtitulo">Para las que todavía no están en la carta</h3>
+            <div className="ck-grid ck-grid-preps">
+              {prepsProximas.map((p) => (
+                <TarjetaPreparacion key={p.id} p={p} />
+              ))}
+            </div>
+          </>
+        )}
       </section>
     </main>
   );

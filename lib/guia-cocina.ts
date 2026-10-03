@@ -1,499 +1,79 @@
 /**
- * Guía de armado para la cocina (`/cocina`).
+ * Guía de armado para la cocina (`/cocina`), armada con el recetario.
  *
- * Los datos viven acá, en el código, y no en la base: la ruta no pide login, así
- * que guardarlos en otro lado no los protegía, y de esta forma la página
- * funciona aunque se caiga la base. Cada cambio de receta es un deploy.
+ * Funciones puras: reciben las filas de la base (`guia-cocina-datos.ts` las lee) y
+ * devuelven las pizzas y las preparaciones. Sin base ni React, para testearse con
+ * `tsx`. Nunca reciben precios ni costos: la página no los muestra.
  *
- * Solo entra lo confirmado por el dueño, salvo las pizzas en estado "prueba": son
- * nuevas, con gramos de prueba, y la página lo avisa. Nada de costos,
- * precios ni notas internas: `tests/guia-cocina.test.ts` lo comprueba. Este módulo no importa la
- * base ni React, para poder testearse con `tsx`.
- *
- * El nombre de cada pizza es el de la carta. `productoId` es el id del producto
- * en `productos` y es la clave de su foto en `REAL_PRODUCT_PHOTOS`.
+ * El recetario es la única fuente: cada línea dice si va en la base, en el horno o
+ * después (`receta_ingredientes.momento`), y cada receta trae sus indicaciones,
+ * conservación y estado para la cocina (`recetas.en_cocina`).
+ * Diseño: docs/superpowers/specs/2026-10-03-cocina-y-fotos-automaticas-design.md.
  */
+import { PIZZAS_DE_LA_CARTA } from "./orden-admin";
 
 export type EstadoPizza = "venta" | "proximamente" | "prueba";
 
-export interface Ingrediente {
+export interface FilaProducto { id: string; nombre: string; categoria: string | null; archivado: boolean | null }
+export interface FilaPrecio { id: string; receta_id: string | null; nombre: string }
+export interface FilaReceta {
+  id: string; nombre: string; precio_salsa: number | string | null;
+  en_cocina: string | null; indicaciones: string | null; conservacion: string | null;
+}
+export interface FilaLinea { id: string; receta_id: string; ingrediente_id: string; cantidad_kg: number | string; momento: string | null }
+export interface FilaIngrediente { id: string; nombre: string; unidad: string | null; gramos_por_unidad: number | string | null }
+export interface FilaPreparacion { receta_id: string; ingrediente_id: string; rinde_kg: number | string }
+export interface FilasGuia {
+  productos: FilaProducto[]; precios: FilaPrecio[]; recetas: FilaReceta[];
+  lineas: FilaLinea[]; ingredientes: FilaIngrediente[]; preparaciones: FilaPreparacion[];
+}
+
+export interface LineaGuia {
   nombre: string;
   cantidad: string;
+  /** Ancla de la tarjeta, si el ingrediente es una preparación. */
+  preparacion?: string;
 }
-
 export interface PizzaGuia {
   nombre: string;
-  /** Sin id: la pizza todavía no existe en la carta (estado "prueba"). */
-  productoId?: string;
-  /** Foto de la guía para pizzas que todavía no tienen producto en la carta. */
-  foto?: string;
   estado: EstadoPizza;
-  /** Lo que va sobre la masa: salsa de tomate, manteca de ajo o nada. */
-  base: string;
-  ingredientes: Ingrediente[];
-  /** Lo que se agrega al salir del horno. */
-  despues?: string;
-  /** Solo si es una instrucción de armado. */
+  /** Id en `productos`; las pizzas en prueba no tienen. */
+  productoId?: string;
+  foto?: string;
+  salsa: boolean;
+  base: LineaGuia[];
+  horno: LineaGuia[];
+  despues: LineaGuia[];
   nota?: string;
-  /** Nombres de `PREPARACIONES` que usa esta pizza. */
-  preparaciones: string[];
+  sinReceta: boolean;
 }
-
 export interface PreparacionGuia {
+  id: string;
   nombre: string;
-  para: string;
-  receta: string;
-  conservacion: string;
-  /** Verdadero cuando solo la usan pizzas que todavía no están en la carta. */
+  /** Pizzas (o preparaciones) que la usan, en el orden de la guía. */
+  para: string[];
+  rinde: string;
+  ingredientes: LineaGuia[];
+  indicaciones?: string;
+  conservacion?: string;
+  /** Verdadero cuando ninguna pizza en venta la usa, ni directa ni a través de otra preparación. */
   proximamente: boolean;
 }
+export interface Guia { pizzas: PizzaGuia[]; preparaciones: PreparacionGuia[] }
 
-const TOMATE = "Salsa de tomate, 150 g";
-const BLANCA = "Sin salsa, base blanca";
-
+export const SALSA = "Salsa de tomate, 150 g";
+export const BLANCA = "Sin salsa, base blanca";
 export const BASE_DE_TODAS: string[] = [
   "Bollo de unos 300 g.",
   "Salsa de tomate: 150 g de tomate triturado por pizza, en las que la llevan. Las que van en blanco no la llevan.",
 ];
 
-export const PIZZAS: PizzaGuia[] = [
-  /* ── En venta ── */
-  {
-    nombre: "Muzzarella Impasto",
-    productoId: "f9305fe1-8eea-465d-90b3-4c81f4656455",
-    estado: "venta",
-    base: TOMATE,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Orégano", cantidad: "5 g" },
-    ],
-    preparaciones: [],
-  },
-  {
-    nombre: "Napoletana all'Aglio",
-    productoId: "9ee7b500-a31a-4e42-acbe-2b694cf67eb4",
-    estado: "venta",
-    base: TOMATE,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Ajo confitado", cantidad: "20 g" },
-      { nombre: "Oliva", cantidad: "10 ml" },
-      { nombre: "Parmesano", cantidad: "30 g" },
-    ],
-    despues: "Puntos de pesto (20 g), como acento y sin cubrir la pizza.",
-    preparaciones: ["Ajo confitado", "Pesto de albahaca"],
-  },
-  {
-    nombre: "Fugazzetta",
-    productoId: "1ab8b31f-c5ef-443d-b024-0e3f7328d481",
-    estado: "venta",
-    base: BLANCA,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Cebolla (cruda, se dora)", cantidad: "200 g" },
-      { nombre: "Oliva", cantidad: "15 ml" },
-      { nombre: "Pimienta", cantidad: "3 g" },
-    ],
-    preparaciones: ["Cebolla dorada"],
-  },
-  {
-    nombre: "Quattro Formaggi",
-    productoId: "c0ab17be-8cde-47fd-8be5-576abe4ccf3d",
-    estado: "venta",
-    base: BLANCA,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Provolone", cantidad: "30 g" },
-      { nombre: "Roquefort", cantidad: "30 g" },
-      { nombre: "Parmesano", cantidad: "30 g" },
-      { nombre: "Almendras tostadas", cantidad: "30 g" },
-    ],
-    despues: "Hilo de miel de ajo.",
-    preparaciones: ["Miel de ajo", "Almendras tostadas y panceta crocante"],
-  },
-  {
-    nombre: "Diavola al Miele Piccante",
-    productoId: "d312b6ed-209f-4cff-8a37-36b515a12553",
-    estado: "venta",
-    base: TOMATE,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Salame calabrés", cantidad: "100 g" },
-    ],
-    despues: "Hilo de miel picante (20 g).",
-    preparaciones: ["Miel picante"],
-  },
-  {
-    nombre: "Prosciutto, Rucola e Parmigiano",
-    productoId: "6d9ee913-270d-4c56-98eb-9e0b30a663ad",
-    estado: "venta",
-    base: TOMATE,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Jamón crudo", cantidad: "100 g" },
-      { nombre: "Parmesano en lascas", cantidad: "30 g" },
-      { nombre: "Rúcula", cantidad: "⅓ de atado" },
-    ],
-    despues: "Rúcula, jamón crudo, lascas de parmesano y aceto reducido (25 ml).",
-    preparaciones: ["Aceto reducido"],
-  },
-  {
-    nombre: "Porteña de Jamón y Morrones",
-    productoId: "8bfedca8-8bd9-4cb4-a677-491c3be4c667",
-    estado: "venta",
-    base: TOMATE,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Jamón cocido", cantidad: "100 g" },
-      { nombre: "Morrón asado en tiras", cantidad: "120 g" },
-      { nombre: "Oliva", cantidad: "10 ml" },
-    ],
-    despues: "Provenzal en hilos (20 g) y un hilo de pesto de morrón asado (unos 25 g).",
-    preparaciones: ["Morrones asados", "Pesto de morrón asado", "Provenzal"],
-  },
-  {
-    nombre: "Palmitos y Salsa Golf",
-    productoId: "b4bc6819-1616-441b-8718-879744b8ffec",
-    estado: "venta",
-    base: TOMATE,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Palmito", cantidad: "150 g" },
-    ],
-    despues: "Salsa golf en zigzag (30 g).",
-    preparaciones: ["Golf de la casa"],
-  },
-  {
-    nombre: "Pepperoni e Panceta",
-    productoId: "e5a169af-104f-4f5e-a938-d02a0e02dd89",
-    estado: "venta",
-    base: TOMATE,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Pepperoni", cantidad: "100 g" },
-      { nombre: "Panceta", cantidad: "100 g" },
-      { nombre: "Orégano", cantidad: "5 g" },
-    ],
-    nota: "Dorar la panceta antes de armar, para que llegue crocante.",
-    preparaciones: ["Almendras tostadas y panceta crocante"],
-  },
-
-  /* ── Próximamente ── */
-  {
-    nombre: "Mortazza al Pistacchio",
-    productoId: "bfca7fb7-d9b4-4812-b1df-f4ba0378b8e0",
-    estado: "proximamente",
-    base: BLANCA,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Mortadela", cantidad: "150 g" },
-      { nombre: "Ricota", cantidad: "60 g" },
-      { nombre: "Pistacho", cantidad: "30 g" },
-    ],
-    despues: "Pesto de pistacho, unos 20 g.",
-    preparaciones: ["Pesto de pistacho"],
-  },
-  {
-    nombre: "Bondiola al Pangrattato",
-    productoId: "3a4abc9d-caa0-458e-aef3-d906fb2f7f2b",
-    estado: "proximamente",
-    base: BLANCA,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Bondiola en láminas", cantidad: "150 g" },
-      { nombre: "Ricota", cantidad: "60 g" },
-      { nombre: "Pangrattato", cantidad: "20 g" },
-    ],
-    despues: "Láminas finas de bondiola, pangrattato dorado y crocante, cucharadas de ricota batida y unos hilos de miel y mostaza.",
-    nota: "En el horno va solo la muzzarella.",
-    preparaciones: ["Miel y mostaza"],
-  },
-  {
-    nombre: "Patate e Rosmarino",
-    productoId: "83371dfd-08ec-41d5-a1b1-be09b475d7db",
-    estado: "proximamente",
-    base: BLANCA,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "220 g" },
-      { nombre: "Papa en escamas", cantidad: "200 g" },
-      { nombre: "Panceta", cantidad: "100 g" },
-      { nombre: "Provolone", cantidad: "60 g" },
-      { nombre: "Oliva", cantidad: "15 ml" },
-      { nombre: "Ajo", cantidad: "10 g" },
-      { nombre: "Romero", cantidad: "4 g" },
-    ],
-    despues: "Puntos de provenzal con ralladura de limón.",
-    preparaciones: ["Provenzal", "Almendras tostadas y panceta crocante"],
-  },
-  {
-    nombre: "Carbonara Impasto",
-    productoId: "4c2c7501-b7ff-4bee-8887-162fbb50b403",
-    estado: "proximamente",
-    base: BLANCA,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Panceta", cantidad: "150 g" },
-      { nombre: "Huevo al centro", cantidad: "1 unidad" },
-      { nombre: "Parmesano", cantidad: "25 g" },
-      { nombre: "Pimienta", cantidad: "3 g" },
-    ],
-    despues: "Pesto de verdeo en puntitos alrededor de la yema (unos 20 g).",
-    preparaciones: ["Pesto de verdeo", "Almendras tostadas y panceta crocante"],
-  },
-  {
-    nombre: "Puerro e Panceta Croccante",
-    productoId: "3e987e20-d7ca-4166-9679-7559d7603d69",
-    estado: "proximamente",
-    base: BLANCA,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "250 g" },
-      { nombre: "Puerro", cantidad: "150 g" },
-      { nombre: "Panceta", cantidad: "120 g" },
-      { nombre: "Oliva", cantidad: "10 ml" },
-      { nombre: "Pimienta", cantidad: "3 g" },
-    ],
-    preparaciones: ["Almendras tostadas y panceta crocante"],
-  },
-  {
-    nombre: "La Provoleta Impasto",
-    productoId: "548ea0b6-ef4c-4f0c-93ee-265f8a7baf83",
-    estado: "proximamente",
-    base: BLANCA,
-    ingredientes: [
-      { nombre: "Provolone", cantidad: "180 g" },
-      { nombre: "Muzzarella", cantidad: "100 g" },
-      { nombre: "Oliva", cantidad: "20 ml" },
-    ],
-    despues: "Cucharadas de chimichurri (45 g) y cherry asados en mitades (80 g).",
-    preparaciones: ["Cherry asados"],
-  },
-  {
-    nombre: "Filetto Impasto",
-    productoId: "7a52594e-ac5e-4d6d-b505-23bce62eea75",
-    estado: "proximamente",
-    base: BLANCA,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "230 g" },
-      { nombre: "Lomo", cantidad: "150 g" },
-      { nombre: "Cebolla morada", cantidad: "100 g" },
-      { nombre: "Cheddar", cantidad: "50 g" },
-      { nombre: "Verdeo", cantidad: "20 g" },
-      { nombre: "Oliva", cantidad: "10 ml" },
-    ],
-    despues: "Chimichurri.",
-    preparaciones: [],
-  },
-  {
-    nombre: "Bianca all'Aglio Confit",
-    productoId: "9ccd6a44-f962-43cc-bc99-d8a8ef7290a7",
-    estado: "proximamente",
-    base: "Manteca de ajo confitado, unos 55 g",
-    ingredientes: [{ nombre: "Muzzarella", cantidad: "250 g" }],
-    despues: "Hilo de oliva (3 ml) y puntos de provenzal (5 g).",
-    nota: "La manteca de ajo confitado va como base sobre la masa, sin llegar al borde, y encima la muzzarella.",
-    preparaciones: ["Manteca de ajo confitado", "Provenzal"],
-  },
-
-  /* ── En prueba: nuevas, con gramos de prueba ── */
-  {
-    nombre: "Pomodorini Confit e Ricotta",
-    foto: "/images/cocina/pomodorini-confit-ricotta-v1.webp",
-    estado: "prueba",
-    base: BLANCA,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "200 g" },
-      { nombre: "Cherry asados", cantidad: "90 g" },
-      { nombre: "Ricota fresca", cantidad: "70 g" },
-      { nombre: "Albahaca", cantidad: "a gusto" },
-    ],
-    despues: "Ricota, albahaca y un hilo del aceite de la placa de los cherry.",
-    preparaciones: ["Cherry asados"],
-  },
-  {
-    nombre: "Pesto Rosso e Ricotta",
-    foto: "/images/cocina/pesto-rosso-ricotta-v1.webp",
-    estado: "prueba",
-    base: BLANCA,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "200 g" },
-      { nombre: "Ricota", cantidad: "60 g" },
-      { nombre: "Tomate seco", cantidad: "50 g" },
-      { nombre: "Albahaca", cantidad: "a gusto" },
-    ],
-    despues: "Pesto rosso, unos 20 g.",
-    nota: "El tomate seco se reseca arriba: ponerlo bajo la muzzarella o pincelarlo con aceite.",
-    preparaciones: ["Pesto rosso", "Tomate seco"],
-  },
-  {
-    nombre: "Puttanesca Impasto",
-    foto: "/images/cocina/puttanesca-impasto-v1.webp",
-    estado: "prueba",
-    base: TOMATE,
-    ingredientes: [
-      { nombre: "Muzzarella", cantidad: "220 g" },
-      { nombre: "Tomate seco", cantidad: "40 g" },
-      { nombre: "Aceitunas negras", cantidad: "30 g" },
-      { nombre: "Alcaparras", cantidad: "15 g" },
-      { nombre: "Orégano", cantidad: "a gusto" },
-    ],
-    despues: "Olivada, opcional.",
-    preparaciones: ["Tomate seco", "Olivada"],
-  },
-];
-
-export const PREPARACIONES: PreparacionGuia[] = [
-  {
-    nombre: "Miel picante",
-    para: "Diavola al Miele Piccante",
-    receta:
-      "125 g de miel y 5 g de ají molido. Baño María unos 5 minutos, sin hervir. Dejar reposar entre 30 y 60 minutos, probar y colar cuando el picor sea el justo: ya colada, el picor no sube más. Pasar a un pomo. Sobre la pizza, un hilo de unos 20 g.",
-    conservacion: "Tapada, a temperatura ambiente, varias semanas.",
-    proximamente: false,
-  },
-  {
-    nombre: "Miel de ajo",
-    para: "Quattro Formaggi",
-    receta:
-      "125 g de miel y 30 g de ajo fresco aplastado. Baño María unos 10 minutos, sin hervir. Dejar reposar 30 minutos y colar sacando todo el ajo. Antes del servicio, entibiar el pomo en agua tibia para que corra. Sobre la pizza, un hilo de unos 20 g.",
-    conservacion: "Heladera. Hacer tandas que se usen en 4 días.",
-    proximamente: false,
-  },
-  {
-    nombre: "Miel y mostaza",
-    para: "Bondiola al Pangrattato",
-    receta:
-      "60 g de miel, 40 g de mostaza antigua o de Dijon y 1 cucharadita de limón. Mezclar hasta que quede una salsa pareja. Sobre la pizza, unos hilos finos al salir del horno.",
-    conservacion: "Heladera, hasta una semana.",
-    proximamente: true,
-  },
-  {
-    nombre: "Golf de la casa",
-    para: "Palmitos y Salsa Golf",
-    receta:
-      "100 g de mayonesa comprada, 50 g de kétchup, 1 cucharadita de limón, una pizca de pimentón dulce y unas gotas de salsa inglesa. Mezclar. Sobre la pizza, 30 g en zigzag después del horno.",
-    conservacion: "Heladera. Hacer tandas para 3 o 4 días.",
-    proximamente: false,
-  },
-  {
-    nombre: "Pesto de albahaca",
-    para: "Napoletana all'Aglio",
-    receta:
-      "Tanda de unos 250 g: 3 atados de albahaca, 110 ml de aceite, 15 ml de oliva, 1 cabeza de ajo, 30 g de parmesano, sal y pimienta. Procesar. Sobre la pizza, puntos de unos 20 g en total.",
-    conservacion: "Heladera 4 días, o cubos congelados.",
-    proximamente: false,
-  },
-  {
-    nombre: "Provenzal",
-    para: "Porteña, Patate e Rosmarino y Bianca all'Aglio Confit",
-    receta:
-      "Tanda de unos 300 g: 2 atados de perejil, 1 cabeza de ajo, 150 ml de aceite, sal y pimienta, todo picado fino y mezclado. Porteña: 20 g en hilos. Bianca all'Aglio Confit: 5 g en puntos. En Patate va con ralladura de limón.",
-    conservacion: "Heladera 4 días.",
-    proximamente: false,
-  },
-  {
-    nombre: "Ajo confitado",
-    para: "Napoletana all'Aglio y manteca de la Bianca all'Aglio Confit",
-    receta:
-      "Dientes pelados cubiertos de aceite de oliva, tapados y a fuego mínimo (60 a 90 °C) unos 40 minutos, hasta que estén tiernos. Napoletana: 20 g de ajo y 10 ml de oliva por pizza. El aceite queda perfumado: usarlo en el hilo de oliva de la Bianca y para aflojar la manteca de ajo.",
-    conservacion: "Cubierto de aceite, en la heladera, 4 días como máximo.",
-    proximamente: false,
-  },
-  {
-    nombre: "Cebolla dorada",
-    para: "Fugazzetta",
-    receta:
-      "200 g de cebolla cruda por pizza, con oliva. Se reduce mucho al dorarse: hacerla en tanda y porcionar.",
-    conservacion: "Heladera, del día o del día siguiente.",
-    proximamente: false,
-  },
-  {
-    nombre: "Morrones asados",
-    para: "Porteña de Jamón y Morrones",
-    receta: "Asar, pelar y cortar en tiras. Porteña: 120 g por pizza.",
-    conservacion: "Heladera, tapados.",
-    proximamente: false,
-  },
-  {
-    nombre: "Pesto de morrón asado",
-    para: "Porteña de Jamón y Morrones",
-    receta:
-      "Tanda para unas 6 pizzas: 1 morrón asado y pelado (120 g), 20 g de almendras tostadas, 1 cucharadita de limón o de vinagre, 20 ml de oliva, sal y pimentón ahumado. Procesar hasta que quede una pasta cremosa. Sobre la pizza, un hilo de unos 25 g después del horno.",
-    conservacion: "Heladera 4 días, o cubos congelados.",
-    proximamente: false,
-  },
-  {
-    nombre: "Aceto reducido",
-    para: "Prosciutto, Rucola e Parmigiano",
-    receta: "25 ml de aceto balsámico por pizza, reducido hasta que quede como almíbar.",
-    conservacion: "Tapado, a temperatura ambiente.",
-    proximamente: false,
-  },
-  {
-    nombre: "Almendras tostadas y panceta crocante",
-    para: "Quattro Formaggi, Pepperoni e Panceta y las pizzas con panceta",
-    receta:
-      "Almendras tostadas y picadas o fileteadas (Quattro: 30 g por pizza). La panceta se dora antes de armar, para que llegue crocante.",
-    conservacion: "Almendras en frasco seco. Panceta del día.",
-    proximamente: false,
-  },
-  {
-    nombre: "Cherry asados",
-    para: "La Provoleta Impasto y Pomodorini Confit e Ricotta",
-    receta:
-      "Cherry cortados al medio, con el corte hacia arriba en una placa. Por cada 250 g: 15 ml de oliva, 5 g de ajo granulado (o un diente en láminas), tomillo o hierbas provenzales y una pizca de sal. Horno a 180 °C, calor arriba y abajo, 30 minutos (o 200 °C durante 20), hasta que los bordes se caramelicen y el jugo espese. La Provoleta: 80 g cocidos por pizza. Se achican: calcular unos 110 a 120 g crudos y pesar la primera tanda para ajustar.",
-    conservacion: "Tapados en la heladera, sin cubrir de aceite, 3 días.",
-    proximamente: true,
-  },
-  {
-    nombre: "Manteca de ajo confitado",
-    para: "Bianca all'Aglio Confit",
-    receta:
-      "Tanda para 6 pizzas: 240 g de manteca pomada (blanda, a temperatura ambiente), 90 g de ajo confitado, 5 ml (1 cucharadita) del aceite del confit y 6 g de sal. Procesar junto 20 a 30 segundos, hasta una pasta lisa, sin que la manteca se derrita. Por pizza, una capa de unos 55 g sobre la masa, sin llegar al borde (1 a 2 cm limpios, para que no se queme el cornicione), y encima la muzzarella.",
-    conservacion:
-      "Heladera 4 días, o congelada en porciones de 55 g. Para el servicio, sacar solo lo de una hora: con calor, no más de 2 horas fuera de la heladera.",
-    proximamente: true,
-  },
-  {
-    nombre: "Pesto de pistacho",
-    para: "Mortazza al Pistacchio",
-    receta:
-      "40 g de pistacho pelado, 20 g de albahaca o perejil, 20 g de parmesano, ½ diente de ajo, 60 ml de oliva y 1 cucharadita de limón. Procesar. Sobre la pizza, unos 20 g.",
-    conservacion: "Heladera 4 días, o cubos congelados.",
-    proximamente: true,
-  },
-  {
-    nombre: "Pesto de verdeo",
-    para: "Carbonara Impasto",
-    receta:
-      "50 g de verdeo blanqueado 15 segundos y enfriado en agua con hielo, 20 g de almendras, 15 g de provolone rallado, 10 g de perejil, 60 ml de oliva, 1 cucharadita de limón y pimienta. Sin sal: la panceta y el parmesano ya aportan. Procesar. Sobre la pizza, unos 20 g en puntos.",
-    conservacion: "Heladera 4 días, o cubos congelados.",
-    proximamente: true,
-  },
-  {
-    nombre: "Pesto rosso",
-    para: "Pesto Rosso e Ricotta",
-    receta:
-      "50 g de tomate seco, 20 g de albahaca, 30 g de almendras, 20 g de parmesano, ½ diente de ajo y 60 ml de oliva. Procesar. Sobre la pizza, unos 20 g.",
-    conservacion: "Heladera 4 días, o cubos congelados.",
-    proximamente: true,
-  },
-  {
-    nombre: "Olivada",
-    para: "Puttanesca Impasto, opcional",
-    receta:
-      "60 g de aceitunas negras sin carozo, 1 cucharadita de alcaparras, ½ diente de ajo, oliva y ralladura de limón. Procesar.",
-    conservacion: "Heladera 4 días.",
-    proximamente: true,
-  },
-  {
-    nombre: "Tomate seco",
-    para: "Pesto Rosso e Ricotta y Puttanesca Impasto",
-    receta:
-      "Comprarlo de frasco, en aceite, o deshidratado para hidratar. No conservarlo en aceite hecho en casa.",
-    conservacion: "Una vez abierto, en la heladera.",
-    proximamente: true,
-  },
-];
+/** Fotos de las pizzas en prueba, que todavía no son productos. Hasta el paso 4 (fotos automáticas). */
+export const FOTOS_EN_PRUEBA: Record<string, string> = {
+  "Pomodorini Confit e Ricotta": "/images/cocina/pomodorini-confit-ricotta-v1.webp",
+  "Pesto Rosso e Ricotta": "/images/cocina/pesto-rosso-ricotta-v1.webp",
+  "Puttanesca Impasto": "/images/cocina/puttanesca-impasto-v1.webp",
+};
 
 /** Id para el ancla de cada preparación: minúsculas, sin tildes ni espacios. */
 export function idDePreparacion(nombre: string): string {
@@ -503,4 +83,143 @@ export function idDePreparacion(nombre: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+const numero = (n: number, decimales = 1) => n.toLocaleString("es-AR", { maximumFractionDigits: decimales });
+const FRACCIONES: [number, string][] = [[1 / 4, "¼"], [1 / 3, "⅓"], [1 / 2, "½"], [2 / 3, "⅔"], [3 / 4, "¾"]];
+
+/** Cantidad para leer en la cocina: gramos, mililitros, unidades o fracción de atado. */
+export function formatearCantidad(cantidad: number, unidad: string | null): string {
+  if (!Number.isFinite(cantidad) || cantidad <= 0) return "—";
+  switch (unidad) {
+    case "kg": return `${numero(cantidad * 1000)} g`;
+    case "litro": return `${numero(cantidad * 1000)} ml`;
+    // Una fracción chica se muestra entera: redondearla a "0" escondería un error de carga.
+    case "unidad": return `${numero(cantidad, cantidad < 1 ? 3 : 2)} ${cantidad === 1 ? "unidad" : "unidades"}`;
+    case "atado": {
+      const fraccion = FRACCIONES.find(([valor]) => Math.abs(valor - cantidad) < 0.04);
+      if (fraccion) return `${fraccion[1]} de atado`;
+      return `${numero(cantidad, 2)} ${cantidad === 1 ? "atado" : "atados"}`;
+    }
+    default: return `${numero(cantidad, 3)} ${unidad ?? ""}`.trim();
+  }
+}
+
+function agrupar<T>(filas: T[], clave: (f: T) => string): Map<string, T[]> {
+  const mapa = new Map<string, T[]>();
+  for (const f of filas) mapa.set(clave(f), [...(mapa.get(clave(f)) ?? []), f]);
+  return mapa;
+}
+
+const momentoDe = (l: FilaLinea) => (l.momento === "base" || l.momento === "despues" ? l.momento : "horno");
+
+export function armarGuia(
+  filas: FilasGuia,
+  fotoDe: (productoId: string | undefined, nombre: string) => string | undefined,
+): Guia {
+  const ingredientes = new Map(filas.ingredientes.map((i) => [i.id, i]));
+  const recetas = new Map(filas.recetas.map((r) => [r.id, r]));
+  const prepPorIngrediente = new Map(filas.preparaciones.map((p) => [p.ingrediente_id, p]));
+  const prepPorReceta = new Map(filas.preparaciones.map((p) => [p.receta_id, p]));
+  const lineasPorReceta = agrupar(filas.lineas, (l) => l.receta_id);
+  // Exacto, como la carta y Carro Fogón: el producto encuentra su precio por nombre.
+  const precioPorNombre = new Map(filas.precios.map((p) => [p.nombre, p]));
+  const precioPorReceta = new Map(filas.precios.filter((p) => p.receta_id).map((p) => [p.receta_id!, p]));
+  const productoPorNombre = new Map(filas.productos.map((p) => [p.nombre, p]));
+
+  // Para ordenar: lo que más pesa primero. Unidades con gramaje cuentan su peso; los atados, al final.
+  const peso = (l: FilaLinea) => {
+    const i = ingredientes.get(l.ingrediente_id);
+    const cantidad = Number(l.cantidad_kg) || 0;
+    if (i?.unidad === "kg" || i?.unidad === "litro") return cantidad;
+    const gramos = Number(i?.gramos_por_unidad);
+    return gramos > 0 ? (cantidad * gramos) / 1000 : 0;
+  };
+  const nombreDe = (l: FilaLinea) => ingredientes.get(l.ingrediente_id)?.nombre ?? "";
+  const ordenar = (ls: FilaLinea[]) => [...ls].sort((a, b) => peso(b) - peso(a) || nombreDe(a).localeCompare(nombreDe(b), "es"));
+  const linea = (l: FilaLinea): LineaGuia => {
+    const nombre = nombreDe(l) || "Ingrediente sin nombre";
+    const cantidad = formatearCantidad(Number(l.cantidad_kg), ingredientes.get(l.ingrediente_id)?.unidad ?? null);
+    return prepPorIngrediente.has(l.ingrediente_id) ? { nombre, cantidad, preparacion: idDePreparacion(nombre) } : { nombre, cantidad };
+  };
+
+  const recetaDePizza = new Map<PizzaGuia, FilaReceta>();
+  const armarPizza = (nombre: string, estado: EstadoPizza, receta: FilaReceta | undefined, productoId: string | undefined): PizzaGuia => {
+    const ls = receta ? ordenar(lineasPorReceta.get(receta.id) ?? []) : [];
+    const de = (momento: string) => ls.filter((l) => momentoDe(l) === momento).map(linea);
+    const pizza: PizzaGuia = {
+      nombre, estado, salsa: !!receta && Number(receta.precio_salsa) > 0,
+      base: de("base"), horno: de("horno"), despues: de("despues"), sinReceta: !receta,
+    };
+    if (productoId) pizza.productoId = productoId;
+    const foto = fotoDe(productoId, nombre);
+    if (foto) pizza.foto = foto;
+    const nota = receta?.indicaciones?.trim();
+    if (nota) pizza.nota = nota;
+    if (receta) recetaDePizza.set(pizza, receta);
+    return pizza;
+  };
+
+  const posicion = (nombre: string) => {
+    const i = PIZZAS_DE_LA_CARTA.findIndex((n) => n.toLowerCase() === nombre.trim().toLowerCase());
+    return i < 0 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  const enVenta = filas.productos
+    .filter((p) => p.categoria === "pizzas" && p.archivado !== true)
+    .sort((a, b) => posicion(a.nombre) - posicion(b.nombre) || a.nombre.localeCompare(b.nombre, "es"))
+    .map((p) => {
+      const precio = precioPorNombre.get(p.nombre);
+      return armarPizza(p.nombre, "venta", precio?.receta_id ? recetas.get(precio.receta_id) : undefined, p.id);
+    });
+  const recetasEnVenta = new Set([...recetaDePizza.values()].map((r) => r.id));
+  const marcadas = (estado: EstadoPizza) => filas.recetas
+    .filter((r) => r.en_cocina === estado && !recetasEnVenta.has(r.id))
+    .map((r) => {
+      const precio = precioPorReceta.get(r.id);
+      const nombre = precio?.nombre ?? r.nombre;
+      return armarPizza(nombre, estado, r, productoPorNombre.get(nombre)?.id);
+    })
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  const pizzas = [...enVenta, ...marcadas("proximamente"), ...marcadas("prueba")];
+
+  // Preparaciones que usan las pizzas mostradas, directas o a través de otra preparación.
+  const usos = new Map<string, { para: Set<string>; venta: boolean }>();
+  const visitar = (recetaId: string, quien: string, venta: boolean, profundidad: number) => {
+    if (profundidad > 8) return;
+    for (const l of ordenar(lineasPorReceta.get(recetaId) ?? [])) {
+      const prep = prepPorIngrediente.get(l.ingrediente_id);
+      if (!prep) continue;
+      const uso = usos.get(prep.receta_id) ?? { para: new Set<string>(), venta: false };
+      uso.para.add(quien);
+      uso.venta ||= venta;
+      usos.set(prep.receta_id, uso);
+      const receta = recetas.get(prep.receta_id);
+      if (receta) visitar(prep.receta_id, ingredientes.get(prep.ingrediente_id)?.nombre ?? receta.nombre, venta, profundidad + 1);
+    }
+  };
+  for (const p of pizzas) {
+    const receta = recetaDePizza.get(p);
+    if (receta) visitar(receta.id, p.nombre, p.estado === "venta", 0);
+  }
+
+  const preparaciones = [...usos].flatMap(([recetaId, uso]) => {
+    const receta = recetas.get(recetaId);
+    const prep = prepPorReceta.get(recetaId);
+    if (!receta || !prep) return [];
+    const nombre = ingredientes.get(prep.ingrediente_id)?.nombre ?? receta.nombre;
+    const tarjeta: PreparacionGuia = {
+      id: idDePreparacion(nombre), nombre, para: [...uso.para],
+      rinde: formatearCantidad(Number(prep.rinde_kg), "kg"),
+      ingredientes: ordenar(lineasPorReceta.get(recetaId) ?? []).map(linea),
+      proximamente: !uso.venta,
+    };
+    const indicaciones = receta.indicaciones?.trim();
+    if (indicaciones) tarjeta.indicaciones = indicaciones;
+    const conservacion = receta.conservacion?.trim();
+    if (conservacion) tarjeta.conservacion = conservacion;
+    return [tarjeta];
+  });
+  // Orden estable: dentro de cada grupo queda el orden en que aparecen al recorrer la guía.
+  preparaciones.sort((a, b) => Number(a.proximamente) - Number(b.proximamente));
+  return { pizzas, preparaciones };
 }
