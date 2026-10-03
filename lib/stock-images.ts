@@ -66,11 +66,11 @@ export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
   "4c2c7501-b7ff-4bee-8887-162fbb50b403": // Carbonara Impasto
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Carbonara%20Impasto.jpg",
   "d312b6ed-209f-4cff-8a37-36b515a12553": // Diavola al Miele Piccante
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Diavola%20al%20Miele%20Piccante%20v2.jpg",
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Diavola%20al%20Miele%20Piccante%20v3.jpg",
   "bfca7fb7-d9b4-4812-b1df-f4ba0378b8e0": // Mortazza al Pistacchio
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Mortazza%20al%20Pistacchio.jpg",
   "b4bc6819-1616-441b-8718-879744b8ffec": // Palmitos y Salsa Golf
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Palmitos%20y%20Salsa%20Golf%20v2.jpg",
+    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Palmitos%20y%20Salsa%20Golf%20v3.jpg",
   "83371dfd-08ec-41d5-a1b1-be09b475d7db": // Patate e Rosmarino
     "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Patate%20e%20Rosmarino.jpg",
   "e5a169af-104f-4f5e-a938-d02a0e02dd89": // Pepperoni e Panceta
