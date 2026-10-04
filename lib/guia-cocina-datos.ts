@@ -16,8 +16,10 @@ export async function leerFilasGuia(): Promise<FilasGuia> {
     readPages((s, e) => t.from("recetas").select("id,nombre,precio_salsa,en_cocina,indicaciones,conservacion").order("id", { ascending: true }).range(s, e)),
     readPages((s, e) => t.from("receta_ingredientes").select("id,receta_id,ingrediente_id,cantidad_kg,momento").order("id", { ascending: true }).range(s, e)),
     readPages((s, e) => t.from("ingredientes").select("id,nombre,unidad,gramos_por_unidad").order("id", { ascending: true }).range(s, e)),
-    // `preparaciones` no tiene columna id (readPages la exige) y son pocas filas.
-    t.from("preparaciones").select("receta_id,ingrediente_id,rinde_kg").limit(1000),
+    // Son pocas filas y no tienen id. La lectura privada acepta tanto el esquema
+    // anterior como el nuevo: tipo_base aparece al aplicar la migración. Se
+    // proyectan solo los campos de cocina abajo; ninguna fila cruda se publica.
+    t.from("preparaciones").select("*").limit(1000),
   ]);
   const leidas = { productos, precios, recetas, lineas, ingredientes, preparaciones };
   for (const [nombre, r] of Object.entries(leidas)) {
@@ -29,6 +31,7 @@ export async function leerFilasGuia(): Promise<FilasGuia> {
     recetas: recetas.data as FilasGuia["recetas"],
     lineas: lineas.data as FilasGuia["lineas"],
     ingredientes: ingredientes.data as FilasGuia["ingredientes"],
-    preparaciones: preparaciones.data as FilasGuia["preparaciones"],
+    preparaciones: (preparaciones.data as FilasGuia["preparaciones"]).map(({receta_id, ingrediente_id, rinde_kg, tipo_base}) =>
+      ({receta_id, ingrediente_id, rinde_kg, tipo_base})),
   };
 }

@@ -68,11 +68,11 @@ function TarjetaPizza({ p, primera }: { p: PizzaGuia; primera: boolean }) {
           <>
             <p className="ck-base-pizza">
               <span>Base</span>
-              {!p.salsa && p.base.length === 0 && BLANCA}
-              {p.salsa && SALSA}
+              {!p.salsa && BLANCA}
+              {p.salsaLegada && SALSA}
               {p.base.map((l, i) => (
                 <span key={l.nombre} className="ck-base-linea">
-                  {(p.salsa || i > 0) && " + "}
+                  {(p.salsaLegada || !p.salsa || i > 0) && " + "}
                   <Nombre l={l} />, {l.cantidad}
                 </span>
               ))}

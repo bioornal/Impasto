@@ -143,6 +143,9 @@ export function buildEffectivePrices(
 
     let costoUnit = 0;
     if (recipe && components.length > 0) {
+      // Las preparaciones se costean como líneas normales por kg. El backend
+      // garantiza importe fijo cero para cada base vinculada (también ante
+      // clientes antiguos); el cero explícito nunca toma el default histórico.
       // La prepizza y la salsa son de la pizza: empanadas y bebidas no las suman
       // aunque la receta las tenga cargadas.
       const llevaPrepizza = subcategoria !== 'Empanadas' && subcategoria !== 'Bebidas';

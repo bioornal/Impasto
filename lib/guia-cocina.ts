@@ -22,7 +22,7 @@ export interface FilaReceta {
 }
 export interface FilaLinea { id: string; receta_id: string; ingrediente_id: string; cantidad_kg: number | string; momento: string | null }
 export interface FilaIngrediente { id: string; nombre: string; unidad: string | null; gramos_por_unidad: number | string | null }
-export interface FilaPreparacion { receta_id: string; ingrediente_id: string; rinde_kg: number | string }
+export interface FilaPreparacion { receta_id: string; ingrediente_id: string; rinde_kg: number | string; tipo_base?: "prepizza" | "salsa" | null }
 export interface FilasGuia {
   productos: FilaProducto[]; precios: FilaPrecio[]; recetas: FilaReceta[];
   lineas: FilaLinea[]; ingredientes: FilaIngrediente[]; preparaciones: FilaPreparacion[];
@@ -41,6 +41,8 @@ export interface PizzaGuia {
   productoId?: string;
   foto?: string;
   salsa: boolean;
+  /** Solo las recetas antiguas usan la indicación fija de salsa. */
+  salsaLegada: boolean;
   base: LineaGuia[];
   horno: LineaGuia[];
   despues: LineaGuia[];
@@ -64,8 +66,8 @@ export interface Guia { pizzas: PizzaGuia[]; preparaciones: PreparacionGuia[] }
 export const SALSA = "Salsa de tomate, 150 g";
 export const BLANCA = "Sin salsa, base blanca";
 export const BASE_DE_TODAS: string[] = [
-  "Bollo de unos 300 g.",
-  "Salsa de tomate: 150 g de tomate triturado por pizza, en las que la llevan. Las que van en blanco no la llevan.",
+  "Usar las cantidades de base indicadas en cada pizza.",
+  "Las pizzas blancas no llevan salsa.",
 ];
 
 /** Fotos de las pizzas en prueba, que todavía no son productos. Hasta el paso 4 (fotos automáticas). */
@@ -147,8 +149,10 @@ export function armarGuia(
   const armarPizza = (nombre: string, estado: EstadoPizza, receta: FilaReceta | undefined, productoId: string | undefined): PizzaGuia => {
     const ls = receta ? ordenar(lineasPorReceta.get(receta.id) ?? []) : [];
     const de = (momento: string) => ls.filter((l) => momentoDe(l) === momento).map(linea);
+    const salsaVinculada = ls.some(l => Number(l.cantidad_kg) > 0 && prepPorIngrediente.get(l.ingrediente_id)?.tipo_base === "salsa");
+    const salsaLegada = !salsaVinculada && !!receta && Number(receta.precio_salsa) > 0;
     const pizza: PizzaGuia = {
-      nombre, estado, salsa: !!receta && Number(receta.precio_salsa) > 0,
+      nombre, estado, salsa: salsaVinculada || salsaLegada, salsaLegada,
       base: de("base"), horno: de("horno"), despues: de("despues"), sinReceta: !receta,
     };
     if (productoId) pizza.productoId = productoId;
@@ -173,7 +177,7 @@ export function armarGuia(
     });
   const recetasEnVenta = new Set([...recetaDePizza.values()].map((r) => r.id));
   const marcadas = (estado: EstadoPizza) => filas.recetas
-    .filter((r) => r.en_cocina === estado && !recetasEnVenta.has(r.id))
+    .filter((r) => r.en_cocina === estado && !recetasEnVenta.has(r.id) && !prepPorReceta.has(r.id))
     .map((r) => {
       const precio = precioPorReceta.get(r.id);
       const nombre = precio?.nombre ?? r.nombre;

@@ -123,5 +123,37 @@ const visible = JSON.stringify(guia);
 chequear("visible · sin precios ni costos", !/\$|precio|costo|rinde_kg|cantidad_kg/i.test(visible.replace(/"rinde":/g, "")));
 chequear("visible · la salsa por defecto", SALSA === "Salsa de tomate, 150 g");
 
+/* Bases derivadas: el importe fijo ya no describe qué se arma en cocina. */
+const bases = armarGuia({
+  productos: [
+    {id: "p-roja", nombre: "Roja", categoria: "pizzas", archivado: false},
+    {id: "p-blanca", nombre: "Blanca", categoria: "pizzas", archivado: false},
+  ],
+  precios: [{id: "v-roja", nombre: "Roja", receta_id: "r-roja"}, {id: "v-blanca", nombre: "Blanca", receta_id: "r-blanca"}],
+  recetas: [rec("r-roja", "Roja", {precio_salsa: 0}), rec("r-blanca", "Blanca", {precio_salsa: 0}),
+    rec("r-masa", "Prepizza", {en_cocina: "prueba"}), rec("r-salsa", "Salsa para pizza", {en_cocina: "prueba"})],
+  ingredientes: [
+    {id: "masa", nombre: "Prepizza", unidad: "kg", gramos_por_unidad: null},
+    {id: "salsa", nombre: "Salsa para pizza", unidad: "kg", gramos_por_unidad: null},
+  ],
+  lineas: [
+    {id: "l1", receta_id: "r-roja", ingrediente_id: "masa", cantidad_kg: .28, momento: "base"},
+    {id: "l2", receta_id: "r-roja", ingrediente_id: "salsa", cantidad_kg: .08, momento: "base"},
+    {id: "l3", receta_id: "r-blanca", ingrediente_id: "masa", cantidad_kg: .32, momento: "base"},
+  ],
+  preparaciones: [
+    {receta_id: "r-masa", ingrediente_id: "masa", rinde_kg: 2.8, tipo_base: "prepizza"},
+    {receta_id: "r-salsa", ingrediente_id: "salsa", rinde_kg: 1, tipo_base: "salsa"},
+  ],
+} as FilasGuia, () => undefined);
+chequear("bases · salsa vinculada aun con importe cero", bases.pizzas.find(p => p.nombre === "Roja")?.salsa === true);
+chequear("bases · cocina muestra porciones reales distintas", bases.pizzas.find(p => p.nombre === "Roja")?.base[0].cantidad === "280 g"
+  && bases.pizzas.find(p => p.nombre === "Roja")?.base[1].cantidad === "80 g"
+  && bases.pizzas.find(p => p.nombre === "Blanca")?.base[0].cantidad === "320 g");
+chequear("bases · blanca sin salsa", bases.pizzas.find(p => p.nombre === "Blanca")?.salsa === false);
+chequear("bases · preparaciones nunca aparecen como pizzas en prueba", bases.pizzas.length === 2);
+chequear("bases · solo salsa antigua usa los 150 g fijos", (bases.pizzas.find(p => p.nombre === "Roja") as unknown as {salsaLegada:boolean})?.salsaLegada === false
+  && (diavola as unknown as {salsaLegada:boolean}).salsaLegada === true);
+
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
 process.exit(fallos === 0 ? 0 : 1);
