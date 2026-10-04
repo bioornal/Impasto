@@ -1,5 +1,15 @@
 @AGENTS.md
 
+## Prepizza y salsa como recetas — estado al 04/10/2026
+
+- El recetario web y Android permiten guardar prepizzas y salsas como preparaciones con ingredientes, rinde y variantes. Impasto consume el `ingredientes.precio_kg` calculado por sus triggers y los gramos de las líneas de cada pizza; conserva su fórmula de precios existente.
+- Contrato compartido: `preparaciones.tipo_base` nullable (`prepizza` / `salsa`), ingrediente producido enlazado en `receta_ingredientes` con `cantidad_kg = gramos / 1000` y `momento = base`. La base de datos mantiene en cero el importe fijo correspondiente para evitar un doble costo. Pizzas sin convertir mantienen el comportamiento anterior; las blancas no necesitan salsa.
+- `/cocina` muestra una sola vez las bases enlazadas con sus gramos reales. La etiqueta anterior de salsa queda solo para recetas que todavía usan `precio_salsa`; se quitó el encabezado universal de 300 g. Las preparaciones se excluyen de Próximamente y En prueba.
+- La lectura privada de preparaciones usa `select('*')` y toma `tipo_base` cuando está disponible, compatible antes y después de la migración. No agregar una consulta pública extra de metadata de preparaciones. Los costos históricos ya capturados se conservan.
+- Migración aplicada y verificada: `recetario-napolitano/migrations/20261003180000_bases-como-recetas.sql`. No se inventaron recetas ni cantidades y no se convirtieron pizzas: el dueño debe ingresar recetas, rindes y consumos en el recetario.
+- Cambios subidos a `main` en `ad407be`; tests y build verificados antes del push. El despliegue automático web no está confirmado. Guía de uso del ecosistema: `recetario-napolitano/docs/prepizza-salsa-recetas.md`.
+- Android quedó listo para compilar, con instrucción vigente de no lanzar builds hasta nueva autorización del dueño y commits `[skip ci]`.
+
 # Impasto · Estado del proyecto
 
 Pizzería de **Puerto Iguazú, Misiones**. Next.js 16 + InsForge (Postgres) + Mercado Pago.
@@ -400,7 +410,7 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   **Paso 3 (03/10/2026): `/cocina` lee el recetario.** Diseño `docs/superpowers/specs/2026-10-03-cocina-y-fotos-automaticas-design.md`,
   plan `docs/superpowers/plans/2026-10-03-cocina-paso-3-lee-el-recetario.md`. `lib/guia-cocina.ts` son funciones puras
   (`armarGuia`, `formatearCantidad`, `idDePreparacion`) sobre filas que lee `lib/guia-cocina-datos.ts` con la clave de
-  backend (sin precios: solo `precio_salsa` para saber si lleva salsa). En venta = productos `impasto`, categoría
+  backend (sin precios: `precio_salsa` queda como respaldo para recetas sin salsa enlazada; desde el 04/10 se usan las bases y sus gramos reales). En venta = productos `impasto`, categoría
   `pizzas`, no archivados, con receta por `precios_venta.nombre` exacto (la Chipa es categoría `otros` y no entra);
   Próximamente / En prueba = `recetas.en_cocina`; base, horno y después = `receta_ingredientes.momento`; nota =
   `recetas.indicaciones`; preparaciones (también las anidadas) con ingredientes, rinde, paso a paso y conservación.
