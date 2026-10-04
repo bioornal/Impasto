@@ -155,5 +155,30 @@ chequear("bases · preparaciones nunca aparecen como pizzas en prueba", bases.pi
 chequear("bases · solo salsa antigua usa los 150 g fijos", (bases.pizzas.find(p => p.nombre === "Roja") as unknown as {salsaLegada:boolean})?.salsaLegada === false
   && (diavola as unknown as {salsaLegada:boolean}).salsaLegada === true);
 
+/* Prepizza por unidad: la receta es de un bollo y cada pizza lleva 1. */
+const bollos = armarGuia({
+  productos: [{id: "p-roja", nombre: "Roja", categoria: "pizzas", archivado: false}],
+  precios: [{id: "v-roja", nombre: "Roja", receta_id: "r-roja"}],
+  recetas: [rec("r-roja", "Roja", {precio_salsa: 0}), rec("r-masa", "Prepizza"), rec("r-salsa", "Salsa para pizza")],
+  ingredientes: [
+    {id: "masa", nombre: "Prepizza", unidad: "unidad", gramos_por_unidad: null},
+    {id: "salsa", nombre: "Salsa para pizza", unidad: "kg", gramos_por_unidad: null},
+    {id: "harina", nombre: "Harina", unidad: "kg", gramos_por_unidad: null},
+  ],
+  lineas: [
+    {id: "l1", receta_id: "r-roja", ingrediente_id: "salsa", cantidad_kg: .15, momento: "base"},
+    {id: "l2", receta_id: "r-roja", ingrediente_id: "masa", cantidad_kg: 1, momento: "base"},
+    {id: "l3", receta_id: "r-masa", ingrediente_id: "harina", cantidad_kg: .176, momento: "horno"},
+  ],
+  preparaciones: [
+    {receta_id: "r-masa", ingrediente_id: "masa", rinde_kg: 1, tipo_base: "prepizza"},
+    {receta_id: "r-salsa", ingrediente_id: "salsa", rinde_kg: 1, tipo_base: "salsa"},
+  ],
+} as FilasGuia, () => undefined);
+const roja = bollos.pizzas.find(p => p.nombre === "Roja");
+chequear("bollos · la prepizza va primero y en unidades", roja?.base[0].nombre === "Prepizza" && roja?.base[0].cantidad === "1 unidad"
+  && roja?.base[1].cantidad === "150 g");
+chequear("bollos · la tarjeta de la prepizza rinde 1 unidad", bollos.preparaciones.find(p => p.nombre === "Prepizza")?.rinde === "1 unidad");
+
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
 process.exit(fallos === 0 ? 0 : 1);

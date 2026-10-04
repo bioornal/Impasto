@@ -130,7 +130,9 @@ export function armarGuia(
   const productoPorNombre = new Map(filas.productos.map((p) => [p.nombre, p]));
 
   // Para ordenar: lo que más pesa primero. Unidades con gramaje cuentan su peso; los atados, al final.
+  // La prepizza va siempre primero, aunque se cuente en bollos.
   const peso = (l: FilaLinea) => {
+    if (prepPorIngrediente.get(l.ingrediente_id)?.tipo_base === "prepizza") return Number.POSITIVE_INFINITY;
     const i = ingredientes.get(l.ingrediente_id);
     const cantidad = Number(l.cantidad_kg) || 0;
     if (i?.unidad === "kg" || i?.unidad === "litro") return cantidad;
@@ -213,7 +215,8 @@ export function armarGuia(
     const nombre = ingredientes.get(prep.ingrediente_id)?.nombre ?? receta.nombre;
     const tarjeta: PreparacionGuia = {
       id: idDePreparacion(nombre), nombre, para: [...uso.para],
-      rinde: formatearCantidad(Number(prep.rinde_kg), "kg"),
+      // rinde_kg va en la unidad de lo que produce: kg, o unidades (bollos).
+      rinde: formatearCantidad(Number(prep.rinde_kg), ingredientes.get(prep.ingrediente_id)?.unidad === "unidad" ? "unidad" : "kg"),
       ingredientes: ordenar(lineasPorReceta.get(recetaId) ?? []).map(linea),
       proximamente: !uso.venta,
     };
