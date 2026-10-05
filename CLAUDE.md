@@ -446,6 +446,16 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   `binary/octet-stream`). El panel "Editar producto" ya se salía del ancho en celular (435 px en 375) antes de este
   cambio: queda pendiente.
 
+- **Etiquetas sobre la foto y "nuestra cocina" (05/10/2026)** — Ver "Cómo funcionan las
+  etiquetas" y la decisión "No hay local a la calle". En la base, `gourmet` y `vegetariana`
+  pasaron a `mostrar_badge = 'ambos'` (aplicado por `db query` y releído). Verificado
+  localmente: `pnpm test`, TypeScript, eslint de lo tocado (el único error es previo, en
+  `Checkout.tsx:79`) y Chrome headless contra `pnpm dev` con la base real: 1280 px (12 pizzas
+  y 5 empanadas con sus cartelitos sobre la foto, ninguno junto al nombre) y 375 px (destacada,
+  filas y empanadas, sin desborde); el aviso "solo retiro" se vio con `/api/store-status`
+  interceptado. El ícono de esos avisos pasó de una fachada de negocio a una bolsa. Sin
+  probar en producción.
+
 ### Distinción que se presta a confusión
 
 `hours` es el horario de trabajo que ve el cliente (**hasta las 00:00**).
@@ -568,6 +578,13 @@ limpieza automática de carritos abandonados, banner de consentimiento de cookie
 - **Sin borde relleno.** El local no lo hace; se eliminó de todo el flujo.
 - **Sin pedidos anticipados.** Con el local cerrado no se toman pedidos, ni siquiera programados.
   Si se quiere habilitar, aceptarlos siempre que el horario elegido caiga dentro de la atención.
+- **No hay local a la calle: el cliente retira en "nuestra cocina"** (pedido del dueño,
+  05/10/2026). Todo texto que ve el cliente (carrito, checkout, confirmación, seguimiento, mail,
+  hero, avisos de solo retiro, FAQ, legales, `llms.txt`) y el prompt del bot dicen "nuestra
+  cocina"; `tests/chat-prompt.test.ts` comprueba que el prompt y el FAQ no digan "local", y el
+  aviso de Telegram dice "Retira en la cocina". **No cambiar `pedidos.direccion = 'Retiro en
+  local'`**: es un valor interno que comparan `card-attempt.ts`, `adapt-order.ts` y el POS.
+  "Local" en comentarios y en nombres de código (`aviso-local`, `fechaLocal`) es interno.
 - **Email como canal de avisos**, no WhatsApp.
 - **Los tres proyectos conviven en la MISMA base** (no se crea base nueva). La separación es por
   la columna `proyecto_id` en `productos` y `pedidos`; `clientes` se comparte a propósito.
@@ -622,18 +639,25 @@ Se administran desde la sección **Etiquetas** del panel y viven en la tabla `et
 - **`slug` es inmutable** y es lo que se guarda en `productos.tags`. **`label`** es lo que
   ve el cliente y se puede renombrar sin tocar ningún producto. Esa separación es
   deliberada: renombrar el slug huerfanaría las marcas de todos los productos.
-- **`orden` define la prioridad.** Cada tarjeta muestra **un solo cartelito**: el de menor
-  orden entre los que el producto tenga. Es decisión de diseño, no una limitación técnica.
+- **Todas las etiquetas visibles salen sobre la foto, arriba a la izquierda, en el `orden`
+  del panel** (decisión del dueño del 05/10/2026). Antes se mostraba una sola, la de menor
+  orden, junto al nombre; y "Veggie"/"Picante" estaban escritos fijos en `PizzaList.tsx` y
+  `lib/ficha.ts` sin leer el panel, por eso unas salían sobre la foto y otras al lado del
+  nombre. Hoy **nada se dibuja desde los tags**: tarjeta, destacada mobile, filas mobile,
+  empanadas y ficha usan `cartelitosDePizza` / `cartelitosDeEmpanada` (`lib/ficha.ts`).
+  Antes de ellas va el interruptor "★ popular" del producto: si una pizza lo tiene y también
+  la etiqueta `mas-pedida`, sale dos veces.
 - **`mostrar_badge`** (`ambos` / `pizzas` / `empanadas` / `ninguno`) decide **dónde se ve**
-  el cartelito, no dónde se puede marcar. Por eso `vegetariana` está en `empanadas`: filtra
-  15 pizzas en la pestaña Veggie sin ensuciarles la tarjeta.
+  el cartelito, no dónde se puede marcar. El 05/10/2026 `gourmet` estaba en `ninguno` (por
+  eso no aparecía) y `vegetariana` en `empanadas`; las dos pasaron a `ambos` a pedido del dueño.
 - **`sistema`** marca las que alimentan pestañas hardcodeadas (`gourmet`, `vegetariana`,
   `picante`). **No impide borrarlas**: el panel avisa qué pestaña queda vacía y cuántos
   productos pierden la marca, y el dueño decide.
 - Al borrar una etiqueta, **el slug se quita de los productos** en la misma operación.
   Dejarlo huérfano lo volvería invisible desde el panel.
-- La resolución del cartelito vive en `resolverBadge()`, en `lib/catalog-build.ts`, y está
-  cubierta por tests. Los componentes reciben el badge ya resuelto.
+- El filtrado y orden viven en `resolverBadges()`, en `lib/catalog-build.ts` (`Pizza.badges`,
+  `Empanada.badges`), cubiertos por `tests/catalog.test.ts`. Sobre la foto los cartelitos son
+  rellenos (`.p-badge.c-<color>`) para leerse sobre cualquier imagen; `.p-badge-tag` ya no existe.
 - La paleta de colores es fija y las variables CSS **tienen que existir en
   `app/impasto.css`**. `--a-sidebar` solo existe en `admin.css`: un badge con ese color se
   vería bien en el panel y roto en el sitio.
