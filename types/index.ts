@@ -12,7 +12,8 @@ export interface Pizza {
   tags: string[];
   disponible: boolean;
   popular?: boolean;
-  badge?: EtiquetaBadge;
+  /** Etiquetas del panel que se ven en pizzas, en su `orden`. */
+  badges?: EtiquetaBadge[];
   /** Foto elegida en el servidor (`lib/fotos.ts`); sin ella, las ilustraciones usan el respaldo. */
   foto?: string;
 }
@@ -24,7 +25,8 @@ export interface Empanada {
   desc: string;
   tags: string[];
   disponible: boolean;
-  badge?: EtiquetaBadge;
+  /** Etiquetas del panel que se ven en empanadas, en su `orden`. */
+  badges?: EtiquetaBadge[];
   foto?: string;
 }
 

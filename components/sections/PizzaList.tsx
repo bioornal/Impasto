@@ -5,7 +5,7 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useTweaks } from "@/components/providers/TweakProvider";
 import { fmt } from "@/lib/utils";
-import { lineaDePizza } from "@/lib/ficha";
+import { cartelitosDePizza, lineaDePizza } from "@/lib/ficha";
 import type { Pizza } from "@/types";
 
 /**
@@ -72,6 +72,15 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
   const botonFoto = (pizza: Pizza) => (
     <button type="button" className="media-zoom" onClick={() => verFicha(pizza.id)} aria-label={`Ver ${pizza.nombre} en grande`} />
   );
+  // Sobre la foto, arriba a la izquierda: ★ popular y las etiquetas del panel.
+  const cartelitos = (pizza: Pizza) => {
+    const lista = cartelitosDePizza(pizza);
+    return lista.length > 0 && (
+      <div className="p-badges">
+        {lista.map((b) => <span key={b.texto} className={b.clase}>{b.texto}</span>)}
+      </div>
+    );
+  };
 
   const emptyState = (
     <p className="empty-state">Sin resultados — probá con otro filtro o buscá otro ingrediente.</p>
@@ -133,17 +142,12 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
                     <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} src={pizza.foto} />
                     {botonFoto(pizza)}
                     {agotado && <div className="media-agotado-bar">Agotado</div>}
-                    <div className="p-badges">
-                      {pizza.popular && !agotado && <span className="p-badge top">★ Más pedida</span>}
-                      {pizza.tags.includes("vegetariana") && <span className="p-badge veg">Veggie</span>}
-                      {pizza.tags.includes("picante") && <span className="p-badge hot">Picante</span>}
-                    </div>
+                    {cartelitos(pizza)}
                     <span className="p-price">{fmt(pizza.precio)}</span>
                   </div>
                   <div className="p-body">
                     <div className="p-title">
                       <h3>{pizza.nombre}</h3>
-                      {pizza.badge && <span className={`p-badge-tag c-${pizza.badge.color}`}>{pizza.badge.label}</span>}
                     </div>
                     <p className="p-desc">{pizza.desc}</p>
                     <div className="p-actions">
@@ -216,7 +220,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
                 <div className="p-feat-media">
                   <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} src={pizza.foto} />
                   {botonFoto(pizza)}
-                  {pizza.popular && !agotado && <span className="p-feat-badge">★ Más pedida</span>}
+                  {cartelitos(pizza)}
                   {agotado && <div className="media-agotado-bar">Agotado</div>}
                   <span className="p-feat-price">{fmt(pizza.precio)}</span>
                 </div>
@@ -254,8 +258,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
                 <div className="p-row-main" onClick={() => verFicha(pizza.id)}>
                   <div className="p-row-title">
                     <h3>{pizza.nombre}</h3>
-                    {pizza.tags.includes("vegetariana") && !agotado && <span className="p-row-flag">Veggie</span>}
-                    {pizza.tags.includes("picante") && !agotado && <span className="p-row-flag hot">Picante</span>}
+                    {!agotado && cartelitosDePizza(pizza).map((b) => <span key={b.texto} className={b.clase}>{b.texto}</span>)}
                   </div>
                   <p className="p-row-desc">{pizza.desc}</p>
                   <span className="p-row-price">{fmt(pizza.precio)}</span>

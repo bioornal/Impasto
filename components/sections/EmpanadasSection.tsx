@@ -1,6 +1,7 @@
 "use client";
 import { EmpanadaIllus } from "@/components/ui/Illus";
 import { fmt } from "@/lib/utils";
+import { cartelitosDeEmpanada } from "@/lib/ficha";
 import { argumento } from "@/lib/marca";
 import { TAMANIOS_CAJA_EMPANADAS } from "@/lib/reglas-carta";
 import type { Empanada } from "@/types";
@@ -71,11 +72,15 @@ export function EmpanadasSection({ empanadas, boxPrices, blockedSizes, selection
                       onClick={() => onVerFicha(empanadas.map((e) => e.id), empanadas.indexOf(empanada))}
                       aria-label={`Ver ${empanada.nombre} en grande`}
                     />
+                    {cartelitosDeEmpanada(empanada).length > 0 && (
+                      <div className="p-badges">
+                        {cartelitosDeEmpanada(empanada).map((b) => <span key={b.texto} className={b.clase}>{b.texto}</span>)}
+                      </div>
+                    )}
                     {agotado && <div className="media-agotado-bar">Agotado</div>}
                   </div>
                   <div className="emp-head">
                     <h4>{empanada.nombre}</h4>
-                    {empanada.badge && <span className={`p-badge-tag c-${empanada.badge.color}`}>{empanada.badge.label}</span>}
                   </div>
                   <p>{empanada.desc}</p>
                   <div className="emp-foot">

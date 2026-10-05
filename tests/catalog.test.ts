@@ -213,9 +213,10 @@ const conEstilos = buildCatalog(estilos, null, null);
 check("una pizza sin tags es clasica",        conEstilos.pizzas.find((p) => p.nombre === "Pizza Muzzarela")?.categoria,          "clasica");
 check("una pizza con tag gourmet es gourmet", conEstilos.pizzas.find((p) => p.nombre === "Pizza Rucula y Jamon Crudo")?.categoria, "gourmet");
 
-// ── resolución del badge ──────────────────────────────────────────────
-// Gana la etiqueta de menor `orden` entre las que el producto tiene y que
-// aplican a su tipo. `mostrar_badge` decide dónde se ve, no dónde se marca.
+// ── cartelitos de etiquetas ───────────────────────────────────────────
+// Salen todas las etiquetas que el producto tiene y que se muestran en su
+// tipo, en el `orden` del panel. `mostrar_badge` decide dónde se ve, no dónde
+// se marca. (Hasta el 05/10/2026 se mostraba una sola, la de menor orden.)
 const etiquetas: Etiqueta[] = [
   { slug: "mas-pedida",  label: "Más pedida",  color: "rojo",   orden: 1, mostrar_badge: "ambos" },
   { slug: "gourmet",     label: "Gourmet",     color: "dorado", orden: 4, mostrar_badge: "ambos" },
@@ -228,33 +229,36 @@ const conTags = (nombre: string, categoria: string, tags: string[]): DatabasePro
 
 const bc = (p: DatabaseProduct[]) => buildCatalog(p, null, null, etiquetas);
 
-check("gana la etiqueta de menor orden",
-  bc([conTags("A", "pizzas", ["gourmet", "mas-pedida"])]).pizzas[0].badge?.label, "Más pedida");
+const textos = (p: { badges?: { label: string }[] }) => (p.badges ?? []).map((b) => b.label);
+
+check("salen todas las etiquetas, en el orden del panel y no en el del producto",
+  textos(bc([conTags("A", "pizzas", ["gourmet", "mas-pedida"])]).pizzas[0]), ["Más pedida", "Gourmet"]);
 
 check("una etiqueta de empanadas no aparece en una pizza",
-  bc([conTags("B", "pizzas", ["vegetariana"])]).pizzas[0].badge, undefined);
+  textos(bc([conTags("B", "pizzas", ["vegetariana", "gourmet"])]).pizzas[0]), ["Gourmet"]);
 
 check("la misma etiqueta sí aparece en una empanada",
-  bc([conTags("C", "empanadas", ["vegetariana"])]).empanadas[0].badge?.label, "Vegetariana");
+  textos(bc([conTags("C", "empanadas", ["vegetariana"])]).empanadas[0]), ["Vegetariana"]);
 
-check("mostrar_badge=ninguno nunca genera badge, aunque gane por orden",
-  bc([conTags("D", "pizzas", ["interna", "gourmet"])]).pizzas[0].badge?.label, "Gourmet");
+check("mostrar_badge=ninguno nunca genera cartelito, aunque tenga mejor orden",
+  textos(bc([conTags("D", "pizzas", ["interna", "gourmet"])]).pizzas[0]), ["Gourmet"]);
 
-check("un producto sin etiquetas no tiene badge",
-  bc([conTags("E", "pizzas", [])]).pizzas[0].badge, undefined);
+check("un producto sin etiquetas no tiene cartelitos",
+  bc([conTags("E", "pizzas", [])]).pizzas[0].badges, []);
 
 check("un slug que no existe en etiquetas se ignora sin romper",
-  bc([conTags("F", "pizzas", ["fantasma", "gourmet"])]).pizzas[0].badge?.label, "Gourmet");
+  textos(bc([conTags("F", "pizzas", ["fantasma", "gourmet"])]).pizzas[0]), ["Gourmet"]);
 
-check("el badge trae el color de la etiqueta",
-  bc([conTags("G", "pizzas", ["gourmet"])]).pizzas[0].badge?.color, "dorado");
+check("cada cartelito trae el color de su etiqueta",
+  bc([conTags("G", "pizzas", ["gourmet", "mas-pedida"])]).pizzas[0].badges,
+  [{ label: "Más pedida", color: "rojo" }, { label: "Gourmet", color: "dorado" }]);
 
-// El badge es independiente de Pizza.categoria, que alimenta la pestaña Clásicas.
-check("categoria sigue derivandose de tags, no del badge",
+// Los cartelitos son independientes de Pizza.categoria, que alimenta la pestaña Clásicas.
+check("categoria sigue derivandose de tags, no de los cartelitos",
   bc([conTags("H", "pizzas", ["gourmet"])]).pizzas[0].categoria, "gourmet");
 
 check("sin etiquetas cargadas, buildCatalog sigue funcionando",
-  buildCatalog([conTags("I", "pizzas", ["gourmet"])], null, null).pizzas[0].badge, undefined);
+  buildCatalog([conTags("I", "pizzas", ["gourmet"])], null, null).pizzas[0].badges, []);
 
 // El slug se genera del label y tiene que sacar los acentos. Si el regex de
 // diacríticos se rompe, "Más pedida" da "m-s-pedida" y nada lo delata.

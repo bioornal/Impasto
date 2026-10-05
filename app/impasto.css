@@ -564,17 +564,24 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 .drink-card:not(.is-agotado):hover .drink-media img{
   transform:scale(1.04);
 }
+/* Cartelitos sobre la foto, arriba a la izquierda. `right` deja libre la lupa. */
 .p-badges{
-  position:absolute; left:12px; top:12px; display:flex; gap:6px; flex-wrap:wrap;
+  position:absolute; left:12px; top:12px; right:54px; display:flex; gap:6px; flex-wrap:wrap;
   pointer-events:none; z-index:2;
 }
 .p-badge{
   font-family:var(--font-mono); font-size:9px; letter-spacing:.18em; text-transform:uppercase;
-  padding:5px 9px; border-radius:999px; font-weight:500;
+  padding:5px 9px; border-radius:999px; font-weight:500; white-space:nowrap;
 }
 .p-badge.top{ background:var(--gold); color:var(--ink); }
-.p-badge.veg{ background:color-mix(in srgb, var(--accent-2) 92%, transparent); color:var(--accent-ink); }
-.p-badge.hot{ background:color-mix(in srgb, var(--accent) 95%, transparent); color:var(--accent-ink); }
+/* Colores de las etiquetas del panel (`COLORES_ETIQUETA`): rellenos, para que
+   se lean sobre cualquier foto. Las variables tienen que existir en este archivo. */
+.p-badge.c-dorado{ background:var(--carbon); color:var(--gold); }
+.p-badge.c-rojo{   background:color-mix(in srgb, var(--accent) 95%, transparent); color:var(--accent-ink); }
+.p-badge.c-verde{  background:color-mix(in srgb, var(--accent-2) 92%, transparent); color:var(--accent-ink); }
+.p-badge.c-oliva{  background:var(--green); color:var(--carbon); }
+.p-badge.c-gris{   background:var(--muted); color:var(--accent-ink); }
+.p-badge.c-negro{  background:var(--ink); color:var(--bg); }
 /* Barra inferior recta minimalista para productos agotados */
 .media-agotado-bar{
   position:absolute; bottom:0; left:0; right:0;
@@ -600,25 +607,6 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 .p-body{ padding:16px 18px 18px; display:flex; flex-direction:column; gap:9px; flex:1; }
 .p-title{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
 .p-title h3{ font-family:var(--font-display); font-size:20px; margin:0; font-weight:600; letter-spacing:-.015em; line-height:1.15; }
-.p-gourmet{
-  font-family:var(--font-mono); font-size:8.5px; letter-spacing:.2em; text-transform:uppercase;
-  color:var(--gold); border:1px solid color-mix(in srgb, var(--gold) 60%, transparent);
-  padding:3px 7px; border-radius:999px;
-}
-/* Badge de etiqueta: misma forma que .p-gourmet, cambia solo el color.
-   Las variables tienen que existir en este archivo, no en admin.css. */
-.p-badge-tag{
-  font-family:var(--font-mono); font-size:8.5px; letter-spacing:.2em; text-transform:uppercase;
-  padding:3px 7px; border-radius:999px; white-space:nowrap;
-}
-/* El dorado limpio es demasiado claro para texto sobre crema (1,8:1): por eso
-   este va relleno en carbón con la letra dorada, en vez de contorno. */
-.p-badge-tag.c-dorado{ background:var(--carbon); color:var(--gold); border:1px solid var(--carbon); }
-.p-badge-tag.c-rojo{   color:var(--accent);    border:1px solid color-mix(in srgb, var(--accent) 60%, transparent); }
-.p-badge-tag.c-verde{  color:var(--accent-2);  border:1px solid color-mix(in srgb, var(--accent-2) 60%, transparent); }
-.p-badge-tag.c-oliva{  color:var(--green);     border:1px solid color-mix(in srgb, var(--green) 60%, transparent); }
-.p-badge-tag.c-gris{   color:var(--muted);     border:1px solid color-mix(in srgb, var(--muted) 60%, transparent); }
-.p-badge-tag.c-negro{  color:var(--ink);       border:1px solid color-mix(in srgb, var(--ink) 60%, transparent); }
 .p-desc{ font-size:13.5px; color:var(--muted); line-height:1.5; margin:0; flex:1; text-wrap:pretty; }
 .p-actions{ display:flex; gap:8px; margin-top:4px; }
 .p-add{
@@ -2016,11 +2004,7 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
     box-shadow:0 1px 2px rgba(30,20,10,.04), 0 8px 22px rgba(30,20,10,.05);
   }
   .p-feat-media{ position:relative; aspect-ratio:16/10; background:var(--bg-2); overflow:hidden; }
-  .p-feat-badge{
-    position:absolute; left:12px; top:12px; z-index:2;
-    font-family:var(--font-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
-    padding:6px 10px; border-radius:999px; background:var(--gold); color:var(--ink); font-weight:500;
-  }
+  .p-feat-media .p-badge{ font-size:10px; letter-spacing:.14em; padding:6px 10px; }
   .p-feat-price{
     position:absolute; right:12px; bottom:12px; z-index:2;
     font-family:var(--font-display); font-size:18px; font-weight:600; font-variant-numeric:lining-nums tabular-nums;
@@ -2040,9 +2024,11 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   .p-row{ background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:10px; display:flex; gap:12px; align-items:center; }
   .p-row-media{ width:76px; height:76px; border-radius:12px; flex:none; overflow:hidden; background:var(--bg-2); position:relative; }
   .p-row-main{ flex:1; min-width:0; }
-  .p-row-title{ display:flex; align-items:baseline; gap:7px; }
-  .p-row-title h3{ font-family:var(--font-display); font-size:17.5px; font-weight:600; letter-spacing:-.018em; line-height:1.2; margin:0; }
-  .p-row-flag{ font-family:var(--font-mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-2); flex:none; }
+  /* La foto de la fila mide 76px: los cartelitos van junto al nombre y bajan
+     de renglón si no entran. */
+  .p-row-title{ display:flex; align-items:center; gap:4px 6px; flex-wrap:wrap; }
+  .p-row-title h3{ font-family:var(--font-display); font-size:17.5px; font-weight:600; letter-spacing:-.018em; line-height:1.2; margin:0 2px 0 0; }
+  .p-row-title .p-badge{ font-size:8.5px; letter-spacing:.12em; padding:3px 7px; }
   .p-row-desc{ margin:3px 0 6px; font-size:12.5px; line-height:1.4; color:var(--muted); }
   .p-row-price{ font-family:var(--font-display); font-size:16.5px; font-weight:600; font-variant-numeric:lining-nums tabular-nums; }
   .p-row-side{ flex:none; display:flex; flex-direction:column; gap:6px; align-items:center; }
@@ -2079,6 +2065,9 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   .emp-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
   .emp-card{ padding:10px; gap:9px; border-radius:16px; min-width:0; }
   .emp-media{ aspect-ratio:16/11; border-radius:11px; margin-bottom:0; }
+  /* Tarjeta de media pantalla y sin lupa visible (no hay hover): todo el ancho. */
+  .emp-media .p-badges{ left:7px; top:7px; right:7px; gap:4px; }
+  .emp-media .p-badge{ font-size:8px; letter-spacing:.1em; padding:4px 7px; }
   .emp-head h4{ font-size:16px; }
   .emp-card p{ font-size:11.5px; min-height:31px; height:31px; overflow:hidden; margin:0; line-height:1.35; }
   /* Pie apilado: rótulo arriba, stepper a lo ancho. Al lado no entran ni el
@@ -2388,7 +2377,6 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 
 /* ---- estados agotados / flags en la fila densa ---- */
 @media (max-width:760px){
-  .p-row-flag.hot{ color:var(--accent); }
   .p-row-add:disabled, .p-row-half:disabled, .p-feat-add:disabled, .p-feat-half:disabled{ opacity:.45; cursor:not-allowed; }
   .p-row-half:hover:not(:disabled){ border-color:var(--gold); }
   .p-row.is-agotado .p-row-media{ opacity:.75; }
@@ -2567,7 +2555,7 @@ html.ficha-abierta .toast{ top:calc(14px + env(safe-area-inset-top)); bottom:aut
   .ficha-agregar, .ficha-half, .ficha-step{ height:50px; }
   /* Pista en la destacada: la lupa se ve siempre. Las filas no la llevan. */
   .p-feat .media-zoom::after{ opacity:1; transform:none; }
-  .p-feat-badge, .p-feat-price{ pointer-events:none; }
+  .p-feat-price{ pointer-events:none; }
 }
 @media (max-width:760px) and (prefers-reduced-motion:reduce){
   .ficha-hoja{ animation:none; transition:none; }

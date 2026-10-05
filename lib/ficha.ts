@@ -26,17 +26,31 @@ export interface FichaItem {
   foto?: string;
 }
 
+/* ── cartelitos: los mismos en la foto de la tarjeta y en la ficha ── */
+
+const deEtiquetas = (badges: { label: string; color: string }[] = []): BadgeFicha[] =>
+  badges.map((b) => ({ texto: b.label, clase: `p-badge c-${b.color}` }));
+
+/**
+ * El interruptor "★ popular" del producto, y después las etiquetas del panel
+ * (ya filtradas y ordenadas en `lib/catalog-build.ts`). Nada sale de los tags:
+ * antes "Veggie" y "Picante" estaban escritos acá y no respetaban el panel.
+ */
+export function cartelitosDePizza(p: Pizza): BadgeFicha[] {
+  const popular: BadgeFicha[] = p.popular && p.disponible !== false ? [{ texto: "★ Más pedida", clase: "p-badge top" }] : [];
+  return [...popular, ...deEtiquetas(p.badges)];
+}
+
+export function cartelitosDeEmpanada(e: Empanada): BadgeFicha[] {
+  return deEtiquetas(e.badges);
+}
+
 /* ── normalización: mismos cartelitos y precio que la tarjeta ── */
 
 export function fichaDePizza(p: Pizza): FichaItem {
-  const agotado = p.disponible === false;
-  const badges: BadgeFicha[] = [];
-  if (p.popular && !agotado) badges.push({ texto: "★ Más pedida", clase: "p-badge top" });
-  if (p.tags.includes("vegetariana")) badges.push({ texto: "Veggie", clase: "p-badge veg" });
-  if (p.tags.includes("picante")) badges.push({ texto: "Picante", clase: "p-badge hot" });
   return {
     id: p.id, tipo: "pizza", nombre: p.nombre, desc: p.desc, foto: p.foto,
-    precio: p.precio, precioTexto: fmt(p.precio), badges, agotado, tags: p.tags,
+    precio: p.precio, precioTexto: fmt(p.precio), badges: cartelitosDePizza(p), agotado: p.disponible === false, tags: p.tags,
   };
 }
 
@@ -46,7 +60,7 @@ export function fichaDeEmpanada(e: Empanada, pesoTexto: string): FichaItem {
   return {
     id: e.id, tipo: "empanada", nombre: e.nombre, desc: e.desc, foto: e.foto,
     precio, precioTexto: precio > 0 ? fmt(precio) : pesoTexto,
-    badges: e.badge ? [{ texto: e.badge.label, clase: `p-badge-tag c-${e.badge.color}` }] : [],
+    badges: cartelitosDeEmpanada(e),
     agotado: e.disponible === false, tags: e.tags,
   };
 }

@@ -35,17 +35,16 @@ const productType = (product: DatabaseProduct): ProductType => {
 type DestinoBadge = "pizzas" | "empanadas";
 
 /**
- * Devuelve el cartelito ganador para un producto: la etiqueta de menor `orden`
- * entre las que tiene y que se muestran en ese destino. Un solo badge por
- * tarjeta es decisión de diseño: cuando todo se destaca, nada se destaca.
+ * Devuelve los cartelitos de un producto: todas las etiquetas que tiene y que
+ * se muestran en ese destino, ordenadas por `orden`. Hasta el 05/10/2026 se
+ * mostraba una sola (la de menor orden); el dueño pidió verlas todas sobre la
+ * foto, para que, por ejemplo, Gourmet no quede tapada por Más pedida.
  */
-function resolverBadge(tags: string[], etiquetas: Etiqueta[], destino: DestinoBadge): EtiquetaBadge | undefined {
-  const aplicables = etiquetas.filter((e) =>
-    tags.includes(e.slug) &&
-    (e.mostrar_badge === "ambos" || e.mostrar_badge === destino));
-  if (aplicables.length === 0) return undefined;
-  const gana = aplicables.reduce((a, b) => (b.orden < a.orden ? b : a));
-  return { label: gana.label, color: gana.color };
+function resolverBadges(tags: string[], etiquetas: Etiqueta[], destino: DestinoBadge): EtiquetaBadge[] {
+  return etiquetas
+    .filter((e) => tags.includes(e.slug) && (e.mostrar_badge === "ambos" || e.mostrar_badge === destino))
+    .sort((a, b) => a.orden - b.orden)
+    .map((e) => ({ label: e.label, color: e.color }));
 }
 
 function mapPizza(product: DatabaseProduct, etiquetas: Etiqueta[]): Pizza {
@@ -59,7 +58,7 @@ function mapPizza(product: DatabaseProduct, etiquetas: Etiqueta[]): Pizza {
     tags,
     disponible: product.disponible !== false,
     popular: product.popular,
-    badge: resolverBadge(tags, etiquetas, "pizzas"),
+    badges: resolverBadges(tags, etiquetas, "pizzas"),
   };
 }
 
@@ -72,7 +71,7 @@ function mapEmpanada(product: DatabaseProduct, etiquetas: Etiqueta[]): Empanada 
     desc: String(product.desc ?? ""),
     tags,
     disponible: product.disponible !== false,
-    badge: resolverBadge(tags, etiquetas, "empanadas"),
+    badges: resolverBadges(tags, etiquetas, "empanadas"),
   };
 }
 
