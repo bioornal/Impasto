@@ -453,8 +453,13 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   `Checkout.tsx:79`) y Chrome headless contra `pnpm dev` con la base real: 1280 px (12 pizzas
   y 5 empanadas con sus cartelitos sobre la foto, ninguno junto al nombre) y 375 px (destacada,
   filas y empanadas, sin desborde); el aviso "solo retiro" se vio con `/api/store-status`
-  interceptado. El ícono de esos avisos pasó de una fachada de negocio a una bolsa. Sin
-  probar en producción.
+  interceptado. El ícono de esos avisos pasó de una fachada de negocio a una bolsa. Commits
+  `e78eb6e` (etiquetas), `333560b` (copy) y `3347ee6` (docs); Netlify `ready` el 05/10. En
+  `www.impastopizzas.com` se verificó: el HTML trae los cartelitos `.p-badge c-*` sobre la foto
+  y ningún `.p-badge-tag`, la home dice "Retirá en nuestra cocina" y ningún "el local", y
+  `llms.txt` lleva la dirección de nuestra cocina. Sin ver todavía: el checkout, la
+  confirmación, el seguimiento y el mail de un pedido real para retirar, ni el dueño en su
+  teléfono.
 
 ### Distinción que se presta a confusión
 
