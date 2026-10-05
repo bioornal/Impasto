@@ -18,9 +18,9 @@ import {
 const DURACION_PASO = 220;
 
 function FotoDeFicha({ item, carga }: { item: FichaItem; carga: "lazy" | "eager" }) {
-  if (item.tipo === "bebida") return <DrinkIllus id={item.id} label={item.nombre} name={item.nombre} loading={carga} />;
-  if (item.tipo === "empanada") return <EmpanadaIllus id={item.id} name={item.nombre} loading={carga} />;
-  return <PizzaIllus id={item.id} name={item.nombre} tags={item.tags} loading={carga} />;
+  if (item.tipo === "bebida") return <DrinkIllus id={item.id} label={item.nombre} name={item.nombre} src={item.foto} loading={carga} />;
+  if (item.tipo === "empanada") return <EmpanadaIllus id={item.id} name={item.nombre} src={item.foto} loading={carga} />;
+  return <PizzaIllus id={item.id} name={item.nombre} tags={item.tags} src={item.foto} loading={carga} />;
 }
 
 interface ProductSheetProps {
@@ -95,7 +95,7 @@ export function ProductSheet({ items, indice, onIndice, onClose, accion }: Produ
       if (i === null) continue;
       const otro = items[i];
       const img = new Image();
-      img.src = imagenDeProducto(otro.tipo, otro.nombre, otro.id, otro.tags);
+      img.src = otro.foto || imagenDeProducto(otro.tipo, otro.nombre, otro.id, otro.tags);
     }
   }, [items, anterior, siguiente]);
 

@@ -23,6 +23,7 @@ export interface FichaItem {
   badges: BadgeFicha[];
   agotado: boolean;
   tags: string[];
+  foto?: string;
 }
 
 /* ── normalización: mismos cartelitos y precio que la tarjeta ── */
@@ -34,7 +35,7 @@ export function fichaDePizza(p: Pizza): FichaItem {
   if (p.tags.includes("vegetariana")) badges.push({ texto: "Veggie", clase: "p-badge veg" });
   if (p.tags.includes("picante")) badges.push({ texto: "Picante", clase: "p-badge hot" });
   return {
-    id: p.id, tipo: "pizza", nombre: p.nombre, desc: p.desc,
+    id: p.id, tipo: "pizza", nombre: p.nombre, desc: p.desc, foto: p.foto,
     precio: p.precio, precioTexto: fmt(p.precio), badges, agotado, tags: p.tags,
   };
 }
@@ -43,7 +44,7 @@ export function fichaDePizza(p: Pizza): FichaItem {
 export function fichaDeEmpanada(e: Empanada, pesoTexto: string): FichaItem {
   const precio = Number(e.precio) || 0;
   return {
-    id: e.id, tipo: "empanada", nombre: e.nombre, desc: e.desc,
+    id: e.id, tipo: "empanada", nombre: e.nombre, desc: e.desc, foto: e.foto,
     precio, precioTexto: precio > 0 ? fmt(precio) : pesoTexto,
     badges: e.badge ? [{ texto: e.badge.label, clase: `p-badge-tag c-${e.badge.color}` }] : [],
     agotado: e.disponible === false, tags: e.tags,
@@ -52,7 +53,7 @@ export function fichaDeEmpanada(e: Empanada, pesoTexto: string): FichaItem {
 
 export function fichaDeBebida(b: Bebida): FichaItem {
   return {
-    id: b.id, tipo: "bebida", nombre: b.nombre, desc: "",
+    id: b.id, tipo: "bebida", nombre: b.nombre, desc: "", foto: b.foto,
     precio: b.precio, precioTexto: fmt(b.precio), badges: [], agotado: b.disponible === false, tags: [],
   };
 }
