@@ -34,14 +34,14 @@ export default function PrivacidadPage() {
 
       <h2>3. Para qué los usamos</h2>
       <p>
-        Para procesar y entregar tu pedido, confirmártelo por correo o WhatsApp, avisar al local y
+        Para procesar y entregar tu pedido, confirmártelo por correo o WhatsApp, avisar a la cocina y
         mantener el historial de compras. No los usamos para publicidad sin tu consentimiento.
       </p>
 
       <h2>4. Con quién los compartimos</h2>
       <p>
         Con los servicios necesarios para que el pedido funcione: Mercado Pago (procesamiento del
-        pago), InsForge (base de datos), Resend (correo) y Telegram (aviso interno al local). No
+        pago), InsForge (base de datos), Resend (correo) y Telegram (aviso interno a la cocina). No
         vendemos ni cedemos tus datos a terceros.
       </p>
 

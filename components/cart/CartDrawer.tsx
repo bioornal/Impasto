@@ -119,10 +119,10 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
             <div className="drawer-ship is-pickup">
               <div className="drawer-ship-top">
                 <span className="ship-icon" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 10l2-6h16l2 6" /><path d="M2 10h20" /><path d="M4 10v10h16V10" /><path d="M10 20v-5h4v5" /></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
                 </span>
                 <div className="ship-text">
-                  <b>Por ahora, solo retiro en el local</b>
+                  <b>Por ahora, solo retiro en nuestra cocina</b>
                   <small>{tienda.delivery.motivo}</small>
                 </div>
               </div>
@@ -243,7 +243,7 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
           <div className="drawer-foot">
             <div className="tot-row"><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
             <div className="tot-row">
-              <span>{sinDelivery ? "Retiro en el local" : "Envío"}</span>
+              <span>{sinDelivery ? "Retiro en nuestra cocina" : "Envío"}</span>
               {sinDelivery ? (
                 <span>Sin cargo</span>
               ) : freeShipping ? (

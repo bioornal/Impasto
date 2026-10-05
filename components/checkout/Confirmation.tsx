@@ -75,7 +75,7 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
           <p className="confirm-lede">
             Ya tomamos tu pedido. {order.mode === "delivery"
               ? `Lo estamos preparando y te llega en ${business.deliveryEstimate} aproximadamente.`
-              : `Lo estamos preparando: podés pasar a retirarlo en ${business.deliveryEstimate} aproximadamente.`}
+              : `Lo estamos preparando: podés acercarte a nuestra cocina a retirarlo en ${business.deliveryEstimate} aproximadamente.`}
           </p>
         </div>
 
@@ -169,7 +169,7 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
                 : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
               }
             </div>
-            <div><small>{order.mode === "delivery" ? "Entregamos en" : "Retirás en"}</small><b>{order.mode === "delivery" ? order.dir : business.address}</b></div>
+            <div><small>{order.mode === "delivery" ? "Entregamos en" : "Retirás en nuestra cocina"}</small><b>{order.mode === "delivery" ? order.dir : business.address}</b></div>
           </div>
           <div className="cd-row">
             <div className="cd-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>

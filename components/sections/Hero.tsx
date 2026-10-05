@@ -87,7 +87,7 @@ export function Features({ freeShippingFrom: _freeShippingFrom, desde }: { freeS
       ? [`Pizzas desde ${fmt(desde)}`, `${PORCIONES.titulo}, con uno o dos gustos`]
       : ["Pizza a la piedra", "Técnica napoletana"],
     ["Delivery propio", "Envíos en Puerto Iguazú"],
-    ["Take away", "Retiro en el local sin esperas"],
+    ["Take away", "Retirá en nuestra cocina, sin esperas"],
     [INGREDIENTES.titulo, INGREDIENTES.detalle],
   ];
 

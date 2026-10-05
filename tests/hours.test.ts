@@ -89,12 +89,14 @@ chequear("validarModalidad · delivery activo acepta delivery", errorDe(() => va
 chequear("validarModalidad · pausado acepta retiro", errorDe(() => validarModalidad(sinDelivery, "takeaway")) === "");
 chequear(
   "validarModalidad · pausado rechaza delivery con el motivo",
-  errorDe(() => validarModalidad(sinDelivery, "delivery")) === "Por la lluvia pausamos el delivery. Elegí retiro en el local para completar tu pedido.",
+  errorDe(() => validarModalidad(sinDelivery, "delivery")) === "Por la lluvia pausamos el delivery. Elegí retiro en nuestra cocina para completar tu pedido.",
 );
 chequear(
   "validarModalidad · agrega el punto si el motivo no lo tiene",
-  errorDe(() => validarModalidad(sinDeliverySinPunto, "delivery")) === "Sin repartidores esta noche. Elegí retiro en el local para completar tu pedido.",
+  errorDe(() => validarModalidad(sinDeliverySinPunto, "delivery")) === "Sin repartidores esta noche. Elegí retiro en nuestra cocina para completar tu pedido.",
 );
+// No hay local a la calle: el cliente retira en la cocina (pedido del dueño, 05/10/2026).
+chequear("el aviso por defecto no habla de un local", !/\blocal\b/i.test(MENSAJE_DELIVERY_DEFAULT) && /nuestra cocina/.test(MENSAJE_DELIVERY_DEFAULT));
 
 // Sábado 21:00 en Iguazú: abierto por horario.
 const sabado = new Date("2026-08-22T00:00:00Z");

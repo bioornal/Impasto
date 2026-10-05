@@ -55,12 +55,12 @@ export function plantilla(aviso: AvisoPedido, business: BusinessConfig, tipo: Ti
 
   <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:12px;">
     <tr><td style="padding:3px 0;color:#7a6f65;">Subtotal</td><td style="text-align:right;">${fmt(aviso.subtotal)}</td></tr>
-    <tr><td style="padding:3px 0;color:#7a6f65;">${esDelivery ? "Envío" : "Retiro en local"}</td><td style="text-align:right;">${aviso.shipping === 0 ? (esDelivery ? "Gratis" : "—") : fmt(aviso.shipping)}</td></tr>
+    <tr><td style="padding:3px 0;color:#7a6f65;">${esDelivery ? "Envío" : "Retiro en nuestra cocina"}</td><td style="text-align:right;">${aviso.shipping === 0 ? (esDelivery ? "Gratis" : "—") : fmt(aviso.shipping)}</td></tr>
     <tr><td style="padding:8px 0 0;font-weight:700;font-size:16px;">Total</td><td style="text-align:right;font-weight:700;font-size:16px;">${fmt(aviso.total)}</td></tr>
   </table>
 
   <div style="margin-top:20px;padding:14px;background:#faf7f2;border-radius:10px;font-size:14px;">
-    <p style="margin:0 0 6px;"><strong>${esDelivery ? "Entregamos en" : "Retirás en"}:</strong> ${escape(esDelivery ? (aviso.dir || "") : business.address)}</p>
+    <p style="margin:0 0 6px;"><strong>${esDelivery ? "Entregamos en" : "Retirás en nuestra cocina"}:</strong> ${escape(esDelivery ? (aviso.dir || "") : business.address)}</p>
     <p style="margin:0;"><strong>Pago:</strong> ${escape(METODO_LABEL[aviso.metodoPago] || aviso.metodoPago)}</p>
   </div>
 

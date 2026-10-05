@@ -19,7 +19,7 @@ export default function TerminosPage() {
       <p>
         {BUSINESS.name} es una pizzería artesanal con delivery propio y take away en{" "}
         {BUSINESS.locationLabel} (Argentina). El sitio permite armar pedidos online que se pagan al
-        confirmar y se retiran en el local o se envían a domicilio.
+        confirmar y se retiran en nuestra cocina o se envían a domicilio.
       </p>
 
       <h2>2. Pedidos y precios</h2>

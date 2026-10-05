@@ -28,10 +28,10 @@ export function GET() {
 
 > Pizzería artesanal en ${BUSINESS.locationLabel}, Argentina. Pizza a la piedra con técnica napoletana. Delivery propio y take away.
 
-## Datos del local
+## Datos de contacto
 - Nombre: ${BUSINESS.name}
 - Ciudad: ${BUSINESS.locationLabel}
-- Dirección: ${BUSINESS.address}
+- Dirección de nuestra cocina: ${BUSINESS.address} (no hay negocio a la calle; los pedidos para retirar se buscan en la cocina)
 - Teléfono y WhatsApp: ${BUSINESS.phone}
 - Email: ${BUSINESS.email}
 - Horario: ${BUSINESS.hours}

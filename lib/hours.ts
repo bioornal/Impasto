@@ -88,7 +88,7 @@ export function proximaApertura(config: HorarioConfig, referencia = new Date()) 
 }
 
 export const MENSAJE_DELIVERY_DEFAULT =
-  "Por el momento no estamos haciendo envíos a domicilio. Podés pedir online y retirarlo en el local.";
+  "Por el momento no estamos haciendo envíos a domicilio. Podés pedir online y retirarlo en nuestra cocina.";
 
 export interface EstadoDelivery {
   activo: boolean;
@@ -114,7 +114,7 @@ export function validarModalidad(business: BusinessConfig, mode: string): void {
   const delivery = estadoDelivery(business);
   if (delivery.activo) return;
   const motivo = /[.!?…]$/.test(delivery.motivo) ? delivery.motivo : `${delivery.motivo}.`;
-  throw new Error(`${motivo} Elegí retiro en el local para completar tu pedido.`);
+  throw new Error(`${motivo} Elegí retiro en nuestra cocina para completar tu pedido.`);
 }
 
 export interface EstadoTienda {

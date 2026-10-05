@@ -31,7 +31,7 @@ function Topbar({ business }: { business: BusinessConfig }) {
             <span>{business.address} · {business.city}</span>
             <span>{business.phone}</span>
             <span className="gold">
-              {sinDelivery ? "Solo retiro en el local" : <>Envío gratis desde {fmt(business.freeShippingFrom)}</>}
+              {sinDelivery ? "Solo retiro en nuestra cocina" :<>Envío gratis desde {fmt(business.freeShippingFrom)}</>}
             </span>
           </div>
         </div>
@@ -56,10 +56,10 @@ function Topbar({ business }: { business: BusinessConfig }) {
         <div className="aviso-delivery" role="status">
           <div className="container aviso-delivery-inner">
             <span className="aviso-delivery-icon" aria-hidden="true">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 10l2-6h16l2 6" /><path d="M2 10h20" /><path d="M4 10v10h16V10" /><path d="M10 20v-5h4v5" /></svg>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
             </span>
             <p>
-              <b>Por ahora, solo retiro en el local</b>
+              <b>Por ahora, solo retiro en nuestra cocina</b>
               <span>{tienda.delivery.motivo}</span>
               <span className="aviso-delivery-dir">Te esperamos en {business.address}.</span>
             </p>

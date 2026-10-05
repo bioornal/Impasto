@@ -179,6 +179,15 @@ chequear("sabe qué días no abre, desde la configuración", promptCerrado.inclu
 chequear("sabe el teléfono y el Instagram", prompt.includes(business.phone) && prompt.includes(business.instagram));
 chequear("sabe el concepto de la marca", prompt.includes(LEMA));
 chequear("sabe por qué se llama así", prompt.includes(ORIGEN_DEL_NOMBRE));
+
+/* ── no hay local a la calle: se retira en la cocina (pedido del dueño, 05/10/2026) ── */
+// El bot repite lo que lee: si el prompt dice "local", se lo dice al cliente.
+for (const [nombre, texto] of [["abierto", prompt], ["cerrado", promptCerrado], ["sin delivery", promptSinDelivery]] as const) {
+  chequear(`prompt ${nombre} · no dice "local"`, !/\blocal\b/i.test(texto));
+}
+chequear("dice que se puede retirar en nuestra cocina", /acercarse a nuestra cocina/i.test(prompt));
+chequear("sin delivery, el retiro también es en nuestra cocina", /nuestra cocina/i.test(promptSinDelivery));
+chequear("las preguntas frecuentes no dicen \"local\"", preguntasFrecuentes(business).every((item) => !/\blocal\b/i.test(`${item.pregunta} ${item.respuesta}`)));
 chequear("las preguntas frecuentes son las del sitio", preguntasFrecuentes(business).every((item) => prompt.includes(item.pregunta)));
 
 console.log(fallos === 0 ? "\nTodo en orden." : `\n${fallos} fallo(s).`);

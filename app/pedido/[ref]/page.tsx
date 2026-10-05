@@ -217,7 +217,7 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
                   ? "Gracias por elegir Impasto. ¡Esperamos que lo disfrutes!"
                   : esDelivery
                     ? `Tu pedido está en proceso. Tiempo estimado de entrega: ${order.deliveryEstimate}.`
-                    : `Tu pedido está en proceso. Podés pasar a retirarlo en ${order.deliveryEstimate} aproximadamente.`}
+                    : `Tu pedido está en proceso. Podés acercarte a nuestra cocina a retirarlo en ${order.deliveryEstimate} aproximadamente.`}
             </p>
           </div>
 
@@ -360,7 +360,7 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
               <span>{fmt(order.subtotal)}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>{esDelivery ? "Envío" : "Retiro en local"}</span>
+              <span>{esDelivery ? "Envío" : "Retiro en nuestra cocina"}</span>
               <span>{esDelivery ? (order.envio === 0 ? "Gratis" : fmt(order.envio)) : "Sin cargo"}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "16px", fontWeight: 700, color: "#2a2018", marginTop: "8px", paddingTop: "8px", borderTop: "1px solid #f0eae1" }}>
@@ -375,7 +375,7 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
           <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontSize: "14px" }}>
             <div>
               <small style={{ display: "block", color: "#8a7a6b", fontSize: "11.5px", textTransform: "uppercase" }}>Modalidad</small>
-              <b>{esDelivery ? "🛵 Delivery a domicilio" : "🏪 Retiro en el local"}</b>
+              <b>{esDelivery ? "🛵 Delivery a domicilio" : "🍕 Retiro en nuestra cocina"}</b>
               <div style={{ color: "#5a4b3f", marginTop: "2px" }}>{esDelivery ? order.direccion : order.businessAddress}</div>
             </div>
 

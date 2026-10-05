@@ -61,7 +61,7 @@ export function plantillaLocal(aviso: AvisoPedido, tipo: TipoAviso): string {
   lineas.push("");
 
   const dir = unaLinea(aviso.dir);
-  lineas.push(esDelivery ? `Delivery — ${dir || "SIN DIRECCIÓN"}` : "Retira en el local");
+  lineas.push(esDelivery ? `Delivery — ${dir || "SIN DIRECCIÓN"}` : "Retira en la cocina");
 
   const contacto = [unaLinea(aviso.nombre), unaLinea(aviso.tel)].filter(Boolean).join(" — ");
   if (contacto) lineas.push(contacto);

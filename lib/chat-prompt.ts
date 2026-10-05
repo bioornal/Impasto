@@ -131,15 +131,19 @@ export function promptVendedor(
   estado: EstadoTienda,
 ): string {
   const ahora = estado.abierto
-    ? "El local está ABIERTO ahora."
-    : `El local está CERRADO ahora. ${estado.motivo} Invitá igual a mirar la carta y a volver cuando abra.`;
+    ? "Estamos ABIERTOS ahora."
+    : `Estamos CERRADOS ahora. ${estado.motivo} Invitá igual a mirar la carta y a volver cuando abra.`;
   const cerrados = diasCerrados(business.diasApertura);
   // El horario va siempre, también con el local cerrado: es justo cuando más
   // lo preguntan. Antes solo viajaba con el local abierto.
-  const local = [
+  // El dueño no tiene local a la calle (05/10/2026): el bot nunca dice "local",
+  // porque repite lo que lee acá.
+  const cocina = [
     `- ${ahora}`,
+    "- No tenemos un negocio a la calle: es nuestra cocina. Quien elige retiro puede acercarse a",
+    "  nuestra cocina a buscar su pedido. Hablá siempre de \"nuestra cocina\".",
     `- Horario: ${business.hours}. Último pedido: ${business.horaCierre}.${cerrados ? ` ${cerrados}.` : ""}`,
-    `- Dirección: ${business.address}, ${business.locationLabel}.`,
+    `- Dirección de nuestra cocina: ${business.address}, ${business.locationLabel}.`,
     `- Teléfono: ${business.phone}. WhatsApp: ${business.whatsappPhone}.`,
     business.instagram ? `- Instagram: ${business.instagram}.` : null,
     business.email ? `- Mail: ${business.email}.` : null,
@@ -150,11 +154,11 @@ export function promptVendedor(
     ? `- Delivery: ${pesos(business.deliveryFee)}.
 - Envío GRATIS a partir de ${pesos(business.freeShippingFrom)} de subtotal. Si la persona está
   cerca de ese monto, decíselo: es el argumento que más cierra.
-- También se puede retirar por el local: ${business.address}.
+- También pueden acercarse a nuestra cocina a retirar el pedido: ${business.address}.
 - Tiempo estimado, tanto para delivery como para retiro: ${business.deliveryEstimate}. Es un
   estimado y lo decís como estimado: nunca prometas una hora exacta de llegada.`
     : `- HOY NO HAY DELIVERY. ${estado.delivery.motivo}
-- Solo se puede pedir para retirar por el local: ${business.address}. Si preguntan por el
+- Solo se puede pedir para retirar en nuestra cocina: ${business.address}. Si preguntan por el
   envío, explicalo con amabilidad y ofrecé el retiro. No ofrezcas envío a domicilio.
 - Tiempo estimado para retirar: ${business.deliveryEstimate}. Es un estimado y lo decís como
   estimado: nunca prometas una hora exacta.`;
@@ -179,8 +183,8 @@ export function promptVendedor(
     .join("\n");
 
   const fuentesPermitidas = haySobreElProducto
-    ? "QUIÉNES SOMOS, EL LOCAL, EL ENVÍO, SOBRE EL PRODUCTO, PREGUNTAS FRECUENTES y LA CARTA"
-    : "QUIÉNES SOMOS, EL LOCAL, EL ENVÍO y LA CARTA";
+    ? "QUIÉNES SOMOS, NUESTRA COCINA, EL ENVÍO, SOBRE EL PRODUCTO, PREGUNTAS FRECUENTES y LA CARTA"
+    : "QUIÉNES SOMOS, NUESTRA COCINA, EL ENVÍO y LA CARTA";
 
   return `Sos el asistente de ${business.name}, una pizzería de ${business.locationLabel}.
 Tu único trabajo es ayudar a la persona a elegir qué pedir y entusiasmarla para que lo pida.
@@ -205,10 +209,10 @@ LO QUE NO HACÉS NUNCA
 - No tomás pedidos, no armás el carrito y no confirmás nada. El cliente agrega solo, con su
   propio click. Si te piden que confirmes un pedido, explicá con amabilidad cómo hacerlo en la página.
 - No inventás nada. Solo existe lo que está en ${fuentesPermitidas}.
-  Si una pregunta frecuente no coincide con EL LOCAL o EL ENVÍO, vale lo de EL LOCAL y EL ENVÍO:
+  Si una pregunta frecuente no coincide con NUESTRA COCINA o EL ENVÍO, vale lo de NUESTRA COCINA y EL ENVÍO:
   es el estado de hoy.
 - Nunca das datos bancarios (CBU, alias, titular): aparecen en el checkout al elegir transferencia.
-  Si te preguntan algo que no figura ahí, decí que no lo tenés y pasales el WhatsApp del local:
+  Si te preguntan algo que no figura ahí, decí que no lo tenés y pasales nuestro WhatsApp:
   ${business.whatsappPhone}.
 - No afirmás nada sobre cantidad de reseñas, puntajes ni años de trayectoria, aunque los veas
   en algún lado. Del tiempo solo podés decir el estimado que figura en EL ENVÍO.
@@ -216,8 +220,8 @@ LO QUE NO HACÉS NUNCA
 - No hablás de otra cosa que no sea ${business.name} y su carta. Si te preguntan otra cosa,
   volvé al tema con simpatía.
 
-EL LOCAL
-${local}
+NUESTRA COCINA
+${cocina}
 
 EL ENVÍO
 ${envio}

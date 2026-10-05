@@ -41,8 +41,9 @@ export function preguntasFrecuentes(business: BusinessConfig): PreguntaFrecuente
   return [
     {
       pregunta: "¿Dónde queda Impasto?",
-      respuesta: `Estamos en ${business.address}, ${business.locationLabel}. `
-        + "Atendemos con delivery propio en la ciudad y también podés retirar tu pedido por el local.",
+      // No hay local a la calle: es la cocina, y ahí se retiran los pedidos.
+      respuesta: `Nuestra cocina está en ${business.address}, ${business.locationLabel}. `
+        + "Hacemos delivery propio en la ciudad y, si preferís, podés acercarte a retirar tu pedido.",
     },
     {
       pregunta: "¿Cuáles son los horarios?",

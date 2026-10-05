@@ -56,7 +56,7 @@ chequear("un método desconocido no rompe el aviso", otro.includes("PAGO: canje"
 chequear("delivery muestra la dirección", efectivo.includes("Delivery — Av. Victoria Aguirre 123"));
 
 const retiro = plantillaLocal({ ...base, mode: "takeaway", dir: "" }, "pedido_recibido");
-chequear("el retiro no inventa dirección", retiro.includes("Retira en el local") && !retiro.includes("Delivery"));
+chequear("el retiro no inventa dirección", retiro.includes("Retira en la cocina") && !retiro.includes("Delivery"));
 
 const sinDir = plantillaLocal({ ...base, dir: "" }, "pedido_recibido");
 chequear("un delivery sin dirección lo canta en vez de callarlo", sinDir.includes("SIN DIRECCIÓN"));

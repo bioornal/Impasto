@@ -227,7 +227,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             </div>
             {!delivery.activo && (
               <div className="co-pickup-note" role="status">
-                <b>Por ahora, solo retiro en el local.</b> {delivery.motivo}
+                <b>Por ahora, solo retiro en nuestra cocina.</b> {delivery.motivo}
               </div>
             )}
             <div className="co-modes">
@@ -249,7 +249,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
               </button>
               <button className={`radio-card ${!isDelivery ? "on" : ""}`} aria-pressed={!isDelivery} onClick={() => set("mode", "takeaway")}>
                 <span className="radio-card-top">
-                  <b>Retiro en el local</b>
+                  <b>Retiro en nuestra cocina</b>
                   <span className={`dot ${!isDelivery ? "on" : ""}`} />
                 </span>
                 <small>
@@ -377,7 +377,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             <div className="co-lines" style={{ paddingTop: 14, borderTop: "1px solid rgba(246,241,231,.16)" }}>
               <div><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
               <div>
-                <span>{isDelivery ? "Envío" : "Retiro en local"}</span>
+                <span>{isDelivery ? "Envío" : "Retiro en nuestra cocina"}</span>
                 {isDelivery && shipping === 0 ? (
                   <span className="free"><s className="was">{fmt(business.deliveryFee)}</s> Gratis</span>
                 ) : (
@@ -394,7 +394,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             {quoteError && <div className="co-error">{quoteError}</div>}
             {submitError && <div className="co-error">{submitError}</div>}
 
-            {pendingManual && <div role="status">Hay un pedido pendiente de confirmación. Reintentá para recuperar el pedido original. Los cambios no se enviarán hasta confirmarlo; si no puede completarse, contactá al local antes de iniciar otro pedido.</div>}
+            {pendingManual && <div role="status">Hay un pedido pendiente de confirmación. Reintentá para recuperar el pedido original. Los cambios no se enviarán hasta confirmarlo; si no puede completarse, contactanos antes de iniciar otro pedido.</div>}
             <button className="co-cta" onClick={confirm} disabled={submitting || (!pendingManual && (quoteLoading || Boolean(quoteError)))}>
               {submitting
                 ? "Registrando pedido…"
@@ -408,7 +408,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             <small className="co-note">
               {isDelivery
                 ? `Tarifa única de ${fmt(business.deliveryFee)} en ${business.city} centro. Gratis desde ${fmt(business.freeShippingFrom)}.`
-                : `Retirás en ${business.address}. Te avisamos cuando esté listo.`}
+                : `Retirás en nuestra cocina: ${business.address}. Te avisamos cuando esté listo.`}
             </small>
           </div>
 
@@ -450,7 +450,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
               ))}
               <div className="co-summary-line"><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
               <div className="co-summary-line">
-                <span>{isDelivery ? "Envío" : "Retiro en el local"}</span>
+                <span>{isDelivery ? "Envío" : "Retiro en nuestra cocina"}</span>
                 <span>{isDelivery && shipping === 0 ? "Gratis" : shipping === 0 ? "Sin cargo" : fmt(shipping)}</span>
               </div>
             </div>
@@ -464,7 +464,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
           </div>
           {!delivery.activo && (
             <div className="co-pickup-note" role="status">
-              <b>Por ahora, solo retiro en el local.</b> {delivery.motivo}
+              <b>Por ahora, solo retiro en nuestra cocina.</b> {delivery.motivo}
             </div>
           )}
           <div className="co-modes">
@@ -482,7 +482,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             <button className={`m-radio ${!isDelivery ? "on" : ""}`} aria-pressed={!isDelivery} onClick={() => set("mode", "takeaway")}>
               <span className="m-radio-dot" />
               <span className="m-radio-body">
-                <b>Retiro en el local</b>
+                <b>Retiro en nuestra cocina</b>
                 <small>Listo en {business.deliveryEstimate}, sin cargo. {business.address}.</small>
               </span>
             </button>
@@ -565,7 +565,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
 
       <div className="co-footbar">
         {(quoteError || submitError) && <div className="co-error-card" role="alert">{quoteError || submitError}</div>}
-        {pendingManual && <div role="status">Hay un pedido pendiente. Reintentá para recuperar el original. Si no puede completarse, contactá al local antes de iniciar otro; los cambios no se enviarán.</div>}
+        {pendingManual && <div role="status">Hay un pedido pendiente. Reintentá para recuperar el original. Si no puede completarse, contactanos antes de iniciar otro; los cambios no se enviarán.</div>}
         <div className="co-footbar-row">
           <div className="co-footbar-total">
             <div className="lbl">Total</div>
@@ -584,7 +584,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
         <small className="co-footbar-note">
           {isDelivery
             ? `Tarifa única de ${fmt(business.deliveryFee)} en ${business.city} centro. Gratis desde ${fmt(business.freeShippingFrom)}.`
-            : `Retirás en ${business.address}. Te avisamos cuando esté listo.`}
+            : `Retirás en nuestra cocina: ${business.address}. Te avisamos cuando esté listo.`}
         </small>
       </div>
 
