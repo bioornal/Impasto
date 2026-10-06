@@ -147,7 +147,7 @@ export function Orders() {
                     <td><div className="tbl-strong">{o.cliente}</div><div className="tbl-muted">{o.tel}</div></td>
                     <td className="tbl-muted">{o.items.map(i => `${i.qty}× ${i.name}`).join(", ").slice(0, 40)}…</td>
                     <td><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>{o.mode === "delivery" ? <Icon.Truck /> : <Icon.Shop />}{o.mode === "delivery" ? "Delivery" : "Retiro"}</span></td>
-                    <td className="tbl-muted" style={{ textTransform: "capitalize" }}>{o.pago === "mercadopago" ? "MercadoPago" : o.pago}</td>
+                    <td className="tbl-muted" style={{ textTransform: "capitalize" }}>{o.pago === "mercadopago" ? "MercadoPago" : o.pago}{o.pago === "transferencia" && o.pagoEstado === "pendiente" && (o.comprobanteSubidoAt ? <div style={{ color: "var(--a-ok, #2e7d32)", fontWeight: 600, textTransform: "none" }}>📎 Comprobante</div> : <div style={{ textTransform: "none" }}>Sin comprobante</div>)}</td>
                     <td className="right tbl-price">{fmt(o.total)}</td>
                     <td><span className={`chip chip-${o.estado}`}>{o.estado.replace("-", " ")}</span></td>
                     <td className="tbl-muted text-mono">{timeAgo(o.fecha)}</td>
@@ -324,7 +324,7 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, p
           </div>
 
           <div style={{ padding: 14, background: "var(--a-bg)", borderRadius: 12, fontSize: 13.5, marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-            <div><b>Pago: </b><span style={{ textTransform: "capitalize" }}>{order.pago}</span>{order.cuentaTransferencia ? <span> · {order.cuentaTransferencia}</span> : null}<div className="text-muted" style={{ fontSize: 12 }}>Estado: {order.pagoEstado}</div></div>
+            <div><b>Pago: </b><span style={{ textTransform: "capitalize" }}>{order.pago}</span>{order.cuentaTransferencia ? <span> · {order.cuentaTransferencia}</span> : null}<div className="text-muted" style={{ fontSize: 12 }}>Estado: {order.pagoEstado}</div>{order.pago === "transferencia" && (order.comprobanteSubidoAt ? <div style={{ fontSize: 12.5, marginTop: 4 }}><a href={`/api/admin/pedidos/${order._dbId}/comprobante`} target="_blank" rel="noreferrer"><b>📎 Ver comprobante</b></a> <span className="text-muted">· subido {timeAgo(order.comprobanteSubidoAt)}</span></div> : <div className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>El cliente todavía no subió el comprobante</div>)}</div>
             {order.pagoEstado === "pendiente" && order.pago !== "mercadopago" && <button className="btn btn-success btn-sm" onClick={() => onPayment("aprobado")}>Marcar pago recibido</button>}
             {order.pagoEstado === "pendiente" && order.pago === "mercadopago" && <span className="text-muted" style={{ fontSize: 12 }}>{order.pagoMpManual ? "Verificar en MP y confirmar en Carro Fogón" : "Se actualiza automáticamente"}</span>}
             {order.puedeConsultarMP && <button className="btn btn-ghost btn-sm" disabled={consulting} onClick={async()=>{

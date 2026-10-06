@@ -5,6 +5,7 @@ import { fmt } from "@/lib/utils";
 import type { BusinessConfig } from "@/lib/business";
 import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
 import { esperaComprobante } from "@/lib/transferencia-pendiente";
+import { SubirComprobante } from "@/components/checkout/SubirComprobante";
 
 interface Order {
   numero: string;
@@ -58,7 +59,7 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
   const esperaPago = esperaComprobante(order.pago, order.estadoPago);
 
   const wspMensaje = order.pago === "transferencia"
-    ? `Hola! Te envío el comprobante de transferencia del pedido ${order.numero} por ${fmt(order.total)} (${order.nombre}).`
+    ? `Hola! Consulto por mi pedido ${order.numero} por ${fmt(order.total)} (${order.nombre}).`
     : `Hola! Hice el pedido ${order.numero} por ${fmt(order.total)} a nombre de ${order.nombre}.`;
 
   const wspUrl = `https://wa.me/${business.whatsappPhone}?text=${encodeURIComponent(wspMensaje)}`;
@@ -78,7 +79,7 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
           <h2>{esperaPago ? "Pedido registrado" : "Pedido recibido"}, {order.nombre.split(" ")[0]}</h2>
           <p className="confirm-lede">
             {esperaPago
-              ? "Lo empezamos a preparar apenas recibamos el comprobante de tu transferencia. Enviánoslo por WhatsApp con el botón de más abajo."
+              ? "Lo empezamos a preparar apenas recibamos el comprobante de tu transferencia. Subilo acá abajo."
               : `Ya tomamos tu pedido. ${order.mode === "delivery"
                 ? `Lo estamos preparando y te llega en ${business.deliveryEstimate} aproximadamente.`
                 : `Lo estamos preparando: podés acercarte a nuestra cocina a retirarlo en ${business.deliveryEstimate} aproximadamente.`}`}
@@ -123,6 +124,7 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a10 10 0 0 0-8.56 15.1L2 22l5.05-1.32A10 10 0 1 0 12.04 2Z"/></svg>
               Pedir los datos por WhatsApp
             </a>
+            <SubirComprobante referencia={order.numero} />
           </div>
         )}
 
@@ -157,18 +159,7 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
                 </div>
               )}
             </div>
-            <div style={{ marginTop: "12px" }}>
-              <a
-                className="btn btn-success btn-sm"
-                style={{ width: "100%", display: "inline-flex", justifyContent: "center", alignItems: "center", gap: "6px", background: "#25d366", color: "white", textDecoration: "none", fontWeight: 600, padding: "9px 14px", borderRadius: "8px" }}
-                href={wspUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a10 10 0 0 0-8.56 15.1L2 22l5.05-1.32A10 10 0 1 0 12.04 2Z"/></svg>
-                Enviar comprobante por WhatsApp
-              </a>
-            </div>
+            <SubirComprobante referencia={order.numero} />
           </div>
         )}
 

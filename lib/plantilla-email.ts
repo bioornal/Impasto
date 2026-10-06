@@ -1,5 +1,6 @@
 import { fmt } from "@/lib/utils";
 import { esperaComprobante } from "@/lib/transferencia-pendiente";
+import { urlAbsoluta } from "@/lib/site";
 import type { BusinessConfig } from "@/lib/business";
 import type { AvisoPedido, TipoAviso } from "@/lib/aviso-local";
 
@@ -26,7 +27,7 @@ export function plantilla(aviso: AvisoPedido, business: BusinessConfig, tipo: Ti
   const bajada = tipo === "pago_aprobado"
     ? "Ya está confirmado y entra a cocina."
     : esperaPago
-      ? `Lo empezamos a preparar apenas recibamos el comprobante de tu transferencia. Enviáselo por WhatsApp al ${business.phone}.`
+      ? `Lo empezamos a preparar apenas recibamos el comprobante de tu transferencia. Subilo desde el seguimiento de tu pedido: ${urlAbsoluta(`/pedido/${aviso.referencia}`)}`
     : esDelivery
       ? "Ya lo estamos preparando. Te avisamos cuando salga."
       : "Ya lo estamos preparando. Te avisamos cuando esté listo para retirar.";

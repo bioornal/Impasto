@@ -49,6 +49,7 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
     pagoMpManual: p.metodo_pago === "mercadopago" && !p.mp_order_id && (!p.external_reference || String(p.external_reference).startsWith('POS-')),
     // En qué cuenta buscar la plata: la que se le mostró al cliente al pedir.
     cuentaTransferencia: datosDesdePedido(p.cuenta_transferencia)?.nombre ?? "",
+    comprobanteSubidoAt: p.comprobante_clave ? String(p.comprobante_subido_at || "") : "",
     cambio: String(p.cambio || ""),
     referencia: String(p.referencia || ""),
     cuando: String(p.cuando || "asap"),

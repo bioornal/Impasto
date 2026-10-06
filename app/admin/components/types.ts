@@ -43,6 +43,8 @@ export interface AdminOrder {
   pagoMpManual?: boolean;
   /** Nombre corto de la cuenta que vio el cliente, si pagó por transferencia. */
   cuentaTransferencia?: string;
+  /** Cuándo el cliente subió el comprobante; vacío si no lo subió. */
+  comprobanteSubidoAt?: string;
   cambio: string;
   referencia: string;
   cuando: string;

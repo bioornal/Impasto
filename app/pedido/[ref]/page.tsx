@@ -5,6 +5,7 @@ import Link from "next/link";
 import { fmt } from "@/lib/utils";
 import { esRespuestaDefinitiva, esEstadoFinal } from "@/lib/seguimiento";
 import { esperaComprobante } from "@/lib/transferencia-pendiente";
+import { SubirComprobante } from "@/components/checkout/SubirComprobante";
 import { OpinionForm } from "@/components/opiniones/OpinionForm";
 
 interface OrderItem {
@@ -44,6 +45,8 @@ interface OrderData {
   whatsappPhone: string;
   businessPhone: string;
   businessAddress: string;
+  /** Cuándo subió el comprobante; vacío si todavía no lo subió. */
+  comprobanteSubidoAt?: string;
 }
 
 const STEPS = [
@@ -187,7 +190,9 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
   const wspUrl = `https://wa.me/${order.whatsappPhone}?text=${encodeURIComponent(wspMensaje)}`;
 
   const pagoInfo = esperaPago
-    ? { label: "Esperando comprobante", color: "#b2472a" }
+    ? order.comprobanteSubidoAt
+      ? { label: "Comprobante en verificación", color: "#b2472a" }
+      : { label: "Esperando comprobante", color: "#b2472a" }
     : ESTADO_PAGO_LABEL[order.estadoPago] || { label: order.estadoPago, color: "#7a6f65" };
 
   return (
@@ -221,7 +226,9 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
                 : stepIndex === 3
                   ? "Gracias por elegir Impasto. ¡Esperamos que lo disfrutes!"
                   : esperaPago
-                    ? "Tu pedido está registrado. Lo empezamos a preparar apenas recibamos el comprobante de tu transferencia."
+                    ? order.comprobanteSubidoAt
+                      ? "Recibimos tu comprobante. Lo estamos verificando y apenas se acredite empezamos a preparar tu pedido."
+                      : "Tu pedido está registrado. Lo empezamos a preparar apenas recibamos el comprobante de tu transferencia."
                     : esDelivery
                     ? `Tu pedido está en proceso. Tiempo estimado de entrega: ${order.deliveryEstimate}.`
                     : `Tu pedido está en proceso. Podés acercarte a nuestra cocina a retirarlo en ${order.deliveryEstimate} aproximadamente.`}
@@ -235,7 +242,7 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
                 // Esperando el pago, el paso 1 es "Esperando comprobante" y nada avanza todavía.
                 const isActive = i === stepIndex;
                 const isDone = i < stepIndex;
-                const stepLabel = esperaPago && i === 0 ? "Esperando comprobante" : i === 2 ? (esDelivery ? "En camino" : "Listo") : s.label;
+                const stepLabel = esperaPago && i === 0 ? (order.comprobanteSubidoAt ? "Verificando pago" : "Esperando comprobante") : i === 2 ? (esDelivery ? "En camino" : "Listo") : s.label;
                 return (
                   <div key={s.key} style={{ textAlign: "center" }}>
                     <div style={{
@@ -295,6 +302,7 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a10 10 0 0 0-8.56 15.1L2 22l5.05-1.32A10 10 0 1 0 12.04 2Z"/></svg>
               Pedir los datos por WhatsApp
             </a>
+            <SubirComprobante referencia={order.numero} subidoAt={order.comprobanteSubidoAt} />
           </div>
         )}
 
@@ -305,7 +313,7 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
               <span>Transferir {fmt(order.total)}</span>
             </div>
             <p style={{ margin: "0 0 12px", fontSize: "13.5px", color: "#5a4b3f", lineHeight: 1.4 }}>
-              Realizá la transferencia por el total para que cocina confirme tu pedido.
+              Realizá la transferencia por el total y subí el comprobante: apenas lo verifiquemos empezamos tu pedido.
             </p>
             <div style={{ background: "white", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e8decb", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
               <div>
@@ -327,15 +335,7 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
                 {alias && order.bancoInfo.cbu && <div><b>CBU/CVU:</b> <span style={{ fontFamily: "monospace" }}>{order.bancoInfo.cbu}</span></div>}
               </div>
             )}
-            <a
-              href={`https://wa.me/${order.whatsappPhone}?text=${encodeURIComponent(`Hola! Envío comprobante de transferencia para el pedido ${order.numero} por ${fmt(order.total)} (${order.cliente}).`)}`}
-              target="_blank"
-              rel="noreferrer"
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", background: "#25d366", color: "white", textDecoration: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: 600, fontSize: "13.5px" }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a10 10 0 0 0-8.56 15.1L2 22l5.05-1.32A10 10 0 1 0 12.04 2Z"/></svg>
-              Enviar comprobante por WhatsApp
-            </a>
+            <SubirComprobante referencia={order.numero} subidoAt={order.comprobanteSubidoAt} />
           </div>
         )}
 

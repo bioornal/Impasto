@@ -35,7 +35,7 @@ export async function GET(
 
   const { data, error } = await db.database
     .from("pedidos")
-    .select("id, numero_pedido, external_reference, nombre_cliente, modalidad, direccion, productos, subtotal, envio, total, status, estado_pago, metodo_pago, cuenta_transferencia, cuando, notas, created_at")
+    .select("id, numero_pedido, external_reference, nombre_cliente, modalidad, direccion, productos, subtotal, envio, total, status, estado_pago, metodo_pago, cuenta_transferencia, comprobante_clave, comprobante_subido_at, cuando, notas, created_at")
     .eq("external_reference", cleanedRef)
     .eq("proyecto_id", "impasto")
     .eq("sucursal_id", SUCURSAL_ID)
@@ -99,6 +99,8 @@ export async function GET(
         titular: cuenta.titular,
       } : null,
       opinion,
+      // Solo si lo subió y cuándo; nunca la clave del archivo.
+      comprobanteSubidoAt: pedido.comprobante_clave ? String(pedido.comprobante_subido_at || "") : "",
       whatsappPhone: business.whatsappPhone,
       businessPhone: business.phone,
       businessAddress: business.address,

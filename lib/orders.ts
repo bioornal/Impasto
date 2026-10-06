@@ -184,7 +184,7 @@ async function createPedidoNew(
 /** Deja rastro de cada cambio de estado, para el panel y el futuro chatbot. */
 export async function registrarEvento(event: {
   pedidoId: string;
-  tipo: "estado" | "pago";
+  tipo: "estado" | "pago" | "comprobante";
   valor: string;
   origen: "checkout" | "panel" | "webhook" | "sistema";
   detalle?: Record<string, unknown>;
