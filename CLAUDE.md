@@ -1,5 +1,10 @@
 @AGENTS.md
 
+## Cotización web rota del 03/10 al 06/10/2026
+
+- **Desde el 03/10 ningún pedido web se podía cotizar** (encontrado el 06/10 al probar la caja en el precio). `agregarFotos` (`c626d43`) devuelve una copia del catálogo y el costeo vive en un `WeakMap` por objeto: `quoteOrder` fallaba siempre con "Costeo de la venta no disponible. Reintentá." (comprobado contra `www.impastopizzas.com/api/orders/quote` el 06/10). `getCatalogData` ahora usa `conservarCosteo` (`lib/catalog-costeo.ts`, test en `tests/pricing-flow.test.ts`). Probado en local: la cotización vuelve a responder 200.
+- Al publicar, comprobar `POST /api/orders/quote` en `www.impastopizzas.com` con un producto en venta: tiene que responder `ok: true`.
+
 ## Prepizza y salsa como recetas — estado al 04/10/2026
 
 - El recetario web y Android permiten guardar prepizzas y salsas como preparaciones con ingredientes, rinde y variantes. Impasto consume el `ingredientes.precio_kg` calculado por sus triggers y los gramos de las líneas de cada pizza; conserva su fórmula de precios existente.

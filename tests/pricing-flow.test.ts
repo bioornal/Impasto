@@ -4,7 +4,8 @@ import { assembleCatalogFromResults, publicSaleProducts, settleCatalogQuery } fr
 import { quoteItemsWithCatalog } from "../lib/order-quote";
 import { PricingUnavailableError } from "../lib/pricing-safety";
 import type { CartItem } from "../types";
-import {catalogCosteo} from '../lib/catalog-costeo';
+import {catalogCosteo,conservarCosteo} from '../lib/catalog-costeo';
+import { agregarFotos } from "../lib/fotos";
 
 const rows = (data: unknown[] = []) => ({ data, error: null });
 const ok = () => ({
@@ -38,6 +39,14 @@ test('el precio usa presupuesto mensual y no depende de gastos históricos ni de
   const changed=assembleCatalogFromResults({...input,costos_variables:rows([{monto_referencia:1000000}])});
   assert.equal(changed.pizzas.find(p=>p.id==='p')?.precio,6500,'editar el presupuesto previsto sí cambia el precio');
   assert.throws(()=>assembleCatalogFromResults({...input,costos_variables:rows([{monto_referencia:null}])}),PricingUnavailableError);
+});
+
+test("el catálogo con fotos conserva el costeo de la venta", () => {
+  const catalog = assembleCatalogFromResults(ok());
+  const conFotos = conservarCosteo(catalog, agregarFotos(catalog, []));
+  assert.notEqual(conFotos, catalog);
+  assert.equal(catalogCosteo(conFotos), catalogCosteo(catalog));
+  assert.throws(() => catalogCosteo(agregarFotos(catalog, [])), /Costeo de la venta no disponible/);
 });
 
 test("cada fuente crítica fallida o nula bloquea el catálogo", () => {

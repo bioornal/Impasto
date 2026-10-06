@@ -7,6 +7,7 @@ import { assembleCatalogFromResults, settleCatalogQuery } from "@/lib/catalog-so
 import { PricingUnavailableError } from "@/lib/pricing-safety";
 import { agregarFotos } from "@/lib/fotos";
 import { listarFotos } from "@/lib/fotos-bucket";
+import { conservarCosteo } from "@/lib/catalog-costeo";
 
 export async function getCatalogData(): Promise<CatalogData> {
   try {
@@ -58,7 +59,9 @@ export async function getCatalogData(): Promise<CatalogData> {
     });
     // La foto más nueva de cada producto en el bucket; si el listado falla, viene vacío
     // y las ilustraciones usan el respaldo de siempre.
-    return agregarFotos(catalogo, await fotos);
+    // agregarFotos devuelve una copia: sin conservar el costeo, la cotización de cualquier
+    // pedido fallaba con "Costeo de la venta no disponible" (03/10 al 06/10/2026).
+    return conservarCosteo(catalogo, agregarFotos(catalogo, await fotos));
   } catch (error) {
     if (error instanceof PricingUnavailableError) console.error(`[catalog] fuente crítica ${error.source} no disponible`);
     else console.error("[catalog] fallo al armar el catálogo:", error);
