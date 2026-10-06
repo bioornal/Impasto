@@ -445,6 +445,13 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   En la carpeta de la Bondiola quedaron dos copias de esa imagen (una de la primera prueba, como
   `binary/octet-stream`). El panel "Editar producto" ya se salía del ancho en celular (435 px en 375) antes de este
   cambio: queda pendiente.
+  **06/10/2026: la foto se sube apenas se elige.** El dueño eligió fotos para la 7-Up y el Agua Misiones y apretó
+  **Guardar**: salía "Producto actualizado", pero la foto se descartaba en silencio, porque solo la subía el botón
+  aparte "Subir foto" (ningún archivo llegó al bucket). `FotoProducto` ahora sube en el `onChange` del input, con
+  "Subiendo foto…" y el resultado debajo; no hay más botón "Subir foto" ni "Cancelar". La ruta no cambió. Las dos
+  fotos se subieron por CLI a `fotos/<id>/` con la misma clave que usa la ruta (sha1 igual al archivo local) y se
+  ven en `www.impastopizzas.com`. Verificado: `pnpm test`, TypeScript y eslint del archivo; **sin probar todavía
+  en el navegador con la sesión del dueño**.
 
 - **Etiquetas sobre la foto y "nuestra cocina" (05/10/2026)** — Ver "Cómo funcionan las
   etiquetas" y la decisión "No hay local a la calle". En la base, `gourmet` y `vegetariana`

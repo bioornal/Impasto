@@ -209,14 +209,14 @@ const TYPE_TO_CATEGORIA: Record<AdminProduct["type"], string> = {
 };
 
 /**
- * Foto del producto: se sube aparte del resto del formulario, a `fotos/<id>/` del bucket.
+ * Foto del producto: se sube apenas se elige, aparte del resto del formulario, a `fotos/<id>/`
+ * del bucket. Antes esperaba un botón "Subir foto" y "Guardar" la descartaba sin avisar.
  * Nunca reemplaza la anterior (queda guardada); la carta y /cocina toman la más nueva.
  */
 function FotoProducto({ product, isNew }: { product?: AdminProduct; isNew?: boolean }) {
   const { state, setProductPhoto } = useStore();
   // La del store: así se ve la foto recién subida aunque el modal se haya abierto antes.
   const actual = state.products.find(p => p._dbId === product?._dbId) ?? product;
-  const [archivo, setArchivo] = useState<File | null>(null);
   const [vista, setVista] = useState<string | null>(null);
   const [estado, setEstado] = useState<{ tipo: "ok" | "error" | "subiendo"; texto: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -225,15 +225,11 @@ function FotoProducto({ product, isNew }: { product?: AdminProduct; isNew?: bool
     return <span className="text-muted" style={{ fontSize: 12.5 }}>Guardá el producto para poder agregarle la foto.</span>;
   }
 
-  const elegir = (f: File | null) => {
-    setEstado(null);
-    setArchivo(f);
-    setVista(f ? URL.createObjectURL(f) : null);
-    if (!f && inputRef.current) inputRef.current.value = "";
-  };
-  const subir = async () => {
+  const subir = async (archivo: File | null) => {
+    if (inputRef.current) inputRef.current.value = "";
     if (!archivo) return;
-    setEstado({ tipo: "subiendo", texto: "Subiendo…" });
+    setVista(URL.createObjectURL(archivo));
+    setEstado({ tipo: "subiendo", texto: "Subiendo foto…" });
     const cuerpo = new FormData();
     cuerpo.append("foto", archivo);
     try {
@@ -241,9 +237,10 @@ function FotoProducto({ product, isNew }: { product?: AdminProduct; isNew?: bool
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j.error || "No se pudo subir la foto.");
       setProductPhoto(actual._dbId, j.foto);
-      elegir(null);
+      setVista(null);
       setEstado({ tipo: "ok", texto: "Foto actualizada. Ya se ve en la carta y en /cocina." });
     } catch (e) {
+      setVista(null);
       setEstado({ tipo: "error", texto: e instanceof Error ? e.message : "No se pudo subir la foto." });
     }
   };
@@ -253,14 +250,8 @@ function FotoProducto({ product, isNew }: { product?: AdminProduct; isNew?: bool
       <ProductThumb item={vista ? { ...actual, foto: vista } : actual} size={96} />
       <div className="foto-producto-acciones">
         <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" aria-label={`Elegir foto de ${actual.nombre}`}
-          onChange={e => elegir(e.target.files?.[0] ?? null)} disabled={subiendo} />
-        {archivo && (
-          <div className="flex gap-8">
-            <button type="button" className="btn btn-primary btn-sm" onClick={subir} disabled={subiendo}>Subir foto</button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => elegir(null)} disabled={subiendo}>Cancelar</button>
-          </div>
-        )}
-        <small className="hint">JPG, PNG o WebP, hasta 4 MB. La foto anterior queda guardada.</small>
+          onChange={e => subir(e.target.files?.[0] ?? null)} disabled={subiendo} />
+        <small className="hint">Se sube apenas la elegís. JPG, PNG o WebP, hasta 4 MB. La foto anterior queda guardada.</small>
         {estado && <small role="status" className={estado.tipo === "error" ? "foto-producto-error" : "hint"}>{estado.texto}</small>}
       </div>
     </div>
