@@ -3,6 +3,7 @@ import type { Etiqueta } from "./etiquetas";
 import type { CatalogData } from "../types";
 import type { PricingDefaults, PricingIngredient, PricingRecipe, RecipeIngredient, SalePriceRule } from "./effective-prices";
 import { PricingUnavailableError, requirePricingRows, resolveValidatedPrices, sellablePrice } from "./pricing-safety";
+import { cajasDeEmpanadas } from "./effective-prices";
 import {presupuestoMensual} from './presupuesto-precios';
 import {rememberCatalogCosteo} from './catalog-costeo';
 
@@ -44,6 +45,13 @@ export function assembleCatalogFromResults(results: CatalogQueryResults): Catalo
 
   const preciosNoDisponibles: string[] = [];
   const empanadaBoxNoDisponibles = new Set<6 | 12 | 24>();
+  // Cada caja suma sus cajas de cartón al costo. Con el precio roto no se vende ninguna.
+  const cajaEmpanadas = resolution.cajaEmpanadas ?? null;
+  const empanadaBoxCharge = { 6: 0, 12: 0, 24: 0 } as Record<6 | 12 | 24, number>;
+  for (const size of [6, 12, 24] as const) {
+    if (cajaEmpanadas === null) empanadaBoxNoDisponibles.add(size);
+    else empanadaBoxCharge[size] = cajasDeEmpanadas(size) * cajaEmpanadas;
+  }
   const vendibles: DatabaseProduct[] = [];
   for (const product of products) {
     const price = sellablePrice(product, resolution);
@@ -65,11 +73,12 @@ export function assembleCatalogFromResults(results: CatalogQueryResults): Catalo
       decorations(results.etiquetas) as Etiqueta[],
     ),
     preciosNoDisponibles,
-    empanadaBoxNoDisponibles: [...empanadaBoxNoDisponibles],
+    empanadaBoxNoDisponibles: [...empanadaBoxNoDisponibles].sort((a, b) => a - b),
+    empanadaBoxCharge,
   };
   const costs=new Map<string,number>();
   for(const product of vendibles){const cost=resolution.productionCosts?.get(String(product.nombre));if(cost!==undefined)costs.set(String(product.id??product.nombre),cost);}
-  rememberCatalogCosteo(catalog,{costs,commissionPct:resolution.commissionPct!});
+  rememberCatalogCosteo(catalog,{costs,commissionPct:resolution.commissionPct!,cajaEmpanadas:cajaEmpanadas ?? 0});
   return catalog;
 }
 

@@ -3,7 +3,17 @@
 ## Cotización web rota del 03/10 al 06/10/2026
 
 - **Desde el 03/10 ningún pedido web se podía cotizar** (encontrado el 06/10 al probar la caja en el precio). `agregarFotos` (`c626d43`) devuelve una copia del catálogo y el costeo vive en un `WeakMap` por objeto: `quoteOrder` fallaba siempre con "Costeo de la venta no disponible. Reintentá." (comprobado contra `www.impastopizzas.com/api/orders/quote` el 06/10). `getCatalogData` ahora usa `conservarCosteo` (`lib/catalog-costeo.ts`, test en `tests/pricing-flow.test.ts`). Probado en local: la cotización vuelve a responder 200.
-- Al publicar, comprobar `POST /api/orders/quote` en `www.impastopizzas.com` con un producto en venta: tiene que responder `ok: true`.
+- Publicado en `1baec70` el 06/10/2026: `POST /api/orders/quote` en `www.impastopizzas.com` volvió a responder `ok: true` (Muzzarella $16.000). Falta ver un pedido web real completo.
+
+## Caja en el precio (06/10/2026)
+
+- **Regla (decisiones del dueño del 06/10/2026):** la caja es un costo interno. **El cliente nunca ve una línea "caja"**: la paga dentro del precio. Se discrimina solo en las pantallas internas (Precios, Ganancias, Android). Va **al costo, sin margen**.
+  - **Pizza:** una caja por pizza (la mitad y mitad cobra la más cara, que ya la trae). Precio = `round(costoReal × markup) + caja`, y recién ahí el redondeo hacia arriba a $500 de la carta. El costo de producción de la pizza incluye la caja.
+  - **Empanadas:** el precio por unidad no cambia. Cada caja suma su caja de cartón: **una cada 12** (x6 y x12 llevan una, 18 y x24 dos), al total, sin redondear (x12 de $3.000 = $36.320).
+  - **Editable** en Ingredientes, por unidad: "Caja de pizza" y "Caja de empanadas", $320 cada una al 06/10/2026 (migración `recetario-napolitano/migrations/20261006160617_cajas-en-el-precio.sql`, aplicada). Sin cargar valen 0 (se vende como antes); con un precio inválido no se venden pizzas o cajas de empanadas.
+- **Dónde:** `lib/effective-prices.ts` (`precioCaja`, `cajasDeEmpanadas`; la caja de pizza en el precio y en el costo de producción), `lib/pricing-safety.ts` (caja de pizza inválida bloquea solo las pizzas; `cajaEmpanadas` en la resolución), `lib/catalog-source.ts` (`empanadaBoxCharge` por tamaño; caja de empanadas inválida bloquea las tres cajas), `lib/order-quote.ts` (el total de la caja suma su caja, sin línea propia), `lib/costeo-capture.ts` (costo de la venta con las cajas). Tests: `tests/caja-precio.test.ts`.
+- **Pantalla:** el total de la caja ("Total caja", aside y barra mobile) se muestra solo con la caja completa; mientras se arma dice "—", para que la caja no aparezca como un salto de $320 al elegir la primera empanada. Las tarjetas siguen mostrando el precio por unidad (decisión del dueño).
+- **Bot:** ya no dice "la caja es la suma de cada empanada". Recibe el precio armado de cada caja de un solo sabor (x6 · x12 · x24) y, con sabores combinados, deriva a la web. No conoce la caja de cartón como concepto (`tests/chat-prompt.test.ts`).
 
 ## Prepizza y salsa como recetas — estado al 04/10/2026
 

@@ -107,8 +107,9 @@ function quoteItem(rawItem: CartItem, data: CatalogData): CartItem {
     const detail = Object.entries(selections)
       .map(([id, amount]) => `${amount}× ${findEmpanada(data, id)?.nombre}`)
       .join(", ");
+    // La caja de cartón va adentro del total, sin una línea propia para el cliente.
     const price = Object.entries(selections).reduce((sum, [id, amount]) =>
-      sum + ensurePrice(findEmpanada(data, id)?.precio) * amount, 0);
+      sum + ensurePrice(findEmpanada(data, id)?.precio) * amount, 0) + (data.empanadaBoxCharge?.[variant.size] ?? 0);
 
     return {
       ...rawItem,
@@ -147,6 +148,6 @@ export async function quoteOrder(
 
   const context=catalogCosteo(data);
   const quote={ items, subtotal, shipping, total: subtotal + shipping, freeShipping };
-  costeos.set(quote,{costo_produccion_centavos:costeoCarrito(items,context.costs),comision_pct:context.commissionPct});
+  costeos.set(quote,{costo_produccion_centavos:costeoCarrito(items,context.costs,context.cajaEmpanadas),comision_pct:context.commissionPct});
   return quote;
 }

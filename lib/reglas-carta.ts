@@ -51,7 +51,8 @@ export const TAMANIOS_CAJA_EMPANADAS = [6, 12, 24] as const;
  * un componente de React.
  *
  * Ahí, apenas CUALQUIER empanada de la carta tiene precio unitario cargado,
- * el total de la caja sale de sumar el precio de cada empanada elegida, y el
+ * el total de la caja sale de sumar el precio de cada empanada elegida (más la
+ * caja de cartón, `empanadaBoxCharge`, que el cliente no ve aparte), y el
  * precio de caja fijo (`empanadaBoxPrices`) se ignora por completo, aunque
  * exista. La tabla de cajas fija solo se usa cuando NINGUNA empanada tiene
  * precio unitario.

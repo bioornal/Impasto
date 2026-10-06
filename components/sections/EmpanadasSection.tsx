@@ -140,7 +140,8 @@ export function EmpanadasSection({ empanadas, boxPrices, blockedSizes, selection
 
             <div className="box-total">
               <span className="box-total-label">Total caja</span>
-              <b>{blocked ? "Precio no disponible" : fmt(priceFor(tier, selection))}</b>
+              {/* El total incluye la caja de cartón: solo se muestra con la caja completa (ver `empPriceFor` en Shell). */}
+              <b>{blocked ? "Precio no disponible" : complete ? fmt(priceFor(tier, selection)) : "—"}</b>
             </div>
 
             <button className={`box-cta ${complete ? "ready" : ""}`} onClick={onAddBox} disabled={!complete}>

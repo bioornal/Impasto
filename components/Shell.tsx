@@ -277,12 +277,15 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
 
   // Caja de empanadas (estado único compartido por grilla, aside y dock).
   const hasUnitPrices = data.empanadas.some((e) => Number(e.precio) > 0);
+  // Igual que la cotización del servidor (`lib/order-quote.ts`): las empanadas más la caja
+  // de cartón, que va adentro del total y nunca como línea propia. Solo hay total con la
+  // caja completa; si se viera mientras se arma, la caja aparecería como un salto aparte.
   const empPriceFor = (size: 6 | 12 | 24, current: Record<string, number>) => {
     if (!hasUnitPrices) return data.empanadaBoxPrices[size];
     return Object.entries(current).reduce((sum, [id, amount]) => {
       const empanada = data.empanadas.find((e) => e.id === id);
       return sum + Number(empanada?.precio || 0) * amount;
-    }, 0);
+    }, 0) + (data.empanadaBoxCharge?.[size] ?? 0);
   };
   const empSelected = Object.values(empSelection).reduce((a, b) => a + b, 0);
   const empComplete = empSelected === empTier && !data.empanadaBoxNoDisponibles?.includes(empTier);
@@ -448,7 +451,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
             <div className="dock-box-bottom">
               <div className="dock-box-total">
                 <div className="dock-box-label">Total caja</div>
-                <b>{data.empanadaBoxNoDisponibles?.includes(empTier) ? "Precio no disponible" : fmt(empPriceFor(empTier, empSelection))}</b>
+                <b>{data.empanadaBoxNoDisponibles?.includes(empTier) ? "Precio no disponible" : empComplete ? fmt(empPriceFor(empTier, empSelection)) : "—"}</b>
               </div>
               <button className={`dock-box-cta ${empComplete ? "ready" : ""}`} disabled={!empComplete} onClick={empAddBox}>
                 {data.empanadaBoxNoDisponibles?.includes(empTier) ? "Precio no disponible" : empComplete ? "Agregar caja" : `Elegí ${empTier - empSelected} más`}

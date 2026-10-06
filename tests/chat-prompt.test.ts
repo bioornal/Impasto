@@ -28,6 +28,7 @@ const catalogo: CatalogData = {
   ],
   bebidas: [{ id: "4", nombre: "Agua sin gas", precio: 1500, disponible: true }],
   empanadaBoxPrices: { 6: 12000, 12: 22000, 24: 40000 },
+  empanadaBoxCharge: { 6: 320, 12: 320, 24: 640 },
   promos: [{ id: "p1", titulo: "Martes 2x1", desc: "Dos pizzas clásicas al precio de una.", badge: "2x1" }],
   reviews: [],
 };
@@ -70,9 +71,11 @@ chequear("dice cómo se cobra: la más cara, sin recargo", /más cara.*sin recar
 chequear("con precio unitario cargado, no cita el precio de caja fijo", !prompt.includes("$22.000"));
 chequear("dice que las empanadas se piden en cajas de 6, 12 o 24", /cajas? de 6, 12 o 24/i.test(prompt));
 chequear(
-  "explica que el precio sale de sumar cada empanada elegida",
-  /suma del precio de cada empanada elegida/i.test(prompt),
+  "cotiza cada caja de un sabor igual que el carrito, con la caja adentro",
+  /Carne suave: caja x6 \$15\.320 · caja x12 \$30\.320 · caja x24 \$60\.640/.test(prompt),
 );
+chequear("no le cuenta al cliente que la caja de cartón se cobra", !/cart[oó]n|\$320\b|\$640\b/i.test(prompt));
+chequear("no le pide sumar el precio por unidad", !/suma del precio de cada empanada/i.test(prompt));
 
 // Con NINGUNA empanada con precio unitario cargado, `priceFor()` sí usa la
 // tabla de cajas fija: ahí el prompt tiene que citarla.
