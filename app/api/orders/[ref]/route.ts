@@ -6,6 +6,7 @@ import { datosDesdePedido } from "@/lib/cuentas-transferencia";
 import { productosDelPedido } from "@/lib/opiniones";
 import { esReferenciaValida, normalizarReferencia } from "@/lib/referencia";
 import { limitar } from "@/lib/rate-limit";
+import { estadoVisibleAlCliente } from "@/lib/transferencia-pendiente";
 
 export const dynamic = "force-dynamic";
 
@@ -79,7 +80,12 @@ export async function GET(
       subtotal: Number(pedido.subtotal || 0),
       envio: Number(pedido.envio || 0),
       total: Number(pedido.total || 0),
-      estado: String(pedido.status || "nuevo") === "normal" ? "nuevo" : String(pedido.status || "nuevo"),
+      // Una transferencia sin acreditar no se muestra como "preparando", aunque el panel la haya movido.
+      estado: estadoVisibleAlCliente(
+        String(pedido.status || "nuevo") === "normal" ? "nuevo" : String(pedido.status || "nuevo"),
+        pedido.metodo_pago,
+        pedido.estado_pago || "pendiente",
+      ),
       estadoPago: String(pedido.estado_pago || "pendiente"),
       metodoPago: String(pedido.metodo_pago || "efectivo"),
       cuando: String(pedido.cuando || "asap"),

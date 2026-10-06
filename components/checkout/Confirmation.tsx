@@ -4,6 +4,7 @@ import Link from "next/link";
 import { fmt } from "@/lib/utils";
 import type { BusinessConfig } from "@/lib/business";
 import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
+import { esperaComprobante } from "@/lib/transferencia-pendiente";
 
 interface Order {
   numero: string;
@@ -53,6 +54,9 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
     }
   };
 
+  // Transferencia: el pedido queda registrado, pero no se prepara hasta ver el comprobante.
+  const esperaPago = esperaComprobante(order.pago, order.estadoPago);
+
   const wspMensaje = order.pago === "transferencia"
     ? `Hola! Te envío el comprobante de transferencia del pedido ${order.numero} por ${fmt(order.total)} (${order.nombre}).`
     : `Hola! Hice el pedido ${order.numero} por ${fmt(order.total)} a nombre de ${order.nombre}.`;
@@ -71,17 +75,22 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
             </div>
           </div>
           <div className="confirm-order-num">{order.numero}</div>
-          <h2>Pedido recibido, {order.nombre.split(" ")[0]}</h2>
+          <h2>{esperaPago ? "Pedido registrado" : "Pedido recibido"}, {order.nombre.split(" ")[0]}</h2>
           <p className="confirm-lede">
-            Ya tomamos tu pedido. {order.mode === "delivery"
-              ? `Lo estamos preparando y te llega en ${business.deliveryEstimate} aproximadamente.`
-              : `Lo estamos preparando: podés acercarte a nuestra cocina a retirarlo en ${business.deliveryEstimate} aproximadamente.`}
+            {esperaPago
+              ? "Lo empezamos a preparar apenas recibamos el comprobante de tu transferencia. Enviánoslo por WhatsApp con el botón de más abajo."
+              : `Ya tomamos tu pedido. ${order.mode === "delivery"
+                ? `Lo estamos preparando y te llega en ${business.deliveryEstimate} aproximadamente.`
+                : `Lo estamos preparando: podés acercarte a nuestra cocina a retirarlo en ${business.deliveryEstimate} aproximadamente.`}`}
           </p>
         </div>
 
         <div className="confirm-eta">
           <div className="eta-bar">
-            {["Recibido", "Preparando", order.mode === "delivery" ? "En camino" : "Listo", "Entregado"].map((s, i) => (
+            {(esperaPago
+              ? ["Pedido registrado", "Comprobante", "Preparando", order.mode === "delivery" ? "En camino" : "Listo"]
+              : ["Recibido", "Preparando", order.mode === "delivery" ? "En camino" : "Listo", "Entregado"]
+            ).map((s, i) => (
               <div key={s} style={{ display: "contents" }}>
                 {i > 0 && <div className="eta-line" />}
                 <div className={`eta-step ${i === 0 ? "done" : i === 1 ? "active" : ""}`}><span>{i + 1}</span><small>{s}</small></div>
@@ -89,7 +98,9 @@ export function Confirmation({ order, onClose, business }: { order: Order; onClo
             ))}
           </div>
           <div className="eta-time">
-            <div><small>Tiempo estimado</small><b>{business.deliveryEstimate}</b></div>
+            {esperaPago
+              ? <div><small>Tiempo estimado</small><b>Desde que recibimos tu pago</b></div>
+              : <div><small>Tiempo estimado</small><b>{business.deliveryEstimate}</b></div>}
             <div style={{ textAlign: "right" }}><small>Total del pedido</small><b>{fmt(order.total)}</b></div>
           </div>
         </div>

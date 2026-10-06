@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fmt } from "@/lib/utils";
 import { esRespuestaDefinitiva, esEstadoFinal } from "@/lib/seguimiento";
+import { esperaComprobante } from "@/lib/transferencia-pendiente";
 import { OpinionForm } from "@/components/opiniones/OpinionForm";
 
 interface OrderItem {
@@ -174,6 +175,8 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
   const stepIndex = ESTADOS_ORDEN[order.estado] ?? 0;
   const esCancelado = order.estado === "cancelado";
   const esDelivery = order.modalidad === "delivery";
+  // Transferencia sin acreditar: el pedido está registrado, no en preparación.
+  const esperaPago = !esCancelado && stepIndex < 3 && esperaComprobante(order.metodoPago, order.estadoPago);
   // Nunca un valor de ejemplo acá: es el dato al que el cliente le manda plata.
   // Si el local no lo tiene cargado, se le pide por WhatsApp. Ver `lib/business.ts`.
   const alias = order.bancoInfo?.alias || "";
@@ -183,7 +186,9 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
   const wspMensaje = `Hola! Consulto por mi pedido ${order.numero} (${order.cliente}).`;
   const wspUrl = `https://wa.me/${order.whatsappPhone}?text=${encodeURIComponent(wspMensaje)}`;
 
-  const pagoInfo = ESTADO_PAGO_LABEL[order.estadoPago] || { label: order.estadoPago, color: "#7a6f65" };
+  const pagoInfo = esperaPago
+    ? { label: "Esperando comprobante", color: "#b2472a" }
+    : ESTADO_PAGO_LABEL[order.estadoPago] || { label: order.estadoPago, color: "#7a6f65" };
 
   return (
     <main style={{ minHeight: "100vh", background: "#fbf8f3", padding: "32px 16px 64px", fontFamily: "Inter, system-ui, sans-serif", color: "#2a2018" }}>
@@ -215,7 +220,9 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
                 ? "Este pedido fue cancelado. Comunicate con nosotros ante cualquier duda."
                 : stepIndex === 3
                   ? "Gracias por elegir Impasto. ¡Esperamos que lo disfrutes!"
-                  : esDelivery
+                  : esperaPago
+                    ? "Tu pedido está registrado. Lo empezamos a preparar apenas recibamos el comprobante de tu transferencia."
+                    : esDelivery
                     ? `Tu pedido está en proceso. Tiempo estimado de entrega: ${order.deliveryEstimate}.`
                     : `Tu pedido está en proceso. Podés acercarte a nuestra cocina a retirarlo en ${order.deliveryEstimate} aproximadamente.`}
             </p>
@@ -225,9 +232,10 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
           {!esCancelado && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", margin: "32px 0 20px" }}>
               {STEPS.map((s, i) => {
+                // Esperando el pago, el paso 1 es "Esperando comprobante" y nada avanza todavía.
                 const isActive = i === stepIndex;
                 const isDone = i < stepIndex;
-                const stepLabel = i === 2 ? (esDelivery ? "En camino" : "Listo") : s.label;
+                const stepLabel = esperaPago && i === 0 ? "Esperando comprobante" : i === 2 ? (esDelivery ? "En camino" : "Listo") : s.label;
                 return (
                   <div key={s.key} style={{ textAlign: "center" }}>
                     <div style={{
