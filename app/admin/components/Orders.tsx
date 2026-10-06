@@ -199,6 +199,15 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
                       >
                         <Icon.Eye />
                       </button>
+                      <button
+                        className="btn btn-icon btn-ghost"
+                        title="Eliminar pedido"
+                        aria-label={`Eliminar el pedido ${o.id}`}
+                        disabled={eliminando}
+                        onClick={e => { e.stopPropagation(); void eliminar([o._dbId]); }}
+                      >
+                        <Icon.Trash />
+                      </button>
                     </td>
                   </tr>
                 ))}
