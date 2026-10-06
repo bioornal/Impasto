@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { CartProvider, useCart } from "@/components/providers/CartProvider";
+import { FotosProvider } from "@/components/providers/FotosProvider";
 import { TweakProvider, useTweaks } from "@/components/providers/TweakProvider";
 import { ToastProvider, useToast } from "@/components/providers/ToastProvider";
 import { StoreStatusProvider, useStoreStatus, type EstadoTiendaCliente } from "@/components/providers/StoreStatusProvider";
@@ -660,7 +661,9 @@ export function Shell({ data, business, estadoInicial, chatDisponible, destacada
       <StoreStatusProvider inicial={estadoInicial}>
         <ToastProvider>
           <CartProvider>
-            <SiteContent data={data} business={business} chatDisponible={chatDisponible} destacadaId={destacadaId} />
+            <FotosProvider data={data}>
+              <SiteContent data={data} business={business} chatDisponible={chatDisponible} destacadaId={destacadaId} />
+            </FotosProvider>
           </CartProvider>
         </ToastProvider>
       </StoreStatusProvider>
