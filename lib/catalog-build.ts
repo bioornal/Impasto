@@ -75,6 +75,24 @@ function mapEmpanada(product: DatabaseProduct, etiquetas: Etiqueta[]): Empanada 
   };
 }
 
+// Orden de la carta de bebidas (pedido del dueño, 06/10/2026): por tipo y, dentro
+// de cada tipo, alfabético por marca. La base no guarda el tipo de bebida, así que
+// sale del nombre; lo que no reconoce va con las gaseosas.
+const TIPOS_DE_BEBIDA: RegExp[] = [
+  /\bagua\b/i,
+  /cerveza|quilmes|brahma|stella|corona|heineken|patagonia|andes/i,
+  /\bvino\b|malbec|cabernet|torront|merlot|syrah|espumante|champ/i,
+];
+
+const tipoDeBebida = (nombre: string) => TIPOS_DE_BEBIDA.findIndex((tipo) => tipo.test(nombre)) + 1;
+
+/** Gaseosas, aguas, cervezas y vinos; dentro de cada grupo, por nombre. */
+export function ordenarBebidas<T extends { nombre: string }>(bebidas: T[]): T[] {
+  return [...bebidas].sort((a, b) =>
+    tipoDeBebida(a.nombre) - tipoDeBebida(b.nombre)
+    || a.nombre.localeCompare(b.nombre, "es", { numeric: true, sensitivity: "base" }));
+}
+
 function mapBebida(product: DatabaseProduct): Bebida {
   return {
     id: String(product.id ?? product.nombre),
@@ -131,7 +149,7 @@ export function buildCatalog(
   return {
     pizzas: deTipo("pizza").map((p) => mapPizza(p, etiquetas)),
     empanadas: deTipo("empanada").map((p) => mapEmpanada(p, etiquetas)),
-    bebidas: deTipo("bebida").map(mapBebida),
+    bebidas: ordenarBebidas(deTipo("bebida").map(mapBebida)),
     empanadaBoxPrices: boxPrices,
     promos: mapPromos(promosRaw),
     reviews: mapReviews(reviewsRaw),

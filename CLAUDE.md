@@ -562,6 +562,10 @@ en el nombre. Si se reescriben las descripciones sacando ingredientes, se pierde
 **Hecho.** Ya no son 0: hay 8 bebidas cargadas con precio (Vino Malbec, Coca-Cola 1.5 L,
 Quilmes, Brahma, Sprite y agua con y sin gas), verificadas en el sitio el 24/08/2026. La
 app las soporta y oculta la sección si no hay — hoy no hace falta que la oculte.
+**06/10/2026:** 11 bebidas en carta (costos unitarios y nuevas cargadas desde el recetario). **Orden:** por tipo
+(gaseosas, aguas, cervezas, vinos) y alfabético dentro de cada uno, con `ordenarBebidas` en `lib/catalog-build.ts`
+(test en `tests/catalog.test.ts`). El tipo sale del nombre por palabras clave (`TIPOS_DE_BEBIDA`); lo que no
+reconoce va con las gaseosas: una cerveza o un vino de marca nueva hay que sumarlo a esa lista.
 
 ### 4. Promociones
 Tabla `promociones` vacía. Falta interfaz, reglas de aplicación, vigencias, límites de uso,

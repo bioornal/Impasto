@@ -28,6 +28,21 @@ check("solo la bebida de Impasto llega a bebidas",   catalogo.bebidas.map((b) =>
 check("el precio de la pizza se conserva desde la base", catalogo.pizzas[0]?.precio, 15000);
 check("sin combos no se inventan precios de caja", catalogo.empanadaBoxPrices, { 6: 0, 12: 0, 24: 0 });
 
+// Las bebidas reales del 06/10/2026, en el orden desordenado en que llegan de la base.
+const bebidasDesordenadas = [
+  "Coca-Cola 1.5 L", "Paso de los Toros Tónica 1.5 L", "Coca-Cola Zero 1.5 L", "Agua Mineral 500 ml",
+  "Paso de los Toros Pomelo 1.5 L", "7-Up 1.5 L", "Vino Malbec 750 ml", "Pepsi 1.5 L",
+  "Cerveza Brahma Lata 710 ml", "Agua Mineral Misiones 1.5 L", "Cerveza Quilmes Lata 710 ml",
+].map((nombre, i): DatabaseProduct => ({ id: `b${i}`, nombre, categoria: "bebidas", precio: 1000 }));
+check("bebidas por tipo (gaseosas, aguas, cervezas, vinos) y por marca",
+  buildCatalog(bebidasDesordenadas, null, null).bebidas.map((b) => b.nombre), [
+    "7-Up 1.5 L", "Coca-Cola 1.5 L", "Coca-Cola Zero 1.5 L", "Paso de los Toros Pomelo 1.5 L",
+    "Paso de los Toros Tónica 1.5 L", "Pepsi 1.5 L",
+    "Agua Mineral 500 ml", "Agua Mineral Misiones 1.5 L",
+    "Cerveza Brahma Lata 710 ml", "Cerveza Quilmes Lata 710 ml",
+    "Vino Malbec 750 ml",
+  ]);
+
 const preciosEfectivos = buildEffectivePrices(
   [{ id: "r1", nombre: "Pizza Muzzarela", precio_prepizza: 485, precio_salsa: 236 }],
   [
