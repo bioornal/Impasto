@@ -62,8 +62,6 @@ export interface CatalogData {
   reviews: Review[];
   preciosNoDisponibles?: string[];
   empanadaBoxNoDisponibles?: Array<6 | 12 | 24>;
-  /** Lo que suma cada caja de empanadas además de sus empanadas. Interno: no se muestra aparte. */
-  empanadaBoxCharge?: Record<6 | 12 | 24, number>;
 }
 
 export interface CartItem {

@@ -4,6 +4,7 @@ import {
   isEmpanadaShell,
   NOMBRE_CAJA_EMPANADAS,
   NOMBRE_CAJA_PIZZA,
+  cajaPorUnidad,
   precioCaja,
   type PricingDefaults,
   type PricingIngredient,
@@ -29,8 +30,6 @@ export interface PriceResolution {
   invalid: Set<string>;
   productionCosts?: Map<string,number>;
   commissionPct?: number;
-  /** Precio de una caja de empanadas (al costo); null si su precio está roto. */
-  cajaEmpanadas?: number | null;
 }
 
 export interface PricingInput {
@@ -96,6 +95,7 @@ export function resolveValidatedPrices(input: PricingInput): PriceResolution {
   const shell = input.ingredients.find(isEmpanadaShell);
   const shellPrice = finite(shell?.precio_kg);
   const pizzaBox = precioCaja(input.ingredients, NOMBRE_CAJA_PIZZA);
+  const empanadaBox = precioCaja(input.ingredients, NOMBRE_CAJA_EMPANADAS);
 
   for (const rule of input.rules) {
     if (!rule.nombre) continue;
@@ -107,7 +107,7 @@ export function resolveValidatedPrices(input: PricingInput): PriceResolution {
     const salsa = finite(recipe?.precio_salsa ?? input.defaults?.precio_salsa_default);
     const invalidBase = usesBase && (prepizza == null || prepizza < 0 || salsa == null || salsa < 0);
     const invalidShell = rule.subcategoria === 'Empanadas' && (shellPrice == null || shellPrice <= 0);
-    const invalidBox = rule.subcategoria === 'Pizzas' && pizzaBox === null;
+    const invalidBox = cajaPorUnidad(String(rule.subcategoria || ''), pizzaBox, empanadaBox) === null;
     const broken =
       (counts.get(rule.nombre) ?? 0) !== 1 ||
       !rule.receta_id ||
@@ -134,10 +134,7 @@ export function resolveValidatedPrices(input: PricingInput): PriceResolution {
     }
   }
 
-  return {
-    calculated, invalid, productionCosts, commissionPct:leerComisionPct(input.defaults?.comision_tarjeta_pct),
-    cajaEmpanadas: precioCaja(input.ingredients, NOMBRE_CAJA_EMPANADAS),
-  };
+  return { calculated, invalid, productionCosts, commissionPct:leerComisionPct(input.defaults?.comision_tarjeta_pct) };
 }
 
 export function sellablePrice(

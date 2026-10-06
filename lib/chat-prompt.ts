@@ -61,28 +61,17 @@ function seccion(titulo: string, items: ItemCarta[]): string {
  * calzar con lo que de verdad cobra el carrito. Ver `seCobraPorUnidad()` en
  * `lib/reglas-carta.ts`: apenas hay UNA empanada con precio unitario cargado
  * (el caso real de Impasto hoy), el carrito ignora la tabla de cajas fija y
- * suma el precio de cada empanada elegida más la caja de cartón
- * (`empanadaBoxCharge`). Solo si NINGUNA tiene precio unitario se usa esa tabla.
- *
- * La caja de cartón es un costo interno: el bot no la conoce como concepto.
- * Recibe el precio ya armado de cada caja de un solo sabor, así cotiza igual
- * que el carrito sin poder contarle al cliente que la caja se cobra.
+ * suma el precio de cada empanada elegida. Solo si NINGUNA tiene precio
+ * unitario se usa esa tabla.
  */
 function cajas(data: CatalogData): string {
   if (data.empanadas.length === 0) return "";
   const tamanios = listaConO(TAMANIOS_CAJA_EMPANADAS);
 
   if (seCobraPorUnidad(data.empanadas)) {
-    const precioCaja = (precio: number, n: 6 | 12 | 24) => n * precio + (data.empanadaBoxCharge?.[n] ?? 0);
-    const tabla = data.empanadas
-      .filter((empanada) => Number(empanada.precio) > 0)
-      .map((empanada) => `- ${empanada.nombre}: ` +
-        TAMANIOS_CAJA_EMPANADAS.map((n) => `caja x${n} ${pesos(precioCaja(Number(empanada.precio), n))}`).join(" · "))
-      .join("\n");
     return `\nCAJAS DE EMPANADAS\n- Se piden en cajas de ${tamanios} unidades, combinando los sabores que` +
-      ` se quiera: no se venden sueltas. Precio de la caja de un solo sabor:\n${tabla}\n` +
-      `- Para cotizar una caja usá esta tabla, nunca multipliques el precio por unidad. Con sabores` +
-      ` combinados, el total exacto aparece en la web al completar la caja.\n`;
+      ` se quiera: no se venden sueltas. El precio de la caja es la suma del precio de cada empanada` +
+      ` elegida (los precios están arriba, en EMPANADAS).\n`;
   }
 
   const conPrecio = TAMANIOS_CAJA_EMPANADAS.filter((n) => data.empanadaBoxPrices[n] > 0);

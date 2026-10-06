@@ -65,7 +65,8 @@ export const isEmpanadaShell = (ingredient: PricingIngredient): boolean =>
 // y se traslada al costo, sin margen.
 export const NOMBRE_CAJA_PIZZA = 'Caja de pizza';
 export const NOMBRE_CAJA_EMPANADAS = 'Caja de empanadas';
-const EMPANADAS_POR_CAJA = 12;
+/** La caja de empanadas se reparte entre 6: cada empanada lleva un sexto, la pidan de a 6, 12 o 24. */
+export const EMPANADAS_POR_CAJA = 6;
 
 /**
  * Precio de una caja cargada en Ingredientes. Si no está cargada vale 0 (se vende
@@ -82,10 +83,16 @@ export function precioCaja(ingredients: PricingIngredient[], nombre: string): nu
   return Number.isFinite(precio) && precio >= 0 ? precio : null;
 }
 
-/** Una caja cada 12 empanadas: la x6 y la x12 llevan una; 18 y la x24, dos. */
-export function cajasDeEmpanadas(unidades: number): number {
-  return unidades > 0 ? Math.ceil(unidades / EMPANADAS_POR_CAJA) : 0;
+/**
+ * Caja que lleva una unidad de la lista de precios: cada pizza, la suya; cada empanada, la
+ * sexta parte de la caja de empanadas. null si el precio de esa caja está roto.
+ */
+export function cajaPorUnidad(subcategoria: string, cajaPizza: number | null, cajaEmpanadas: number | null): number | null {
+  if (subcategoria === 'Pizzas') return cajaPizza;
+  if (subcategoria === 'Empanadas') return cajaEmpanadas === null ? null : cajaEmpanadas / EMPANADAS_POR_CAJA;
+  return 0;
 }
+
 // El precio de venta sube al próximo múltiplo de $500. Con $1.000 los saltos
 // eran dispares: Pollo pasaba de $2.029 a $3.000 y Árabe de $2.993 a $3.000.
 const REDONDEO_PRECIO = 500;
@@ -117,8 +124,7 @@ export function leerComisionPct(valor: unknown): number {
  *   costoReceta = round(Σ(precio_kg * cantidad_kg * multiplo_rendimiento))
  *   unidades = según rend_tipo y rend_valor de la receta
  *   costoUnit = costoReceta / unidades + precio de una tapa
- *   precioEfectivo = round(costoUnit * markup)
- *   La caja de empanadas no va por unidad: la suma la cotización de cada caja.
+ *   precioEfectivo = round(costoUnit * markup) + caja de empanadas ÷ 6 (al costo, sin margen)
  */
 export function buildEffectivePrices(
   recipes: PricingRecipe[],
@@ -141,6 +147,7 @@ export function buildEffectivePrices(
   const tapa = ingredients.find(isEmpanadaShell);
   const costoTapa = Number(tapa?.precio_kg) || 0;
   const cajaPizza = precioCaja(ingredients, NOMBRE_CAJA_PIZZA);
+  const cajaEmpanadas = precioCaja(ingredients, NOMBRE_CAJA_EMPANADAS);
 
   const riByRecipe = new Map<string, RecipeIngredient[]>();
   for (const ri of recipeIngredients) {
@@ -169,9 +176,8 @@ export function buildEffectivePrices(
     // La categoría normalizada solo decide el tilde; el costeo sigue con la subcategoría tal cual.
     const categoria = CATEGORIAS_PRECIO.includes(subcategoria) ? subcategoria : 'Otros';
     const markupFinal = categoriasConComision.has(categoria) ? markup / (1 - comisionPct / 100) : markup;
-    const llevaCaja = subcategoria === 'Pizzas';
-    if (llevaCaja && cajaPizza === null) throw new Error('Precio de la caja de pizza inválido');
-    const caja = llevaCaja ? cajaPizza! : 0;
+    const caja = cajaPorUnidad(subcategoria, cajaPizza, cajaEmpanadas);
+    if (caja === null) throw new Error('Precio de la caja inválido');
 
     let costoUnit = 0;
     if (recipe && components.length > 0) {
