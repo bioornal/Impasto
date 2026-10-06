@@ -128,6 +128,14 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
             </div>
           </div>
           <div className="panel-head-spacer" />
+          <button
+            className="btn btn-danger btn-sm"
+            disabled={marcados.size === 0 || eliminando}
+            title={marcados.size === 0 ? "Marcá pedidos con las casillas de la tabla" : "Eliminar los pedidos marcados"}
+            onClick={() => void eliminar([...marcados])}
+          >
+            <Icon.Trash /> {eliminando ? "Eliminando…" : `Eliminar seleccionados (${marcados.size})`}
+          </button>
           <button className="btn btn-ghost btn-sm" onClick={pairPrinter}>Emparejar impresora</button>
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
             Impresora de Impasto
@@ -158,8 +166,7 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
         {marcados.size > 0 && (
           <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'var(--a-warn-soft)' }}>
             <b>{marcados.size} seleccionado{marcados.size === 1 ? '' : 's'}</b>
-            <button className="btn btn-danger btn-sm" disabled={eliminando} onClick={() => void eliminar([...marcados])}>{eliminando ? 'Eliminando…' : 'Eliminar seleccionados'}</button>
-            <button className="btn btn-ghost btn-sm" disabled={eliminando} onClick={() => setMarcados(new Set())}>Cancelar</button>
+            <button className="btn btn-ghost btn-sm" disabled={eliminando} onClick={() => setMarcados(new Set())}>Deseleccionar</button>
           </div>
         )}
         <div className="panel-body no-pad">
