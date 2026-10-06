@@ -65,12 +65,3 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   return NextResponse.json({ ok: true });
 }
-
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const unauthorized = await requireAdmin();
-  if (unauthorized) return unauthorized;
-  const { id } = await params;
-  const { error } = await db.database.from("pedidos").delete().eq("id", id).eq("sucursal_id", SUCURSAL_ID).eq("proyecto_id", "impasto");
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
-}

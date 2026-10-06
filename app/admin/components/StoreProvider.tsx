@@ -153,6 +153,8 @@ interface StoreCtx {
   deleteEtiqueta: (id: string) => Promise<void>;
   updateOrderStatus: (dbId: string, estado: string) => Promise<boolean>;
   updateOrderPayment: (dbId: string, estado: string) => Promise<boolean>;
+  /** Elimina pedidos para siempre. Devuelve los que se eliminaron y los que no se pudieron, con el motivo. */
+  deleteOrders: (dbIds: string[]) => Promise<{ eliminados: string[]; bloqueados: { id: string; pedido: string; motivo: string }[] }>;
   /** Sin `monto` devuelve el total; con `monto` hace una devolución parcial. */
   recordManualRefund: (dbId: string, body: ManualRefund) => Promise<string>;
   refundOrder: (dbId: string, monto?: number, operationId?: string) => Promise<boolean>;
@@ -482,6 +484,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
       showToast(`Pago de ${prevOrder?.id ?? ""} → ${estado}`);
       return true;
+    },
+
+    deleteOrders: async (dbIds) => {
+      const res = await fetch("/api/admin/pedidos/eliminar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: dbIds }),
+      }).catch(() => null);
+      const result = res ? await res.json().catch(() => ({})) : {};
+      if (!res || !res.ok || !result.ok) {
+        showToast(result.error || "No se pudieron eliminar los pedidos");
+        return { eliminados: [], bloqueados: [] };
+      }
+      const eliminados: string[] = result.ids ?? [];
+      setState(s => ({ ...s, orders: s.orders.filter(o => !eliminados.includes(o._dbId)) }));
+      showToast(eliminados.length === 1 ? "Pedido eliminado" : `${eliminados.length} pedidos eliminados`);
+      return { eliminados, bloqueados: result.bloqueados ?? [] };
     },
 
     recordManualRefund: async (dbId, body) => {

@@ -23,7 +23,7 @@ const fmtDateTime = (iso: string) => new Date(iso).toLocaleDateString("es-AR", {
 const FILTERS: [string, string][] = [["todos","Todos"],["nuevo","Nuevos"],["preparando","Preparando"],["en-camino","En camino"],["entregado","Entregados"],["cancelado","Cancelados"]];
 
 export function Orders() {
-  const { state, updateOrderStatus, updateOrderPayment, refundOrder, recordManualRefund, reload } = useStore();
+  const { state, updateOrderStatus, updateOrderPayment, deleteOrders, refundOrder, recordManualRefund, reload } = useStore();
   const [filter, setFilter] = useState("todos");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<AdminOrder | null>(null);
@@ -31,6 +31,8 @@ export function Orders() {
   const [printing, setPrinting] = useState(false);
   const [printerSelection, setPrinterSelection] = useState<PrinterSelection | null>(null);
   const [printerBusy, setPrinterBusy] = useState(false);
+  const [marcados, setMarcados] = useState<Set<string>>(new Set());
+  const [eliminando, setEliminando] = useState(false);
   const printingRef = useRef(false);
   const failedAttempts = useRef(new Map<string, PrintJob>());
   const sentOrders = useRef(new Set<string>());
@@ -81,6 +83,25 @@ export function Orders() {
       try { setPrinterSelection(await getPrinterSelection()); } catch { /* Keep the last confirmed choice. */ }
       setPrintState({ orderId: '', message: error instanceof Error ? error.message : 'No se pudo guardar la impresora.', error: true });
     } finally { setPrinterBusy(false); }
+  }
+
+  /** Irreversible: pide confirmación con la cantidad y avisa cuáles no se pudieron eliminar. */
+  async function eliminar(ids: string[]) {
+    if (ids.length === 0 || eliminando) return;
+    const ordenes = state.orders.filter(o => ids.includes(o._dbId));
+    const detalle = ordenes.length === 1 ? `el pedido ${ordenes[0].id} de ${ordenes[0].cliente}` : `${ordenes.length} pedidos`;
+    if (!window.confirm(`¿Eliminar ${detalle} para siempre?
+
+Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`)) return;
+    setEliminando(true);
+    try {
+      const { eliminados, bloqueados } = await deleteOrders(ids);
+      setMarcados(prev => new Set([...prev].filter(id => !eliminados.includes(id))));
+      setSelected(prev => (prev && eliminados.includes(prev._dbId) ? null : prev));
+      if (bloqueados.length > 0) {
+        setPrintState({ orderId: '', error: true, message: `No se pudo eliminar ${bloqueados.length}: ${bloqueados.map(b => `${b.pedido} (${b.motivo})`).join(' · ')}` });
+      }
+    } finally { setEliminando(false); }
   }
 
   const filtered = useMemo(() => {
@@ -134,15 +155,23 @@ export function Orders() {
             })()}
           </div>
         )}
+        {marcados.size > 0 && (
+          <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'var(--a-warn-soft)' }}>
+            <b>{marcados.size} seleccionado{marcados.size === 1 ? '' : 's'}</b>
+            <button className="btn btn-danger btn-sm" disabled={eliminando} onClick={() => void eliminar([...marcados])}>{eliminando ? 'Eliminando…' : 'Eliminar seleccionados'}</button>
+            <button className="btn btn-ghost btn-sm" disabled={eliminando} onClick={() => setMarcados(new Set())}>Cancelar</button>
+          </div>
+        )}
         <div className="panel-body no-pad">
           <div className="tbl-wrap">
             <table className="tbl">
               <thead>
-                <tr><th>Orden</th><th>Cliente</th><th>Items</th><th>Modalidad</th><th>Pago</th><th className="right">Total</th><th>Estado</th><th>Hace</th><th></th></tr>
+                <tr><th style={{ width: 32 }}><input type="checkbox" aria-label="Seleccionar todos los pedidos de la lista" checked={filtered.length > 0 && filtered.every(o => marcados.has(o._dbId))} onChange={e => setMarcados(e.target.checked ? new Set(filtered.map(o => o._dbId)) : new Set())} /></th><th>Orden</th><th>Cliente</th><th>Items</th><th>Modalidad</th><th>Pago</th><th className="right">Total</th><th>Estado</th><th>Hace</th><th></th></tr>
               </thead>
               <tbody>
                 {filtered.map(o => (
                   <tr key={o._dbId} style={{ cursor: "pointer" }} onClick={() => setSelected(o)}>
+                    <td onClick={e => e.stopPropagation()}><input type="checkbox" aria-label={`Seleccionar el pedido ${o.id}`} checked={marcados.has(o._dbId)} onChange={e => setMarcados(prev => { const sig = new Set(prev); if (e.target.checked) sig.add(o._dbId); else sig.delete(o._dbId); return sig; })} /></td>
                     <td className="tbl-mono tbl-strong">{o.id}</td>
                     <td><div className="tbl-strong">{o.cliente}</div><div className="tbl-muted">{o.tel}</div></td>
                     <td className="tbl-muted">{o.items.map(i => `${i.qty}× ${i.name}`).join(", ").slice(0, 40)}…</td>
@@ -187,6 +216,7 @@ export function Orders() {
           printing={printing}
           printMessage={printState?.orderId === selected._dbId ? printState.message : null}
           onClose={() => setSelected(null)}
+          onDelete={() => void eliminar([selected._dbId])}
           onUpdate={async (estado) => {
             if (await updateOrderStatus(selected._dbId, estado)) setSelected({ ...selected, estado });
           }}
@@ -258,7 +288,7 @@ function RefundBox({ total, pedidoId, onRefund }: { total: number; pedidoId: str
   );
 }
 
-function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, printing, printMessage, onReconcile, onManualRefund }: { order: AdminOrder; onClose: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void; onRefund?: (monto?: number, operationId?: string) => Promise<boolean>; onPrint: () => void; printing: boolean; printMessage: string | null; onReconcile:()=>Promise<string>; onManualRefund:(body:ManualRefund)=>Promise<string> }) {
+function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, printing, printMessage, onReconcile, onManualRefund, onDelete }: { order: AdminOrder; onClose: () => void; onDelete: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void; onRefund?: (monto?: number, operationId?: string) => Promise<boolean>; onPrint: () => void; printing: boolean; printMessage: string | null; onReconcile:()=>Promise<string>; onManualRefund:(body:ManualRefund)=>Promise<string> }) {
   const [now] = useState(() => Date.now());
   const [consulting,setConsulting]=useState(false);
   const [consultMessage,setConsultMessage]=useState('');
@@ -379,6 +409,7 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, p
         </div>
         <div className="modal-foot">
           {printMessage && <span role="status" style={{ fontSize: 12 }}>{printMessage}</span>}
+          <button className="btn btn-danger btn-sm" onClick={onDelete}>Eliminar pedido</button>
           <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
           <button className="btn btn-ghost btn-sm" disabled={!habilitadoCocina} onClick={() => window.print()}>
             Imprimir con navegador

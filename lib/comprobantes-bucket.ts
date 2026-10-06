@@ -26,3 +26,12 @@ export async function bajarComprobante(clave: string): Promise<Response> {
     cache: "no-store",
   });
 }
+
+/** Borra el archivo de un comprobante, al eliminar su pedido. */
+export async function borrarComprobante(clave: string): Promise<void> {
+  const respuesta = await fetch(urlDe(clave), {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${process.env.INSFORGE_API_KEY}` },
+  });
+  if (!respuesta.ok && respuesta.status !== 404) throw new Error(`El borrado respondió ${respuesta.status}`);
+}
