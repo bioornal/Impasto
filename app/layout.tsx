@@ -6,13 +6,13 @@ import { PALABRAS_CLAVE, descripcionSitio, tituloSitio } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";
 
 /**
- * Metadatos estáticos: salen de `BUSINESS` y no de la base, para que el layout
+ * Metadatos de respaldo (la home los adapta a la carta vigente): salen de `BUSINESS` y no de la base, para que el layout
  * no dependa de una consulta. Los datos que Google realmente usa para el
  * horario y el teléfono son los del JSON-LD de `app/page.tsx`, que sí lee la
  * configuración viva del panel.
  */
 const TITULO = tituloSitio(BUSINESS);
-const DESCRIPCION = descripcionSitio(BUSINESS);
+const DESCRIPCION = descripcionSitio(BUSINESS, false);
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   description: DESCRIPCION,
   applicationName: BUSINESS.name,
   category: "restaurant",
-  keywords: PALABRAS_CLAVE,
+  keywords: PALABRAS_CLAVE.filter(p => !/empanada/i.test(p)),
   authors: [{ name: BUSINESS.name, url: SITE_URL }],
   creator: BUSINESS.name,
   publisher: BUSINESS.name,

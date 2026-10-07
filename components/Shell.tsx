@@ -12,6 +12,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Hero, Features } from "@/components/sections/Hero";
 import { Promos } from "@/components/sections/Promos";
 import { PizzaList } from "@/components/sections/PizzaList";
+import { cartaVisible, negocioDeCarta } from "@/lib/carta-visible";
 import { EmpanadasSection } from "@/components/sections/EmpanadasSection";
 import { Bebidas } from "@/components/sections/Bebidas";
 import { PedidoWhatsapp } from "@/components/sections/PedidoWhatsapp";
@@ -354,6 +355,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
     setHalfOpen(true);
   };
 
+  const visible = cartaVisible(data);
   const sections = [
     "home",
     ...(data.pizzas.length > 0 ? ["pizzas"] : []),
@@ -366,7 +368,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
     { key: "pizzas", label: "Pizzas", conteo: String(data.pizzas.length) },
     { key: "empanadas", label: "Empanadas", conteo: String(data.empanadas.length) },
     { key: "bebidas", label: "Bebidas", conteo: String(data.bebidas.length) },
-  ];
+  ].filter(t => Number(t.conteo) > 0);
 
   return (
     <div className={`app ${paletteClass} ${typeClass} ${headerOculto ? "header-collapsed" : ""}`}>
@@ -380,7 +382,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
         sections={sections}
         oculto={headerOculto}
       />
-      <Ticker desde={desde} />
+      <Ticker desde={desde} hayEmpanadas={visible.hayEmpanadas} />
       {(data.preciosNoDisponibles?.length ?? 0) > 0 && (
         <p role="status" style={{ textAlign: "center", padding: "10px 16px", background: "#fff3db", color: "#60420a" }}>
           Algunos productos no están disponibles temporalmente por su precio. Podés pedir los demás.
@@ -388,11 +390,12 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
       )}
 
       <main>
-        <Hero onCta={goSection} onHalf={() => openHalf()} featured={featured} varieties={data.pizzas.length} />
+        <Hero hayEmpanadas={visible.hayEmpanadas} onCta={goSection} onHalf={() => openHalf()} featured={featured} varieties={data.pizzas.length} />
         <Features freeShippingFrom={business.freeShippingFrom} desde={desde} />
-        <Promos promos={data.promos} onNav={goSection} />
-        <PizzaList pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} foco={focoPizza} onVerFicha={abrirFicha("pizzas")} />
+        <Promos hayEmpanadas={visible.hayEmpanadas} promos={visible.promos} onNav={goSection} />
+        {data.pizzas.length > 0 && <PizzaList indice={visible.indice("pizzas")} hayEmpanadas={visible.hayEmpanadas} pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} foco={focoPizza} onVerFicha={abrirFicha("pizzas")} />}
         <EmpanadasSection
+          indice={visible.indice("empanadas")}
           empanadas={data.empanadas}
           boxPrices={data.empanadaBoxPrices}
           blockedSizes={data.empanadaBoxNoDisponibles ?? []}
@@ -404,11 +407,11 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
           priceFor={empPriceFor}
           onVerFicha={abrirFicha("empanadas")}
         />
-        <Bebidas bebidas={data.bebidas} onVerFicha={abrirFicha("bebidas")} />
+        <Bebidas indice={visible.indice("bebidas")} bebidas={data.bebidas} onVerFicha={abrirFicha("bebidas")} />
         <PedidoWhatsapp business={business} />
-        <Story onCta={goSection} />
-        <Reviews reviews={data.reviews} business={business} productos={productosOpinables} />
-        <Faq business={business} />
+        <Story indice={visible.indice("nosotros")} onCta={goSection} />
+        <Reviews indice={visible.indice("opiniones")} reviews={visible.reviews} business={business} productos={productosOpinables} />
+        <Faq indice={visible.indice("preguntas")} hayEmpanadas={visible.hayEmpanadas} business={business} />
       </main>
 
       <Footer business={business} />
@@ -524,6 +527,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
       )}
 
       <CartDrawer
+        hayEmpanadas={visible.hayEmpanadas}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         onCheckout={() => { setDrawerOpen(false); setScreen("checkout"); }}
@@ -653,6 +657,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
 }
 
 export function Shell({ data, business, estadoInicial, chatDisponible, destacadaId }: { data: CatalogData; business: BusinessConfig; estadoInicial: EstadoTiendaCliente; chatDisponible: boolean; destacadaId?: string }) {
+  business = negocioDeCarta(business, data.empanadas.length > 0);
   return (
     <TweakProvider>
       <StoreStatusProvider inicial={estadoInicial}>

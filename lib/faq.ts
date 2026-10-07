@@ -31,7 +31,7 @@ export interface PreguntaFrecuente {
   soloConDelivery?: boolean;
 }
 
-export function preguntasFrecuentes(business: BusinessConfig): PreguntaFrecuente[] {
+export function preguntasFrecuentes(business: BusinessConfig, hayEmpanadas = true): PreguntaFrecuente[] {
   const fermentacion = argumentoConCifra("fermentacion");
   const horno = argumentoConCifra("horno");
   const empanada = argumentoConCifra("empanadas-peso");
@@ -67,11 +67,11 @@ export function preguntasFrecuentes(business: BusinessConfig): PreguntaFrecuente
       pregunta: "¿Se puede pedir pizza mitad y mitad?",
       respuesta: `${REGLA_MITAD_Y_MITAD} Escribinos por WhatsApp o elegí la opción "mitad y mitad" al armar el pedido.`,
     },
-    {
+    ...(hayEmpanadas ? [{
       pregunta: "¿Las empanadas se venden sueltas?",
       respuesta: `Las empanadas son de ${empanada.cifra} y van al horno. Se piden en cajas de ${tamanios} unidades, `
         + "combinando los sabores que quieras.",
-    },
+    }] : []),
     {
       pregunta: "¿Cuánto tarda mi pedido?",
       respuesta: `El tiempo estimado es de ${business.deliveryEstimate} para delivery y para retiro. Es un estimado, no una hora `

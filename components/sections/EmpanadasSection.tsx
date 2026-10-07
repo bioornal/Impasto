@@ -15,6 +15,7 @@ const REPULGUE = argumento("repulgue");
 
 interface EmpanadasSectionProps {
   empanadas: Empanada[];
+  indice?: string;
   boxPrices: Record<6 | 12 | 24, number>;
   blockedSizes: Array<6 | 12 | 24>;
   selection: Record<string, number>;
@@ -27,7 +28,7 @@ interface EmpanadasSectionProps {
   onVerFicha: (ids: string[], indice: number) => void;
 }
 
-export function EmpanadasSection({ empanadas, boxPrices, blockedSizes, selection, tier, onPick, onChangeTier, onAddBox, priceFor, onVerFicha }: EmpanadasSectionProps) {
+export function EmpanadasSection({ indice = "02", empanadas, boxPrices, blockedSizes, selection, tier, onPick, onChangeTier, onAddBox, priceFor, onVerFicha }: EmpanadasSectionProps) {
   if (empanadas.length === 0) return null;
 
   const selected = Object.values(selection).reduce((a, b) => a + b, 0);
@@ -51,7 +52,7 @@ export function EmpanadasSection({ empanadas, boxPrices, blockedSizes, selection
       <div className="container">
         <div className="section-head">
           <div>
-            <div className="sec-index">02 — Rellenas y al horno</div>
+            <div className="sec-index">{indice} — Rellenas y al horno</div>
             <h2>Armá tu caja</h2>
           </div>
           <p>Grandes y abundantes de {EMPANADA_PESO.cifra}, con {REPULGUE.titulo.toLowerCase()} y cocción al horno. Rellenos generosos con ingredientes de primera calidad. Elegí la cantidad para tu caja y combiná los sabores que quieras.</p>

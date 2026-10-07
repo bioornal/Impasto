@@ -1,3 +1,4 @@
+import { argumentosDeCarta, cartaVisible, negocioDeCarta } from "./carta-visible";
 import { ARGUMENTOS_MARCA, LEMA, ORIGEN_DEL_NOMBRE } from "@/lib/marca";
 import { preguntasFrecuentes } from "@/lib/faq";
 import { diasCerrados } from "@/lib/hours";
@@ -102,9 +103,9 @@ function carta(data: CatalogData): string {
 }
 
 /** Los argumentos de marca, si los hay. Nunca escritos a mano acá. */
-function sobreElProducto(): string {
+function sobreElProducto(hayEmpanadas: boolean): string {
   if (ARGUMENTOS_MARCA.length === 0) return "";
-  const lista = ARGUMENTOS_MARCA.map((a) => `- ${a.titulo}: ${a.detalle}`).join("\n");
+  const lista = argumentosDeCarta(hayEmpanadas).map((a) => `- ${a.titulo}: ${a.detalle}`).join("\n");
   return `\nSOBRE EL PRODUCTO\n${lista}\n`;
 }
 
@@ -113,12 +114,12 @@ function sobreElProducto(): string {
  * salen los medios de pago, los horarios y qué es la pizza, sin escribirlos dos
  * veces. Con el reparto pausado se omite la de delivery, que promete un envío.
  */
-function faq(business: BusinessConfig, estado: EstadoTienda): string {
+function faq(business: BusinessConfig, estado: EstadoTienda, hayEmpanadas: boolean): string {
   // Varias respuestas citan cifras de ARGUMENTOS_MARCA (`argumentoConCifra`
   // tira si falta una). Sin argumentos de marca, el bot sigue sin el FAQ en
   // vez de caerse: igual que SOBRE EL PRODUCTO, la sección no se anuncia.
   if (ARGUMENTOS_MARCA.length === 0) return "";
-  const lista = preguntasFrecuentes(business)
+  const lista = preguntasFrecuentes(business, hayEmpanadas)
     .filter((item) => estado.delivery.activo || !item.soloConDelivery)
     .map((item) => `- ${item.pregunta} ${item.respuesta}`)
     .join("\n");
@@ -130,6 +131,9 @@ export function promptVendedor(
   business: BusinessConfig,
   estado: EstadoTienda,
 ): string {
+  const visible = cartaVisible(data);
+  business = negocioDeCarta(business, visible.hayEmpanadas);
+  data = { ...data, promos: visible.promos };
   const ahora = estado.abierto
     ? "Estamos ABIERTOS ahora."
     : `Estamos CERRADOS ahora. ${estado.motivo} Invitá igual a mirar la carta y a volver cuando abra.`;
@@ -199,7 +203,7 @@ CÓMO HABLÁS
 - Si te escriben en portugués o en inglés, contestás en ese idioma con el mismo tono.
 - 2 a 4 líneas por respuesta. Como mucho tres productos por vez: nunca listas largas.
 - Cerrás siempre con una acción concreta, diciendo en qué sección de la página está lo que
-  recomendaste. Las secciones son: Pizzas, Empanadas, Bebidas y Nosotros.
+  recomendaste. Las secciones son: ${[...(data.pizzas.length ? ["Pizzas"] : []), ...(visible.hayEmpanadas ? ["Empanadas"] : []), ...(data.bebidas.length ? ["Bebidas"] : []), "Nosotros"].join(", ")}.
 - Sugerís un acompañamiento una sola vez. Si no enganchan, no insistís: insistir espanta.
 
 CÓMO VENDÉS
@@ -225,7 +229,7 @@ ${cocina}
 
 EL ENVÍO
 ${envio}
-${sobreElProducto()}${faq(business, estado)}
+${sobreElProducto(visible.hayEmpanadas)}${faq(business, estado, visible.hayEmpanadas)}
 LA CARTA
 ${carta(data)}`;
 }

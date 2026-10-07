@@ -5,10 +5,11 @@ import type { Promo } from "@/types";
 
 interface PromosProps {
   promos: Promo[];
+  hayEmpanadas?: boolean;
   onNav: (section: string) => void;
 }
 
-export function Promos({ promos, onNav }: PromosProps) {
+export function Promos({ promos, onNav, hayEmpanadas = true }: PromosProps) {
   if (promos.length === 0) return null;
   const [hero, ...rest] = promos.slice(0, 3);
   const stack = rest.slice(0, 2);
@@ -33,7 +34,7 @@ export function Promos({ promos, onNav }: PromosProps) {
             <div className="promo-stack">
               {stack.map((promo, index) => {
                 const dark = index === 1;
-                const target = dark ? "empanadas" : "pizzas";
+                const target = dark && hayEmpanadas ? "empanadas" : "pizzas";
                 return (
                   <article className={`promo-card ${dark ? "dark" : ""}`} key={promo.id}>
                     <div>
@@ -46,7 +47,7 @@ export function Promos({ promos, onNav }: PromosProps) {
                         className={`btn btn-sm ${dark ? "btn-ghost" : "btn-dark"}`}
                         onClick={() => onNav(target)}
                       >
-                        {dark ? "Armar caja" : "Ver pizzas"}
+                        {target === "empanadas" ? "Armar caja" : "Ver pizzas"}
                       </button>
                     </div>
                   </article>

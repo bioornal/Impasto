@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
-import { BUSINESS } from "@/lib/business";
+import { getBusinessConfig } from "@/lib/business-server";
+import { getCatalogData } from "@/lib/catalog";
+import { negocioDeCarta } from "@/lib/carta-visible";
 import { descripcionSitio } from "@/lib/seo";
 
 /**
@@ -8,11 +10,16 @@ import { descripcionSitio } from "@/lib/seo";
  * alguien lo agrega al inicio del celular, y es una señal más de marca para
  * los buscadores.
  */
-export default function manifest(): MetadataRoute.Manifest {
+export const dynamic = "force-dynamic";
+
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const [data, config] = await Promise.all([getCatalogData(), getBusinessConfig()]);
+  const hayEmpanadas = data.empanadas.length > 0;
+  const BUSINESS = negocioDeCarta(config, hayEmpanadas);
   return {
     name: `${BUSINESS.name} · Pizzería en ${BUSINESS.city}`,
     short_name: BUSINESS.name,
-    description: descripcionSitio(BUSINESS),
+    description: descripcionSitio(BUSINESS, hayEmpanadas),
     start_url: "/",
     display: "standalone",
     background_color: "#f6f1e7",

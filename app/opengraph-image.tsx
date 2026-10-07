@@ -1,17 +1,18 @@
 import { ImageResponse } from "next/og";
 import { BUSINESS } from "@/lib/business";
+import { getCatalogData } from "@/lib/catalog";
 
 /**
  * La miniatura que se ve al compartir el sitio en WhatsApp, Instagram o
- * Facebook. Se genera en el build, no en cada visita, así que usa la
- * configuración del código y no la de la base: un cambio de horario desde el
- * panel no tiene por qué invalidar la imagen.
+ * Facebook. La categoría de empanadas sigue la carta vigente.
  */
-export const alt = "Impasto · Pizzas y empanadas en Puerto Iguazú";
+export const dynamic = "force-dynamic";
+export const alt = "Impasto · Pizzería artesanal en Puerto Iguazú";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function Image() {
+export default async function Image() {
+  const data = await getCatalogData();
   return new ImageResponse(
     (
       <div
@@ -34,7 +35,7 @@ export default function Image() {
           {BUSINESS.name}
         </div>
         <div style={{ display: "flex", fontSize: 36, color: "#4a3f33", marginTop: 20 }}>
-          Pizzas de fermentación lenta, empanadas y bebidas
+          {`Pizzas de fermentación lenta${data.empanadas.length ? ", empanadas" : ""} y bebidas`}
         </div>
         <div style={{ display: "flex", fontSize: 30, color: "#8a7b69", marginTop: 36 }}>
           {`Delivery y take away · ${BUSINESS.hours}`}

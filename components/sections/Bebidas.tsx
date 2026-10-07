@@ -6,7 +6,7 @@ import { fmt } from "@/lib/utils";
 import { esMobile, lineaDeBebida } from "@/lib/ficha";
 import type { Bebida } from "@/types";
 
-export function Bebidas({ bebidas, onVerFicha }: { bebidas: Bebida[]; onVerFicha: (ids: string[], indice: number) => void }) {
+export function Bebidas({ bebidas, onVerFicha, indice = "03" }: { indice?: string; bebidas: Bebida[]; onVerFicha: (ids: string[], indice: number) => void }) {
   const { items, add, incKey, decKey } = useCart();
   const toast = useToast();
   if (bebidas.length === 0) return null;
@@ -23,7 +23,7 @@ export function Bebidas({ bebidas, onVerFicha }: { bebidas: Bebida[]; onVerFicha
       <div className="container">
         <div className="section-head" style={{ marginBottom: 30 }}>
           <div>
-            <div className="sec-index">03 — Para acompañar</div>
+            <div className="sec-index">{indice} — Para acompañar</div>
             <h2>Bebidas</h2>
           </div>
         </div>

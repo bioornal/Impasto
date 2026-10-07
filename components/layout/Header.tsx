@@ -87,11 +87,12 @@ const TICKER = [
   `Empanadas de ${EMPANADA_PESO.cifra} al horno`,
 ];
 
-export function Ticker({ desde }: { desde: number | null }) {
+export function Ticker({ desde, hayEmpanadas = true }: { desde: number | null; hayEmpanadas?: boolean }) {
   // El precio va segundo, después de la pizza a la piedra. Sin "desde" no se muestra.
+  const ticker = TICKER.filter(t => hayEmpanadas || !/empanada/i.test(t));
   const items = desde === null
-    ? TICKER
-    : [TICKER[0], `${PORCIONES.titulo} desde ${fmt(desde)}`, ...TICKER.slice(1)];
+    ? ticker
+    : [ticker[0], `${PORCIONES.titulo} desde ${fmt(desde)}`, ...ticker.slice(1)];
   const run = (key: string) => (
     <span key={key}>
       {items.map((text) => (

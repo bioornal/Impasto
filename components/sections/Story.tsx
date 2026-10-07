@@ -23,7 +23,7 @@ const CIFRAS = [
   { id: HORNO.id, grande: fino(HORNO.cifra), texto: HORNO.titulo },
 ];
 
-export function Story({ onCta }: { onCta: (section: string) => void }) {
+export function Story({ onCta, indice = "04" }: { onCta: (section: string) => void; indice?: string }) {
   return (
     <section className="story" id="nosotros">
       <div className="story-bg" aria-hidden>
@@ -31,7 +31,7 @@ export function Story({ onCta }: { onCta: (section: string) => void }) {
       </div>
       <div className="container story-inner">
         <div className="story-copy">
-          <div className="sec-index gold">04 — Nosotros</div>
+          <div className="sec-index gold">{indice} — Nosotros</div>
           <h2>Impasto<br />significa <em>masa.</em></h2>
           <p className="story-sub">Y acá todo empieza ahí.</p>
           <p className="story-lede">

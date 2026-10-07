@@ -14,6 +14,7 @@ const esMobile = () => window.matchMedia("(max-width: 760px)").matches;
 
 interface CartDrawerProps {
   open: boolean;
+  hayEmpanadas?: boolean;
   onClose: () => void;
   onCheckout: () => void;
   onBrowse: () => void;
@@ -21,7 +22,7 @@ interface CartDrawerProps {
   bebidas: Bebida[];
 }
 
-export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebidas }: CartDrawerProps) {
+export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onBrowse, business, bebidas }: CartDrawerProps) {
   const { items, add, inc, dec, remove, subtotal } = useCart();
   const tienda = useStoreStatus();
   const toast = useToast();
@@ -167,7 +168,7 @@ export function CartDrawer({ open, onClose, onCheckout, onBrowse, business, bebi
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
               </div>
               <h4>Todavía no hay nada acá</h4>
-              <p>Sumá una pizza, una caja de empanadas o una bebida.</p>
+              <p>Sumá una pizza{hayEmpanadas && ", una caja de empanadas"} o una bebida.</p>
               <button className="btn btn-primary" onClick={onBrowse}>Ver la carta</button>
             </div>
           ) : (

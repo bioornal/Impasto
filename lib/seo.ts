@@ -1,3 +1,4 @@
+import { cartaVisible, negocioDeCarta, mencionaEmpanadas } from "./carta-visible";
 import type { BusinessConfig } from "@/lib/business";
 import type { CatalogData, Empanada, Pizza } from "@/types";
 import { SITE_URL } from "@/lib/site";
@@ -143,7 +144,7 @@ function carta(data: CatalogData) {
     "@type": "Menu",
     "@id": `${SITE_URL}/#carta`,
     name: "Carta de Impasto",
-    description: "Pizzas de fermentación lenta, empanadas al horno y bebidas.",
+    description: `Pizzas de fermentación lenta${data.empanadas.length ? ", empanadas al horno" : ""} y bebidas.`,
     inLanguage: "es-AR",
     hasMenuSection: secciones.map((seccion) => ({
       "@type": "MenuSection",
@@ -173,13 +174,13 @@ export function tituloSitio(business: BusinessConfig): string {
  * (`lib/marca.ts`), no están escritas a mano acá: son las mismas que ve el
  * cliente en el sitio y el bot en el prompt.
  */
-export function descripcionSitio(business: BusinessConfig): string {
+export function descripcionSitio(business: BusinessConfig, hayEmpanadas = true): string {
   // `argumentoConCifra`, no `argumento`: las dos se interpolan en el
   // template literal de abajo, y ahí un `cifra` faltante compilaría igual.
   const fermentacion = argumentoConCifra("fermentacion");
   const empanadaPeso = argumentoConCifra("empanadas-peso").cifra;
   return `Pizza a la piedra con técnica napoletana en ${business.city}: masa madurada en frío ${fermentacion.cifra}, `
-    + `con mucha muzzarella y toppings abundantes. Empanadas de ${empanadaPeso}, delivery propio y take away. Pedí online.`;
+    + `con mucha muzzarella y toppings abundantes. ${hayEmpanadas ? `Empanadas de ${empanadaPeso}, ` : ""}Delivery propio y take away. Pedí online.`;
 }
 
 /** La ficha de Google Maps más cercana al domicilio, sin necesidad de un place_id. */
@@ -208,6 +209,8 @@ export const PALABRAS_CLAVE = [
 ];
 
 export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {
+  const { hayEmpanadas } = cartaVisible(data);
+  business = negocioDeCarta(business, hayEmpanadas);
   const restaurante = {
     // `Restaurant` ya es un `FoodEstablishment` y un `LocalBusiness`; Google lo
     // trata como ficha de negocio local. El `@id` es el nodo al que apuntan el
@@ -217,17 +220,17 @@ export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {
     name: business.name,
     alternateName: `${business.name} ${business.city}`,
     slogan: `${LEMA}.`,
-    description: descripcionSitio(business),
+    description: descripcionSitio(business, hayEmpanadas),
     url: SITE_URL,
     image: [STOCK_IMAGES.hero.main, `${SITE_URL}/opengraph-image`],
     logo: LOGO.src,
     telephone: telefonoInternacional(business),
     email: business.email,
-    servesCuisine: ["Pizza", "Italiana", "Empanadas", "Argentina"],
+    servesCuisine: ["Pizza", "Italiana", ...(hayEmpanadas ? ["Empanadas"] : []), "Argentina"],
     priceRange: "$$",
     currenciesAccepted: "ARS",
     paymentAccepted: "Efectivo, Transferencia, Tarjeta de crédito, Tarjeta de débito, Mercado Pago",
-    keywords: PALABRAS_CLAVE.join(", "),
+    keywords: PALABRAS_CLAVE.filter(p => hayEmpanadas || !mencionaEmpanadas(p)).join(", "),
     address: direccion(business),
     hasMap: mapaUrl(business),
     areaServed: { "@type": "City", name: partesUbicacion(business).localidad },
@@ -268,7 +271,7 @@ export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {
     url: SITE_URL,
     name: business.name,
     alternateName: `${business.name} ${business.city}`,
-    description: descripcionSitio(business),
+    description: descripcionSitio(business, hayEmpanadas),
     inLanguage: "es-AR",
     publisher: { "@id": `${SITE_URL}/#local` },
   };
@@ -278,7 +281,7 @@ export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {
     "@id": `${SITE_URL}/#pagina`,
     url: SITE_URL,
     name: tituloSitio(business),
-    description: descripcionSitio(business),
+    description: descripcionSitio(business, hayEmpanadas),
     isPartOf: { "@id": `${SITE_URL}/#sitio` },
     about: { "@id": `${SITE_URL}/#local` },
     primaryImageOfPage: { "@type": "ImageObject", url: `${SITE_URL}/opengraph-image` },
@@ -295,7 +298,7 @@ export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {
     "@id": `${SITE_URL}/#preguntas`,
     inLanguage: "es-AR",
     isPartOf: { "@id": `${SITE_URL}/#sitio` },
-    mainEntity: preguntasFrecuentes(business).map((item) => ({
+    mainEntity: preguntasFrecuentes(business, hayEmpanadas).map((item) => ({
       "@type": "Question",
       name: item.pregunta,
       acceptedAnswer: { "@type": "Answer", text: item.respuesta },

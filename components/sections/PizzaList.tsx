@@ -26,6 +26,8 @@ const FILTERS: [string, string][] = [
 
 interface PizzaListProps {
   pizzas: Pizza[];
+  indice?: string;
+  hayEmpanadas?: boolean;
   onHalf: (pizza: Pizza) => void;
   destacadaId?: string;
   /** Mobile: pizza elegida en la búsqueda. Limpia filtros y la resalta un momento. */
@@ -34,7 +36,7 @@ interface PizzaListProps {
   onVerFicha: (ids: string[], indice: number) => void;
 }
 
-export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: PizzaListProps) {
+export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, destacadaId, foco, onVerFicha }: PizzaListProps) {
   const [cat, setCat] = useState("todas");
   const [q, setQ] = useState("");
   // Ajuste de estado al cambiar la prop (patrón de React, sin efecto): la pizza
@@ -96,7 +98,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
       <div className="container">
         <div className="section-head" style={{ marginBottom: 26 }}>
           <div style={{ maxWidth: "56%" }}>
-            <div className="sec-index">01 — La carta</div>
+            <div className="sec-index">{indice} — La carta</div>
             <h2>Pizzas</h2>
           </div>
           <p>Elegí un gusto, o combiná dos en la misma pizza. Filtrá por estilo: clásicas, gourmet, veggie o picantes.</p>
@@ -282,7 +284,7 @@ export function PizzaList({ pizzas, onHalf, destacadaId, foco, onVerFicha }: Piz
           })}
 
           {mobileRows.length > 0 && (
-            <p className="p-rows-end">Fin de {list.length} resultados. Seguí en Empanadas desde la barra de abajo.</p>
+            <p className="p-rows-end">Fin de {list.length} resultados.{hayEmpanadas && " Seguí en Empanadas desde la barra de abajo."}</p>
           )}
         </div>
       </div>

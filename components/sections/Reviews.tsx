@@ -7,6 +7,7 @@ import { OpinionForm } from "@/components/opiniones/OpinionForm";
 
 interface ReviewsProps {
   reviews: Review[];
+  indice?: string;
   business: BusinessConfig;
   /** Lo que se puede elegir en "¿Qué probaste?": pizzas de la carta y "Empanadas". */
   productos: string[];
@@ -44,14 +45,14 @@ function Invitacion({ productos }: { productos: string[] }) {
   );
 }
 
-export function Reviews({ reviews, business, productos }: ReviewsProps) {
+export function Reviews({ reviews, business, productos, indice = "05" }: ReviewsProps) {
   // Sin opiniones publicadas, la sección es solo la invitación (y WhatsApp en
   // escritorio). Antes, en mobile, se ocultaba entera.
   if (reviews.length === 0) {
     return (
       <section className="reviews reviews-empty">
         <div className="container reviews-empty-inner">
-          <Invitacion productos={productos} />
+          <div><div className="sec-index">{indice} — Opiniones</div><Invitacion productos={productos} /></div>
           <WspCard business={business} texto="Te confirmamos el pedido y te preparamos la orden directamente." />
         </div>
       </section>
@@ -63,7 +64,7 @@ export function Reviews({ reviews, business, productos }: ReviewsProps) {
       <div className="container">
         <div className="section-head">
           <div>
-            <div className="sec-index">05 — Opiniones</div>
+            <div className="sec-index">{indice} — Opiniones</div>
             <h2>Lo que dicen los que ya probaron</h2>
           </div>
           <div className="side-note">Opiniones de<br />clientes de Impasto</div>

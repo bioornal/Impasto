@@ -16,12 +16,13 @@ interface HeroProps {
   onHalf: () => void;
   featured?: Pizza;
   varieties: number;
+  hayEmpanadas?: boolean;
   // El "desde $X" no vive acá: lo muestra `Features`, la franja de abajo, con
   // más peso visual. Repetirlo en el párrafo era decir el mismo precio dos
   // veces en la misma pantalla.
 }
 
-export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroProps) {
+export function Hero({ onCta, onHalf, featured, varieties: _varieties, hayEmpanadas = true }: HeroProps) {
   return (
     <section className="hero">
       <div className="hero-bg" aria-hidden="true">
@@ -50,7 +51,7 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties }: HeroPro
             <button className="btn btn-ghost btn-lg" onClick={onHalf}>Pizza mitad y mitad</button>
           </div>
           <div className="hero-stats">
-            {HERO_STATS.map((stat) => (
+            {HERO_STATS.filter(s => hayEmpanadas || s.id !== "empanadas-peso").map((stat) => (
               <div key={stat.id}>
                 <b>{stat.cifra}</b>
                 <small>{stat.titulo}</small>

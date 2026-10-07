@@ -7,15 +7,15 @@ import type { BusinessConfig } from "@/lib/business";
  * cerrado, que es lo que el rastreador necesita, y el usuario no carga JS para
  * abrir una respuesta.
  */
-export function Faq({ business }: { business: BusinessConfig }) {
-  const preguntas = preguntasFrecuentes(business);
+export function Faq({ business, hayEmpanadas = true, indice = "06" }: { business: BusinessConfig; hayEmpanadas?: boolean; indice?: string }) {
+  const preguntas = preguntasFrecuentes(business, hayEmpanadas);
 
   return (
     <section className="faq" id="preguntas">
       <div className="container">
         <div className="section-head">
           <div>
-            <div className="sec-index">06 — Preguntas</div>
+            <div className="sec-index">{indice} — Preguntas</div>
             <h2>Lo que más nos preguntan</h2>
           </div>
           <div className="side-note">Delivery y take away<br />en {business.locationLabel}</div>
