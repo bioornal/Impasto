@@ -2,6 +2,8 @@
 
 Estado al 24/09/2026: código publicado en `main` de Impasto y Carro Fogón. `queued` significa **enviado a la cola de Windows**, no papel impreso.
 
+**Versión 3 (09/10/2026): copia del cliente.** Un trabajo con `copy: "cliente"` (más `receipt.subtotal`, `receipt.shipping` e `items[].lineTotal`) sale con el formato para pegar en la caja: IMPASTO, sin número de pedido, notas ni `REIMPRESIÓN`, con precios, totales, el pago en texto para el cliente y el pie de contacto (textos fijos en `ReceiptEncoder.cs`). Sin `copy`, la comanda de cocina sale byte a byte igual que en la versión 2. `/health` informa `"version":"3"`; las webs solo mandan la copia del cliente a un agente 3+. La huella anti-duplicados se calcula sobre los bytes recibidos.
+
 ## Equipo y pruebas realizadas
 
 - Epson TM-T20II USB, cola exacta `EPSON TM-T20II Receipt`, papel de 80 mm, ESC/POS RAW, 42 columnas, WPC1252 (`ESC t 16`) y corte `GS V 0`.
@@ -64,6 +66,7 @@ El agente acepta solo dos orígenes exactos, token local y JSON validado de hast
 ```powershell
 ./printer-agent/bin/PrinterAgent.exe --test-raw "EPSON TM-T20II Receipt"
 ./printer-agent/bin/PrinterAgent.exe --test-raw-long "EPSON TM-T20II Receipt"
+./printer-agent/bin/PrinterAgent.exe --test-cliente "EPSON TM-T20II Receipt"
 ```
 
 Consumen papel y llevan `NO PREPARAR`; no usan datos reales. El dueño confirmó impresión desde Carro Fogón (tras emparejar y reintentar el pedido guardado) y desde Impasto web el 24/09. La matriz completa delivery/retiro, bloqueo MP y agente caído en producción no se ensayó todavía.
