@@ -126,8 +126,10 @@ namespace PrinterAgent {
             string printerId = selection.Selected(source);
             string queueName = selection.Queue(source);
             byte[] ticket = ReceiptEncoder.Encode(job, job.reprint, printerId == "3nstar");
+            // Identity of the exact bytes the site sent: a retry resends the same stored job. Re-serializing the
+            // parsed request is not stable, because reflection does not guarantee property order.
             string identity;
-            using (var hash = SHA256.Create()) identity = Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(json.Serialize(job))));
+            using (var hash = SHA256.Create()) identity = Convert.ToBase64String(hash.ComputeHash(body));
             try {
                 if (!ledger.TryReserve(job.attemptId, identity)) {
                     if (ledger.IsQueued(job.attemptId)) Reply(response, 200, new { status = "queued", duplicate = true });
