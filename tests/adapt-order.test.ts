@@ -95,6 +95,13 @@ if (conCuenta.cuentaTransferencia === "Billetera A") {
   console.log("FALLA  cuenta de transferencia:", conCuenta.cuentaTransferencia);
 }
 
+if (adapted.numero === "1042" && adapted.id === "IM-1042-AB12") {
+  console.log("PASA   adaptOrder guarda el número corto sin tocar la referencia");
+} else {
+  fallos++;
+  console.log("FALLA  numero/id esperados '1042' e 'IM-1042-AB12', obtuvo:", adapted.numero, adapted.id);
+}
+
 if (adapted.items[1]?.extra === 500 && adapted.items[0]?.extra === 0) {
   console.log("PASA   adaptOrder conserva el extra del POS (0 si no hay)");
 } else {

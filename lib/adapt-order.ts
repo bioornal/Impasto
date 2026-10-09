@@ -32,6 +32,7 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
   return {
     _dbId: String(p.id || ""),
     id: String(p.external_reference || "IM-" + num),
+    numero: String(p.numero_pedido || ""),
     cliente: String(p.nombre_cliente || "—"),
     tel: String(p.telefono_cliente || "—"),
     mode: mode as "delivery" | "takeaway",

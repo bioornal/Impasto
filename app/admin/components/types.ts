@@ -28,6 +28,8 @@ export interface OrderItem {
 export interface AdminOrder {
   _dbId: string;
   id: string;
+  /** numero_pedido tal cual (6 cifras en la web, 1, 2, 3… en el POS): lo que se imprime en la comanda. */
+  numero?: string;
   cliente: string;
   tel: string;
   mode: "delivery" | "takeaway";

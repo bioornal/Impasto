@@ -18,7 +18,8 @@ export function adminPrintJob(order: AdminOrder, attemptId: string, reprint = tr
     receipt: {
       kind: order.mode === 'delivery' ? 'delivery' : 'retiro',
       date: new Date(order.fecha).toLocaleString('es-AR'),
-      number: order.id,
+      // El número corto, como el POS: la referencia (IM-MAN-…, POS-…) tiene más de 40 caracteres.
+      number: order.numero || order.id,
       customer: order.cliente,
       phone: order.tel,
       address,

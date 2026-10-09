@@ -29,6 +29,8 @@ assert.equal(retiro.receipt.kind, 'retiro');
 assert.equal(retiro.receipt.address, '');
 assert.equal(retiro.reprint, false);
 
+assert.equal(adminPrintJob({ ...base, numero: '718688' }, 'attempt-8', false).receipt.number, '718688', 'la comanda imprime el número corto, no la referencia');
+assert.equal(adminPrintJob(base, 'attempt-8', false).receipt.number, 'IM-0042', 'sin número corto usa la referencia');
 const cocina = adminPrintJob(base, 'attempt-9', false);
 assert.equal(cocina.copy, undefined, 'la comanda de cocina no cambia');
 assert.equal('subtotal' in cocina.receipt, false);
