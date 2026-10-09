@@ -3,11 +3,15 @@ const STORAGE_KEY = "impasto-printer-token";
 export type PrinterId = "epson" | "3nstar";
 export interface PrinterSelection { selected: PrinterId; epsonAvailable: boolean; threeNStarAvailable: boolean }
 
+export type PrintCopy = "cocina" | "cliente";
+
 export interface PrintJob {
   readonly attemptId: string;
   readonly source: "impasto" | "carro-fogon";
   readonly orderId: string;
   readonly reprint: boolean;
+  /** Ausente = comanda de cocina. "cliente" = copia para pegar en la caja (agente versión 3+). */
+  readonly copy?: PrintCopy;
   readonly receipt: {
     readonly kind: "delivery" | "retiro";
     readonly date: string;
@@ -21,8 +25,11 @@ export interface PrintJob {
       readonly quantity: number;
       readonly detail?: string;
       readonly unitPrice: number;
+      readonly lineTotal?: number;
     }>;
     readonly total: number;
+    readonly subtotal?: number;
+    readonly shipping?: number;
     readonly paymentMethod: string;
     readonly paymentStatus: string;
   };
@@ -123,4 +130,82 @@ export async function printLocal(
 
 export function newAttemptId(): string {
   return crypto.randomUUID();
+}
+
+/** Versión del agente instalado, o null si no responde o no está emparejado. */
+export async function printerVersion(fetcher: typeof fetch = fetch): Promise<number | null> {
+  const token = storedToken();
+  if (!token) return null;
+  try {
+    const response = await request("/health", token, fetcher);
+    if (!response.ok) return null;
+    const result = await response.json() as { version?: unknown };
+    const version = Number(result.version);
+    return Number.isInteger(version) && version > 0 ? version : null;
+  } catch {
+    return null;
+  }
+}
+
+export const VERSION_COPIA_CLIENTE = 3;
+
+export class AgenteSinCopiaCliente extends Error {
+  constructor() {
+    super("Actualizá el agente de impresión para imprimir la copia del cliente.");
+    this.name = "AgenteSinCopiaCliente";
+  }
+}
+
+/**
+ * Como printLocal, pero la copia del cliente solo viaja a un agente que la entiende:
+ * uno viejo ignoraría `copy` y la imprimiría con el formato de cocina.
+ */
+export async function printCopy(job: PrintJob, fetcher: typeof fetch = fetch): Promise<"queued" | "duplicate"> {
+  if (job.copy === "cliente") {
+    const version = await printerVersion(fetcher);
+    if (version === null) throw new Error("Agente no disponible; el pedido sigue guardado.");
+    if (version < VERSION_COPIA_CLIENTE) throw new AgenteSinCopiaCliente();
+  }
+  return printLocal(job, fetcher);
+}
+
+export interface ResultadoCopias {
+  /** Lo que no salió, con sus mismas claves: reintentar no duplica lo que ya salió. */
+  readonly pendientes: PrintJob[];
+  readonly agenteViejo: boolean;
+  readonly error?: unknown;
+}
+
+/** Imprime en orden (cocina y después cliente) y se detiene en el primer fallo. */
+export async function imprimirCopias(
+  jobs: readonly PrintJob[],
+  print: (job: PrintJob) => Promise<"queued" | "duplicate"> = job => printCopy(job),
+): Promise<ResultadoCopias> {
+  let agenteViejo = false;
+  for (let i = 0; i < jobs.length; i++) {
+    try {
+      await print(jobs[i]);
+    } catch (error) {
+      if (error instanceof AgenteSinCopiaCliente) { agenteViejo = true; continue; }
+      return { pendientes: jobs.slice(i), agenteViejo, error };
+    }
+  }
+  return { pendientes: [], agenteViejo };
+}
+
+/** Texto para el operario según qué copias se intentaron y cuáles salieron. */
+export function mensajeCopias(jobs: readonly PrintJob[], resultado: ResultadoCopias): { ok: boolean; texto: string } {
+  const conCocina = jobs.some(job => job.copy !== "cliente");
+  const conCliente = jobs.some(job => job.copy === "cliente");
+  if (resultado.pendientes.length) {
+    const motivo = resultado.error instanceof Error ? resultado.error.message : "No se pudo enviar la comanda; el pedido sigue guardado.";
+    const salioCocina = conCocina && resultado.pendientes.every(job => job.copy === "cliente");
+    return { ok: false, texto: salioCocina ? `Comanda de cocina enviada; copia del cliente no enviada. ${motivo}` : motivo };
+  }
+  if (resultado.agenteViejo) {
+    const aviso = new AgenteSinCopiaCliente().message;
+    return { ok: false, texto: conCocina ? `Comanda de cocina enviada a la cola. ${aviso}` : aviso };
+  }
+  if (conCocina && conCliente) return { ok: true, texto: "Comanda de cocina y copia del cliente enviadas a la cola." };
+  return { ok: true, texto: conCliente ? "Copia del cliente enviada a la cola." : "Comanda de cocina enviada a la cola." };
 }
