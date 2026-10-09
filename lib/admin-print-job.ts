@@ -1,18 +1,20 @@
 import type { AdminOrder } from '../app/admin/components/types';
 import { esPedidoParaCocina } from './pedido-visible';
-import type { PrintJob } from './local-printer';
+import type { PrintCopy, PrintJob } from './local-printer';
 
-export function adminPrintJob(order: AdminOrder, attemptId: string, reprint = true): PrintJob {
+export function adminPrintJob(order: AdminOrder, attemptId: string, reprint = true, copy: PrintCopy = 'cocina'): PrintJob {
+  const cliente = copy === 'cliente';
   const address = order.mode === 'delivery'
     ? [order.dir, order.referencia].filter(Boolean).join(' · ')
     : '';
   const notes = [order.notas, order.cuando === 'asap' ? '' : `Horario: ${order.cuando}`]
     .filter(Boolean).join(' · ');
   return {
-    attemptId,
+    attemptId: cliente ? `${attemptId}:cliente` : attemptId,
     source: 'impasto',
     orderId: order._dbId,
     reprint,
+    ...(cliente ? { copy } : {}),
     receipt: {
       kind: order.mode === 'delivery' ? 'delivery' : 'retiro',
       date: new Date(order.fecha).toLocaleString('es-AR'),
@@ -26,21 +28,24 @@ export function adminPrintJob(order: AdminOrder, attemptId: string, reprint = tr
         quantity: item.qty,
         detail: item.detail || '',
         unitPrice: item.price,
+        ...(cliente ? { lineTotal: item.price * item.qty + (item.extra ?? 0) } : {}),
       })),
       total: order.total,
+      ...(cliente ? { subtotal: order.subtotal, shipping: order.shipping } : {}),
       paymentMethod: order.pago,
       paymentStatus: order.pagoEstado,
     },
   };
 }
 
-export async function sendAdminPrint(
+/** Las copias pedidas, en orden (cocina y después cliente), con la misma regla de bloqueo de cocina. */
+export function adminPrintJobs(
   order: AdminOrder,
   attemptId: string,
-  send: (job: PrintJob) => Promise<'queued' | 'duplicate'>,
-  reprint = false,
-): Promise<'queued' | 'duplicate'> {
+  reprint: boolean,
+  copias: readonly PrintCopy[] = ['cocina', 'cliente'],
+): PrintJob[] {
   if (!esPedidoParaCocina(order)) throw new Error('Pedido bloqueado para cocina.');
   if (!order._dbId || !order.items.length) throw new Error('Pedido sin productos válidos.');
-  return send(adminPrintJob(order, attemptId, reprint));
+  return copias.map(copy => adminPrintJob(order, attemptId, reprint, copy));
 }

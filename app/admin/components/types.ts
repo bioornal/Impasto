@@ -21,6 +21,8 @@ export interface OrderItem {
   qty: number;
   price: number;
   detail?: string;
+  /** Recargo manual del POS sobre la línea (no unitario). */
+  extra?: number;
 }
 
 export interface AdminOrder {

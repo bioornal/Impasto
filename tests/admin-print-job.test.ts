@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import type { AdminOrder } from '../app/admin/components/types';
-import { adminPrintJob, sendAdminPrint } from '../lib/admin-print-job';
+import { adminPrintJob, adminPrintJobs } from '../lib/admin-print-job';
 
 async function main() {
 const base: AdminOrder = {
@@ -29,25 +29,26 @@ assert.equal(retiro.receipt.kind, 'retiro');
 assert.equal(retiro.receipt.address, '');
 assert.equal(retiro.reprint, false);
 
-let sent = 0;
-const print = async (candidate: typeof job) => {
-  sent++;
-  assert.equal(candidate.attemptId, `attempt-${sent}`);
-  assert.equal(candidate.reprint, sent === 2);
-  return 'queued' as const;
-};
-assert.equal(await sendAdminPrint(base, 'attempt-1', print), 'queued');
-assert.equal(await sendAdminPrint(base, 'attempt-2', print, true), 'queued');
-assert.equal(sent, 2, 'each explicit print receives a fresh attempt id');
+const cocina = adminPrintJob(base, 'attempt-9', false);
+assert.equal(cocina.copy, undefined, 'la comanda de cocina no cambia');
+assert.equal('subtotal' in cocina.receipt, false);
+assert.equal('lineTotal' in cocina.receipt.items[0], false);
+const cliente = adminPrintJob({ ...base, items: [...base.items, { name: 'Pizza POS', qty: 2, price: 10000, extra: 500 }] }, 'attempt-9', false, 'cliente');
+assert.equal(cliente.copy, 'cliente');
+assert.equal(cliente.attemptId, 'attempt-9:cliente');
+assert.equal(cliente.receipt.subtotal, 27000);
+assert.equal(cliente.receipt.shipping, 1000);
+assert.deepEqual(cliente.receipt.items.map(i => i.lineTotal), [12000, 15000, 20500], 'importe con extra');
+assert.deepEqual(adminPrintJobs(base, 'k', false).map(j => j.attemptId), ['k', 'k:cliente']);
+assert.deepEqual(adminPrintJobs(base, 'k', true, ['cliente']).map(j => j.copy), ['cliente']);
 for (const blocked of [
   { ...base, estado: 'cancelado' },
   { ...base, pago: 'mercadopago', pagoEstado: 'pendiente' },
   { ...base, pago: 'mercadopago', pagoEstado: 'rechazado' },
   { ...base, items: [] },
 ]) {
-  await assert.rejects(sendAdminPrint(blocked, 'blocked', print), /bloquead|sin productos/i);
+  assert.throws(() => adminPrintJobs(blocked, 'blocked', false), /bloquead|sin productos/i);
 }
-assert.equal(sent, 2, 'blocked orders never reach printer');
 process.stdout.write('PASA impresión manual Impasto: contenido, pagos, claves y bloqueo\n');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

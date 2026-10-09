@@ -7,8 +7,8 @@ import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 import type { AdminOrder } from "./types";
 import { esPedidoParaCocina } from "@/lib/pedido-visible";
-import { sendAdminPrint } from "@/lib/admin-print-job";
-import { configurePrinter, getPrinterSelection, newAttemptId, printLocal, selectPrinter, type PrinterId, type PrinterSelection, type PrintJob } from "@/lib/local-printer";
+import { adminPrintJobs } from "@/lib/admin-print-job";
+import { configurePrinter, getPrinterSelection, imprimirCopias, mensajeCopias, newAttemptId, selectPrinter, type PrintCopy, type PrinterId, type PrinterSelection, type PrintJob } from "@/lib/local-printer";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 const timeAgo = (iso: string) => {
@@ -34,25 +34,26 @@ export function Orders() {
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
   const [eliminando, setEliminando] = useState(false);
   const printingRef = useRef(false);
-  const failedAttempts = useRef(new Map<string, PrintJob>());
+  // Copias que no salieron, por pedido, con sus claves: reintentar no duplica lo que ya salió.
+  const failedAttempts = useRef(new Map<string, PrintJob[]>());
   const sentOrders = useRef(new Set<string>());
   useEffect(() => { void getPrinterSelection().then(setPrinterSelection).catch(() => setPrinterSelection(null)); }, []);
 
-  async function printOrder(order: AdminOrder) {
+  async function printOrder(order: AdminOrder, copias: readonly PrintCopy[] = ['cocina', 'cliente']) {
     if (printingRef.current) return;
     printingRef.current = true;
     setPrinting(true);
-    const previousJob = failedAttempts.current.get(order._dbId);
-    const attemptId = previousJob?.attemptId ?? newAttemptId();
     try {
-      await sendAdminPrint(order, attemptId, job => {
-        const stableJob = previousJob ?? job;
-        failedAttempts.current.set(order._dbId, stableJob);
-        return printLocal(stableJob);
-      }, sentOrders.current.has(order._dbId));
-      failedAttempts.current.delete(order._dbId);
-      sentOrders.current.add(order._dbId);
-      setPrintState({ orderId: order._dbId, message: `Comanda ${order.id} enviada a la cola. Revisá el papel para confirmar la impresión.`, error: false });
+      const previas = failedAttempts.current.get(order._dbId) ?? [];
+      const reintento = previas.filter(job => copias.includes(job.copy ?? 'cocina'));
+      const jobs = reintento.length ? reintento : adminPrintJobs(order, newAttemptId(), sentOrders.current.has(order._dbId), copias);
+      const resultado = await imprimirCopias(jobs);
+      const quedan = [...previas.filter(job => !jobs.includes(job)), ...resultado.pendientes];
+      if (quedan.length) failedAttempts.current.set(order._dbId, quedan);
+      else failedAttempts.current.delete(order._dbId);
+      if (resultado.pendientes.length < jobs.length) sentOrders.current.add(order._dbId);
+      const mensaje = mensajeCopias(jobs, resultado);
+      setPrintState({ orderId: order._dbId, message: mensaje.ok ? `${mensaje.texto} Revisá el papel para confirmar la impresión.` : mensaje.texto, error: !mensaje.ok });
     } catch (error) {
       setPrintState({ orderId: order._dbId, message: error instanceof Error ? error.message : 'No se pudo enviar la comanda.', error: true });
     } finally {
@@ -229,6 +230,7 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
         <OrderDetail
           order={selected}
           onPrint={() => printOrder(selected)}
+          onPrintCliente={() => printOrder(selected, ['cliente'])}
           printing={printing}
           printMessage={printState?.orderId === selected._dbId ? printState.message : null}
           onClose={() => setSelected(null)}
@@ -304,7 +306,7 @@ function RefundBox({ total, pedidoId, onRefund }: { total: number; pedidoId: str
   );
 }
 
-function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, printing, printMessage, onReconcile, onManualRefund, onDelete }: { order: AdminOrder; onClose: () => void; onDelete: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void; onRefund?: (monto?: number, operationId?: string) => Promise<boolean>; onPrint: () => void; printing: boolean; printMessage: string | null; onReconcile:()=>Promise<string>; onManualRefund:(body:ManualRefund)=>Promise<string> }) {
+function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, onPrintCliente, printing, printMessage, onReconcile, onManualRefund, onDelete }: { order: AdminOrder; onClose: () => void; onDelete: () => void; onUpdate: (estado: string) => void; onPayment: (estado: string) => void; onRefund?: (monto?: number, operationId?: string) => Promise<boolean>; onPrint: () => void; onPrintCliente: () => void; printing: boolean; printMessage: string | null; onReconcile:()=>Promise<string>; onManualRefund:(body:ManualRefund)=>Promise<string> }) {
   const [now] = useState(() => Date.now());
   const [consulting,setConsulting]=useState(false);
   const [consultMessage,setConsultMessage]=useState('');
@@ -429,6 +431,14 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, p
           <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
           <button className="btn btn-ghost btn-sm" disabled={!habilitadoCocina} onClick={() => window.print()}>
             Imprimir con navegador
+          </button>
+          <button
+            className="btn btn-ghost btn-sm"
+            disabled={!habilitadoCocina || printing}
+            title={habilitadoCocina ? "Imprimir la copia para pegar en la caja" : "Pago sin acreditar: la comanda está bloqueada"}
+            onClick={onPrintCliente}
+          >
+            Copia cliente
           </button>
           <button
             className="btn btn-primary"

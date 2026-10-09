@@ -1065,3 +1065,5 @@ Implementación publicada en `main`; desarrollo conservado en la rama
   las dos colas disponibles. Se comprobó por HTTP que elegir 3nStar en una web
   no cambia la otra y se restauró Epson en ambas. No copiar ni rotar el token
   al actualizar.
+
+- **Copia del cliente (09/10/2026):** "Enviar a impresora térmica" imprime la comanda de cocina y después la copia para pegar en la caja (sin número de pedido, notas ni `REIMPRESIÓN`; con IMPASTO, precios, subtotal, envío, total, pago en texto para el cliente y pie de contacto), cada una con su corte. El detalle suma "Copia cliente". El formato vive en el agente versión 3 (`copy: "cliente"`); `lib/local-printer.ts` es idéntico al del POS y solo manda esa copia a un agente 3+. Reintentar manda solo las copias que faltaron, con sus claves (`<clave>` y `<clave>:cliente`). El agente ahora calcula la huella anti-duplicados sobre los bytes recibidos (reserializar el pedido no era estable). Diseño y plan: `docs/superpowers/specs/2026-10-09-copia-cliente-design.md`, `docs/superpowers/plans/2026-10-09-copia-cliente.md`.

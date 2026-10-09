@@ -11,7 +11,7 @@ const rawConDetalle = {
   total: 33000,
   productos: [
     { name: "Caja x12", qty: 1, price: 30000, detail: "4 Pollo, 4 Carne, 4 Árabe" },
-    { name: "Coca-Cola 1.5 L", qty: 1, price: 3000 }
+    { name: "Coca-Cola 1.5 L", qty: 1, price: 3000, extra: 500 }
   ],
 };
 
@@ -93,6 +93,13 @@ if (conCuenta.cuentaTransferencia === "Billetera A") {
 } else {
   fallos++;
   console.log("FALLA  cuenta de transferencia:", conCuenta.cuentaTransferencia);
+}
+
+if (adapted.items[1]?.extra === 500 && adapted.items[0]?.extra === 0) {
+  console.log("PASA   adaptOrder conserva el extra del POS (0 si no hay)");
+} else {
+  fallos++;
+  console.log("FALLA  extra esperado 0 y 500, obtuvo:", adapted.items[0]?.extra, adapted.items[1]?.extra);
 }
 
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
