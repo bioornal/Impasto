@@ -18,24 +18,15 @@ namespace PrinterAgent {
                     return 1;
                 }
             }
-            if (args.Length != 2 || (args[0] != "--test-raw" && args[0] != "--test-raw-long")) {
+            if (args.Length != 2 || (args[0] != "--test-raw" && args[0] != "--test-raw-long" && args[0] != "--test-cliente")) {
                 Console.WriteLine("Uso: PrinterAgent.exe --serve <config.local.json>");
                 Console.WriteLine("     PrinterAgent.exe --test-raw <nombre exacto de cola>");
                 Console.WriteLine("     PrinterAgent.exe --test-raw-long <nombre exacto de cola>");
+                Console.WriteLine("     PrinterAgent.exe --test-cliente <nombre exacto de cola>");
                 return 2;
             }
             try {
-                bool longTicket = args[0] == "--test-raw-long";
-                var item = new ReceiptItem { name = "Pizza á/ñ: jamón y morrón", quantity = 1, detail = "Mitad muzza / mitad jamón", unitPrice = 1000 };
-                var items = new ReceiptItem[longTicket ? 8 : 1];
-                for (int i = 0; i < items.Length; i++) items[i] = item;
-                var request = new PrintRequest {
-                    attemptId = Guid.NewGuid().ToString(), source = "impasto", orderId = "prueba-raw", reprint = false,
-                    receipt = new Receipt { kind = "retiro", date = DateTime.Now.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture),
-                        number = longTicket ? "PRUEBA LARGA" : "PRUEBA RAW", customer = "", phone = "", address = "",
-                        notes = longTicket ? "FICTICIO - NO PREPARAR. " + new string('X', 120) : "FICTICIO - NO PREPARAR", items = items,
-                        total = 1000 * items.Length, paymentMethod = "PRUEBA", paymentStatus = "SIN COBRO" }
-                };
+                PrintRequest request = args[0] == "--test-cliente" ? PruebaCliente() : PruebaRaw(args[0] == "--test-raw-long");
                 request = PrintRequest.Parse(new JavaScriptSerializer().Serialize(request));
                 RawSpooler.Send(args[1], ReceiptEncoder.Encode(request, false));
                 Console.WriteLine("Enviado a la cola. Verificar papel, corte, tildes y largo físicamente.");
@@ -45,6 +36,31 @@ namespace PrinterAgent {
                 Console.Error.WriteLine("No se pudo enviar la prueba RAW (" + error.GetType().Name + "). Revisar la cola.");
                 return 1;
             }
+        }
+        static PrintRequest PruebaRaw(bool longTicket) {
+            var item = new ReceiptItem { name = "Pizza á/ñ: jamón y morrón", quantity = 1, detail = "Mitad muzza / mitad jamón", unitPrice = 1000 };
+            var items = new ReceiptItem[longTicket ? 8 : 1];
+            for (int i = 0; i < items.Length; i++) items[i] = item;
+            return new PrintRequest {
+                attemptId = Guid.NewGuid().ToString(), source = "impasto", orderId = "prueba-raw", reprint = false,
+                receipt = new Receipt { kind = "retiro", date = DateTime.Now.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture),
+                    number = longTicket ? "PRUEBA LARGA" : "PRUEBA RAW", customer = "", phone = "", address = "",
+                    notes = longTicket ? "FICTICIO - NO PREPARAR. " + new string('X', 120) : "FICTICIO - NO PREPARAR", items = items,
+                    total = 1000 * items.Length, paymentMethod = "PRUEBA", paymentStatus = "SIN COBRO" }
+            };
+        }
+        // Copia del cliente ficticia: el nombre avisa que no se prepara, porque esta copia no imprime notas.
+        static PrintRequest PruebaCliente() {
+            return new PrintRequest {
+                attemptId = Guid.NewGuid().ToString(), source = "impasto", orderId = "prueba-cliente", reprint = false, copy = "cliente",
+                receipt = new Receipt { kind = "delivery", date = DateTime.Now.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture),
+                    number = "PRUEBA", customer = "PRUEBA - NO PREPARAR", phone = "3757 000000", address = "Dirección de prueba 123", notes = "",
+                    items = new[] {
+                        new ReceiptItem { name = "Muzzarella", quantity = 2, detail = "", unitPrice = 16000, lineTotal = 32000 },
+                        new ReceiptItem { name = "Caja x12 empanadas", quantity = 1, detail = "4 Carne, 4 Pollo, 4 Árabe", unitPrice = 27000, lineTotal = 27000 },
+                        new ReceiptItem { name = "Coca-Cola 1.5 L", quantity = 1, detail = "", unitPrice = 4500, lineTotal = 4500 } },
+                    subtotal = 63500, shipping = 0, total = 63500, paymentMethod = "efectivo", paymentStatus = "pendiente" }
+            };
         }
     }
 }

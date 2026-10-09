@@ -87,7 +87,7 @@ namespace PrinterAgent {
             string source = origin == config.allowedOrigins[0] ? "impasto" : "carro-fogon";
             if (request.Url.AbsolutePath == "/health" && request.HttpMethod == "GET") {
                 if (token != null && !TokenMatches(token)) { Reply(response, 403, new { error = "pairing_required" }); return; }
-                Reply(response, 200, new { status = "available", version = "2", queueName = selection.Queue(source), paired = token != null }); return;
+                Reply(response, 200, new { status = "available", version = "3", queueName = selection.Queue(source), paired = token != null }); return;
             }
             if (request.Url.AbsolutePath == "/printers") {
                 if (!TokenMatches(token)) { Reply(response, 403, new { error = "pairing_required" }); return; }

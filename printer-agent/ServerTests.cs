@@ -85,6 +85,9 @@ namespace PrinterAgent {
                         Check(Send(port, "/print", "POST", Origin, Token, Tests.Fixture("Different pizza")).status == 409, "changed receipt conflict");
                         Check(calls == 1, "no conflict spool");
                     });
+                    test("health reports version 3 for the customer copy", delegate {
+                        Check(Send(port, "/health", "GET", Origin, Token, null).body.Contains("\"version\":\"3\""), "version 3");
+                    });
                 }
                 test("dedup survives process restart without storing customer text", delegate {
                     using (var ledger = new AttemptLedger(path)) using (var server = new LocalServer(config, delegate { calls++; }, ledger, Port())) {
@@ -136,6 +139,18 @@ namespace PrinterAgent {
                         Directory.CreateDirectory(blocked); server.Start();
                         Check(Send(server.Port, "/print", "POST", Origin, Token, Tests.Fixture()).status == 503, "persistence failure");
                         Check(calls == 1, "no print without durable reservation");
+                    }
+                });
+                test("HTTP customer copy is queued with its own key", delegate {
+                    byte[] ticket = null; int prints = 0;
+                    using (var ledger = new AttemptLedger(Path.Combine(directory, "cliente.json")))
+                    using (var server = new LocalServer(config, delegate(string queue, byte[] bytes) { prints++; ticket = bytes; }, ledger, Port())) {
+                        server.Start();
+                        Check(Send(server.Port, "/print", "POST", Origin, Token, Tests.Fixture()).status == 200, "kitchen queued");
+                        Check(Send(server.Port, "/print", "POST", Origin, Token, Tests.ClienteFixture()).body.Contains("\"duplicate\":false"), "customer queued separately");
+                        Check(prints == 2 && Encoding.GetEncoding(1252).GetString(ticket).Contains("¡Gracias por elegir Impasto!"), "customer layout spooled");
+                        Check(Send(server.Port, "/print", "POST", Origin, Token, Tests.ClienteFixture().Replace("\"copy\":\"cliente\"", "\"copy\":\"otra\"")).status == 400, "invalid copy rejected");
+                        Check(prints == 2, "invalid copy not spooled");
                     }
                 });
                 test("printer selection is saved separately for each site and routes later jobs", delegate {
