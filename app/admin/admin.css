@@ -259,6 +259,9 @@ a{ color:inherit; text-decoration:none; }
 .tbl .tbl-mono{ font-family:var(--a-font-mono); font-size:12px; color:var(--a-ink-2); }
 .tbl .tbl-strong{ font-weight:600; color:var(--a-ink); }
 .tbl .tbl-muted{ color:var(--a-muted); font-size:12.5px; }
+.tbl .tbl-wa{ display:inline-flex; align-items:center; gap:5px; margin:-2px -4px; padding:2px 4px; border-radius:6px; text-decoration:none; }
+.tbl .tbl-wa svg{ color:#25d366; flex:none; }
+.tbl .tbl-wa:hover{ color:var(--a-ink); background:rgba(37,211,102,.12); text-decoration:underline; }
 .tbl .tbl-price{ font-family:var(--a-font-display); font-size:15px; font-weight:600; }
 .tbl .tbl-actions{ display:flex; gap:4px; justify-content:flex-end; }
 .tbl td.right, .tbl th.right{ text-align:right; }

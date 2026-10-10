@@ -1,5 +1,12 @@
 @AGENTS.md
 
+## WhatsApp con el cliente desde el panel (10/10/2026)
+
+- **Pedido del dueño:** para resolver problemas con un pedido necesita escribirle al cliente. En **Pedidos**, el teléfono de cada fila es un enlace (ícono verde) que abre el chat sin abrir el detalle (`TelCliente` en `Orders.tsx`, `stopPropagation`); el botón "WhatsApp" del detalle usa lo mismo. El chat se abre con "¡Hola, Juan! Te escribimos de Impasto por tu pedido IM-107345-K7QD." (la referencia solo si es de la web; la del POS, `IM-3`, el cliente nunca la vio).
+- **El botón que ya había estaba roto para muchos formatos:** pegaba `54` delante de lo que escribió el cliente (con 0, 15, +54 o 6 cifras daba un número equivocado). Ahora `whatsappDeCliente` (`lib/contacto.ts`, tests en `tests/contacto.test.ts`) lo lleva a **54 + característica + número, sin el 9** (el formato del WhatsApp de Impasto, que el dueño probó y anda): saca 0, 00, +54, el 9 y el 15 (sabe dónde va el 15 con la lista de características de 3 cifras; la 11 es la única de 2); 6 cifras, o 15 + 6, se toman como de Iguazú (3757). Otro país, solo si viene con +. **Lo que no reconoce no tiene enlace** ("Número incompleto: sin WhatsApp"): mejor eso que abrir el chat de otra persona. Clientes → detalle tenía el mismo error: arreglado igual (saludo sin pedido).
+- Con los 23 pedidos de la base al 10/10: 12 quedan con enlace; los 5 del POS del 24/09 cargados con 6 cifras dan **el mismo número** que el pedido web del 12/09 escrito completo (confirma la regla de Iguazú). Los 11 sin enlace: web con 11 cifras (375…, 512…) o 9 cifras (334…, 454…, 456…); POS con 7, 8, 10 (546…) u 11 (544…) cifras y uno "x+xxx+…".
+- Verificado: `pnpm test`, TypeScript, eslint de lo tocado (solo los dos `set-state-in-effect` previos de `Orders.tsx`). **Sin probar en el navegador con la sesión del dueño y sin publicar.**
+
 ## La chipa salió de la carta (10/10/2026)
 
 - La chipa se vende **fuera de Impasto** (negocio aparte del dueño): `productos` Chipa (`otros`) quedó `archivado = true` (migración `recetario-napolitano/migrations/20261010180813_chipa-negocio-aparte.sql`). El recetario la costea con un costo operativo propio (`precios_venta.negocio_aparte`, `costo_op_dia`, `unidades_dia`). **Impasto y Carro Fogón no leen esas columnas**: si alguien la reactiva en la carta, `lib/effective-prices.ts` le vuelve a sumar el costo operativo de la pizzería (unos $15.500 por chipa). Si algún día se vende por acá, hay que portar `costoOperativoUnidad` del recetario.

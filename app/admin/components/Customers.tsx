@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 import { pedidosDelCliente } from "@/lib/adapt-customer";
+import { enlaceWhatsapp, mensajeAlCliente, whatsappDeCliente } from "@/lib/contacto";
 import type { AdminCustomer } from "./types";
 
 const fmt = (n: number) => "$" + n.toLocaleString("es-AR", { maximumFractionDigits: 2 });
@@ -93,6 +94,7 @@ export function Customers() {
 function CustomerDetail({ customer, onClose }: { customer: AdminCustomer; onClose: () => void }) {
   const { state } = useStore();
   const history = pedidosDelCliente(state.orders, customer.tel);
+  const whatsapp = whatsappDeCliente(customer.tel);
 
   return (
     <div className="modal-bg" onClick={onClose}>
@@ -137,7 +139,9 @@ function CustomerDetail({ customer, onClose }: { customer: AdminCustomer; onClos
           }
         </div>
         <div className="modal-foot">
-          <a className="btn btn-ghost" href={`https://wa.me/54${customer.tel.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">WhatsApp</a>
+          {whatsapp
+            ? <a className="btn btn-ghost" href={enlaceWhatsapp(whatsapp, mensajeAlCliente(customer.nombre))} target="_blank" rel="noreferrer"><Icon.Whatsapp /> WhatsApp</a>
+            : <span className="text-muted" style={{ fontSize: 12 }}>Número incompleto: sin WhatsApp</span>}
           <button className="btn btn-primary" onClick={onClose}>Cerrar</button>
         </div>
       </div>

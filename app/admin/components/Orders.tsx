@@ -9,6 +9,13 @@ import type { AdminOrder } from "./types";
 import { esPedidoParaCocina } from "@/lib/pedido-visible";
 import { adminPrintJobs } from "@/lib/admin-print-job";
 import { configurePrinter, getPrinterSelection, imprimirCopias, mensajeCopias, newAttemptId, selectPrinter, type PrintCopy, type PrinterId, type PrinterSelection, type PrintJob } from "@/lib/local-printer";
+import { enlaceWhatsapp, mensajeAlCliente, whatsappDeCliente } from "@/lib/contacto";
+
+/** El chat con el cliente, con el saludo y el pedido ya escritos. Null si el número no se reconoce. */
+const whatsappDelPedido = (o: AdminOrder) => {
+  const numero = whatsappDeCliente(o.tel);
+  return numero ? enlaceWhatsapp(numero, mensajeAlCliente(o.cliente, o.id)) : null;
+};
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 const timeAgo = (iso: string) => {
@@ -181,7 +188,7 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
                   <tr key={o._dbId} className={o.pagoEstado === "pendiente" && o.estado !== "cancelado" ? "order-payment-pending" : undefined} style={{ cursor: "pointer" }} onClick={() => setSelected(o)}>
                     <td onClick={e => e.stopPropagation()}><input type="checkbox" aria-label={`Seleccionar el pedido ${o.id}`} checked={marcados.has(o._dbId)} onChange={e => setMarcados(prev => { const sig = new Set(prev); if (e.target.checked) sig.add(o._dbId); else sig.delete(o._dbId); return sig; })} /></td>
                     <td className="tbl-mono tbl-strong">{o.id}</td>
-                    <td><div className="tbl-strong">{o.cliente}</div><div className="tbl-muted">{o.tel}</div></td>
+                    <td><div className="tbl-strong">{o.cliente}</div><TelCliente order={o} /></td>
                     <td className="tbl-muted">{o.items.map(i => `${i.qty}× ${i.name}`).join(", ").slice(0, 40)}…</td>
                     <td><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>{o.mode === "delivery" ? <Icon.Truck /> : <Icon.Shop />}{o.mode === "delivery" ? "Delivery" : "Retiro"}</span></td>
                     <td className="tbl-muted" style={{ textTransform: "capitalize" }}>
@@ -265,6 +272,17 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
   );
 }
 
+/** El teléfono en la lista: un clic abre el chat de WhatsApp sin abrir el detalle del pedido. */
+function TelCliente({ order }: { order: AdminOrder }) {
+  const enlace = whatsappDelPedido(order);
+  if (!enlace) return <div className="tbl-muted">{order.tel}</div>;
+  return (
+    <a className="tbl-muted tbl-wa" href={enlace} target="_blank" rel="noreferrer" title={`Escribirle a ${order.cliente} por WhatsApp`} onClick={e => e.stopPropagation()}>
+      <Icon.Whatsapp /> {order.tel}
+    </a>
+  );
+}
+
 /** Devoluciones de Mercado Pago. Pide confirmación porque mueve plata real. */
 function RefundBox({ total, pedidoId, onRefund }: { total: number; pedidoId: string; onRefund: (monto?: number, operationId?: string) => Promise<boolean> }) {
   const [monto, setMonto] = useState("");
@@ -331,6 +349,7 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, o
   const steps = ["nuevo", "preparando", "en-camino", "entregado"];
   const currentIdx = steps.indexOf(order.estado);
   const habilitadoCocina = esPedidoParaCocina(order);
+  const whatsapp = whatsappDelPedido(order);
 
   return (
     <div className="modal-bg" onClick={onClose}>
@@ -376,7 +395,9 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, o
           <div className="od-customer">
             <div className="avatar" style={{ background: "var(--a-accent)", color: "white" }}>{order.cliente[0]}</div>
             <div className="grow"><b>{order.cliente}</b><div className="text-muted text-mono" style={{ fontSize: 12 }}>{order.tel}</div></div>
-            <a className="btn btn-ghost btn-sm" href={`https://wa.me/54${order.tel.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">WhatsApp</a>
+            {whatsapp
+              ? <a className="btn btn-ghost btn-sm" href={whatsapp} target="_blank" rel="noreferrer"><Icon.Whatsapp /> WhatsApp</a>
+              : <span className="text-muted" style={{ fontSize: 12 }} title="Sin característica o con una forma que no se reconoce: escribile a mano">Número incompleto: sin WhatsApp</span>}
           </div>
 
           <div style={{ padding: 14, background: "var(--a-bg)", borderRadius: 12, fontSize: 13.5, marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
