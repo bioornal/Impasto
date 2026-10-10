@@ -24,6 +24,7 @@ import { HalfModal } from "@/components/cart/HalfModal";
 import { Checkout } from "@/components/checkout/Checkout";
 import { Confirmation } from "@/components/checkout/Confirmation";
 import { ChatWidget } from "@/components/chat/ChatWidget";
+import { WhatsappFab } from "@/components/chat/WhatsappFab";
 import { ActiveOrderBanner } from "@/components/layout/ActiveOrderBanner";
 import { ProductSheet, useCierreConAtras } from "@/components/ui/ProductSheet";
 import { FichaAccion } from "@/components/cart/FichaAccion";
@@ -650,6 +651,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
         />
       )}
 
+      <WhatsappFab business={business} oculto={headerOculto} />
       <ChatWidget business={business} disponible={chatDisponible} oculto={headerOculto} />
       <TweaksPanel />
     </div>

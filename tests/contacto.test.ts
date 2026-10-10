@@ -1,4 +1,4 @@
-import { enlaceTelefono, enlaceInstagram, enlaceWhatsapp, MENSAJE_PEDIDO_WHATSAPP } from "../lib/contacto";
+import { enlaceTelefono, enlaceInstagram, enlaceWhatsapp, MENSAJE_PEDIDO_WHATSAPP, telefonoSiEsWhatsapp } from "../lib/contacto";
 
 let fallos = 0;
 
@@ -37,6 +37,14 @@ chequear(
 chequear("limpia lo que no es dígito", enlaceWhatsapp("+54 3757 42-1840"), "https://wa.me/543757421840");
 chequear("diez dígitos sin 54 → se le agrega 54", enlaceWhatsapp("3757 652003"), "https://wa.me/543757652003");
 chequear("diez dígitos con 0 → se quita el 0 y agrega 54", enlaceWhatsapp("(03757) 652003"), "https://wa.me/543757652003");
+
+/* ── el número junto al botón de WhatsApp: solo si es el mismo ── */
+
+chequear("teléfono de Impasto = su WhatsApp → se muestra como está escrito", telefonoSiEsWhatsapp("(03757) 65-2003", "543757652003"), "(03757) 65-2003");
+chequear("WhatsApp con el 9 de celular también coincide", telefonoSiEsWhatsapp("(03757) 65-2003", "5493757652003"), "(03757) 65-2003");
+chequear("otro número → no se muestra", telefonoSiEsWhatsapp("(03757) 42-1840", "543757652003"), null);
+chequear("teléfono vacío → no se muestra", telefonoSiEsWhatsapp("", "543757652003"), null);
+chequear("teléfono corto → no coincide por casualidad", telefonoSiEsWhatsapp("652003", "543757652003"), null);
 
 console.log(fallos === 0 ? "\nTodos los casos pasan" : `\n${fallos} casos fallan`);
 process.exit(fallos === 0 ? 0 : 1);

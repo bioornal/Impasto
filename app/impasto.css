@@ -1092,7 +1092,7 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   animation:chat-fab-pulso 1.4s ease-out .9s 1;
 }
 .chat-fab-insignia svg{ width:22px; height:22px; }
-/* Solo dentro del botón del asistente: el de WhatsApp de respaldo no lo lleva. */
+/* Solo dentro del botón del asistente: el de WhatsApp no lo lleva. */
 .chat-fab-punto{
   position:absolute; top:0; right:0; width:11px; height:11px; border-radius:999px;
   background:var(--green); border:2px solid var(--carbon);
@@ -1116,6 +1116,16 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 @media (max-width:520px){
   .chat-fab-pill{ width:56px; padding:0; }
   .chat-fab-pill .chat-fab-texto{ display:none; }
+}
+/* WhatsApp (`WhatsappFab.tsx`): el mismo botón, en la esquina izquierda. La
+   insignia va en el verde de WhatsApp para reconocerlo de un vistazo; el resto
+   (carbón y borde dorado) es el del chat. Doble clase para ganarle al
+   `right:16px` de `.chat-fab` en el bloque mobile, que viene después. */
+.chat-fab.wsp-fab{ right:auto; left:24px; }
+.wsp-fab .chat-fab-insignia{ background:#25d366; color:#fff; animation-name:wsp-fab-pulso; }
+@keyframes wsp-fab-pulso{
+  from{ box-shadow:0 0 0 0 rgba(37,211,102,.55); }
+  to{ box-shadow:0 0 0 14px transparent; }
 }
 
 .chat-panel{
@@ -2230,6 +2240,7 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
     transition:transform .2s ease, opacity .2s ease, bottom .22s ease, background .2s ease, border-color .2s ease;
   }
   .chat-fab.is-hidden{ opacity:0; transform:translateY(12px); pointer-events:none; }
+  .chat-fab.wsp-fab{ left:16px; }
   .chat-panel{ bottom:12px; right:12px; }
   /* max-content: con left:50% el ancho disponible era medio viewport y el aviso
      se partía en tres líneas. */

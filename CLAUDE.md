@@ -1,5 +1,12 @@
 @AGENTS.md
 
+## WhatsApp flotante abajo a la izquierda (10/10/2026)
+
+- **Pedido del dueño:** fuera del footer el número de WhatsApp casi no se veía y los clientes no encontraban cómo escribir. `components/chat/WhatsappFab.tsx` (en `Shell`, solo la home, como el chat): el mismo botón que el del asistente (`.chat-fab`, carbón y borde dorado) en la esquina opuesta, con la insignia en verde WhatsApp. Escritorio: píldora "Escribinos por WhatsApp" + el número; celular (≤520 px): círculo, 12 px sobre la barra de abajo, y se desvanece al bajar igual que el chat. Abre `wa.me` con "¡Hola! Les escribo desde la web." (`MENSAJE_CONSULTA_WHATSAPP`).
+- El número que se muestra es `business.phone` **solo si sus últimos 10 dígitos coinciden con el de WhatsApp** (`telefonoSiEsWhatsapp` en `lib/contacto.ts`, con test): son dos campos aparte del panel.
+- **El chat ya no se convierte en botón de WhatsApp:** sin key, o caído el asistente, `ChatWidget` no se muestra (antes habría dos botones de WhatsApp). Dentro del panel abierto, el aviso de falla y su link a WhatsApp siguen igual.
+- Verificado en local (`pnpm dev` con la base real): 1280 px (las dos píldoras, enlace y número correctos), 375 px (círculos simétricos sobre la barra, se esconden al bajar y vuelven al subir; el panel del chat a pantalla completa tapa al de WhatsApp), sin errores en la consola. `pnpm test`, TypeScript y eslint de lo tocado (solo el error previo de `Shell.tsx:127`). En `pnpm dev` el botón "N" de Next queda encima de la insignia: es solo de desarrollo. **Sin publicar.**
+
 ## CI otra vez en verde: `/cocina` ya no se arma en el build (10/10/2026)
 
 - **Problema:** el paso "Production build without backend access" del CI falló en **todos** los pushes desde `ad4c368` (03/10, `/cocina` lee el recetario): con `revalidate = 60` Next generaba `/cocina` en el build, y el CI compila a propósito sin base (`INSFORGE_API_BASE_URL=http://127.0.0.1:9`) → "/cocina: no se pudo leer productos". Netlify sí tiene la base y publicaba igual, así que producción no estaba afectada; el CI quedó rojo dos semanas y dejó de avisar.
@@ -819,14 +826,15 @@ carta entera vive en `/` y el sitemap tiene una sola entrada.
 
 ## El chatbot vendedor (23/08/2026)
 
-Reemplazó al botón flotante de WhatsApp (`components/chat/ChatWidget.tsx`). **Vende, pero no
+Reemplazó al botón flotante de WhatsApp (`components/chat/ChatWidget.tsx`); desde el 10/10/2026
+WhatsApp volvió como botón aparte en la esquina izquierda (ver "WhatsApp flotante"). **Vende, pero no
 toma pedidos**: recomienda de la carta y dice dónde encontrar el producto; el que agrega al
 carrito es siempre el cliente.
 
 - **La IA va por DeepSeek directo**, no por InsForge. `lib/deepseek.ts` es el punto único de
   llamada, espejo de `lib/telegram.ts` (mismo patrón `{ estado: "omitido"; motivo }`): sin
-  `DEEPSEEK_API_KEY` devuelve `omitido`, `hayChat()` da `false` y el widget pasa a ser un botón
-  de WhatsApp. **La key es server-only, nunca `NEXT_PUBLIC_`.**
+  `DEEPSEEK_API_KEY` devuelve `omitido`, `hayChat()` da `false` y el widget no se muestra
+  (queda el WhatsApp flotante de la izquierda). **La key es server-only, nunca `NEXT_PUBLIC_`.**
 - **InsForge sí tiene IA funcionando** en el plan free de este proyecto —se probó contra el
   backend el 23/08/2026— pero el Model Gateway nuevo no está disponible y el helper viejo del
   SDK no hace streaming. Si algún día hay que volver, el camino es `db.ai.chat.completions`.
@@ -868,7 +876,7 @@ carrito es siempre el cliente.
 - **Manejo de créditos insuficientes y fallas del bot (`lib/chat-fallas.ts` y `lib/aviso-sistema.ts`):**
   - **Detección de saldo insuficiente (HTTP 402) y key rechazada (HTTP 401):** Cuando DeepSeek responde sin créditos (HTTP 402) o con credencial inválida (HTTP 401), `alertaPorFallo()` genera una alerta del sistema con el encabezado `CHAT CAÍDO`, el motivo exacto y el enlace directo de recarga (`https://platform.deepseek.com`). Errores transitorios de servidor (HTTP 500 o timeouts) no generan alerta para evitar ruido.
   - **Alerta al dueño por Telegram sin spam:** `lib/aviso-sistema.ts:avisarFalloDelChat` despacha el aviso por Telegram (`sendTelegram`), pero previene el spam mediante deduplicación en la tabla `rate_limit_intentos` con una ventana de 1 hora (`VENTANA_AVISO = 3600`). Si entran decenas de clientes mientras no hay saldo, el dueño recibe un único mensaje por hora.
-  - **Fallback elegante a WhatsApp (`ChatWidget.tsx`):** El cliente `ChatWidget` evalúa el status con `esFallaDelAsistente(status)`. Si recibe un código terminal (502 de backend caído o 503 sin key), se rinde limpiamente (`setSinBot(true)`) y conmuta de inmediato el widget a un botón directo de WhatsApp (`wa.me`), sin romper la UX ni dejar al cliente esperando. Si el error es transitorio (429 por rate limit propio o 400), el widget no se rinde porque reintentar minutos después sí funciona.
+  - **Fallback elegante a WhatsApp (`ChatWidget.tsx`):** El cliente `ChatWidget` evalúa el status con `esFallaDelAsistente(status)`. Si recibe un código terminal (502 de backend caído o 503 sin key), se rinde limpiamente (`setSinBot(true)`): el panel abierto ofrece WhatsApp en lugar del campo de texto y, al cerrarlo, el botón del chat desaparece (desde el 10/10/2026 ya no se convierte en un segundo botón de WhatsApp: está el flotante de la izquierda). Si el error es transitorio (429 por rate limit propio o 400), el widget no se rinde porque reintentar minutos después sí funciona.
   - **Tests dedicados:** La lógica completa está cubierta por `tests/chat-fallas.test.ts` y se ejecuta con `pnpm test`.
 - **`lib/marca.ts` no alcanza si el sitio no lee de ahí.** Empezó con 3 argumentos sin `id`; hoy
   tiene 7, cada uno con `id` estable para pedirlo puntual con `argumento()`. Lo leen el prompt

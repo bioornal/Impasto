@@ -29,15 +29,16 @@ class ErrorServidor extends Error {
 }
 
 /**
- * El chat del sitio. Ocupa el lugar que dejó el botón flotante de WhatsApp:
- * dos burbujas en la misma esquina se pisan.
+ * El chat del sitio, abajo a la derecha. WhatsApp tiene su propio botón
+ * flotante en la esquina izquierda (`WhatsappFab.tsx`): dos burbujas en la
+ * misma esquina se pisan.
  *
  * El bot **no arma pedidos**: recomienda y dice dónde está el producto. El que
  * agrega al carrito es siempre el cliente.
  *
- * `disponible` lo calcula el servidor en `app/page.tsx`. Sin key, el widget es
- * directamente un botón de WhatsApp: no vale la pena fingir que hay un bot ni
- * intentar una request que se sabe que va a fallar.
+ * `disponible` lo calcula el servidor en `app/page.tsx`. Sin key, el widget no
+ * se muestra: no vale la pena fingir que hay un bot ni intentar una request que
+ * se sabe que va a fallar, y el botón de WhatsApp ya está a la vista.
  */
 /**
  * `business.name` sale de la base y hoy es "Impasto - Pizzeria y Empanadas":
@@ -152,9 +153,8 @@ export function ChatWidget({ business, disponible, oculto = false }: { business:
     // de 20s cubre solo la conexión, no el cuerpo del stream. Si DeepSeek abre
     // la respuesta y se cuelga a mitad de camino -sin cerrar y sin mandar más
     // datos- `lector.read()` de más abajo no resuelve nunca, y sin esto el
-    // cliente queda con "Escribiendo…" para siempre y sin ninguna vía de
-    // contacto: esta task le sacó el botón flotante de WhatsApp, así que el
-    // chat es la única puerta.
+    // cliente queda con "Escribiendo…" para siempre, mirando un chat que no
+    // contesta.
     //
     // Dos plazos, no uno, porque cubren riesgos distintos:
     //
@@ -273,10 +273,10 @@ export function ChatWidget({ business, disponible, oculto = false }: { business:
       setFallo(error instanceof ErrorServidor ? error.message : SIN_CHAT);
 
       // Si el que falló fue el asistente -no el rate limit, no un historial
-      // mal armado-, insistir no lo va a revivir: el widget se rinde y pasa a
-      // ser el botón de WhatsApp. El panel sigue abierto con el error a la
-      // vista; el cambio se ve recién cuando el cliente lo cierra, para no
-      // arrancarle de la pantalla el link que estaba por tocar.
+      // mal armado-, insistir no lo va a revivir: el widget se rinde y
+      // desaparece (queda el WhatsApp flotante). El panel sigue abierto con el
+      // error a la vista; el cambio se ve recién cuando el cliente lo cierra,
+      // para no arrancarle de la pantalla el link que estaba por tocar.
       if (error instanceof ErrorServidor && esFallaDelAsistente(error.status)) setSinBot(true);
     } finally {
       // Pase lo que pase -éxito, error del servidor o timeout propio- el timer
@@ -286,19 +286,11 @@ export function ChatWidget({ business, disponible, oculto = false }: { business:
     }
   }
 
-  if (!disponible || (sinBot && !abierto)) {
-    // Sin key nunca hubo bot; con `sinBot` lo hubo y se cayó. En los dos casos
-    // el botón tiene que verse coherente con lo que hace
-    // -abrir WhatsApp-, no con lo que no puede hacer. Mismo pill, ícono y
-    // texto de WhatsApp.
-    return (
-      <a className={`chat-fab chat-fab-pill ${oculto ? "is-hidden" : ""}`} href={wsp} target="_blank" rel="noreferrer" aria-label="Escribinos por WhatsApp">
-        {/* Sin el punto verde: ese punto dice "el asistente está andando", y acá no. */}
-        <span className="chat-fab-insignia"><IconoWhatsapp /></span>
-        <span className="chat-fab-texto"><b>Escribinos por WhatsApp</b></span>
-      </a>
-    );
-  }
+  // Sin key nunca hubo bot; con `sinBot` lo hubo y se cayó. En los dos casos
+  // no se muestra nada: el WhatsApp flotante de la otra esquina
+  // (`WhatsappFab.tsx`) ya es la vía de contacto, y antes acá el chat se volvía
+  // un segundo botón de WhatsApp.
+  if (!disponible || (sinBot && !abierto)) return null;
 
   return (
     <>
@@ -422,8 +414,3 @@ const IconoCerrar = () => (
   </svg>
 );
 
-const IconoWhatsapp = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M12.04 2a10 10 0 0 0-8.56 15.1L2 22l5.05-1.32A10 10 0 1 0 12.04 2Zm5.4 14.24c-.23.64-1.34 1.23-1.85 1.27-.47.04-1.08.23-3.62-.76-3.06-1.2-5-4.25-5.15-4.45-.15-.2-1.23-1.64-1.23-3.13 0-1.5.78-2.23 1.06-2.54.28-.3.6-.38.8-.38.2 0 .4 0 .57.01.18 0 .43-.07.67.51.23.58.82 2 .89 2.14.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.32.38-.46.51-.15.15-.31.32-.13.62.17.3.77 1.27 1.65 2.06 1.13 1 2.08 1.32 2.38 1.47.3.15.47.12.65-.07.17-.2.75-.88.95-1.18.2-.3.4-.25.67-.15.27.1 1.7.8 2 .95.28.15.47.22.54.35.07.12.07.72-.16 1.36Z" />
-  </svg>
-);
