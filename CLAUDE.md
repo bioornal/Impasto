@@ -1,5 +1,11 @@
 @AGENTS.md
 
+## Checkout: textos de ayuda y aviso de retiro (10/10/2026)
+
+- **Revisado:** la dirección **ya era obligatoria** para delivery, en `Checkout.tsx` (`validate`) y en el servidor (`lib/orders.ts`). Los 4 pedidos web sin dirección del 09/10 (3 de clientes y uno de prueba) se guardaron todos como **retiro** (`modalidad = takeaway`, envío $0) con el delivery activo: el cliente eligió "Retiro en nuestra cocina", y con retiro el campo Dirección desaparece. No hubo un pedido delivery sin dirección.
+- **Mejora pedida por el dueño:** texto de ayuda bajo WhatsApp ("Es el número que usamos para comunicarnos con vos por tu pedido."), Email y Dirección, en escritorio y mobile (`AYUDA_*`, enlazados con `aria-describedby`; el error ocupa su lugar). Con retiro elegido y el delivery activo, un aviso (`AvisoRetiro`, `.co-mode-note`) dice que por eso no se pide dirección y que para envío hay que elegir Delivery. `.field .hint` ahora también tiene estilo en escritorio.
+- Verificado en local (escritorio y 375 px) con el guardado del carrito y el envío del pedido bloqueados en el navegador y el estado "abierto" simulado: textos, aviso, errores y el aviso oculto con el delivery pausado. `pnpm test`, TypeScript y eslint (solo el error previo de `set-state-in-effect`). **Sin publicar.**
+
 ## Cotización web rota del 03/10 al 06/10/2026
 
 - **Desde el 03/10 ningún pedido web se podía cotizar** (encontrado el 06/10 al probar la caja en el precio). `agregarFotos` (`c626d43`) devuelve una copia del catálogo y el costeo vive en un `WeakMap` por objeto: `quoteOrder` fallaba siempre con "Costeo de la venta no disponible. Reintentá." (comprobado contra `www.impastopizzas.com/api/orders/quote` el 06/10). `getCatalogData` ahora usa `conservarCosteo` (`lib/catalog-costeo.ts`, test en `tests/pricing-flow.test.ts`). Probado en local: la cotización vuelve a responder 200.

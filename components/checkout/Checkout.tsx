@@ -57,6 +57,24 @@ const PAGOS: [string, string, string, string][] = [
   ["transferencia", "Transferencia", "Alias y CBU listos al confirmar", "Al confirmar"],
 ];
 
+/** Debajo de cada campo, para qué lo usamos. Escritorio y mobile dicen lo mismo. */
+const AYUDA_TEL = "Es el número que usamos para comunicarnos con vos por tu pedido.";
+const AYUDA_EMAIL = "Te mandamos la confirmación del pedido acá.";
+const AYUDA_DIR = "Adonde te llevamos el pedido.";
+
+/**
+ * Los pedidos sin dirección del 09/10/2026 eran todos retiro: el cliente puede
+ * elegirlo sin darse cuenta, porque con retiro el campo Dirección desaparece.
+ * Este aviso dice por qué no se pide y cómo pasar a delivery.
+ */
+function AvisoRetiro() {
+  return (
+    <div className="co-mode-note" role="status">
+      <b>Lo retirás vos en nuestra cocina</b>, por eso no te pedimos dirección. Si querés que te lo llevemos, elegí Delivery.
+    </div>
+  );
+}
+
 export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }: CheckoutProps) {
   const { items, count, subtotal: localSubtotal } = useCart();
   const { delivery } = useStoreStatus();
@@ -258,6 +276,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
                 </small>
               </button>
             </div>
+            {delivery.activo && !isDelivery && <AvisoRetiro />}
             <div className="when-row">
               {WHEN_OPTIONS.map(([key, label]) => (
                 <button key={key} className={`when ${data.when === key ? "on" : ""}`} aria-pressed={data.when === key} onClick={() => set("when", key)}>
@@ -280,21 +299,21 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
               </div>
               <div className={`field ${errors.tel ? "error" : ""}`}>
                 <label htmlFor="co-tel">WhatsApp</label>
-                <input id="co-tel" aria-invalid={Boolean(errors.tel)} type="tel" inputMode="tel" autoComplete="tel" placeholder="3757 55 1234" value={data.tel} onChange={(e) => set("tel", e.target.value)} />
-                {errors.tel && <span className="err">{errors.tel}</span>}
+                <input id="co-tel" aria-invalid={Boolean(errors.tel)} aria-describedby="co-tel-ayuda" type="tel" inputMode="tel" autoComplete="tel" placeholder="3757 55 1234" value={data.tel} onChange={(e) => set("tel", e.target.value)} />
+                {errors.tel ? <span className="err" id="co-tel-ayuda">{errors.tel}</span> : <span className="hint" id="co-tel-ayuda">{AYUDA_TEL}</span>}
               </div>
               <div className={`field ${errors.email ? "error" : ""}`}>
                 <label htmlFor="co-email">Email</label>
-                <input id="co-email" aria-invalid={Boolean(errors.email)} type="email" placeholder="vos@email.com" autoComplete="email" value={data.email} onChange={(e) => set("email", e.target.value)} />
-                {errors.email ? <span className="err">{errors.email}</span> : <span className="hint">Te mandamos la confirmación del pedido acá.</span>}
+                <input id="co-email" aria-invalid={Boolean(errors.email)} aria-describedby="co-email-ayuda" type="email" placeholder="vos@email.com" autoComplete="email" value={data.email} onChange={(e) => set("email", e.target.value)} />
+                {errors.email ? <span className="err" id="co-email-ayuda">{errors.email}</span> : <span className="hint" id="co-email-ayuda">{AYUDA_EMAIL}</span>}
               </div>
 
               {isDelivery && (
                 <>
                   <div className={`field full ${errors.dir ? "error" : ""}`}>
                     <label htmlFor="co-dir">Dirección</label>
-                    <input id="co-dir" aria-invalid={Boolean(errors.dir)} placeholder="Calle y altura" value={data.dir} onChange={(e) => set("dir", e.target.value)} />
-                    {errors.dir && <span className="err">{errors.dir}</span>}
+                    <input id="co-dir" aria-invalid={Boolean(errors.dir)} aria-describedby="co-dir-ayuda" placeholder="Calle y altura" value={data.dir} onChange={(e) => set("dir", e.target.value)} />
+                    {errors.dir ? <span className="err" id="co-dir-ayuda">{errors.dir}</span> : <span className="hint" id="co-dir-ayuda">{AYUDA_DIR}</span>}
                   </div>
                   <div className="field full">
                     <label htmlFor="co-ref">Referencia para el repartidor (opcional)</label>
@@ -487,6 +506,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
               </span>
             </button>
           </div>
+          {delivery.activo && !isDelivery && <AvisoRetiro />}
         </section>
 
         <section className="co-card">
@@ -502,21 +522,21 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             </div>
             <div className={`field ${errors.tel ? "error" : ""}`}>
               <label htmlFor="co-m-tel">WhatsApp</label>
-              <input id="co-m-tel" aria-invalid={Boolean(errors.tel)} type="tel" inputMode="tel" autoComplete="tel" placeholder="3757 55 1234" value={data.tel} onChange={(e) => set("tel", e.target.value)} />
-              {errors.tel && <span className="err">{errors.tel}</span>}
+              <input id="co-m-tel" aria-invalid={Boolean(errors.tel)} aria-describedby="co-m-tel-ayuda" type="tel" inputMode="tel" autoComplete="tel" placeholder="3757 55 1234" value={data.tel} onChange={(e) => set("tel", e.target.value)} />
+              {errors.tel ? <span className="err" id="co-m-tel-ayuda">{errors.tel}</span> : <span className="hint" id="co-m-tel-ayuda">{AYUDA_TEL}</span>}
             </div>
             <div className={`field ${errors.email ? "error" : ""}`}>
               <label htmlFor="co-m-email">Email</label>
-              <input id="co-m-email" aria-invalid={Boolean(errors.email)} type="email" inputMode="email" autoComplete="email" placeholder="vos@email.com" value={data.email} onChange={(e) => set("email", e.target.value)} />
-              {errors.email ? <span className="err">{errors.email}</span> : <span className="hint">Te mandamos la confirmación del pedido acá.</span>}
+              <input id="co-m-email" aria-invalid={Boolean(errors.email)} aria-describedby="co-m-email-ayuda" type="email" inputMode="email" autoComplete="email" placeholder="vos@email.com" value={data.email} onChange={(e) => set("email", e.target.value)} />
+              {errors.email ? <span className="err" id="co-m-email-ayuda">{errors.email}</span> : <span className="hint" id="co-m-email-ayuda">{AYUDA_EMAIL}</span>}
             </div>
 
             {isDelivery && (
               <>
                 <div className={`field full ${errors.dir ? "error" : ""}`}>
                   <label htmlFor="co-m-dir">Dirección</label>
-                  <input id="co-m-dir" aria-invalid={Boolean(errors.dir)} autoComplete="street-address" placeholder="Calle y altura" value={data.dir} onChange={(e) => set("dir", e.target.value)} />
-                  {errors.dir && <span className="err">{errors.dir}</span>}
+                  <input id="co-m-dir" aria-invalid={Boolean(errors.dir)} aria-describedby="co-m-dir-ayuda" autoComplete="street-address" placeholder="Calle y altura" value={data.dir} onChange={(e) => set("dir", e.target.value)} />
+                  {errors.dir ? <span className="err" id="co-m-dir-ayuda">{errors.dir}</span> : <span className="hint" id="co-m-dir-ayuda">{AYUDA_DIR}</span>}
                 </div>
                 <div className="field full">
                   <label htmlFor="co-m-ref">Referencia <span className="opt">(opcional)</span></label>
