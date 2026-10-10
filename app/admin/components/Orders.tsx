@@ -178,13 +178,21 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
               </thead>
               <tbody>
                 {filtered.map(o => (
-                  <tr key={o._dbId} style={{ cursor: "pointer" }} onClick={() => setSelected(o)}>
+                  <tr key={o._dbId} className={o.pagoEstado === "pendiente" && o.estado !== "cancelado" ? "order-payment-pending" : undefined} style={{ cursor: "pointer" }} onClick={() => setSelected(o)}>
                     <td onClick={e => e.stopPropagation()}><input type="checkbox" aria-label={`Seleccionar el pedido ${o.id}`} checked={marcados.has(o._dbId)} onChange={e => setMarcados(prev => { const sig = new Set(prev); if (e.target.checked) sig.add(o._dbId); else sig.delete(o._dbId); return sig; })} /></td>
                     <td className="tbl-mono tbl-strong">{o.id}</td>
                     <td><div className="tbl-strong">{o.cliente}</div><div className="tbl-muted">{o.tel}</div></td>
                     <td className="tbl-muted">{o.items.map(i => `${i.qty}× ${i.name}`).join(", ").slice(0, 40)}…</td>
                     <td><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>{o.mode === "delivery" ? <Icon.Truck /> : <Icon.Shop />}{o.mode === "delivery" ? "Delivery" : "Retiro"}</span></td>
-                    <td className="tbl-muted" style={{ textTransform: "capitalize" }}>{o.pago === "mercadopago" ? "MercadoPago" : o.pago}{o.pago === "transferencia" && o.pagoEstado === "pendiente" && (o.comprobanteSubidoAt ? <div style={{ color: "var(--a-ok, #2e7d32)", fontWeight: 600, textTransform: "none" }}>📎 Comprobante</div> : <div style={{ textTransform: "none" }}>Sin comprobante</div>)}</td>
+                    <td className="tbl-muted" style={{ textTransform: "capitalize" }}>
+                      {o.pago === "mercadopago" ? "MercadoPago" : o.pago}
+                      {o.pagoEstado === "pendiente" && o.estado !== "cancelado" && (
+                        <div className="order-payment-reminder">
+                          {o.estado === "entregado" ? "⚠ Entregado · falta registrar pago" : "⚠ Pago pendiente"}
+                        </div>
+                      )}
+                      {o.pago === "transferencia" && o.pagoEstado === "pendiente" && (o.comprobanteSubidoAt ? <div style={{ color: "var(--a-ok, #2e7d32)", fontWeight: 600, textTransform: "none" }}>📎 Comprobante</div> : <div style={{ textTransform: "none" }}>Sin comprobante</div>)}
+                    </td>
                     <td className="right tbl-price">{fmt(o.total)}</td>
                     <td><span className={`chip chip-${o.estado}`}>{o.estado.replace("-", " ")}</span></td>
                     <td className="tbl-muted text-mono">{timeAgo(o.fecha)}</td>
