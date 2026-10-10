@@ -1,5 +1,11 @@
 @AGENTS.md
 
+## CI otra vez en verde: `/cocina` ya no se arma en el build (10/10/2026)
+
+- **Problema:** el paso "Production build without backend access" del CI falló en **todos** los pushes desde `ad4c368` (03/10, `/cocina` lee el recetario): con `revalidate = 60` Next generaba `/cocina` en el build, y el CI compila a propósito sin base (`INSFORGE_API_BASE_URL=http://127.0.0.1:9`) → "/cocina: no se pudo leer productos". Netlify sí tiene la base y publicaba igual, así que producción no estaba afectada; el CI quedó rojo dos semanas y dejó de avisar.
+- **Arreglo:** `app/cocina/page.tsx` pasa a `dynamic = "force-dynamic"` (como la home) y `leerFilasGuia` (`lib/guia-cocina-datos.ts`) va dentro de `unstable_cache` con 60 s. Se conserva lo de antes: si la base falla al renovar, se sirven las últimas filas buenas (comprobado en `next/dist/server/web/spec-extension/unstable-cache.js` 16.3.8: un refresco que falla devuelve el valor viejo). Diferencia: sin caché todavía (deploy nuevo) y con la base caída, `/cocina` da error en vez de una versión del build. **Ojo:** en 16.3.8 `force-dynamic` no desactiva `unstable_cache` (solo `fetchCache = 'force-no-store'` lo hace); si se agrega ese export, el caché se pierde.
+- Verificado: build local en un worktree limpio sin `.env.local` y con las variables del CI → falla antes, pasa después (`/cocina` sale `ƒ`). `/cocina` local con la base real: 23 pizzas, 19 preparaciones, 23 fotos, `noindex` (igual que producción); segunda carga 154 ms contra 1,7 s de la primera (caché). `pnpm test`, TypeScript, eslint de lo tocado. `tests/cocina-bases-render.test.ts` simula `next/cache`.
+
 ## Checkout: textos de ayuda y aviso de retiro (10/10/2026)
 
 - **Revisado:** la dirección **ya era obligatoria** para delivery, en `Checkout.tsx` (`validate`) y en el servidor (`lib/orders.ts`). Los 4 pedidos web sin dirección del 09/10 (3 de clientes y uno de prueba) se guardaron todos como **retiro** (`modalidad = takeaway`, envío $0) con el delivery activo: el cliente eligió "Retiro en nuestra cocina", y con retiro el campo Dirección desaparece. No hubo un pedido delivery sin dirección.
@@ -410,7 +416,7 @@ estado del 22/09/2026 documentado arriba prevalece sobre las descripciones hist�
   escriba la dirección ve las recetas. La defensa es `noindex, nofollow` en `app/cocina/layout.tsx`;
   **`/cocina` no está en `robots.ts` ni en `sitemap.ts` a propósito** (nombrarla anunciaría que
   existe). **Desde el 03/10/2026 (paso 3) la página se arma con el recetario y se renueva cada
-  minuto (`revalidate = 60`); ya no hace falta un deploy por cada receta** (ver el bloque "Paso 3"
+  minuto (desde el 10/10, `force-dynamic` + `unstable_cache` de 60 s; ver "CI otra vez en verde"); ya no hace falta un deploy por cada receta** (ver el bloque "Paso 3"
   al final de este punto; lo que sigue describe la versión del 02/10).
   Solo entra lo confirmado, salvo las 3 pizzas nuevas con tomate (Pomodorini, Pesto Rosso,
   Puttanesca), que el dueño pidió ver en una sección "En prueba" con aviso, gramos de prueba y

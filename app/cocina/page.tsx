@@ -13,9 +13,11 @@ import { elegirFoto, type ObjetoFoto } from "@/lib/fotos";
 import { listarFotos } from "@/lib/fotos-bucket";
 import { REAL_PRODUCT_PHOTOS } from "@/lib/stock-images";
 
-// Se arma con el recetario y se renueva cada minuto. Si la base falla al renovar,
-// Next sigue mostrando la última versión buena.
-export const revalidate = 60;
+// Se arma en cada visita y no en el build: el CI compila sin acceso a la base, y con
+// `revalidate` Next la generaba en el build y el CI fallaba (desde el 03/10/2026).
+// Las filas del recetario se guardan un minuto en `leerFilasGuia`; si la base falla
+// al renovarlas, se sigue mostrando la última versión buena.
+export const dynamic = "force-dynamic";
 
 // La foto más nueva del bucket (por carpeta del producto o por nombre); si no hay,
 // la del mapa del código, y para las pizzas en prueba, la de la guía.

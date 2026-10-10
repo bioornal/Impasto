@@ -26,7 +26,9 @@ test('kitchen data loads both old and migrated preparation schemas, and keeps th
       return query;
     }}};
     const exported:{leerFilasGuia?:()=>Promise<guia.FilasGuia>}={};
-    runInNewContext(compiled,{exports:exported,require:(name:string)=>name==='@/lib/insforge'?{db}:name==='@/lib/read-pages'?{readPages}:require(name)});
+    // Fuera de Next no hay caché: unstable_cache pasa la función tal cual.
+    const nextCache={unstable_cache:<T,>(fn:T)=>fn};
+    runInNewContext(compiled,{exports:exported,require:(name:string)=>name==='@/lib/insforge'?{db}:name==='@/lib/read-pages'?{readPages}:name==='next/cache'?nextCache:require(name)});
     const loaded=await exported.leerFilasGuia!();
     assert.equal(loaded.preparaciones[0].receta_id,'prep');
     assert.equal(loaded.preparaciones[0].rinde_kg,1);

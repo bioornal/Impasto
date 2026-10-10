@@ -1,13 +1,15 @@
+import { unstable_cache } from "next/cache";
 import { db } from "@/lib/insforge";
 import { readPages } from "@/lib/read-pages";
 import type { FilasGuia } from "@/lib/guia-cocina";
 
 /**
  * Lee del recetario lo que arma `/cocina`, con la clave de backend. No pide precios
- * ni costos (solo `precio_salsa`, para saber si la pizza lleva salsa). Si una lectura
- * falla, tira: con `revalidate`, Next sigue sirviendo la última versión buena.
+ * ni costos (solo `precio_salsa`, para saber si la pizza lleva salsa). Las filas se
+ * guardan un minuto. Si una lectura falla, tira: al renovar, `unstable_cache` sigue
+ * devolviendo las últimas filas buenas (Next 16.3.8, `unstable-cache.js`).
  */
-export async function leerFilasGuia(): Promise<FilasGuia> {
+export const leerFilasGuia = unstable_cache(async (): Promise<FilasGuia> => {
   const t = db.database;
   const [productos, precios, recetas, lineas, ingredientes, preparaciones] = await Promise.all([
     readPages((s, e) => t.from("productos").select("id,nombre,categoria,archivado")
@@ -34,4 +36,4 @@ export async function leerFilasGuia(): Promise<FilasGuia> {
     preparaciones: (preparaciones.data as FilasGuia["preparaciones"]).map(({receta_id, ingrediente_id, rinde_kg, tipo_base}) =>
       ({receta_id, ingrediente_id, rinde_kg, tipo_base})),
   };
-}
+}, ["guia-cocina"], { revalidate: 60 });
