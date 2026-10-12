@@ -7,6 +7,7 @@ import { esRespuestaDefinitiva, esEstadoFinal } from "@/lib/seguimiento";
 import { esperaComprobante } from "@/lib/transferencia-pendiente";
 import { SubirComprobante } from "@/components/checkout/SubirComprobante";
 import { OpinionForm } from "@/components/opiniones/OpinionForm";
+import { nombreParaPublicar } from "@/lib/opiniones";
 
 interface OrderItem {
   name?: string;
@@ -278,7 +279,7 @@ export default function PedidoTrackingPage({ params }: { params: Promise<{ ref: 
               modo="pedido"
               productos={order.opinion.productos}
               referencia={order.numero}
-              nombreInicial={order.cliente.split(" ")[0]}
+              nombreInicial={nombreParaPublicar(order.cliente)}
               yaOpino={order.opinion.yaOpino}
             />
           </div>

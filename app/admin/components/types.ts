@@ -23,6 +23,8 @@ export interface OrderItem {
   detail?: string;
   /** Recargo manual del POS sobre la línea (no unitario). */
   extra?: number;
+  /** pizza, pizza-half, empanadas, bebida…: con esto Testimonios sabe qué se puede opinar. */
+  type?: string;
 }
 
 export interface AdminOrder {
@@ -83,6 +85,14 @@ export interface Testimonial {
   producto: string;
   /** Referencia del pedido si vino del seguimiento (verificada); vacío si vino de la home. */
   pedidoRef: string;
+  /** uuid del pedido (`_dbId` en Pedidos); vacío si vino de la home o se eliminó el pedido. */
+  pedidoId: string;
+}
+
+export interface CambioTestimonial {
+  estado?: Testimonial["estado"];
+  nombre?: string;
+  producto?: string;
 }
 
 export interface AdminEtiqueta {

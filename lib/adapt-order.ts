@@ -22,6 +22,7 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
         price: Number(i.price || i.precio || 0),
         detail: String(i.detail || i.detalle || ""),
         extra: Math.max(0, Number(i.extra) || 0),
+        type: String(i.type || ""),
       }))
     : [];
   const num = String(p.numero_pedido || "").padStart(4, "0");

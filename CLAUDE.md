@@ -1,5 +1,15 @@
 @AGENTS.md
 
+## Testimonios: nombre completo y qué pizza probó (12/10/2026)
+
+- **Pedido del dueño:** la opinión de un pedido real (Carlos Alberto Barrios, 11/10) llegó como "Carlos", sin producto, y el panel mostraba la referencia `IM-MAN-…`: aprobada, la web habría dicho "— Carlos · Cliente de Impasto".
+- **Seguimiento:** el nombre del formulario se completa con el del pedido **entero** (decisión del dueño), `nombreParaPublicar` en `lib/opiniones.ts` (una línea, hasta 40, corta palabras enteras). El cliente lo puede cambiar.
+- **Sin producto elegido, la opinión queda sobre todo lo que compró** (`productoDeLaOpinion`): las pizzas por nombre (la mitad y mitad en sus dos gustos) y "Empanadas"; nunca bebidas. Varios se guardan en `testimonios.producto` separados por `" + "` (`SEPARADOR_PRODUCTOS`) y `lineaProducto` los lee: "Probó la Diavola al Miele Piccante y la Muzzarela y Jamon".
+- **Panel → Testimonios:** bajo la opinión, el nombre que se publica con **Editar** (nombre, con atajo "Usar el del pedido", y sobre qué opinó: todo el pedido o cada pizza; de la home, la carta). Debajo, un recuadro (`QueProbo`) con la misma línea que lee el cliente en la web ("Probó la Diavola al Miele Piccante y la Muzzarela y Jamon"). **La tarjeta del panel es la de la web: estrellas, comentario, nombre y qué probó.** El dueño pidió explícitamente sacar todo lo demás: fecha, hora, modalidad, monto, bebidas, el nombre repetido y "Pedido verificado" / "Desde la home" (versiones anteriores del mismo día los mostraban). No agregarlos. El pedido se busca en `state.orders` por `pedido_id` (`OrderItem.type` existe para eso). `PUT /api/admin/testimonios/[id]` acepta `estado`, `nombre` y `producto` (`validarCambioTestimonio`).
+- **Telegram:** "Se publica como: X" y "Pedido de <cliente>" en vez de la referencia.
+- La opinión de Carlos se corrigió desde el panel local (base real): nombre completo y "todo el pedido"; sigue **pendiente** para que la apruebe el dueño. **No aprobarla antes de publicar este cambio:** el `lineaProducto` viejo mostraría el `+`.
+- Verificado: `pnpm test` (casos nuevos en `tests/opiniones.test.ts`), TypeScript, eslint de lo tocado; en el navegador con la sesión del dueño, la tarjeta, la edición y el guardado; el seguimiento de un pedido entregado sin opinión trae el nombre completo (no se envió nada). **Sin publicar.**
+
 ## WhatsApp con el cliente desde el panel (10/10/2026)
 
 - **Pedido del dueño:** para resolver problemas con un pedido necesita escribirle al cliente. En **Pedidos**, el teléfono de cada fila es un enlace (ícono verde) que abre el chat sin abrir el detalle (`TelCliente` en `Orders.tsx`, `stopPropagation`); el botón "WhatsApp" del detalle usa lo mismo. El chat se abre con "¡Hola, Juan! Te escribimos de Impasto por tu pedido IM-107345-K7QD." (la referencia solo si es de la web; la del POS, `IM-3`, el cliente nunca la vio).

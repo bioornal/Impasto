@@ -3,7 +3,7 @@ import { db } from "@/lib/insforge";
 import { SUCURSAL_ID } from "@/lib/business";
 import { limitar } from "@/lib/rate-limit";
 import { esReferenciaValida, normalizarReferencia } from "@/lib/referencia";
-import { EMPANADAS, productosDelPedido, textoAvisoOpinion, validarOpinion } from "@/lib/opiniones";
+import { EMPANADAS, productoDeLaOpinion, productosDelPedido, textoAvisoOpinion, validarOpinion } from "@/lib/opiniones";
 import { sendTelegram } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
 
   let pedidoId: string | null = null;
   let pedidoRef = "";
+  let pedidoCliente = "";
   let productosPermitidos: string[];
 
   if (body.ref !== undefined && body.ref !== "") {
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
     const { data, error } = await db.database
       .from("pedidos")
-      .select("id, status, productos")
+      .select("id, status, productos, nombre_cliente")
       .eq("external_reference", ref)
       .eq("proyecto_id", "impasto")
       .eq("sucursal_id", SUCURSAL_ID)
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
     }
     pedidoId = String(pedido.id);
     pedidoRef = ref;
+    pedidoCliente = String(pedido.nombre_cliente || "");
     productosPermitidos = productosDelPedido(pedido.productos);
 
     const { data: previa } = await db.database.from("testimonios").select("id").eq("pedido_id", pedidoId).limit(1);
@@ -75,7 +77,10 @@ export async function POST(req: NextRequest) {
 
   const validada = validarOpinion(body, productosPermitidos);
   if (!validada.ok) return NextResponse.json({ ok: false, error: validada.error }, { status: 400 });
-  const { opinion } = validada;
+  // Del pedido, sin producto elegido: queda sobre todo lo que compró.
+  const opinion = pedidoId
+    ? { ...validada.opinion, producto: productoDeLaOpinion(validada.opinion.producto, productosPermitidos) }
+    : validada.opinion;
 
   const { error: errorInsert } = await db.database.from("testimonios").insert([{
     nombre: opinion.nombre,
@@ -97,7 +102,7 @@ export async function POST(req: NextRequest) {
   // Se espera el aviso: la función serverless puede congelarse apenas responde.
   // Si falla, la opinión igual quedó guardada y aparece en el panel.
   try {
-    const resultado = await sendTelegram(textoAvisoOpinion(opinion, { ref: pedidoRef || undefined }));
+    const resultado = await sendTelegram(textoAvisoOpinion(opinion, pedidoId ? { cliente: pedidoCliente } : null));
     if (resultado.estado === "fallido") console.error("[opiniones] aviso", resultado.motivo);
   } catch (error) {
     console.error("[opiniones] aviso", error instanceof Error ? error.message : "error");

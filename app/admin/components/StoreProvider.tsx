@@ -2,7 +2,7 @@
 import { providerRefundConfirmed } from "@/lib/provider-refund-intent";
 import type { ManualRefund } from "@/lib/manual-refund";
 import { createContext, useContext, useState, useEffect, useRef } from "react";
-import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial, AdminOrder, AdminCustomer } from "./types";
+import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial, CambioTestimonial, AdminOrder, AdminCustomer } from "./types";
 import { esCategoriaImpasto } from "@/lib/categorias";
 import { adaptOrder } from "@/lib/adapt-order";
 import { loadAdminCustomers } from "@/lib/adapt-customer";
@@ -45,6 +45,7 @@ function adaptTestimonial(t: Record<string, unknown>): Testimonial {
     fecha: String(t.created_at || t.updated_at || new Date().toISOString()),
     producto: String(t.producto || ""),
     pedidoRef: String(t.pedido_ref || ""),
+    pedidoId: String(t.pedido_id || ""),
   };
 }
 
@@ -158,7 +159,8 @@ interface StoreCtx {
   /** Sin `monto` devuelve el total; con `monto` hace una devolución parcial. */
   recordManualRefund: (dbId: string, body: ManualRefund) => Promise<string>;
   refundOrder: (dbId: string, monto?: number, operationId?: string) => Promise<boolean>;
-  updateTestimonial: (id: string, estado: string) => Promise<void>;
+  /** Estado, nombre publicado o producto. Devuelve si se guardó. */
+  updateTestimonial: (id: string, cambio: CambioTestimonial) => Promise<boolean>;
   deleteTestimonial: (id: string) => Promise<void>;
   reset: () => Promise<void>;
 }
@@ -536,16 +538,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return true;
     },
 
-    updateTestimonial: async (id, estado) => {
+    updateTestimonial: async (id, cambio) => {
       try {
       await confirmAdminMutation(() => fetch(`/api/admin/testimonios/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado }),
+        body: JSON.stringify(cambio),
       }));
-      setState(s => ({ ...s, testimonials: s.testimonials.map(t => t.id === id ? { ...t, estado: estado as Testimonial["estado"] } : t) }));
-      showToast("Testimonio actualizado");
-      } catch (error) { showToast(error instanceof Error ? error.message : "No se pudo actualizar el testimonio"); }
+      setState(s => ({ ...s, testimonials: s.testimonials.map(t => t.id === id ? { ...t, ...cambio } : t) }));
+      showToast(cambio.estado === "aprobado" ? "Testimonio publicado en la web" : "Testimonio actualizado");
+      return true;
+      } catch (error) { showToast(error instanceof Error ? error.message : "No se pudo actualizar el testimonio"); return false; }
     },
 
     deleteTestimonial: async (id) => {
