@@ -1,0 +1,133 @@
+.page {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(240, 182, 74, .12), transparent 55%),
+    var(--bg, #f6f1e7);
+  color: var(--ink, #1f1a15);
+  font-family: var(--font-body, Inter, ui-sans-serif, system-ui, sans-serif);
+}
+
+.card {
+  position: relative;
+  width: min(100%, 500px);
+  overflow: hidden;
+  border: 1px solid var(--line, #e4d9c3);
+  border-radius: 24px;
+  background: var(--surface, #fffaf0);
+  box-shadow: 0 24px 70px rgba(40, 25, 10, .16);
+}
+
+.card::before {
+  position: absolute;
+  top: -110px;
+  left: 50%;
+  width: 250px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(240, 182, 74, .16), transparent 70%);
+  content: "";
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.logo {
+  display: block;
+  position: relative;
+  width: 180px;
+  height: auto;
+  margin: 0 auto 28px;
+  mix-blend-mode: multiply;
+}
+
+.content {
+  padding: 34px 38px 38px;
+  text-align: center;
+}
+
+.content h1 {
+  margin: 0;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(25px, 6vw, 32px);
+  font-weight: 600;
+  letter-spacing: -.025em;
+  line-height: 1.16;
+}
+
+.description {
+  max-width: 390px;
+  margin: 14px auto 0;
+  color: var(--ink-2, #4a3f33);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.whatsapp,
+.retry {
+  display: inline-flex;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .16s ease, transform .16s ease;
+}
+
+.whatsapp {
+  gap: 9px;
+  border: 1px solid #285c39;
+  background: #356e47;
+  color: #fffaf0;
+  box-shadow: 0 9px 22px rgba(43, 91, 57, .2);
+}
+
+.whatsappIcon {
+  width: 19px;
+  height: 19px;
+  flex: none;
+}
+
+.whatsapp:hover {
+  background: #285c39;
+  transform: translateY(-1px);
+}
+
+.retry {
+  border: 1px solid var(--line-2, #d6c8ac);
+  background: transparent;
+  color: var(--ink-2, #4a3f33);
+}
+
+.retry:hover {
+  background: var(--bg-2, #efe7d6);
+}
+
+.whatsapp:focus-visible,
+.retry:focus-visible {
+  outline: 3px solid var(--gold, #f0b64a);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .page { padding: 16px; }
+  .card { border-radius: 20px; }
+  .content { padding: 29px 22px 26px; }
+  .logo { width: 160px; margin-bottom: 23px; }
+  .description { font-size: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .whatsapp, .retry { transition: none; }
+}
