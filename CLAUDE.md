@@ -1,5 +1,10 @@
 @AGENTS.md
 
+## Estado de error de la tienda y pedidos por WhatsApp (12/10/2026)
+
+- `app/error.tsx` usa una tarjeta clara con el logo oficial (`public/logo.png`), sin ilustración generada. El CTA principal abre WhatsApp con el mensaje de pedido prellenado y la configuración existente; **Reintentar** queda como acción secundaria.
+- Copy aprobado por el dueño: “La tienda online no está disponible en este momento, pero estamos tomando pedidos por WhatsApp. Escribinos y te ayudamos.” No incluir días ni horarios de toma de pedidos en esta pantalla; se retiró la mención a viernes-domingo porque no fue confirmada.
+
 ## Testimonios: nombre completo y qué pizza probó (12/10/2026)
 
 - **Pedido del dueño:** la opinión de un pedido real (Carlos Alberto Barrios, 11/10) llegó como "Carlos", sin producto, y el panel mostraba la referencia `IM-MAN-…`: aprobada, la web habría dicho "— Carlos · Cliente de Impasto".
