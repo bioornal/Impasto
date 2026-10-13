@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { CATEGORIAS_IMPASTO, esCategoriaImpasto } from "@/lib/categorias";
 import { elegirFoto } from "@/lib/fotos";
 import { listarFotos } from "@/lib/fotos-bucket";
+import { invalidarCatalogo } from "@/lib/catalog-cache";
 
 export async function GET() {
   const unauthorized = await requireAdmin();
@@ -49,5 +50,6 @@ export async function POST(req: NextRequest) {
       proyecto_id: "impasto",
     });
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  invalidarCatalogo();
   return NextResponse.json({ ok: true, data });
 }

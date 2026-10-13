@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { SUCURSAL_ID } from "@/lib/business";
 import { esColorValido, esMostrarValido } from "@/lib/etiquetas";
 import { CATEGORIAS_IMPASTO } from "@/lib/categorias";
+import { invalidarCatalogo } from "@/lib/catalog-cache";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const unauthorized = await requireAdmin();
@@ -36,6 +37,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { data, error } = await db.database
     .from("etiquetas").update(fields).eq("id", id).eq("sucursal_id", SUCURSAL_ID);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  invalidarCatalogo();
   return NextResponse.json({ ok: true, data });
 }
 
@@ -76,5 +78,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { error } = await db.database
     .from("etiquetas").delete().eq("id", id).eq("sucursal_id", SUCURSAL_ID);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  invalidarCatalogo();
   return NextResponse.json({ ok: true, limpiados });
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
 import { CATEGORIAS_IMPASTO, esCategoriaImpasto } from "@/lib/categorias";
+import { invalidarCatalogo } from "@/lib/catalog-cache";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const unauthorized = await requireAdmin();
@@ -27,6 +28,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (body.popular !== undefined) fields.popular = !!body.popular;
   const { data, error } = await db.database.from("productos").update(fields).eq("id", id).eq("proyecto_id", "impasto").in("categoria", [...CATEGORIAS_IMPASTO]);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  invalidarCatalogo();
   return NextResponse.json({ ok: true, data });
 }
 
@@ -36,5 +38,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   const { error } = await db.database.from("productos").delete().eq("id", id).eq("proyecto_id", "impasto").in("categoria", [...CATEGORIAS_IMPASTO]);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  invalidarCatalogo();
   return NextResponse.json({ ok: true });
 }

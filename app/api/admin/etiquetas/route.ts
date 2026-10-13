@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { SUCURSAL_ID } from "@/lib/business";
 import { esColorValido, esMostrarValido, slugificar } from "@/lib/etiquetas";
 import { CATEGORIAS_IMPASTO } from "@/lib/categorias";
+import { invalidarCatalogo } from "@/lib/catalog-cache";
 
 /** Cuántos productos de Impasto usan cada slug. */
 async function conteoDeUso(): Promise<Record<string, number>> {
@@ -70,5 +71,6 @@ export async function POST(req: NextRequest) {
     sucursal_id: SUCURSAL_ID,
   }]);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  invalidarCatalogo();
   return NextResponse.json({ ok: true, data });
 }

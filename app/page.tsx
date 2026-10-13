@@ -2,7 +2,7 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import { descripcionSitio, tituloSitio, PALABRAS_CLAVE } from "@/lib/seo";
 import { negocioDeCarta, mencionaEmpanadas } from "@/lib/carta-visible";
-import { getCatalogData } from "@/lib/catalog";
+import { getCatalogDataVisible } from "@/lib/catalog-cache";
 import { getBusinessConfig } from "@/lib/business-server";
 import { estadoTienda } from "@/lib/hours";
 import { jsonLdSitio } from "@/lib/seo";
@@ -11,7 +11,7 @@ import { Shell } from "@/components/Shell";
 import { JsonLd } from "@/components/JsonLd";
 import type { CatalogData } from "@/types";
 
-const catalogoActual = cache(getCatalogData);
+const catalogoActual = cache(getCatalogDataVisible);
 const negocioActual = cache(getBusinessConfig);
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,7 +28,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// Los precios se administran en la base y deben reflejarse en cada visita.
+// Los precios se administran en la base: la carta sale de un caché de 60 s
+// (`getCatalogDataVisible`, nunca más vieja que 5 min) y los cambios hechos
+// desde el panel se ven al instante. El cobro siempre usa precios frescos.
 export const dynamic = "force-dynamic";
 
 // Por request a propósito: cada visita ve otra pizza en la tarjeta ancha.

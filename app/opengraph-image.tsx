@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { BUSINESS } from "@/lib/business";
-import { getCatalogData } from "@/lib/catalog";
+import { getCatalogDataVisible } from "@/lib/catalog-cache";
 
 /**
  * La miniatura que se ve al compartir el sitio en WhatsApp, Instagram o
@@ -12,7 +12,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function Image() {
-  const data = await getCatalogData();
+  const data = await getCatalogDataVisible();
   return new ImageResponse(
     (
       <div

@@ -2,7 +2,7 @@ import { readPages } from "@/lib/read-pages";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { CATEGORIAS_IMPASTO } from "@/lib/categorias";
-import { getCatalogData } from "@/lib/catalog";
+import { getCatalogDataVisible } from "@/lib/catalog-cache";
 import { publicSaleProducts } from "@/lib/catalog-source";
 import { PricingUnavailableError, requirePricingRows } from "@/lib/pricing-safety";
 import type { DatabaseProduct } from "@/lib/catalog-build";
@@ -11,7 +11,7 @@ export async function GET() {
   try {
     // También es un endpoint público: no puede divulgar precios guardados que
     // el catálogo/checkout considera inseguros. Conservamos los campos de cada fila.
-    const catalog = await getCatalogData();
+    const catalog = await getCatalogDataVisible();
     const result = await readPages((start, end) => db.database.from("productos").select("*")
       .eq("proyecto_id", "impasto")
       .in("categoria", [...CATEGORIAS_IMPASTO]).order("id", { ascending: true }).range(start, end));

@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { CATEGORIAS_IMPASTO } from "@/lib/categorias";
 import { claveDeFoto, idValido, validarFoto } from "@/lib/foto-subida";
 import { subirFoto } from "@/lib/fotos-bucket";
+import { invalidarCatalogo } from "@/lib/catalog-cache";
 
 const error = (mensaje: string, status: number) => NextResponse.json({ ok: false, error: mensaje }, { status });
 
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
   // Que la carta, /cocina y el admin la vean ya, sin esperar el minuto de caché.
   revalidateTag("fotos", { expire: 0 });
+  invalidarCatalogo();
   revalidatePath("/cocina");
   return NextResponse.json({ ok: true, foto: url, clave });
 }

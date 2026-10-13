@@ -92,6 +92,7 @@ test('imagen compartida, manifiesto, metadatos y resumen para asistentes siguen 
       const exports: Record<string, (...args: unknown[]) => Promise<unknown>> = {};
       runInNewContext(compiled, { exports, React, Response, process, require: (name: string) => {
         if (name === '@/lib/catalog') return { getCatalogData: async () => data };
+        if (name === '@/lib/catalog-cache') return { getCatalogDataVisible: async () => data };
         if (name === '@/lib/business-server') return { getBusinessConfig: async () => BUSINESS };
         if (name === 'next/og') return { ImageResponse: class { html: string; constructor(element: React.ReactNode) { this.html = renderToStaticMarkup(element); } } };
         if (name === 'react') return { ...React, cache: (fn: unknown) => fn };

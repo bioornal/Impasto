@@ -1,4 +1,4 @@
-import { getCatalogData } from "@/lib/catalog";
+import { getCatalogDataVisible } from "@/lib/catalog-cache";
 import { getBusinessConfig } from "@/lib/business-server";
 import { argumentosDeCarta, negocioDeCarta } from "@/lib/carta-visible";
 import { argumentoConCifra } from "@/lib/marca";
@@ -17,7 +17,7 @@ import { fmt } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const [data, config] = await Promise.all([getCatalogData(), getBusinessConfig()]);
+  const [data, config] = await Promise.all([getCatalogDataVisible(), getBusinessConfig()]);
   const hayEmpanadas = data.empanadas.length > 0;
   const BUSINESS = negocioDeCarta(config, hayEmpanadas);
   const empanada = argumentoConCifra("empanadas-peso");
