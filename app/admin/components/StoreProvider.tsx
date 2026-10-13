@@ -12,6 +12,7 @@ import {
   pedidosNuevosParaCocina,
   registrarPedidosConocidosParaCocina,
 } from "@/lib/pedido-visible";
+import { cursorDePedidos, desdeParaConsulta, unirPedidos, POLLS_ENTRE_RECARGAS } from "@/lib/pedidos-incrementales";
 
 /* ── adaptadores InsForge → admin ── */
 function adaptProduct(p: Record<string, unknown>): AdminProduct {
@@ -111,6 +112,7 @@ async function loadAll(): Promise<{
   customersUpdatedAt: string | null;
   testimonials: Testimonial[];
   etiquetas: AdminEtiqueta[];
+  ordersCursor: string | null;
 }> {
   const [prodRes, pedRes, crm, etiRes] = await Promise.all([
     fetch("/api/admin/productos").then(r => r.json()).catch(() => ({ data: [] })),
@@ -131,6 +133,7 @@ async function loadAll(): Promise<{
     customersLoading: false,
     testimonials: Array.isArray(testiRes.data) ? testiRes.data.map(adaptTestimonial) : [],
     etiquetas: (etiRes.data || []).map(adaptEtiqueta),
+    ordersCursor: cursorDePedidos(Array.isArray(pedRes.data) ? pedRes.data : [], null),
   };
 }
 
@@ -198,6 +201,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   stateRef.current = state;
   const knownOrderIdsRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef(true);
+  // Sondeo incremental: último `updated_at` visto y sondeos desde la última lista completa.
+  const cursorRef = useRef<string | null>(null);
+  const pollsRef = useRef(0);
 
   // Initialize sound preference from localStorage
   useEffect(() => {
@@ -236,9 +242,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const load = async () => {
     setState(s => ({ ...s, loading: true, error: null }));
     try {
-      const data = await loadAll();
+      const { ordersCursor, ...data } = await loadAll();
       knownOrderIdsRef.current = clavesDePedidosParaCocina(data.orders);
       isInitialLoadRef.current = false;
+      cursorRef.current = ordersCursor;
+      pollsRef.current = 0;
       setState({ loading: false, error: null, ...data });
     } catch (err) {
       setState(s => ({ ...s, loading: false, error: err instanceof Error ? err.message : "Error de red" }));
@@ -248,10 +256,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     load();
 
-    // Auto-polling every 15s for new orders + kitchen chime
+    // Auto-polling every 15s for new orders + kitchen chime.
+    // Pide solo lo que cambió desde el último `updated_at` visto (egress, 13/10/2026);
+    // cada POLLS_ENTRE_RECARGAS sondeos, o sin cursor, la lista completa.
     const timer = setInterval(async () => {
       try {
-        const res = await fetch("/api/admin/pedidos");
+        pollsRef.current += 1;
+        const cursor = cursorRef.current;
+        let completa = cursor === null || pollsRef.current >= POLLS_ENTRE_RECARGAS;
+        let res = await fetch(completa || cursor === null
+          ? "/api/admin/pedidos"
+          : `/api/admin/pedidos?desde=${encodeURIComponent(desdeParaConsulta(cursor))}`);
+        if (!res.ok && res.status !== 401 && !completa) {
+          // Sin la columna (migración pendiente) o un error puntual: la lista completa de siempre.
+          res = await fetch("/api/admin/pedidos");
+          completa = true;
+        }
         if (!res.ok) {
           if (res.status === 401) {
             setState(s => ({
@@ -264,11 +284,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const j = await res.json();
         if (!j.ok || !Array.isArray(j.data)) return;
 
-        const newOrders: AdminOrder[] = j.data.map(adaptOrder);
+        const filas = j.data as Record<string, unknown>[];
+        const recibidos: AdminOrder[] = filas.map(adaptOrder);
         const prevIds = knownOrderIdsRef.current;
 
         if (!isInitialLoadRef.current) {
-          const freshOrders = pedidosNuevosParaCocina(prevIds, newOrders);
+          const freshOrders = pedidosNuevosParaCocina(prevIds, recibidos);
           if (freshOrders.length > 0) {
             if (soundEnabledRef.current) {
               playKitchenChime();
@@ -277,9 +298,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        knownOrderIdsRef.current = registrarPedidosConocidosParaCocina(prevIds, newOrders);
+        knownOrderIdsRef.current = registrarPedidosConocidosParaCocina(prevIds, recibidos);
+        cursorRef.current = cursorDePedidos(filas, completa ? null : cursor);
+        if (completa) pollsRef.current = 0;
 
-        setState(s => ({ ...s, orders: newOrders }));
+        setState(s => ({ ...s, orders: completa ? recibidos : unirPedidos(s.orders, recibidos) }));
       } catch {
         // Silently ignore polling hiccups
       }
