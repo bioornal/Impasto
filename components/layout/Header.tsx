@@ -5,6 +5,7 @@ import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { fmt } from "@/lib/utils";
 import { LOGO } from "@/lib/logo";
 import { LEMA, argumento, argumentoConCifra } from "@/lib/marca";
+import { listaDeDias } from "@/lib/hours";
 import type { BusinessConfig } from "@/lib/business";
 
 const NAV: [string, string][] = [
@@ -76,6 +77,8 @@ const FERMENTACION = argumentoConCifra("fermentacion");
 const HORNO = argumentoConCifra("horno");
 const EMPANADA_PESO = argumentoConCifra("empanadas-peso");
 const PORCIONES = argumento("porciones");
+/** Sin los datos del local (tests), el texto de siempre. */
+const ULTIMO_PEDIDO = "Último pedido 23:45";
 
 const TICKER = [
   LEMA,
@@ -83,13 +86,21 @@ const TICKER = [
   `${FERMENTACION.titulo} ${FERMENTACION.cifra}`,
   `Horno de piedra a ${HORNO.cifra}`,
   "Ingredientes premium, mucha muzzarella y toppings abundantes",
-  "Último pedido 23:45",
+  ULTIMO_PEDIDO,
   `Empanadas de ${EMPANADA_PESO.cifra} al horno`,
 ];
 
-export function Ticker({ desde, hayEmpanadas = true }: { desde: number | null; hayEmpanadas?: boolean }) {
+/** "Viernes a domingo · último pedido 23:45": los días salen del panel. */
+function diasYUltimoPedido(business: BusinessConfig) {
+  const dias = listaDeDias(business.diasApertura);
+  return `${dias.charAt(0).toUpperCase()}${dias.slice(1)} · último pedido ${business.horaCierre}`;
+}
+
+export function Ticker({ desde, hayEmpanadas = true, business }: { desde: number | null; hayEmpanadas?: boolean; business?: BusinessConfig }) {
   // El precio va segundo, después de la pizza a la piedra. Sin "desde" no se muestra.
-  const ticker = TICKER.filter(t => hayEmpanadas || !/empanada/i.test(t));
+  const ticker = TICKER
+    .filter(t => hayEmpanadas || !/empanada/i.test(t))
+    .map(t => (business && t === ULTIMO_PEDIDO ? diasYUltimoPedido(business) : t));
   const items = desde === null
     ? ticker
     : [ticker[0], `${PORCIONES.titulo} desde ${fmt(desde)}`, ...ticker.slice(1)];

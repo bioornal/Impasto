@@ -64,8 +64,9 @@ export const BUSINESS: BusinessConfig = {
   address: "Santa María esq. Obispo Angelelli",
   instagram: "@impasto.iguazu",
   facebook: "Impasto Iguazú",
-  hours: "Martes a Domingo · 19:30 — 00:00",
-  diasApertura: [2, 3, 4, 5, 6, 0],
+  hours: "Viernes a Domingo · 19:30 — 00:00",
+  // Decisión del dueño (14/10/2026): solo viernes, sábado y domingo, con delivery.
+  diasApertura: [5, 6, 0],
   horaApertura: "19:30",
   horaCierre: "23:45",
   zonaHoraria: "America/Argentina/Buenos_Aires",

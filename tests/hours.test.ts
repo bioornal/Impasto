@@ -1,4 +1,4 @@
-import { estaAbierto, proximaApertura, fechaLocal, diasCerrados, estadoDelivery, validarModalidad, estadoTienda, MENSAJE_DELIVERY_DEFAULT, type HorarioConfig } from "../lib/hours";
+import { estaAbierto, proximaApertura, fechaLocal, diasCerrados, listaDeDias, estadoDelivery, validarModalidad, estadoTienda, MENSAJE_DELIVERY_DEFAULT, type HorarioConfig } from "../lib/hours";
 import { BUSINESS, type BusinessConfig } from "../lib/business";
 
 const cfg: HorarioConfig = {
@@ -57,6 +57,7 @@ const cerrados: [string, number[], string][] = [
   ["todos los días",                [0, 1, 2, 3, 4, 5, 6], ""],
   ["cierra lunes y martes",         [3, 4, 5, 6, 0],       "Lunes y martes cerrados"],
   ["cierra lunes, martes y domingo", [3, 4, 5, 6],         "Lunes, martes y domingo cerrados"],
+  ["viernes a domingo",             [5, 6, 0],             "Lunes a jueves cerrados"],
 ];
 
 for (const [nombre, dias, esperado] of cerrados) {
@@ -70,6 +71,33 @@ function chequear(nombre: string, condicion: boolean) {
   if (condicion) console.log(`PASA   ${nombre}`);
   else { fallos++; console.log(`FALLA  ${nombre}`); }
 }
+
+/* ── viernes a domingo (decisión del dueño, 14/10/2026) ── */
+const listas: [string, number[], string][] = [
+  ["viernes a domingo",             [5, 6, 0],             "viernes a domingo"],
+  ["tramo y enumerados",            [0, 1, 2, 3, 5, 6],    "lunes a miércoles y viernes a domingo"],
+  ["dos seguidos no hacen tramo",   [6, 0],                "sábado y domingo"],
+  ["un solo día",                   [5],                   "viernes"],
+];
+for (const [nombre, dias, esperado] of listas) {
+  const real = listaDeDias(dias);
+  chequear(`listaDeDias · ${nombre}: "${real}"`, real === esperado);
+}
+
+const finde: HorarioConfig = { ...cfg, dias: [5, 6, 0], cierre: "23:45" };
+chequear("finde · miércoles 21:00 cerrado", !estaAbierto(finde, new Date("2026-10-15T00:00:00Z")));
+chequear("finde · jueves 21:00 cerrado", !estaAbierto(finde, new Date("2026-10-16T00:00:00Z")));
+chequear("finde · viernes 21:00 abierto", estaAbierto(finde, new Date("2026-10-17T00:00:00Z")));
+chequear("finde · domingo 23:44 abierto", estaAbierto(finde, new Date("2026-10-19T02:44:00Z")));
+chequear("finde · domingo 23:45 ya no toma pedidos", !estaAbierto(finde, new Date("2026-10-19T02:45:00Z")));
+chequear("finde · lunes 21:00 cerrado", !estaAbierto(finde, new Date("2026-10-20T00:00:00Z")));
+chequear("finde · el miércoles abre el viernes", proximaApertura(finde, new Date("2026-10-15T00:00:00Z")) === "viernes a las 19:30");
+chequear("finde · el jueves abre mañana", proximaApertura(finde, new Date("2026-10-16T00:00:00Z")) === "mañana a las 19:30");
+const miercoles = estadoTienda(BUSINESS, new Date("2026-10-15T00:00:00Z"));
+chequear(
+  `finde · la barra del miércoles dice "${miercoles.etiqueta}"`,
+  !miercoles.abierto && miercoles.etiqueta === "Cerrado · abre vie 19:30",
+);
 const errorDe = (fn: () => void) => {
   try { fn(); return ""; } catch (e) { return e instanceof Error ? e.message : String(e); }
 };

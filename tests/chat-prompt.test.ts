@@ -32,9 +32,9 @@ const catalogo: CatalogData = {
   reviews: [],
 };
 
-// Martes 21:00 en Iguazú: el local está abierto.
-const abierto = estadoTienda(business, new Date("2026-08-26T00:00:00Z"));
-// Lunes 21:00: el único día que no abre.
+// Viernes 21:00 en Iguazú: el local está abierto.
+const abierto = estadoTienda(business, new Date("2026-08-22T00:00:00Z"));
+// Lunes 21:00: cerrado (abre de viernes a domingo).
 const cerrado = estadoTienda(business, new Date("2026-08-25T00:00:00Z"));
 
 const prompt = promptVendedor(catalogo, business, abierto);
@@ -161,7 +161,7 @@ chequear("y no anuncia secciones que no existen", !vacio.includes("BEBIDAS"));
 
 /* ── delivery pausado: el bot no puede ofrecer lo que el checkout rechaza ── */
 const sinDelivery: BusinessConfig = { ...business, deliveryActivo: false, mensajeDelivery: "Por la lluvia pausamos el delivery." };
-const promptSinDelivery = promptVendedor(catalogo, sinDelivery, estadoTienda(sinDelivery, new Date("2026-08-26T00:00:00Z")));
+const promptSinDelivery = promptVendedor(catalogo, sinDelivery, estadoTienda(sinDelivery, new Date("2026-08-22T00:00:00Z")));
 chequear("con el delivery activo ofrece el envío gratis", /Envío GRATIS a partir/.test(prompt));
 chequear("con el delivery pausado dice que solo hay retiro, con la dirección", /solo .*retir/i.test(promptSinDelivery) && promptSinDelivery.includes(business.address));
 chequear("y lleva el motivo que cargó el local", promptSinDelivery.includes("Por la lluvia pausamos el delivery."));
@@ -175,7 +175,7 @@ chequear("sabe los medios de pago", /efectivo/i.test(prompt) && /transferencia/i
 chequear("no da datos bancarios", /nunca das datos bancarios/i.test(prompt));
 chequear("con el local cerrado igual sabe el horario", promptCerrado.includes(business.hours));
 chequear("sabe la hora del último pedido", promptCerrado.includes(`Último pedido: ${business.horaCierre}`));
-chequear("sabe qué días no abre, desde la configuración", promptCerrado.includes("Lunes cerrado"));
+chequear("sabe qué días no abre, desde la configuración", promptCerrado.includes("Lunes a jueves cerrados"));
 chequear("sabe el teléfono y el Instagram", prompt.includes(business.phone) && prompt.includes(business.instagram));
 chequear("sabe el concepto de la marca", prompt.includes(LEMA));
 chequear("sabe por qué se llama así", prompt.includes(ORIGEN_DEL_NOMBRE));

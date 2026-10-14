@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { BUSINESS } from "../lib/business";
 import { enlaceWhatsapp, MENSAJE_PEDIDO_WHATSAPP } from "../lib/contacto";
+import { listaDeDias } from "../lib/hours";
 import styles from "./error.module.css";
 
 export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
@@ -15,7 +16,8 @@ export default function Error({ reset }: { error: Error & { digest?: string }; r
           <Image className={styles.logo} src="/logo.png" alt="Impasto · Pizzas a la piedra" width={1200} height={360} priority />
           <h1 id="error-title">La tienda online no está disponible en este momento</h1>
           <p className={styles.description}>
-            La tienda online no está disponible en este momento, pero estamos tomando pedidos por WhatsApp. Escribinos y te ayudamos.
+            La tienda online no está disponible en este momento, pero tomamos pedidos por WhatsApp de {listaDeDias(BUSINESS.diasApertura)},
+            de {BUSINESS.horaApertura} a {BUSINESS.horaCierre}. Escribinos y te ayudamos.
           </p>
 
           <div className={styles.actions}>

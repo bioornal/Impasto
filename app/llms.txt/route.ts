@@ -3,6 +3,7 @@ import { getBusinessConfig } from "@/lib/business-server";
 import { argumentosDeCarta, negocioDeCarta } from "@/lib/carta-visible";
 import { argumentoConCifra } from "@/lib/marca";
 import { preguntasFrecuentes } from "@/lib/faq";
+import { diasCerrados } from "@/lib/hours";
 import { SITE_URL } from "@/lib/site";
 import { fmt } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ export async function GET() {
   const hayEmpanadas = data.empanadas.length > 0;
   const BUSINESS = negocioDeCarta(config, hayEmpanadas);
   const empanada = argumentoConCifra("empanadas-peso");
+  const cerrados = diasCerrados(BUSINESS.diasApertura);
 
   const argumentos = argumentosDeCarta(hayEmpanadas).map((a) => `- ${a.titulo}: ${a.detalle}`).join("\n");
   const faq = preguntasFrecuentes(BUSINESS, hayEmpanadas)
@@ -38,8 +40,7 @@ export async function GET() {
 - Teléfono y WhatsApp: ${BUSINESS.phone}
 - Email: ${BUSINESS.email}
 - Horario: ${BUSINESS.hours}
-- Último pedido: 23:45
-- Lunes: cerrado
+- Último pedido: ${BUSINESS.horaCierre}${cerrados ? `\n- ${cerrados}` : ""}
 - Delivery propio en ${BUSINESS.city}
 - Costo de envío: ${fmt(BUSINESS.deliveryFee)}
 - Envío gratis desde: ${fmt(BUSINESS.freeShippingFrom)} de subtotal

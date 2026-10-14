@@ -56,7 +56,10 @@ chequear("el país va en ISO, no en texto", local.address.addressCountry === "AR
 
 /* ── horarios ── */
 const horario = local.openingHoursSpecification[0];
-chequear("abre martes a domingo, sin lunes", !horario.dayOfWeek.includes("https://schema.org/Monday") && horario.dayOfWeek.length === 6);
+chequear(
+  "abre viernes a domingo, nada de lunes a jueves",
+  horario.dayOfWeek.join(",") === "https://schema.org/Friday,https://schema.org/Saturday,https://schema.org/Sunday",
+);
 chequear("declara la hora de apertura del local", horario.opens === "19:30");
 chequear("cierra a la hora del último pedido, no a la del local", horario.closes === "23:45");
 

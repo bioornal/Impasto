@@ -10,18 +10,36 @@ export interface HorarioConfig {
 
 const DIAS_NOMBRE = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
+/** La semana como se lee en Argentina: de lunes a domingo. */
+const SEMANA = [1, 2, 3, 4, 5, 6, 0];
+
+/**
+ * Los días para leer: tres o más seguidos van como tramo ("viernes a
+ * domingo"), el resto enumerado ("lunes, martes y domingo").
+ */
+export function listaDeDias(dias: number[]): string {
+  const tramos: number[][] = [];
+  for (const dia of SEMANA.filter((d) => dias.includes(d))) {
+    const ultimo = tramos[tramos.length - 1];
+    if (ultimo && SEMANA.indexOf(ultimo[ultimo.length - 1]) === SEMANA.indexOf(dia) - 1) ultimo.push(dia);
+    else tramos.push([dia]);
+  }
+  const partes = tramos.flatMap((tramo) => tramo.length >= 3
+    ? [`${DIAS_NOMBRE[tramo[0]]} a ${DIAS_NOMBRE[tramo[tramo.length - 1]]}`]
+    : tramo.map((d) => DIAS_NOMBRE[d]));
+  return partes.length === 1 ? partes[0] : `${partes.slice(0, -1).join(", ")} y ${partes[partes.length - 1]}`;
+}
+
 /**
  * Los días en que el local no abre, para mostrar: "Lunes cerrado", "Lunes y
- * martes cerrados". Sale de `diasApertura`, así que sigue al panel. Antes el
- * footer decía "Lunes cerrado" escrito a mano. Si abre todos los días, "".
+ * martes cerrados", "Lunes a jueves cerrados". Sale de `diasApertura`, así que
+ * sigue al panel. Antes el footer decía "Lunes cerrado" escrito a mano. Si abre
+ * todos los días, "".
  */
 export function diasCerrados(dias: number[]): string {
-  const cerrados = [1, 2, 3, 4, 5, 6, 0].filter((d) => !dias.includes(d)).map((d) => DIAS_NOMBRE[d]);
+  const cerrados = SEMANA.filter((d) => !dias.includes(d));
   if (cerrados.length === 0) return "";
-  const lista = cerrados.length === 1
-    ? cerrados[0]
-    : `${cerrados.slice(0, -1).join(", ")} y ${cerrados[cerrados.length - 1]}`;
-  const texto = `${lista} ${cerrados.length === 1 ? "cerrado" : "cerrados"}`;
+  const texto = `${listaDeDias(cerrados)} ${cerrados.length === 1 ? "cerrado" : "cerrados"}`;
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 

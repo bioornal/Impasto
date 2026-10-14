@@ -1,5 +1,13 @@
 @AGENTS.md
 
+## Se trabaja solo de viernes a domingo (14/10/2026)
+
+- **Decisión del dueño:** viernes, sábado y domingo, 19:30 a 00:00 (último pedido 23:45), **con delivery y retiro**. De lunes a jueves, cerrado.
+- **Base (`sucursales` iguazu), cambiada el 14/10 por CLI:** `horarios` "Viernes a Domingo · 19:30 — 00:00", `dias_apertura` "0,5,6", `delivery_activo` true (estaba pausado y la web decía "solo retiro"), `mensaje_cierre` "Abrimos de viernes a domingo, de 19:30 a 00:00, con delivery y retiro." (antes "Venta cerrada hasta próxima inaguración"). **`ventas_activas` sigue en false a pedido del dueño:** lo prende él desde el panel el viernes. Con la venta prendida, el horario solo cierra de lunes a jueves ("Cerrado · abre vie 19:30"). También `info_empresa_impasto` (horarios), que hoy no lee ninguna app.
+- **Código:** `BUSINESS` (valor por defecto, y lo que usan términos, la miniatura OG y la pantalla de error) pasa a viernes a domingo. `listaDeDias` (`lib/hours.ts`) arma "viernes a domingo" / "lunes a jueves" con tramos de 3+ días; `diasCerrados` la usa ("Lunes a jueves cerrados"). `llms.txt` ya no tiene "Lunes: cerrado" ni "23:45" fijos. La cinta de la home dice "Viernes a domingo · último pedido 23:45" desde el panel. La pantalla de error ahora dice los días y horas en que se toman pedidos por WhatsApp (antes no los decía porque no estaban confirmados).
+- Verificado en local con la base real: footer, cinta, barra, FAQ, JSON-LD (Fri/Sat/Sun), `llms.txt`, términos y `/api/store-status`. `pnpm test`, `tsc`, eslint de lo tocado (solo el error previo de `Shell.tsx:127`).
+- **Fuera de la web, a cargo del dueño:** Google Business Profile, bio de Instagram y estados de WhatsApp.
+
 ## InsForge propio en Oracle Cloud: `api.impastopizzas.com` (14/10/2026)
 
 - **Por qué:** InsForge cloud dejó la organización `blocked` aun con el ciclo nuevo en 0 GB (`projects restore` → "Organization is blocked"; su FAQ: pausado "until you upgrade"). El dueño no quiere pagar Pro. Se mudó la base a **InsForge OSS 2.3.4** (mismo código y API: solo cambian URL y claves) en Oracle Cloud São Paulo, detrás de **`https://api.impastopizzas.com`** (registro `A api` en Hostinger; Caddy con Let's Encrypt).
@@ -36,7 +44,7 @@
 ## Estado de error de la tienda y pedidos por WhatsApp (12/10/2026)
 
 - `app/error.tsx` usa una tarjeta clara con el logo oficial (`public/logo.png`), sin ilustración generada. El CTA principal abre WhatsApp con el mensaje de pedido prellenado y la configuración existente; **Reintentar** queda como acción secundaria.
-- Copy aprobado por el dueño: “La tienda online no está disponible en este momento, pero estamos tomando pedidos por WhatsApp. Escribinos y te ayudamos.” No incluir días ni horarios de toma de pedidos en esta pantalla; se retiró la mención a viernes-domingo porque no fue confirmada.
+- Copy aprobado por el dueño: “La tienda online no está disponible en este momento, pero estamos tomando pedidos por WhatsApp. Escribinos y te ayudamos.” El 12/10 se retiró la mención a viernes-domingo porque no estaba confirmada; el 14/10 el dueño la confirmó y la pantalla dice los días y horas desde `BUSINESS` (ver "Se trabaja solo de viernes a domingo").
 
 ## Testimonios: nombre completo y qué pizza probó (12/10/2026)
 
