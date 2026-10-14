@@ -1,5 +1,14 @@
 @AGENTS.md
 
+## InsForge propio en Oracle Cloud: `api.impastopizzas.com` (14/10/2026)
+
+- **Por qué:** InsForge cloud dejó la organización `blocked` aun con el ciclo nuevo en 0 GB (`projects restore` → "Organization is blocked"; su FAQ: pausado "until you upgrade"). El dueño no quiere pagar Pro. Se mudó la base a **InsForge OSS 2.3.4** (mismo código y API: solo cambian URL y claves) en Oracle Cloud São Paulo, detrás de **`https://api.impastopizzas.com`** (registro `A api` en Hostinger; Caddy con Let's Encrypt).
+- **Máquina actual = puente pago con créditos de prueba** (`VM.Standard.E3.Flex`, 1 OCPU/8 GB, ~US$27/mes de lista). **Vence con la prueba (~12/11/2026)**: hay que mudarla a la ARM Always Free (`VM.Standard.A1.Flex`). Los reintentos para conseguirla corren desde la PC del dueño (`PROYECTOS/servidor-impasto`, tarea de Windows "Impasto - pedir servidor ARM"). Detalle operativo (SSH, respaldos, restauración) en la memoria de Claude, no acá: este repo es público.
+- **Datos:** las 29 tablas de `public` con las mismas filas que el backup del 12/10, los 2 usuarios reales con su contraseña, metadatos de storage y las 54 migraciones propias. **Fotos:** el backup de InsForge no las trae; se recuperaron 66 de la PC del dueño (comparadas por tamaño exacto). Sin archivo quedaron `2.png`, `3.png`, `Cinque Formaggi.jpg`, `Diavola al Miele Piccante v2.jpg` (sin uso) y 4 comprobantes de transferencia de clientes.
+- **Migraciones:** InsForge OSS las corre como `project_admin`; los objetos de `public` se pasaron a ese dueño (si no, "must be owner of table"). `migrations/20261013200000_pedidos-updated-at.sql` **ya está aplicada** (14/10/2026, por CLI): el panel ya sondea incremental. `.insforge/project.json` apunta al servidor nuevo (copia de la conexión vieja en `.insforge/project.cloud-3agqcygs.json.bak`).
+- **Producción:** Netlify `INSFORGE_API_BASE_URL`/`INSFORGE_API_KEY` nuevas; fotos fijas y CSP/`remotePatterns` al host nuevo (`765986c`). Verificado el 14/10: home con carta y 24 fotos del host nuevo, sin referencias a `3agqcygs`. Carro Fogón (Vercel `INSFORGE_URL`/`INSFORGE_ANON_KEY`, server-only) y el recetario (Netlify, ahora con la **anon key real**: antes publicaba la `ik_` admin en el navegador) redeployados. **El dueño confirmó el 14/10/2026 que los tres funcionan.**
+- **Pendiente:** apps Android (recompilar con URL y clave nuevas; el dueño autoriza los builds), subir los pedidos del modo `/sin-base`, y que el dueño pruebe login y guardado en el recetario con la anon key.
+
 ## Base pausada por InsForge: límite de egress del plan free (12/10/2026)
 
 - **Qué pasó:** el 12/10/2026 a las 14:02 (hora AR) InsForge pausó `App_PedidosDelivery` con `paused_reason: usage_limit_exceeded`: **egress 5,52 GB contra 5 GB** (5368709120 bytes) del plan free. Cayeron juntos la web ("No pudimos cargar la carta"), el panel, Carro Fogón y el recetario, porque comparten la base. Los datos quedaron intactos.
