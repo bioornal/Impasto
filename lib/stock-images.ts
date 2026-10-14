@@ -5,13 +5,13 @@
 
 export const STOCK_IMAGES = {
   hero: {
-    main: "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/hero1.jpg",
+    main: "https://api.impastopizzas.com/api/storage/buckets/DB/objects/hero1.jpg",
     // La pizza que aparece en `main`: la etiqueta del hero tiene que nombrar esa. Cambiar juntos.
     productoId: "c0ab17be-8cde-47fd-8be5-576abe4ccf3d", // Quattro Formaggi e Noci
-    chip: "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/hero-quattro-formaggi.jpg",
+    chip: "https://api.impastopizzas.com/api/storage/buckets/DB/objects/hero-quattro-formaggi.jpg",
   },
   story: {
-    dough: "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/nosotros.jpg",
+    dough: "https://api.impastopizzas.com/api/storage/buckets/DB/objects/nosotros.jpg",
     kneading: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1000&q=85",
     oven: "https://images.unsplash.com/photo-1541745537411-b8046dc6d66c?auto=format&fit=crop&w=1000&q=85",
   },
@@ -54,83 +54,83 @@ export const STOCK_IMAGES = {
  */
 export const REAL_PRODUCT_PHOTOS: Record<string, string> = {
   "f9305fe1-8eea-465d-90b3-4c81f4656455": // Muzzarella Impasto
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Muzzarella%20Impasto.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Muzzarella%20Impasto.jpg",
   "9ee7b500-a31a-4e42-acbe-2b694cf67eb4": // Napoletana all'Aglio
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/napoletana-aglio-v2.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/napoletana-aglio-v2.jpg",
   "1ab8b31f-c5ef-443d-b024-0e3f7328d481": // Fugazzetta
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/fugazzetta-provolone-v2.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/fugazzetta-provolone-v2.jpg",
   "d36e95b3-243c-4dce-a2cc-4c3f0a52531c": // Americana Agridulce
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Americana%20Agridulce.png",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Americana%20Agridulce.png",
   "3a4abc9d-caa0-458e-aef3-d906fb2f7f2b": // Bondiola al Pangrattato
     "/images/cocina/bondiola-miel-mostaza-v2.webp",
   "4c2c7501-b7ff-4bee-8887-162fbb50b403": // Carbonara Impasto
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Carbonara%20Impasto.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Carbonara%20Impasto.jpg",
   "d312b6ed-209f-4cff-8a37-36b515a12553": // Diavola al Miele Piccante
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Diavola%20al%20Miele%20Piccante%20v3.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Diavola%20al%20Miele%20Piccante%20v3.jpg",
   "bfca7fb7-d9b4-4812-b1df-f4ba0378b8e0": // Mortazza al Pistacchio
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Mortazza%20al%20Pistacchio.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Mortazza%20al%20Pistacchio.jpg",
   "b4bc6819-1616-441b-8718-879744b8ffec": // Palmitos y Salsa Golf
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Palmitos%20y%20Salsa%20Golf%20v3.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Palmitos%20y%20Salsa%20Golf%20v3.jpg",
   "83371dfd-08ec-41d5-a1b1-be09b475d7db": // Patate e Rosmarino
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Patate%20e%20Rosmarino.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Patate%20e%20Rosmarino.jpg",
   "e5a169af-104f-4f5e-a938-d02a0e02dd89": // Pepperoni e Panceta
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Pepperoni%20e%20Panceta.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Pepperoni%20e%20Panceta.jpg",
   "3e987e20-d7ca-4166-9679-7559d7603d69": // Porro e Panceta Croccante
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Porro%20e%20Panceta%20Croccante.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Porro%20e%20Panceta%20Croccante.jpg",
   "8bfedca8-8bd9-4cb4-a677-491c3be4c667": // Porteña de Jamón y Morrones
     "/images/cocina/portena-pesto-morron-v2.webp",
   "c0ab17be-8cde-47fd-8be5-576abe4ccf3d": // Quattro Formaggi e Noci
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Quattro%20Formaggi%20e%20Noci.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Quattro%20Formaggi%20e%20Noci.jpg",
   "bffd02f2-b069-45fa-9324-316a204f5447": // Choclo, Panceta y Salsa Criolla
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Choclo,%20Panceta%20y%20Salsa%20Criolla.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Choclo,%20Panceta%20y%20Salsa%20Criolla.jpg",
   "a8659b32-fb98-4a8c-a0f6-cf3e6546a575": // Cinque Formaggi
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Cinque%20Formaggi%20%281%29.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Cinque%20Formaggi%20%281%29.jpg",
   "7a52594e-ac5e-4d6d-b505-23bce62eea75": // Filetto Impasto
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Filetto%20Impasto.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Filetto%20Impasto.jpg",
   // "v2": el CDN de InsForge siguió sirviendo la primera versión de "Bianca ai Funghi.png"
   // después de reemplazarla con el mismo nombre. Una foto nueva va con nombre nuevo.
   "0d871df5-0e5c-4fe3-8450-5e63261de27a": // Bianca ai Funghi
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Bianca%20ai%20Funghi%20v2.png",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Bianca%20ai%20Funghi%20v2.png",
   "9ccd6a44-f962-43cc-bc99-d8a8ef7290a7": // Bianca all'Aglio Confit
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Bianca%20all%27Aglio%20Confit.png",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Bianca%20all%27Aglio%20Confit.png",
   "548ea0b6-ef4c-4f0c-93ee-265f8a7baf83": // La Provoleta Impasto
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/La%20Provoleta%20Impasto.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/La%20Provoleta%20Impasto.jpg",
   "6d9ee913-270d-4c56-98eb-9e0b30a663ad": // Prosciutto, Rucola e Parmigiano
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/Prosciutto,%20Rucola%20e%20Parmigiano.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/Prosciutto,%20Rucola%20e%20Parmigiano.jpg",
   "e21c2dea-c487-4094-b54f-32da320986cf": // Empanadas Arabe
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20arabe.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/empanada%20arabe.jpg",
   "6d9a8570-9bfd-435d-9aa1-413792e2bd47": // Empanadas Caprese
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20caprese.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/empanada%20caprese.jpg",
   "7bf77e9d-1e36-471a-bfdb-362df3e7298d": // Empanadas Carne Dulce
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20carne%20dulce.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/empanada%20carne%20dulce.jpg",
   "702e0f9c-25ed-4444-990f-de56fc7a8194": // Empanadas Carne Relleno
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20carne.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/empanada%20carne.jpg",
   "a06602f2-984e-46da-aa90-bb3496a38ca0": // Empanadas de Palmito
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20palmito.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/empanada%20palmito.jpg",
   "48804913-5f31-4188-99df-c594ed75f457": // Empanadas de Pollo
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20pollo.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/empanada%20pollo.jpg",
   "3d96d200-647e-4719-9fa5-0a3022f44d72": // Empanadas de Roquefort
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20roquefort.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/empanada%20roquefort.jpg",
   "3ef2a602-17eb-483c-bf9f-ed985a44d4ee": // Empanadas Espinaca y Muzza
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20espinaca.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/empanada%20espinaca.jpg",
   "bf4ef7e1-400f-417a-be6a-03734e330909": // Empanadas Jamon y Muzza
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/empanada%20jamon%20y%20muzza.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/empanada%20jamon%20y%20muzza.jpg",
   "a3bb5e88-2433-49e1-bc8b-9935c8cad0e5": // Agua Mineral con gas 500 ml
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/agua%20gas.webp",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/agua%20gas.webp",
   "6b52d73e-c482-4a64-a910-abaa95ecb2eb": // Agua Mineral sin gas 500 ml
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/agua.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/agua.jpg",
   "c03c9b94-ae21-45bf-ad04-36c732b4805a": // Cerveza Brahma 1 L
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/brahma.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/brahma.jpg",
   "f62cfa81-9573-43db-9ac0-2f0ceb77d19c": // Cerveza Quilmes 1 L
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/quilmes.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/quilmes.jpg",
   "4953e9dd-86c3-410e-a708-5aa9bff868b4": // Coca-Cola 1.5 L
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/coca.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/coca.jpg",
   "5ac93efd-25cd-429a-a69f-bd9aa60e5973": // Coca-Cola Zero 1.5 L
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/coca%20zero.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/coca%20zero.jpg",
   "742c2588-de49-4516-b8e2-456e2718d4ab": // Sprite 1.5 L
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/sprite.jpg",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/sprite.jpg",
   "ae0da614-592f-45ff-96c3-2fe277701b6f": // Vino Malbec 750 ml — OJO: la etiqueta subida es un Cabernet Sauvignon, no Malbec
-    "https://3agqcygs.us-east.insforge.app/api/storage/buckets/DB/objects/vino.webp",
+    "https://api.impastopizzas.com/api/storage/buckets/DB/objects/vino.webp",
 };
 
 /**

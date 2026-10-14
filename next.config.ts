@@ -8,7 +8,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   // cdn.insforge.dev: las fotos de la carta. mercadolibre/mercadolivre: el antifraude de MP.
-  "img-src 'self' data: blob: https://3agqcygs.us-east.insforge.app https://cdn.insforge.dev https://images.unsplash.com https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com https://*.mlstatic.com",
+  "img-src 'self' data: blob: https://api.impastopizzas.com https://cdn.insforge.dev https://images.unsplash.com https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com https://*.mlstatic.com",
   "connect-src 'self' https://*.mercadopago.com https://*.mercadolibre.com https://*.mercadolivre.com https://*.mlstatic.com",
   "frame-src https://*.mercadopago.com https://*.mercadolibre.com",
   "frame-ancestors 'none'",
@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
     // Storage de InsForge: el logo del navbar y, más adelante, las fotos de
     // productos que sube el dueño desde el panel.
     remotePatterns: [
-      { protocol: "https", hostname: "3agqcygs.us-east.insforge.app", pathname: "/api/storage/**" },
+      { protocol: "https", hostname: "api.impastopizzas.com", pathname: "/api/storage/**" },
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
     ],
   },
