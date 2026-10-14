@@ -1,0 +1,95 @@
+name: Vigilar servidor
+
+# Revisa cada 10 minutos que respondan el servidor propio de InsForge (api.impastopizzas.com)
+# y la web. Manda un mail solo cuando cambia el estado (se cae / vuelve), por Resend.
+# El destinatario (ALERTA_EMAIL) y la key (RESEND_API_KEY) son secrets: el repo es público.
+# El último estado se guarda en la caché de Actions (vigilar-estado-*).
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      probar_mail:
+        description: "Mandar un mail de prueba"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vigilar-servidor
+  cancel-in-progress: false
+
+jobs:
+  vigilar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Último estado conocido
+        uses: actions/cache/restore@v4
+        with:
+          path: estado.txt
+          key: vigilar-estado-${{ github.run_id }}
+          restore-keys: vigilar-estado-
+
+      - name: Revisar servidor y web
+        id: revisar
+        run: |
+          antes=$(cat estado.txt 2>/dev/null || echo arriba)
+          fallas=""
+          chequear() { # $1 nombre, $2 url, $3 texto que tiene que venir en la respuesta
+            for intento in 1 2 3; do
+              if curl -s --max-time 20 "$2" | grep -qF "$3"; then return 0; fi
+              sleep 20
+            done
+            fallas="$fallas $1"
+          }
+          chequear "servidor (api.impastopizzas.com)" "https://api.impastopizzas.com/api/health" '"status":"ok"'
+          chequear "web (www.impastopizzas.com)" "https://www.impastopizzas.com/api/store-status" '"ok":true'
+          if [ -z "$fallas" ]; then ahora=arriba; else ahora=caido; fi
+          echo "$ahora" > estado.txt
+          {
+            echo "antes=$antes"
+            echo "ahora=$ahora"
+            echo "fallas=${fallas# }"
+          } >> "$GITHUB_OUTPUT"
+          echo "Antes: $antes. Ahora: $ahora.${fallas:+ Fallan:$fallas}"
+
+      - name: Avisar por mail
+        if: steps.revisar.outputs.antes != steps.revisar.outputs.ahora || inputs.probar_mail
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERTA_EMAIL: ${{ secrets.ALERTA_EMAIL }}
+          AHORA: ${{ steps.revisar.outputs.ahora }}
+          FALLAS: ${{ steps.revisar.outputs.fallas }}
+          PRUEBA: ${{ inputs.probar_mail }}
+        run: |
+          hora=$(TZ=America/Argentina/Buenos_Aires date "+%d/%m/%Y %H:%M")
+          if [ "$PRUEBA" = "true" ]; then
+            asunto="Prueba: aviso de caídas de Impasto"
+            texto="Esto es una prueba del aviso de caídas ($hora). Estado actual: $AHORA. Si te llegó, los avisos funcionan."
+          elif [ "$AHORA" = "caido" ]; then
+            asunto="ALERTA Impasto: no responde $FALLAS"
+            texto="Desde las $hora no responde: $FALLAS (se probó 3 veces en 1 minuto).
+          La web, el POS y el recetario pueden estar caídos.
+
+          Qué hacer: avisale a Claude. Si querés mirar vos, en la consola de Oracle (cloud.oracle.com) fijate que la instancia esté en verde (Running).
+          Cuando vuelva vas a recibir otro mail."
+          else
+            asunto="Impasto: el servidor volvió a responder"
+            texto="Desde las $hora el servidor y la web responden de nuevo. No hace falta hacer nada."
+          fi
+          jq -n --arg to "$ALERTA_EMAIL" --arg s "$asunto" --arg t "$texto" \
+            '{from: "Monitor Impasto <pedidos@impastopizzas.com>", to: [$to], subject: $s, text: $t}' > mail.json
+          curl -sf -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" -H "Content-Type: application/json" \
+            --data @mail.json > /dev/null
+          echo "Mail enviado: $asunto"
+
+      - name: Guardar estado nuevo
+        if: success() && steps.revisar.outputs.antes != steps.revisar.outputs.ahora
+        uses: actions/cache/save@v4
+        with:
+          path: estado.txt
+          key: vigilar-estado-${{ github.run_id }}
