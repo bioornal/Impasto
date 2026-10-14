@@ -7,6 +7,8 @@
 - **Código:** `BUSINESS` (valor por defecto, y lo que usan términos, la miniatura OG y la pantalla de error) pasa a viernes a domingo. `listaDeDias` (`lib/hours.ts`) arma "viernes a domingo" / "lunes a jueves" con tramos de 3+ días; `diasCerrados` la usa ("Lunes a jueves cerrados"). `llms.txt` ya no tiene "Lunes: cerrado" ni "23:45" fijos. La cinta de la home dice "Viernes a domingo · último pedido 23:45" desde el panel. La pantalla de error ahora dice los días y horas en que se toman pedidos por WhatsApp (antes no los decía porque no estaban confirmados).
 - Verificado en local con la base real: footer, cinta, barra, FAQ, JSON-LD (Fri/Sat/Sun), `llms.txt`, términos y `/api/store-status`. `pnpm test`, `tsc`, eslint de lo tocado (solo el error previo de `Shell.tsx:127`).
 - **Fuera de la web, a cargo del dueño:** Google Business Profile, bio de Instagram y estados de WhatsApp.
+- **Asistente (chat) probado en producción el 14/10** con la base nueva: "¿qué días abren?", "¿puedo pedir el martes?", "¿delivery el sábado?" y "¿están abiertos ahora?" → responde viernes a domingo 19:30–00:00, último pedido 23:45, lunes a jueves cerrado, y que hoy está cerrado.
+- **Instagram oficial: `@pizzasimpasto`** (sin punto; lo confirmó el dueño el 14/10/2026). `@impasto.iguazu` (lo que tenía la web) y `@pizzas.impasto` no son de Impasto. Sale de `BUSINESS.instagram` (footer, chat, `llms.txt`, `sameAs` del JSON-LD); también `info_empresa_impasto`.
 
 ## InsForge propio en Oracle Cloud: `api.impastopizzas.com` (14/10/2026)
 

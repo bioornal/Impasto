@@ -104,7 +104,7 @@ const sinBebidas = jsonLdSitio(business, { ...catalogo, bebidas: [] })["@graph"]
 chequear("sin bebidas cargadas no aparece la sección vacía", sinBebidas.hasMenu.hasMenuSection.length === 2);
 
 /* ── redes ── */
-chequear("arma el perfil real de Instagram", local.sameAs[0] === "https://www.instagram.com/impasto.iguazu/");
+chequear("arma el perfil real de Instagram", local.sameAs[0] === "https://www.instagram.com/pizzasimpasto/");
 const sinRedes = jsonLdSitio({ ...business, instagram: "" }, catalogo)["@graph"]
   .find((nodo: Nodo) => nodo["@type"] === "Restaurant") as Nodo;
 chequear("sin usuario de Instagram no inventa una URL", sinRedes.sameAs === undefined);

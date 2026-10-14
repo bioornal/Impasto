@@ -21,8 +21,8 @@ chequear("sin dígitos no arma un enlace", enlaceTelefono(""), null);
 
 /* ── Instagram ── */
 
-chequear("usuario con @", enlaceInstagram("@impasto.iguazu"), "https://www.instagram.com/impasto.iguazu/");
-chequear("usuario sin @", enlaceInstagram("impasto.iguazu"), "https://www.instagram.com/impasto.iguazu/");
+chequear("usuario con @", enlaceInstagram("@pizzasimpasto"), "https://www.instagram.com/pizzasimpasto/");
+chequear("usuario sin @", enlaceInstagram("pizzasimpasto"), "https://www.instagram.com/pizzasimpasto/");
 chequear("si ya es una URL, se respeta", enlaceInstagram("https://www.instagram.com/otro/"), "https://www.instagram.com/otro/");
 chequear("vacío no inventa un perfil", enlaceInstagram("  "), null);
 
