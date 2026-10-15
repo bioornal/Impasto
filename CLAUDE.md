@@ -8,7 +8,7 @@
 - Verificado en local con la base real: footer, cinta, barra, FAQ, JSON-LD (Fri/Sat/Sun), `llms.txt`, términos y `/api/store-status`. `pnpm test`, `tsc`, eslint de lo tocado (solo el error previo de `Shell.tsx:127`).
 - **Fuera de la web, a cargo del dueño:** Google Business Profile, bio de Instagram y estados de WhatsApp.
 - **Asistente (chat) probado en producción el 14/10** con la base nueva: "¿qué días abren?", "¿puedo pedir el martes?", "¿delivery el sábado?" y "¿están abiertos ahora?" → responde viernes a domingo 19:30–00:00, último pedido 23:45, lunes a jueves cerrado, y que hoy está cerrado.
-- **Instagram oficial: `@pizzasimpasto`** (sin punto; lo confirmó el dueño el 14/10/2026). `@impasto.iguazu` (lo que tenía la web) y `@pizzas.impasto` no son de Impasto. Sale de `BUSINESS.instagram` (footer, chat, `llms.txt`, `sameAs` del JSON-LD); también `info_empresa_impasto`.
+- **Instagram oficial: `@pizzas.impasto`, con punto** (verificado en instagram.com el 14/10/2026: "Impasto · Pizzas a la piedra"). `@impasto.iguazu` (lo que tenía la web) no es de Impasto. El 14/10 se publicó por error `@pizzasimpasto` sin punto (`30a3b2e`) por un mensaje tipeado sin el punto; el dueño avisó que no abría y se volvió a `@pizzas.impasto`. Sale de `BUSINESS.instagram` (footer, chat, `llms.txt`, `sameAs` del JSON-LD); también `info_empresa_impasto`.
 
 ## InsForge propio en Oracle Cloud: `api.impastopizzas.com` (14/10/2026)
 

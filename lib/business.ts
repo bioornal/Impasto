@@ -62,8 +62,8 @@ export const BUSINESS: BusinessConfig = {
   whatsappPhone: "543757652003",
   email: "impastopizzas.pedidos@gmail.com",
   address: "Santa María esq. Obispo Angelelli",
-  // La cuenta oficial (confirmada por el dueño el 14/10/2026): sin punto. @impasto.iguazu y @pizzas.impasto no son nuestras.
-  instagram: "@pizzasimpasto",
+  // La cuenta oficial, con punto (verificada el 14/10/2026: "Impasto · Pizzas a la piedra"). @impasto.iguazu no es la nuestra.
+  instagram: "@pizzas.impasto",
   facebook: "Impasto Iguazú",
   hours: "Viernes a Domingo · 19:30 — 00:00",
   // Decisión del dueño (14/10/2026): solo viernes, sábado y domingo, con delivery.

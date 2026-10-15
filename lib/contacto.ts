@@ -13,7 +13,7 @@ export function enlaceTelefono(telefono: string): string | null {
   return `tel:${digitos}`;
 }
 
-/** "@pizzasimpasto" (o la URL completa) → el perfil. Sin usuario, null: no se inventa nada. */
+/** "@pizzas.impasto" (o la URL completa) → el perfil. Sin usuario, null: no se inventa nada. */
 export function enlaceInstagram(instagram: string): string | null {
   const valor = String(instagram || "").trim();
   if (/^https?:\/\//i.test(valor)) return valor;

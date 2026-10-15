@@ -40,7 +40,7 @@ function telefonoInternacional(business: BusinessConfig): string {
   return digitos ? `+${digitos}` : business.phone;
 }
 
-/** "@pizzasimpasto" → el perfil real. Si no hay usuario, no se inventa nada. */
+/** "@pizzas.impasto" → el perfil real. Si no hay usuario, no se inventa nada. */
 function perfilesSociales(business: BusinessConfig): string[] {
   const usuario = String(business.instagram || "").trim().replace(/^@/, "");
   // `facebook` guarda el nombre visible ("Impasto Iguazú"), no el usuario:
