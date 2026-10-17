@@ -23,6 +23,7 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
         detail: String(i.detail || i.detalle || ""),
         extra: Math.max(0, Number(i.extra) || 0),
         type: String(i.type || ""),
+        ...(i.masa === "molde" || i.masa === "napoletana" ? { masa: i.masa } : {}),
       }))
     : [];
   const num = String(p.numero_pedido || "").padStart(4, "0");

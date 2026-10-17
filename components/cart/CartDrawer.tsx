@@ -6,6 +6,9 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { ItemMedia } from "@/components/ui/ItemMedia";
 import { DrinkIllus } from "@/components/ui/Illus";
 import { fmt } from "@/lib/utils";
+import { MASAS, detalleSinMasa, masaDe } from "@/lib/masa";
+
+const SIN_BEBIDAS = "impasto_sin_bebidas";
 import type { BusinessConfig } from "@/lib/business";
 import type { Bebida } from "@/types";
 
@@ -23,12 +26,20 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onBrowse, business, bebidas }: CartDrawerProps) {
-  const { items, add, inc, dec, remove, subtotal } = useCart();
+  const { items, add, inc, dec, setMasa, remove, subtotal } = useCart();
   const tienda = useStoreStatus();
   const toast = useToast();
   const railRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const [dragY, setDragY] = useState(0);
+  // "¿Algo para tomar?" se puede cerrar y no vuelve a aparecer en esta visita.
+  const [sinBebidas, setSinBebidas] = useState(() => {
+    try { return typeof window !== "undefined" && sessionStorage.getItem(SIN_BEBIDAS) === "1"; } catch { return false; }
+  });
+  const cerrarBebidas = () => {
+    setSinBebidas(true);
+    try { sessionStorage.setItem(SIN_BEBIDAS, "1"); } catch {}
+  };
   const arrastre = useRef<{ inicio: number; puntero: number } | null>(null);
 
   // Mobile: Esc cierra la hoja y el foco queda atrapado mientras está abierta.
@@ -178,7 +189,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
                   <div className="ci-media"><ItemMedia item={item} /></div>
                   <div style={{ minWidth: 0 }}>
                     <h4>{item.name}</h4>
-                    {item.detail && <small className="ci-detail">{item.detail}</small>}
+                    {detalleSinMasa(item.detail) && <small className="ci-detail">{detalleSinMasa(item.detail)}</small>}
                     <div className="ci-qty">
                       <div className="qty-pill">
                         <button onClick={() => dec(item.cartId)} aria-label={`Quitar una unidad de ${item.name}`}>−</button>
@@ -189,19 +200,39 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
                     </div>
                   </div>
                   <b className="ci-price">{fmt(item.price * item.qty)}</b>
+                  {masaDe(item) && (
+                    <div className="ci-masa">
+                      <span className="ci-masa-titulo" id={`masa-${item.cartId}`}>Elegí la masa{item.qty > 1 ? ` (las ${item.qty})` : ""}</span>
+                      <div className="ci-masa-opciones" role="radiogroup" aria-labelledby={`masa-${item.cartId}`}>
+                        {MASAS.map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={masaDe(item) === m.id}
+                            className={masaDe(item) === m.id ? "on" : ""}
+                            onClick={() => setMasa(item.cartId, m.id)}
+                          >
+                            {m.nombre}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
 
               {/* Sugerencias, no ítems del pedido: por eso otra forma (carrusel en
                   vez de filas), "Opcional" a la vista y el precio con "+". Antes
                   eran filas iguales a las del pedido y se confundían con él. */}
-              {upsells.length > 0 && (
+              {upsells.length > 0 && !sinBebidas && (
                 <section className="upsells" aria-labelledby="upsells-titulo">
                   <div className="upsells-head">
                     <div>
                       <h5 id="upsells-titulo">¿Algo para tomar?</h5>
                       <small>Opcional · no está en tu pedido</small>
                     </div>
+                    <div className="upsells-acciones">
                     {upsells.length > 3 && (
                       <div className="upsell-nav">
                         <button onClick={() => deslizar(-1)} aria-label="Ver bebidas anteriores">
@@ -212,6 +243,10 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
                         </button>
                       </div>
                     )}
+                      <button className="upsells-cerrar" onClick={cerrarBebidas} aria-label="Cerrar las sugerencias de bebidas" title="No, gracias">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                      </button>
+                    </div>
                   </div>
                   <div className="upsell-rail" ref={railRef}>
                     {upsells.map((bebida) => (

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 import { esPedidoValidoParaVentas } from "@/lib/pedido-visible";
+import { contarMasas } from "@/lib/masa";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 const timeAgo = (iso: string) => {
@@ -90,6 +91,12 @@ export function Dashboard() {
   });
 
   const maxChartRev = Math.max(...chartBars.map(b => b.rev), 1);
+
+  // Masas elegidas en el mismo período del gráfico (solo pedidos con masa: desde el 17/10/2026)
+  const desdeMasas = startOfToday - (dayCount - 1) * 86400000;
+  const masas = contarMasas(validOrders.filter(o => new Date(o.fecha).getTime() >= desdeMasas));
+  const totalMasas = masas.napoletana + masas.molde;
+  const pctMasa = (n: number) => (totalMasas ? Math.round((n / totalMasas) * 100) : 0);
 
   // Top products from non-cancelled orders
   const counts: Record<string, number> = {};
@@ -179,6 +186,27 @@ export function Dashboard() {
               {top.length === 0 && <div style={{ padding: 20, color: "var(--a-muted)", fontSize: 13 }}>Sin datos de pedidos aún</div>}
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="panel mt-20">
+        <div className="panel-head">
+          <h3>Masas elegidas · {period === "7d" ? "últimos 7 días" : period === "30d" ? "últimos 14 días" : "últimos 30 días"}</h3>
+        </div>
+        <div className="panel-body">
+          {totalMasas === 0 ? (
+            <div style={{ color: "var(--a-muted)", fontSize: 13 }}>Todavía no hay pizzas pedidas con masa elegida en este período.</div>
+          ) : (
+            <div className="masas-conteo">
+              {([["Napoletana", masas.napoletana], ["Al molde", masas.molde]] as const).map(([nombre, n]) => (
+                <div className="masas-fila" key={nombre}>
+                  <b>{nombre}</b>
+                  <div className="masas-barra"><span style={{ width: `${pctMasa(n)}%` }} /></div>
+                  <span>{n} {n === 1 ? "pizza" : "pizzas"} · {pctMasa(n)}%</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

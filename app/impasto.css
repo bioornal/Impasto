@@ -470,6 +470,48 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   .promo-hero-body h3{ font-size:30px; }
 }
 
+/* ============ AVISO DE MASAS (napoletana / al molde) ============ */
+.masas{ padding:56px 0 0; }
+.masas-card{
+  display:grid; grid-template-columns:1fr 1.3fr; gap:28px; align-items:center;
+  background:var(--ink); color:var(--bg); border-radius:var(--radius-lg); padding:36px;
+}
+.masas-intro h2{
+  font-family:var(--font-display); font-size:38px; line-height:1.05;
+  letter-spacing:-.03em; font-weight:600; margin:0 0 10px;
+}
+.masas-intro p{ margin:0 0 18px; font-size:14.5px; line-height:1.5; color:color-mix(in srgb, var(--bg) 75%, transparent); max-width:38ch; }
+.masas-opciones{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.masa{
+  border:1px solid color-mix(in srgb, var(--bg) 18%, transparent); border-radius:var(--radius);
+  padding:20px; background:color-mix(in srgb, var(--bg) 6%, transparent);
+}
+.masa-kicker{
+  font-family:var(--font-mono); font-size:9.5px; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--gold);
+}
+.masa h3{ font-family:var(--font-display); font-size:25px; letter-spacing:-.02em; font-weight:600; margin:8px 0 6px; }
+.masa p{ margin:0; font-size:13.5px; line-height:1.5; color:color-mix(in srgb, var(--bg) 70%, transparent); }
+@media (max-width:980px){
+  .masas-card{ grid-template-columns:1fr; padding:28px; }
+  .masas-intro h2{ font-size:30px; }
+}
+/* Celular: franja compacta (pedido del dueño, 17/10/2026). Las dos masas quedan como dos
+   chips en una fila, sin descripción, y sin botón: la carta empieza justo abajo. */
+@media (max-width:760px){
+  .masas{ padding-top:20px; }
+  .masas-card{ padding:16px; gap:12px; border-radius:16px; }
+  .masas-intro .promo-badge{ margin-bottom:8px; padding:4px 9px; font-size:8.5px; }
+  .masas-intro h2{ font-size:22px; margin:0 0 4px; }
+  .masas-intro p{ font-size:13px; margin:0; }
+  .masas-intro .btn{ display:none; }
+  .masas-opciones{ grid-template-columns:1fr 1fr; gap:8px; }
+  .masa{ padding:9px 12px; border-radius:12px; }
+  .masa-kicker{ font-size:8px; letter-spacing:.18em; }
+  .masa h3{ font-size:17px; margin:2px 0 0; }
+  .masa p{ display:none; }
+}
+
 /* ============ ENCABEZADO DE SECCIÓN ============ */
 .section{ padding:64px 0; }
 .section-head{
@@ -1256,6 +1298,22 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 .cart-item h4{ font-family:var(--font-body); font-size:14.5px; font-weight:600; margin:0 0 3px; line-height:1.3; }
 .cart-item .ci-detail{ display:block; color:var(--muted); font-size:12px; line-height:1.4; margin-bottom:8px; }
 .ci-qty{ display:flex; align-items:center; gap:10px; margin-top:6px; }
+/* Masa de la pizza (napoletana / al molde): fila propia a todo el ancho de la línea,
+   porque un "Masa" chiquito al costado no se entendía (pedido del dueño, 17/10/2026). */
+.ci-masa{
+  grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+  gap:6px 10px; padding:6px 6px 6px 12px; min-width:0;
+  border:1px solid var(--line-2); border-radius:var(--radius-sm); background:var(--bg-2);
+}
+.ci-masa-titulo{ font-size:12.5px; font-weight:700; color:var(--ink); }
+.ci-masa-opciones{ display:flex; gap:4px; padding:3px; border-radius:999px; background:var(--surface); border:1px solid var(--line); }
+.ci-masa-opciones button{
+  padding:6px 12px; border:0; border-radius:999px; background:none;
+  font-size:13px; font-weight:600; line-height:1.2; color:var(--muted); white-space:nowrap;
+}
+.ci-masa-opciones button.on{ background:var(--accent); color:var(--accent-ink); }
+.ci-masa-opciones button.on::before{ content:"✓ "; }
+.ci-masa-opciones button:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
 .qty-pill{
   display:inline-flex; align-items:center; background:var(--surface);
   border:1px solid var(--line); border-radius:999px; overflow:hidden;
@@ -1275,6 +1333,12 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 .upsells-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; margin-bottom:12px; padding:0 2px; }
 .upsells-head h5{ font-family:var(--font-body); font-size:15px; font-weight:600; letter-spacing:0; color:var(--ink); margin:0; }
 .upsells-head small{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+.upsells-acciones{ display:flex; align-items:center; gap:6px; flex:none; }
+.upsells-cerrar{
+  width:30px; height:30px; border-radius:999px; display:grid; place-items:center;
+  border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
+}
+.upsells-cerrar:hover{ background:var(--bg-2); border-color:var(--line-2); }
 .upsell-nav{ display:flex; gap:6px; flex:none; }
 .upsell-nav button{
   width:30px; height:30px; border-radius:999px; display:grid; place-items:center;

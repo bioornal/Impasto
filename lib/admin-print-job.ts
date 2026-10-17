@@ -1,5 +1,6 @@
 import type { AdminOrder } from '../app/admin/components/types';
 import { esPedidoParaCocina } from './pedido-visible';
+import { detalleCocina, nombreCocina } from './masa';
 import type { PrintCopy, PrintJob } from './local-printer';
 
 export function adminPrintJob(order: AdminOrder, attemptId: string, reprint = true, copy: PrintCopy = 'cocina'): PrintJob {
@@ -25,9 +26,9 @@ export function adminPrintJob(order: AdminOrder, attemptId: string, reprint = tr
       address,
       notes,
       items: order.items.map(item => ({
-        name: item.name,
+        name: cliente ? item.name : nombreCocina(item),
         quantity: item.qty,
-        detail: item.detail || '',
+        detail: cliente ? item.detail || '' : detalleCocina(item),
         unitPrice: item.price,
         ...(cliente ? { lineTotal: item.price * item.qty + (item.extra ?? 0) } : {}),
       })),

@@ -62,7 +62,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
     return destacada ? [destacada, ...result.filter((p) => p !== destacada)] : result;
   }, [pizzas, cat, q, destacadaId]);
 
-  const qtyOf = (id: string) => items.find((i) => i.key === id && i.type === "pizza")?.qty || 0;
+  const qtyOf = (id: string) => items.filter((i) => i.key === id && i.type === "pizza").reduce((s, i) => s + i.qty, 0);
 
   const addPizza = (pizza: Pizza) => {
     add(lineaDePizza(pizza));
@@ -101,7 +101,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
             <div className="sec-index">{indice} — La carta</div>
             <h2>Pizzas</h2>
           </div>
-          <p>Elegí un gusto, o combiná dos en la misma pizza. Filtrá por estilo: clásicas, gourmet, veggie o picantes.</p>
+          <p>Elegí un gusto, o combiná dos en la misma pizza. Masa napoletana o al molde: la elegís en el carrito.</p>
         </div>
       </div>
 

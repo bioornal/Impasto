@@ -5,6 +5,7 @@ import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { ItemMedia } from "@/components/ui/ItemMedia";
 import { CardPayment, type CardFormData } from "@/components/checkout/CardPayment";
 import { fmt } from "@/lib/utils";
+import { masaDe } from "@/lib/masa";
 import type { BusinessConfig } from "@/lib/business";
 import type { CartItem } from "@/types";
 
@@ -368,7 +369,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
                   <div className="co-sum-media"><ItemMedia item={item} /></div>
                   <div style={{ minWidth: 0 }}>
                     <b>{item.name}</b>
-                    <small>×{item.qty}</small>
+                    <small>×{item.qty}{masaDe(item) && ` · masa ${masaDe(item) === "molde" ? "al molde" : "napoletana"}`}</small>
                   </div>
                   <span className="line">{fmt(item.price * item.qty)}</span>
                 </div>
@@ -462,7 +463,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
                   <div className="co-sum-media"><ItemMedia item={item} /></div>
                   <div className="co-summary-item-main">
                     <b>{item.name}</b>
-                    <small>×{item.qty}</small>
+                    <small>×{item.qty}{masaDe(item) && ` · masa ${masaDe(item) === "molde" ? "al molde" : "napoletana"}`}</small>
                   </div>
                   <span className="co-summary-price">{fmt(item.price * item.qty)}</span>
                 </div>

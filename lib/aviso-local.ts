@@ -1,4 +1,5 @@
 import { fmt } from "@/lib/utils";
+import { detalleCocina, nombreCocina } from "@/lib/masa";
 import type { CartItem } from "@/types";
 
 /**
@@ -6,7 +7,7 @@ import type { CartItem } from "@/types";
  * a propósito: ese módulo importa el SDK de InsForge y no se puede cargar bajo
  * `tsx`, así que la plantilla no sería testeable desde ahí.
  *
- * Sin dependencias fuera de `@/lib/utils` y `@/types`.
+ * Sin dependencias fuera de `@/lib/utils`, `@/lib/masa` y `@/types`.
  */
 
 export type TipoAviso = "pedido_recibido" | "pago_aprobado";
@@ -68,8 +69,8 @@ export function plantillaLocal(aviso: AvisoPedido, tipo: TipoAviso): string {
   lineas.push("");
 
   for (const item of aviso.items) {
-    const detalle = unaLinea(item.detail);
-    lineas.push(`${item.qty}x ${unaLinea(item.name)}${detalle ? ` (${detalle})` : ""}`);
+    const detalle = unaLinea(detalleCocina(item));
+    lineas.push(`${item.qty}x ${unaLinea(nombreCocina(item))}${detalle ? ` (${detalle})` : ""}`);
   }
   lineas.push("");
 

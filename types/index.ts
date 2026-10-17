@@ -64,6 +64,9 @@ export interface CatalogData {
   empanadaBoxNoDisponibles?: Array<6 | 12 | 24>;
 }
 
+/** Masa de la pizza; ver `lib/masa.ts`. */
+export type Masa = "napoletana" | "molde";
+
 export interface CartItem {
   key: string;
   cartId: string;
@@ -74,6 +77,8 @@ export interface CartItem {
   qty: number;
   illus?: string;
   unique?: boolean;
+  /** Solo pizzas y mitad y mitad. Sin el campo, es napoletana. */
+  masa?: Masa;
   variant?:
     | { kind: "half"; ids: [string, string] }
     | { kind: "empanadas-box"; size: 6 | 12 | 24; selections: Record<string, number> };

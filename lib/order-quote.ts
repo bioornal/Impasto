@@ -2,6 +2,7 @@ import { DELIVERY_FEE, FREE_SHIPPING_FROM } from "@/lib/business";
 import type { CartItem, CatalogData } from "@/types";
 import {catalogCosteo} from './catalog-costeo';
 import {costeoCarrito} from './costeo-capture';
+import { DETALLE_MOLDE, normalizarMasa } from "./masa";
 
 interface QuoteResult {
   items: CartItem[];
@@ -53,14 +54,18 @@ function quoteItem(rawItem: CartItem, data: CatalogData): CartItem {
     ensureListed(data, rawItem.key);
     const product = findPizza(data, rawItem.key);
     if (!product || !product.disponible) throw new Error(`La pizza "${product?.nombre || "seleccionada"}" está agotada`);
-    return { ...rawItem, key: product.id, name: product.nombre, price: ensurePrice(product.precio), qty };
+    const masa = normalizarMasa(rawItem.masa);
+    return {
+      ...rawItem, key: product.id, name: product.nombre, price: ensurePrice(product.precio), qty,
+      masa, detail: masa === "molde" ? DETALLE_MOLDE : undefined,
+    };
   }
 
   if (rawItem.type === "bebida") {
     ensureListed(data, rawItem.key);
     const product = data.bebidas.find((item) => item.id === rawItem.key);
     if (!product || !product.disponible) throw new Error(`La bebida "${product?.nombre || "seleccionada"}" está agotada`);
-    return { ...rawItem, key: product.id, name: product.nombre, price: ensurePrice(product.precio), qty };
+    return { ...rawItem, key: product.id, name: product.nombre, price: ensurePrice(product.precio), qty, masa: undefined, detail: undefined };
   }
 
   if (rawItem.type === "pizza-half") {
@@ -78,7 +83,8 @@ function quoteItem(rawItem: CartItem, data: CatalogData): CartItem {
       ...rawItem,
       key: `half-${left.id}-${right.id}`,
       name: `Mitad ${left.nombre} / Mitad ${right.nombre}`,
-      detail: "Pizza mitad y mitad",
+      masa: normalizarMasa(rawItem.masa),
+      detail: normalizarMasa(rawItem.masa) === "molde" ? `Pizza mitad y mitad · ${DETALLE_MOLDE}` : "Pizza mitad y mitad",
       price: Math.max(ensurePrice(left.precio), ensurePrice(right.precio)),
       qty,
       variant: { kind: "half", ids: [left.id, right.id] },

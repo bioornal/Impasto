@@ -1,3 +1,5 @@
+import type { Masa } from "../../../types";
+
 export interface AdminProduct {
   _dbId: string;
   id: string;
@@ -25,6 +27,8 @@ export interface OrderItem {
   extra?: number;
   /** pizza, pizza-half, empanadas, bebida…: con esto Testimonios sabe qué se puede opinar. */
   type?: string;
+  /** Solo pizzas pedidas desde que se puede elegir masa (17/10/2026). */
+  masa?: Masa;
 }
 
 export interface AdminOrder {

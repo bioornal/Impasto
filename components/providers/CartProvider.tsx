@@ -1,7 +1,8 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
-import type { CartItem } from "@/types";
+import type { CartItem, Masa } from "@/types";
 import { uid } from "@/lib/utils";
+import { cambiarMasa, esMismaLinea } from "@/lib/masa";
 
 interface CartCtx {
   items: CartItem[];
@@ -10,6 +11,7 @@ interface CartCtx {
   dec: (cartId: string) => void;
   incKey: (key: string) => void;
   decKey: (key: string) => void;
+  setMasa: (cartId: string, masa: Masa) => void;
   remove: (cartId: string) => void;
   clear: () => void;
   subtotal: number;
@@ -60,7 +62,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const add = (item: Omit<CartItem, "cartId">) =>
     setItems((prev) => {
       if (!item.unique) {
-        const idx = prev.findIndex((p) => p.key === item.key);
+        const idx = prev.findIndex((p) => esMismaLinea(p, item));
         if (idx >= 0) {
           const next = [...prev];
           next[idx] = { ...next[idx], qty: next[idx].qty + (item.qty || 1) };
@@ -74,17 +76,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((p) => p.map((i) => i.cartId === cartId ? { ...i, qty: i.qty + 1 } : i));
   const dec = (cartId: string) =>
     setItems((p) => p.flatMap((i) => i.cartId === cartId ? (i.qty > 1 ? [{ ...i, qty: i.qty - 1 }] : []) : [i]));
-  const incKey = (key: string) =>
-    setItems((p) => p.map((i) => i.key === key ? { ...i, qty: i.qty + 1 } : i));
-  const decKey = (key: string) =>
-    setItems((p) => p.flatMap((i) => i.key === key ? (i.qty > 1 ? [{ ...i, qty: i.qty - 1 }] : []) : [i]));
+  // Una pizza puede estar en dos líneas (napoletana y al molde): el + de la tarjeta
+  // suma en la primera y el − resta de la última, nunca de las dos a la vez.
+  const incKey = (key: string) => {
+    const linea = items.find((i) => i.key === key);
+    if (linea) inc(linea.cartId);
+  };
+  const decKey = (key: string) => {
+    const linea = items.findLast((i) => i.key === key);
+    if (linea) dec(linea.cartId);
+  };
+  const setMasa = (cartId: string, masa: Masa) => setItems((p) => cambiarMasa(p, cartId, masa));
   const remove = (cartId: string) => setItems((p) => p.filter((i) => i.cartId !== cartId));
   const clear = () => setItems([]);
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const count = items.reduce((s, i) => s + i.qty, 0);
 
   return (
-    <CartCtx.Provider value={{ items, add, inc, dec, incKey, decKey, remove, clear, subtotal, count }}>
+    <CartCtx.Provider value={{ items, add, inc, dec, incKey, decKey, setMasa, remove, clear, subtotal, count }}>
       {children}
     </CartCtx.Provider>
   );

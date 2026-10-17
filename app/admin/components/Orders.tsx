@@ -10,6 +10,7 @@ import { esPedidoParaCocina } from "@/lib/pedido-visible";
 import { adminPrintJobs } from "@/lib/admin-print-job";
 import { configurePrinter, getPrinterSelection, imprimirCopias, mensajeCopias, newAttemptId, selectPrinter, type PrintCopy, type PrinterId, type PrinterSelection, type PrintJob } from "@/lib/local-printer";
 import { enlaceWhatsapp, mensajeAlCliente, whatsappDeCliente } from "@/lib/contacto";
+import { detalleCocina, masaCocina, nombreCocina } from "@/lib/masa";
 
 /** El chat con el cliente, con el saludo y el pedido ya escritos. Null si el número no se reconoce. */
 const whatsappDelPedido = (o: AdminOrder) => {
@@ -427,12 +428,19 @@ function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onPrint, o
             {order.items.map((i, idx) => (
               <div className="od-row" key={idx} style={{ flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-                  <span>{i.qty}× {i.name}</span>
+                  <span>
+                    {i.qty}× {i.name}
+                    {masaCocina(i) && (
+                      <b style={{ marginLeft: 6, fontSize: 11, padding: "1px 6px", borderRadius: 4, background: i.masa === "molde" ? "var(--a-warn)" : "var(--a-bg-2)", color: i.masa === "molde" ? "white" : "var(--a-ink)" }}>
+                        {masaCocina(i)}
+                      </b>
+                    )}
+                  </span>
                   <span className="tbl-price">{fmt(i.price * i.qty)}</span>
                 </div>
-                {i.detail ? (
+                {detalleCocina(i) ? (
                   <div style={{ fontSize: 12, color: "var(--a-muted)", paddingLeft: 12 }}>
-                    ↳ {i.detail}
+                    ↳ {detalleCocina(i)}
                   </div>
                 ) : null}
               </div>
@@ -536,8 +544,8 @@ export function ComandaTicket({ order }: { order: AdminOrder }) {
           <div key={idx} className="c-item">
             <div className="c-item-qty">{item.qty}×</div>
             <div className="c-item-info">
-              <div className="c-item-name">{item.name}</div>
-              {item.detail ? <div className="c-item-detail">{item.detail}</div> : null}
+              <div className="c-item-name">{nombreCocina(item)}</div>
+              {detalleCocina(item) ? <div className="c-item-detail">{detalleCocina(item)}</div> : null}
             </div>
             <div className="c-item-price">{fmt(item.price * item.qty)}</div>
           </div>

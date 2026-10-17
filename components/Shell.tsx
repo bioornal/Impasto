@@ -11,6 +11,7 @@ import { fmt } from "@/lib/utils";
 import { Footer } from "@/components/layout/Footer";
 import { Hero, Features } from "@/components/sections/Hero";
 import { Promos } from "@/components/sections/Promos";
+import { MasasAviso } from "@/components/sections/MasasAviso";
 import { PizzaList } from "@/components/sections/PizzaList";
 import { cartaVisible, negocioDeCarta } from "@/lib/carta-visible";
 import { EmpanadasSection } from "@/components/sections/EmpanadasSection";
@@ -393,6 +394,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
       <main>
         <Hero hayEmpanadas={visible.hayEmpanadas} onCta={goSection} onHalf={() => openHalf()} featured={featured} varieties={data.pizzas.length} />
         <Features freeShippingFrom={business.freeShippingFrom} desde={desde} />
+        <MasasAviso onNav={goSection} />
         <Promos hayEmpanadas={visible.hayEmpanadas} promos={visible.promos} onNav={goSection} />
         {data.pizzas.length > 0 && <PizzaList indice={visible.indice("pizzas")} hayEmpanadas={visible.hayEmpanadas} pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} foco={focoPizza} onVerFicha={abrirFicha("pizzas")} />}
         <EmpanadasSection
