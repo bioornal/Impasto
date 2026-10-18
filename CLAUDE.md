@@ -1,5 +1,14 @@
 @AGENTS.md
 
+## Cupos de la noche (18/10/2026)
+
+- **Pedido del dueño:** cargar cuántas pizzas de cada sabor se pueden vender esta noche (de a media: "1,5 Fugazzetta"). Al agotarse sale **Agotado** en la web y desaparece de la carta del POS. Diseño: `docs/superpowers/specs/2026-10-18-cupos-noche-design.md`.
+- **Lo controla la base**, para web y POS a la vez: `migrations/20261018202351_cupos-noche.sql` (aplicada el 18/10). Tabla `cupos_noche` en **mitades**; `crear_pedido_costeado` descuenta y, si no alcanza, lanza `CUPO_AGOTADO|<nombre>|<mitades que quedan>` y el pedido no se guarda. Cancelar, pago rechazado o eliminar devuelven el cupo (trigger, `cupo_liberado`). Noche: `noche_de_negocio()`, de 06:00 a 05:59 (UTC-3). Sin fila de cupo, sin límite.
+- **Servidor propio:** `db migrations up` corre como `project_admin`, que es dueño de todo; **no poner `OWNER TO postgres`** en migraciones nuevas ("must be member of role postgres"). El CLI rechaza bloques `DO`: para probar SQL sin dejar rastro, `psql` por SSH (`docker compose exec -T postgres psql` en `~/insforge`) dentro de `BEGIN … ROLLBACK` con `SET LOCAL ROLE project_admin`.
+- **Web:** `lib/cupos.ts` (con `tests/cupos.test.ts`). La carta lee los cupos (no crítico) y marca `Pizza.quedanMitades`; cartelito "¡Quedan N!" / "¡Última media!" (`.p-badge.cupo`) con 2 o menos; con media restante "Agregar" abre la mitad y mitad. La cotización (`quoteOrder`, no el borrador) frena lo que pasa el cupo con 409; el rechazo de la base se traduce igual (`errorDeCupoDeLaBase` en `lib/orders.ts`). Un pedido que consume cupo invalida el caché de la carta.
+- **Panel:** sección "Cupos de la noche" (`app/admin/components/Cupos.tsx`, `/api/admin/cupos`). Cuenta lo que se venda **desde que se carga** el cupo.
+- **Verificado:** en la base, dentro de `BEGIN … ROLLBACK`: entera web, rebote, mitad y mitad del POS por nombre, cancelar, reactivar, pago rechazado y pizza sin cupo. En local con la base real y la venta cerrada: cartelito, cotización (pasa justo / frena de más), última media que abre la mitad y mitad, y Agotado; el cupo de prueba se borró. `pnpm test`, `pnpm build`, `tsc`, eslint. **No visto:** la pantalla del panel (pide contraseña). Pedidos sin costeo no se pueden eliminar (regla previa), así que el trigger de eliminación es solo red de seguridad.
+
 ## Resumen diario en el panel (17/10/2026)
 
 - **Pedido del dueño:** ver por noche cuántas unidades vendió y cuánto en efectivo, transferencia y Mercado Pago. **Unidad = una pizza (entera o mitad y mitad) o una docena de empanadas.** Sección nueva "Resumen diario" del panel, debajo de Dashboard. Diseño: `docs/superpowers/specs/2026-10-17-resumen-diario-design.md`.

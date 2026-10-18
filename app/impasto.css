@@ -574,6 +574,8 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   padding:5px 9px; border-radius:999px; font-weight:500; white-space:nowrap;
 }
 .p-badge.top{ background:var(--gold); color:var(--ink); }
+/* Cupo de la noche: "¡Quedan 2!" (lib/cupos.ts) */
+.p-badge.cupo{ background:var(--accent); color:var(--accent-ink); }
 /* Colores de las etiquetas del panel (`COLORES_ETIQUETA`): rellenos, para que
    se lean sobre cualquier foto. Las variables tienen que existir en este archivo. */
 .p-badge.c-dorado{ background:var(--carbon); color:var(--gold); }

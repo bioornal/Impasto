@@ -5,6 +5,7 @@
  * Sin React ni `db`: se testea con `tsx` (tests/ficha.test.ts).
  */
 import { fmt } from "./utils";
+import { avisoQuedan } from "./cupos";
 import type { Bebida, CartItem, Empanada, Pizza } from "../types";
 
 export type TipoFicha = "pizza" | "empanada" | "bebida";
@@ -38,7 +39,10 @@ const deEtiquetas = (badges: { label: string; color: string }[] = []): BadgeFich
  */
 export function cartelitosDePizza(p: Pizza): BadgeFicha[] {
   const popular: BadgeFicha[] = p.popular && p.disponible !== false ? [{ texto: "★ Más pedida", clase: "p-badge top" }] : [];
-  return [...popular, ...deEtiquetas(p.badges)];
+  // Cupo de la noche: cuando quedan 2 o menos, va primero para que se vea.
+  const quedan = p.disponible !== false ? avisoQuedan(p.quedanMitades) : null;
+  const cupo: BadgeFicha[] = quedan ? [{ texto: quedan, clase: "p-badge cupo" }] : [];
+  return [...cupo, ...popular, ...deEtiquetas(p.badges)];
 }
 
 export function cartelitosDeEmpanada(e: Empanada): BadgeFicha[] {

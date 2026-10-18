@@ -2,6 +2,7 @@ import { DELIVERY_FEE, FREE_SHIPPING_FROM } from "@/lib/business";
 import type { CartItem, CatalogData } from "@/types";
 import {catalogCosteo} from './catalog-costeo';
 import {costeoCarrito} from './costeo-capture';
+import { validarCupos } from "./cupos";
 
 interface QuoteResult {
   items: CartItem[];
@@ -131,6 +132,8 @@ export async function quoteOrder(
   rawItems: CartItem[],
   mode: string,
   rates: Partial<QuoteRates> = {},
+  /** El borrador del carrito se guarda aunque pase el cupo: el aviso llega en el checkout. */
+  { cupos = true }: { cupos?: boolean } = {},
 ): Promise<QuoteResult> {
   if (!Array.isArray(rawItems) || rawItems.length === 0 || rawItems.length > 50) {
     throw new Error("El carrito está vacío o es demasiado grande");
@@ -141,6 +144,7 @@ export async function quoteOrder(
   const { getCatalogData } = await import("@/lib/catalog");
   const data = await getCatalogData();
   const items = quoteItemsWithCatalog(rawItems, data);
+  if (cupos) validarCupos(items, data);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const freeShipping = subtotal >= applied.freeShippingFrom;
   const shipping = mode === "delivery" && !freeShipping ? applied.deliveryFee : 0;

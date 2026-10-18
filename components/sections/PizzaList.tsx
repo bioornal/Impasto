@@ -65,6 +65,12 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
   const qtyOf = (id: string) => items.find((i) => i.key === id && i.type === "pizza")?.qty || 0;
 
   const addPizza = (pizza: Pizza) => {
+    // Cupo de la noche: queda media, no alcanza para una entera.
+    if (pizza.quedanMitades === 1) {
+      toast(`De la ${pizza.nombre} queda solo media: elegila en una mitad y mitad`);
+      onHalf(pizza);
+      return;
+    }
     add(lineaDePizza(pizza));
     toast(`${pizza.nombre} agregada`);
   };

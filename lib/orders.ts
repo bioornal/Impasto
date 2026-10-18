@@ -15,6 +15,7 @@ import type { CartItem } from "@/types";
 import { executeManualAttempt, manualAttemptKey, ManualAttemptConflict } from './manual-attempt';
 import { matchesManualOrder, restoredManualOrder } from './manual-order-data';
 import {createCostedPedido} from './create-costed-pedido';
+import { errorDeCupoDeLaBase } from './cupos';
 
 export interface OrderPayload {
   nombre: string;
@@ -161,12 +162,18 @@ async function createPedidoNew(
       fecha: fechaLocal(),
     },quoteCosteo(quote));
 
+  const cupo = errorDeCupoDeLaBase(error);
+  if (cupo) throw cupo;
   const inserted = requireUpdatedRow(
     { data, error },
     "crear el pedido",
   );
   const id = String((inserted as { id?: unknown }).id || "");
   if (!id) throw new Error("El pedido se guardó sin identificador");
+  // Consumió cupo de la noche: la carta muestra lo que queda sin esperar el minuto del caché.
+  if ((inserted as { cupo_consumo?: unknown }).cupo_consumo) {
+    try { (await import("./catalog-cache")).invalidarCatalogo(); } catch { /* fuera de una request de Next */ }
+  }
 
   // El perfil se guarda por trigger en la transacción del pedido; no incrementa compras.
 

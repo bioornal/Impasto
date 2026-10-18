@@ -16,6 +16,8 @@ export interface Pizza {
   badges?: EtiquetaBadge[];
   /** Foto elegida en el servidor (`lib/fotos.ts`); sin ella, las ilustraciones usan el respaldo. */
   foto?: string;
+  /** Mitades que quedan del cupo de esta noche (`lib/cupos.ts`); sin cupo cargado, no viene. */
+  quedanMitades?: number;
 }
 
 export interface Empanada {
