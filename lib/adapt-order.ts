@@ -59,5 +59,7 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
     estado: estadoPreparacion,
     fecha: String(p.created_at || new Date().toISOString()),
     notas: String(p.notas || ""),
+    // El id visible no sirve: a un pedido del POS sin referencia se le inventa "IM-0003".
+    canal: String(p.external_reference || "").startsWith("IM-") ? "web" : "pos",
   };
 }

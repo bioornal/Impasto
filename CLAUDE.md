@@ -1,5 +1,13 @@
 @AGENTS.md
 
+## Resumen diario en el panel (17/10/2026)
+
+- **Pedido del dueño:** ver por noche cuántas unidades vendió y cuánto en efectivo, transferencia y Mercado Pago. **Unidad = una pizza (entera o mitad y mitad) o una docena de empanadas.** Sección nueva "Resumen diario" del panel, debajo de Dashboard. Diseño: `docs/superpowers/specs/2026-10-17-resumen-diario-design.md`.
+- **Cómo cuenta:** noche de 06:00 a 05:59 (UTC-3, como el POS); web y POS juntos con la regla del Dashboard (`esPedidoValidoParaVentas`). Arriba la noche elegida (unidades, pedidos, total con envíos, y una tabla por medio de pago); abajo hasta 30 noches. El POS no guarda `type`: pizzas y empanadas se reconocen por el nombre de la carta (por **categoría**, porque el panel marca "pizza" a todo lo que no es empanada ni bebida) y "Mitad … / Mitad …". Las cajas web "Caja x6/x12/x24" valen 0,5 / 1 / 2. `AdminOrder.canal` (web/POS) sale de `external_reference`.
+- **Código:** `lib/resumen-diario.ts` (con `tests/resumen-diario.test.ts`), `app/admin/components/ResumenDiario.tsx`, entrada en `Sidebar` y `page.tsx`. Sin cambios en la base.
+- **Verificado en local:** `pnpm test`, `pnpm build`, `tsc` y eslint de lo tocado; la lógica corrida contra los pedidos reales de las últimas 3 semanas (sáb 17/10: 6 pizzas, 5 web y 1 POS, 4 pedidos, $135.500: $68.000 efectivo y $67.500 transferencia; lo único del POS que no cuenta son agua y vino). **No se vio la pantalla** en el navegador: el panel pide la contraseña del dueño.
+- **La masa al molde sigue aparte**, en la rama local `masa-al-molde` (sin push): este resumen salió de `main` sin esos cambios.
+
 ## Se trabaja solo de viernes a domingo (14/10/2026)
 
 - **Decisión del dueño:** viernes, sábado y domingo, 19:30 a 00:00 (último pedido 23:45), **con delivery y retiro**. De lunes a jueves, cerrado.

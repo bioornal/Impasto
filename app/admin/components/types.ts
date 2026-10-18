@@ -57,6 +57,8 @@ export interface AdminOrder {
   estado: string;
   fecha: string;
   notas: string;
+  /** Web (referencia IM-…) o POS (POS-… o vacía). */
+  canal?: "web" | "pos";
 }
 
 export interface AdminCustomer {

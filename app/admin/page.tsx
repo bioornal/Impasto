@@ -10,11 +10,13 @@ import { Etiquetas } from "./components/Etiquetas";
 import { Customers } from "./components/Customers";
 import { Testimonials } from "./components/Testimonials";
 import { Settings } from "./components/Settings";
+import { ResumenDiario } from "./components/ResumenDiario";
 
-type Page = "dashboard" | "orders" | "products" | "etiquetas" | "customers" | "testimonials" | "settings";
+type Page = "dashboard" | "resumen" | "orders" | "products" | "etiquetas" | "customers" | "testimonials" | "settings";
 
 const TITLES: Record<Page, [string, string]> = {
   dashboard:    ["Dashboard",      "Un vistazo general de tu negocio"],
+  resumen:      ["Resumen diario", "Pizzas, pedidos y cobros de cada noche, web y POS"],
   orders:       ["Pedidos",        "Administrá los pedidos entrantes"],
   products:     ["Productos",      "Tu carta de pizzas, empanadas y bebidas"],
   etiquetas:    ["Etiquetas",      "Los cartelitos que aparecen en las tarjetas del sitio"],
@@ -45,6 +47,7 @@ function AdminApp() {
         />
         <div className="content">
           {page === "dashboard"    && <Dashboard />}
+          {page === "resumen"      && <ResumenDiario />}
           {page === "orders"       && <><NotificationsRecovery /><Orders /></>}
           {page === "products"     && <Products />}
           {page === "etiquetas"    && <Etiquetas />}
