@@ -85,3 +85,16 @@ export function mitadesDesdePizzas(valor: unknown): number | null {
   const mitades = n * 2;
   return Number.isInteger(mitades) ? mitades : null;
 }
+
+/**
+ * En el panel el cupo se maneja como "cuántas me quedan para vender esta noche" (18/10/2026):
+ * cada pizza arranca la noche en 100 (sin fila = sin límite) y el dueño baja las que no tiene.
+ */
+export const SIN_LIMITE_PIZZAS = 100;
+
+/** Pizzas que quedan para vender esta noche; sin cupo cargado, 100. */
+export const quedanPizzas = (fila?: FilaCupo) => (fila ? quedanMitades(fila) / 2 : SIN_LIMITE_PIZZAS);
+
+/** Flechitas: de a media pizza, entre 0 y 100. */
+export const pasoCupo = (pizzas: number, sentido: 1 | -1) =>
+  Math.min(SIN_LIMITE_PIZZAS, Math.max(0, Math.round((pizzas + sentido * 0.5) * 2) / 2));

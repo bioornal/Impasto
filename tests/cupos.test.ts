@@ -77,3 +77,14 @@ test("mitadesDesdePizzas: de a media pizza, con coma o punto", async () => {
   assert.equal(mitadesDesdePizzas(-1), null);
   assert.equal(mitadesDesdePizzas("dos"), null);
 });
+
+test("quedanPizzas y pasoCupo: 100 por defecto, de a media entre 0 y 100", async () => {
+  const { quedanPizzas, pasoCupo } = await import("../lib/cupos");
+  assert.equal(quedanPizzas(undefined), 100);
+  assert.equal(quedanPizzas({ producto_id: "f", cupo_mitades: 5, vendidas_mitades: 2 }), 1.5);
+  assert.equal(quedanPizzas({ producto_id: "f", cupo_mitades: 2, vendidas_mitades: 3 }), 0);
+  assert.equal(pasoCupo(100, -1), 99.5);
+  assert.equal(pasoCupo(100, 1), 100);
+  assert.equal(pasoCupo(0, -1), 0);
+  assert.equal(pasoCupo(1.5, 1), 2);
+});

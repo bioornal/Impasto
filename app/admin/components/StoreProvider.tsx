@@ -30,7 +30,6 @@ function adaptProduct(p: Record<string, unknown>): AdminProduct {
     desc: String(p.desc || ""),
     tags: Array.isArray(p.tags) ? p.tags : [],
     popular: Boolean(p.popular),
-    stock: 24,
     archivado: p.archivado === true,
     foto: typeof p.foto === "string" ? p.foto : undefined,
   };

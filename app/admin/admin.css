@@ -864,8 +864,20 @@ a{ color:inherit; text-decoration:none; }
 
 /* ============ CUPOS DE LA NOCHE ============ */
 .cupos-ayuda{ color:var(--a-muted); font-size:13px; line-height:1.5; padding-top:0; }
-.cupo-input{
-  width:96px; padding:7px 10px; border:1px solid var(--a-line); border-radius:8px;
-  font-size:14px; text-align:right; background:var(--a-surface); color:var(--a-ink);
-}
 .cupos-tbl tbody tr.cupo-agotado{ background:var(--a-danger-soft); }
+/* − [número] + de "quedan esta noche" (CupoControl.tsx): tabla de Productos y Cupos */
+.cupo-ctrl{ display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap; justify-content:flex-end; }
+.cupo-ctrl button{
+  width:28px; height:28px; border-radius:8px; border:1px solid var(--a-line);
+  background:var(--a-surface); color:var(--a-ink); font-size:16px; font-weight:700; line-height:1; cursor:pointer;
+}
+.cupo-ctrl button:hover:not(:disabled){ background:var(--a-bg-2); }
+.cupo-ctrl button:disabled{ opacity:.35; cursor:default; }
+.cupo-ctrl input{
+  width:52px; height:28px; padding:0 6px; border:1px solid var(--a-line); border-radius:8px;
+  text-align:center; font-family:var(--a-font-mono); font-size:13px; background:var(--a-surface); color:var(--a-muted);
+}
+.cupo-ctrl.limitado input{ color:var(--a-ink); font-weight:700; border-color:var(--a-warn); }
+.cupo-ctrl.agotado input{ color:var(--a-danger); font-weight:700; border-color:var(--a-danger); }
+.cupo-ctrl small{ flex-basis:100%; text-align:right; font-size:11px; color:var(--a-muted); }
+.cupo-ctrl.agotado small{ color:var(--a-danger); font-weight:600; }
