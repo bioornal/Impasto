@@ -71,11 +71,14 @@ export function errorDeCupoDeLaBase(error: unknown): CupoAgotadoError | null {
   return m ? new CupoAgotadoError(m[1], Number(m[2])) : null;
 }
 
-/** Cartelito de la tarjeta cuando quedan 2 pizzas o menos. */
-export function avisoQuedan(mitades: number | undefined): string | null {
+/**
+ * Franja de la tarjeta cuando quedan 2 pizzas o menos (`components/ui/AvisoCupo.tsx`).
+ * Va dentro de la tarjeta y no como cartelito sobre la foto: así no se veía (dueño, 18/10/2026).
+ */
+export function avisoQuedan(mitades: number | undefined, corto = false): string | null {
   if (mitades === undefined || mitades <= 0 || mitades > 4) return null;
-  if (mitades === 1) return "¡Última media!";
-  return `¡Queda${mitades >= 4 ? "n" : ""} ${cantidadCliente(mitades)}!`;
+  if (mitades === 1) return corto ? "¡Última media!" : "¡Queda la última media de la noche!";
+  return `¡Queda${mitades >= 3 ? "n" : ""} solo ${cantidadCliente(mitades)}${corto ? "" : " esta noche"}!`;
 }
 
 /** El panel carga pizzas de a media: 0, 0,5, 1, 1,5… hasta 1000. Devuelve mitades o null. */

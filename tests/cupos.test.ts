@@ -60,11 +60,13 @@ test("errorDeCupoDeLaBase: traduce el error de crear_pedido_costeado", () => {
 test("avisoQuedan y cantidadCliente: textos para el cliente", () => {
   assert.equal(avisoQuedan(undefined), null);
   assert.equal(avisoQuedan(0), null);
-  assert.equal(avisoQuedan(1), "¡Última media!");
-  assert.equal(avisoQuedan(2), "¡Queda 1!");
-  assert.equal(avisoQuedan(3), "¡Queda 1 y media!");
-  assert.equal(avisoQuedan(4), "¡Quedan 2!");
+  assert.equal(avisoQuedan(1), "¡Queda la última media de la noche!");
+  assert.equal(avisoQuedan(2), "¡Queda solo 1 esta noche!");
+  assert.equal(avisoQuedan(3), "¡Quedan solo 1 y media esta noche!");
+  assert.equal(avisoQuedan(4), "¡Quedan solo 2 esta noche!");
   assert.equal(avisoQuedan(5), null);
+  assert.equal(avisoQuedan(4, true), "¡Quedan solo 2!");
+  assert.equal(avisoQuedan(1, true), "¡Última media!");
   assert.equal(cantidadCliente(5), "2 y media");
 });
 

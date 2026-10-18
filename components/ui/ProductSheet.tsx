@@ -1,4 +1,5 @@
 "use client";
+import { AvisoCupo } from "./AvisoCupo";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { PizzaIllus } from "@/components/ui/PizzaIllus";
 import { EmpanadaIllus, DrinkIllus } from "@/components/ui/Illus";
@@ -228,6 +229,7 @@ export function ProductSheet({ items, indice, onIndice, onClose, accion }: Produ
           <h3 className="ficha-titulo">{item.nombre}</h3>
           <b className="ficha-precio">{item.precioTexto}</b>
           {item.desc && <p className="ficha-desc">{item.desc}</p>}
+          {!item.agotado && <AvisoCupo quedanMitades={item.quedanMitades} />}
         </div>
 
         <div className="ficha-pie">{accion}</div>

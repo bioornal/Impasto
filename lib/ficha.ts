@@ -5,7 +5,6 @@
  * Sin React ni `db`: se testea con `tsx` (tests/ficha.test.ts).
  */
 import { fmt } from "./utils";
-import { avisoQuedan } from "./cupos";
 import type { Bebida, CartItem, Empanada, Pizza } from "../types";
 
 export type TipoFicha = "pizza" | "empanada" | "bebida";
@@ -25,6 +24,8 @@ export interface FichaItem {
   agotado: boolean;
   tags: string[];
   foto?: string;
+  /** Cupo de la noche (solo pizzas): mitades que quedan. */
+  quedanMitades?: number;
 }
 
 /* ── cartelitos: los mismos en la foto de la tarjeta y en la ficha ── */
@@ -39,10 +40,7 @@ const deEtiquetas = (badges: { label: string; color: string }[] = []): BadgeFich
  */
 export function cartelitosDePizza(p: Pizza): BadgeFicha[] {
   const popular: BadgeFicha[] = p.popular && p.disponible !== false ? [{ texto: "★ Más pedida", clase: "p-badge top" }] : [];
-  // Cupo de la noche: cuando quedan 2 o menos, va primero para que se vea.
-  const quedan = p.disponible !== false ? avisoQuedan(p.quedanMitades) : null;
-  const cupo: BadgeFicha[] = quedan ? [{ texto: quedan, clase: "p-badge cupo" }] : [];
-  return [...cupo, ...popular, ...deEtiquetas(p.badges)];
+  return [...popular, ...deEtiquetas(p.badges)];
 }
 
 export function cartelitosDeEmpanada(e: Empanada): BadgeFicha[] {
@@ -54,7 +52,7 @@ export function cartelitosDeEmpanada(e: Empanada): BadgeFicha[] {
 export function fichaDePizza(p: Pizza): FichaItem {
   return {
     id: p.id, tipo: "pizza", nombre: p.nombre, desc: p.desc, foto: p.foto,
-    precio: p.precio, precioTexto: fmt(p.precio), badges: cartelitosDePizza(p), agotado: p.disponible === false, tags: p.tags,
+    precio: p.precio, precioTexto: fmt(p.precio), badges: cartelitosDePizza(p), agotado: p.disponible === false, tags: p.tags, quedanMitades: p.quedanMitades,
   };
 }
 
