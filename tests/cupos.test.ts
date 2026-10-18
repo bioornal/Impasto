@@ -65,8 +65,10 @@ test("avisoQuedan y cantidadCliente: textos para el cliente", () => {
   assert.equal(avisoQuedan(3), "¡Quedan solo 1 y media esta noche!");
   assert.equal(avisoQuedan(4), "¡Quedan solo 2 esta noche!");
   assert.equal(avisoQuedan(5), null);
-  assert.equal(avisoQuedan(4, true), "¡Quedan solo 2!");
-  assert.equal(avisoQuedan(1, true), "¡Última media!");
+  assert.equal(avisoQuedan(4, true), "¡Quedan 2!");
+  assert.equal(avisoQuedan(3, true), "¡Quedan 1½!");
+  assert.equal(avisoQuedan(2, true), "¡Queda 1!");
+  assert.equal(avisoQuedan(1, true), "¡Última ½!");
   assert.equal(cantidadCliente(5), "2 y media");
 });
 

@@ -77,8 +77,10 @@ export function errorDeCupoDeLaBase(error: unknown): CupoAgotadoError | null {
  */
 export function avisoQuedan(mitades: number | undefined, corto = false): string | null {
   if (mitades === undefined || mitades <= 0 || mitades > 4) return null;
-  if (mitades === 1) return corto ? "¡Última media!" : "¡Queda la última media de la noche!";
-  return `¡Queda${mitades >= 3 ? "n" : ""} solo ${cantidadCliente(mitades)}${corto ? "" : " esta noche"}!`;
+  // Corto: va sobre la miniatura de 76 px de las filas del celular.
+  if (corto) return mitades === 1 ? "¡Última ½!" : `¡Queda${mitades >= 3 ? "n" : ""} ${mitades % 2 ? `${Math.floor(mitades / 2)}½` : mitades / 2}!`;
+  if (mitades === 1) return "¡Queda la última media de la noche!";
+  return `¡Queda${mitades >= 3 ? "n" : ""} solo ${cantidadCliente(mitades)} esta noche!`;
 }
 
 /** El panel carga pizzas de a media: 0, 0,5, 1, 1,5… hasta 1000. Devuelve mitades o null. */

@@ -197,7 +197,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
                   <div className="lrow-media">
                     <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} src={pizza.foto} />
                     {botonFoto(pizza)}
-                    {agotado && <div className="media-agotado-bar">Agotado</div>}
+                    {agotado ? <div className="media-agotado-bar">Agotado</div> : <AvisoCupo quedanMitades={pizza.quedanMitades} formato="foto" />}
                   </div>
                   <div className="lrow-main">
                     <div className="lrow-title">
@@ -207,7 +207,6 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
                       <b className="lrow-price">{fmt(pizza.precio)}</b>
                     </div>
                     <p>{pizza.desc}</p>
-                    {!agotado && <AvisoCupo quedanMitades={pizza.quedanMitades} compacta />}
                   </div>
                   <div className="lrow-actions">
                     <button className="btn btn-light btn-sm" disabled={agotado} onClick={() => !agotado && onHalf(pizza)} title={agotado ? "No disponible" : "Mitad y mitad"} aria-label={`Elegir pizza mitad y mitad con ${pizza.nombre}`}>½½</button>
@@ -265,7 +264,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
                 <div className="p-row-media">
                   <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} src={pizza.foto} />
                   {botonFoto(pizza)}
-                  {agotado && <div className="media-agotado-bar">Agotado</div>}
+                  {agotado ? <div className="media-agotado-bar">Agotado</div> : <AvisoCupo quedanMitades={pizza.quedanMitades} formato="foto" />}
                 </div>
                 <div className="p-row-main" onClick={() => verFicha(pizza.id)}>
                   <div className="p-row-title">
@@ -273,7 +272,6 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
                     {!agotado && cartelitosDePizza(pizza).map((b) => <span key={b.texto} className={b.clase}>{b.texto}</span>)}
                   </div>
                   <p className="p-row-desc">{pizza.desc}</p>
-                  {!agotado && <AvisoCupo quedanMitades={pizza.quedanMitades} compacta />}
                   <span className="p-row-price">{fmt(pizza.precio)}</span>
                 </div>
                 <div className="p-row-side">
