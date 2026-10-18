@@ -1,5 +1,12 @@
 @AGENTS.md
 
+## El panel ya no se cierra a los 15 minutos (18/10/2026)
+
+- **Síntoma (dueño):** el panel se bloqueaba "cada 5 o 10 minutos" y había que volver a entrar con usuario y contraseña.
+- **Causa:** en el InsForge propio el acceso dura **15 min** (`ACCESS_TOKEN_EXPIRES_IN`) y la renovación **7 días**. `getCurrentAdmin` (página /admin y las 21 rutas `/api/admin`) solo leía la cookie `insforge_access_token`, que vence con el token; la cookie `insforge_refresh_token` (httpOnly, la guarda el login) nunca se usaba y `/api/auth/refresh` no la llamaba nadie.
+- **Arreglo:** `getCurrentAdmin` llama a `updateSession` (`@insforge/sdk/ssr/middleware`) antes de validar: si el acceso venció o vence en menos de 1 min y está la renovación, pide uno nuevo y lo guarda en la respuesta. En el layout (Server Component) Next no deja escribir cookies: `cookiesTolerantes` (`lib/admin-sesion.ts`, con test) ignora ese error y la renovación igual sirve para esa carga. Las renovaciones de InsForge son JWT sin estado (no rotan ni se revocan), así que dos rutas renovando a la vez no se pisan. Como el panel sondea cada 15 s, la sesión se estira sola mientras está abierto; cerrado, dura hasta 7 días.
+- **Verificado en local** contra el servidor real: sin sesión 401; con una renovación inválida intenta renovar, InsForge la rechaza, se borran las cookies y /admin manda al login. `pnpm test`, `pnpm build`. **No verificado:** el camino feliz con una sesión real (requiere la contraseña del dueño): confirmarlo dejando el panel abierto más de 15 min.
+
 ## Cupos de la noche (18/10/2026)
 
 - **Pedido del dueño:** cargar cuántas pizzas de cada sabor se pueden vender esta noche (de a media: "1,5 Fugazzetta"). Al agotarse sale **Agotado** en la web y desaparece de la carta del POS. Diseño: `docs/superpowers/specs/2026-10-18-cupos-noche-design.md`.
