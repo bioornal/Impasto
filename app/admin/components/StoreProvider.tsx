@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial, CambioTestimonial, AdminOrder, AdminCustomer } from "./types";
 import { esCategoriaImpasto } from "@/lib/categorias";
 import { adaptOrder } from "@/lib/adapt-order";
+import { nombreMedio } from "@/lib/medio-pago";
 import { loadAdminCustomers } from "@/lib/adapt-customer";
 import { confirmAdminMutation } from "@/lib/stabilization";
 import {
@@ -156,6 +157,8 @@ interface StoreCtx {
   deleteEtiqueta: (id: string) => Promise<void>;
   updateOrderStatus: (dbId: string, estado: string) => Promise<boolean>;
   updateOrderPayment: (dbId: string, estado: string) => Promise<boolean>;
+  /** Corrige el medio de pago (efectivo, transferencia, mercadopago). Devuelve si se guardó. */
+  updateOrderMethod: (dbId: string, metodo: string) => Promise<boolean>;
   /** Elimina pedidos para siempre. Devuelve los que se eliminaron y los que no se pudieron, con el motivo. */
   deleteOrders: (dbIds: string[]) => Promise<{ eliminados: string[]; bloqueados: { id: string; pedido: string; motivo: string }[] }>;
   /** Sin `monto` devuelve el total; con `monto` hace una devolución parcial. */
@@ -481,6 +484,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
       showToast(`Pedido ${prevOrder?.id ?? ""} → ${estado}`);
+      return true;
+    },
+
+    updateOrderMethod: async (dbId, metodo) => {
+      const res = await fetch(`/api/admin/pedidos/${dbId}/medio`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ metodo }),
+      }).catch(() => null);
+      const result = res ? await res.json().catch(() => ({})) : {};
+      if (!res || !res.ok || !result.ok || !result.pedido) {
+        showToast(result.error || "No se pudo cambiar el medio de pago");
+        return false;
+      }
+      // La base devuelve el pedido entero: se reemplaza tal cual (medio, estado de pago, updated_at).
+      const actualizado = adaptOrder(result.pedido);
+      setState(s => ({ ...s, orders: s.orders.map(o => o._dbId === dbId ? actualizado : o) }));
+      showToast(`Pedido ${actualizado.numero || actualizado.id}: ahora ${nombreMedio(metodo)}`);
       return true;
     },
 

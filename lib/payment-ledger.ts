@@ -51,7 +51,8 @@ export function resumenGuardado(rows:MovimientoGuardado[]) {
   ids.add(row.id);keys.add(row.clave);
   if(typeof row.monto_centavos!=='number' && !(typeof row.monto_centavos==='string' && /^\d+$/.test(row.monto_centavos)))return fail();
   const amount=Number(row.monto_centavos);if(!Number.isSafeInteger(amount) || amount<=0)return fail();
-  if(row.tipo==='cobro')cobros+=amount;else devoluciones+=amount;
+  // Corrección de medio (corregir_medio_pago): mueve plata entre medios, no es cobro ni devolución.
+  if(!row.clave.startsWith('correccion-medio:')){if(row.tipo==='cobro')cobros+=amount;else devoluciones+=amount;}
   if(!Number.isSafeInteger(cobros) || !Number.isSafeInteger(devoluciones))return fail();
  }
  if(devoluciones>cobros)return fail();

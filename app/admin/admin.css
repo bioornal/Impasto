@@ -881,3 +881,11 @@ a{ color:inherit; text-decoration:none; }
 .cupo-ctrl.agotado input{ color:var(--a-danger); font-weight:700; border-color:var(--a-danger); }
 .cupo-ctrl small{ flex-basis:100%; text-align:right; font-size:11px; color:var(--a-muted); }
 .cupo-ctrl.agotado small{ color:var(--a-danger); font-weight:600; }
+/* Resumen diario: corregir el medio de pago de cada pedido de la noche */
+.medio-select{
+  height:30px; padding:0 8px; border:1px solid var(--a-line); border-radius:8px;
+  background:var(--a-surface); color:var(--a-ink); font-size:13px; font-weight:600; cursor:pointer;
+}
+.medio-select:disabled{ opacity:.5; cursor:wait; }
+.medio-aviso{ display:block; margin-top:3px; font-size:11px; color:var(--a-warn); font-weight:600; }
+.pedidos-noche td{ white-space:nowrap; }

@@ -44,6 +44,8 @@ export interface AdminOrder {
   pagoEstado: string;
   puedeDevolverMP?: boolean;
   puedeRegistrarDevolucionManual?: boolean;
+  /** Se puede corregir el medio de pago desde el Resumen diario (no es tarjeta de la web). */
+  medioEditable?: boolean;
   puedeConsultarMP?: boolean;
   pagoMpManual?: boolean;
   /** Nombre corto de la cuenta que vio el cliente, si pagó por transferencia. */

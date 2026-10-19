@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 import { MEDIOS, etiquetaDia, formatoUnidades, resumenPorDia } from "@/lib/resumen-diario";
+import { MEDIOS_PAGO, nombreMedio, pedidosDeLaNoche } from "@/lib/medio-pago";
+import type { AdminOrder } from "./types";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 /** Hasta 30 noches con ventas en la tabla de abajo. */
@@ -81,6 +83,8 @@ export function ResumenDiario() {
         </div>
       </div>
 
+      <PedidosDeLaNoche dia={dia.dia} />
+
       <div className="panel mt-20">
         <div className="panel-head"><h3>Últimas noches</h3></div>
         <div className="panel-body no-pad tbl-wrap">
@@ -105,5 +109,68 @@ export function ResumenDiario() {
         </div>
       </div>
     </>
+  );
+}
+
+const hora = (iso: string) => new Date(iso).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
+
+/**
+ * Los pedidos de la noche elegida con su medio de pago, para corregirlo si se cargó mal (sobre todo
+ * desde el POS) y que la rendición del efectivo del delivery cierre (18/10/2026). Ver lib/medio-pago.ts.
+ */
+function PedidosDeLaNoche({ dia }: { dia: string }) {
+  const { state, updateOrderMethod } = useStore();
+  const [guardando, setGuardando] = useState<string | null>(null);
+  const pedidos = useMemo(() => pedidosDeLaNoche(state.orders, dia), [state.orders, dia]);
+  if (pedidos.length === 0) return null;
+
+  const cambiar = async (o: AdminOrder, metodo: string) => {
+    if (metodo === o.pago) return;
+    const pregunta = `¿Cambiar el pedido ${o.numero || o.id} (${fmt(o.total)}) de ${nombreMedio(o.pago)} a ${nombreMedio(metodo)}?`
+      + (metodo === "mercadopago" && o.pagoEstado !== "aprobado" ? " Queda como cobrado por Mercado Pago." : "");
+    if (!window.confirm(pregunta)) return;
+    setGuardando(o._dbId);
+    try { await updateOrderMethod(o._dbId, metodo); } finally { setGuardando(null); }
+  };
+
+  return (
+    <div className="panel mt-20">
+      <div className="panel-head">
+        <h3>Pedidos de la noche</h3>
+        <div className="panel-head-spacer" />
+        <span className="tbl-muted" style={{ fontSize: 12 }}>Si un medio quedó mal cargado, cambialo acá: se corrige el resumen, la caja del POS y el recetario.</span>
+      </div>
+      <div className="panel-body no-pad tbl-wrap">
+        <table className="tbl pedidos-noche">
+          <thead><tr><th>Hora</th><th>Pedido</th><th>Cliente</th><th>Canal</th><th className="right">Total</th><th>Medio de pago</th></tr></thead>
+          <tbody>
+            {pedidos.map((o) => {
+              const sinConfirmar = o.pago === "mercadopago" && o.pagoEstado !== "aprobado";
+              return (
+                <tr key={o._dbId}>
+                  <td className="tbl-mono">{hora(o.fecha)}</td>
+                  <td className="tbl-strong">{o.numero || o.id}</td>
+                  <td>{o.cliente}</td>
+                  <td>{o.canal === "pos" ? "POS" : "Web"}</td>
+                  <td className="right tbl-strong">{fmt(o.total)}</td>
+                  <td>
+                    {o.medioEditable ? (
+                      <select className="medio-select" value={o.pago} disabled={guardando === o._dbId}
+                        onChange={(e) => cambiar(o, e.target.value)} aria-label={`Medio de pago del pedido ${o.numero || o.id}`}>
+                        {!MEDIOS_PAGO.some((m) => m.id === o.pago) && <option value={o.pago}>{nombreMedio(o.pago)}</option>}
+                        {MEDIOS_PAGO.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+                      </select>
+                    ) : (
+                      <span title="Pago con tarjeta de la web: lo confirma Mercado Pago">Tarjeta · Mercado Pago</span>
+                    )}
+                    {sinConfirmar && <small className="medio-aviso">sin confirmar · no suma</small>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }

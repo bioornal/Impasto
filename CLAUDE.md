@@ -1,5 +1,13 @@
 @AGENTS.md
 
+## Corregir el medio de pago desde el Resumen diario (18/10/2026)
+
+- **Pedido del dueño:** el POS a veces carga mal el medio (efectivo / transferencia / Mercado Pago) y la rendición del efectivo del delivery no cierra. En **Resumen diario → "Pedidos de la noche"** cada pedido tiene un selector de medio (con confirmación). Los pagos con **tarjeta de la web** (`proveedor_pago = mercadopago`, `mp_order_id` o `id_pago`) no se tocan.
+- **Base:** `corregir_medio_pago(pedido, metodo)` (migración `20261019021530`, aplicada y probada dentro de `BEGIN … ROLLBACK`): cambia `metodo_pago`; si ya había cobros en `pedido_movimientos` (libro inmutable), pasa el neto de cada otro medio al nuevo con un par devolución + cobro de clave `correccion-medio:<n>:<medio>:salida|entrada` y la fecha del cobro original; **a Mercado Pago lo da por cobrado** (`estado_pago = aprobado`, decisión del dueño), y deja un `pedido_eventos` `pago / medio:<metodo>`. Errores: `MEDIO_NO_EDITABLE`, `PEDIDO_NO_ENCONTRADO`, `MEDIO_INVALIDO` (`lib/medio-pago.ts`).
+- **Lectores del libro:** la corrección suma y resta por medio pero **no es devolución ni cobro nuevo**: `resumenGuardado` (`lib/payment-ledger.ts`), la caja del POS (`saldoMovimientos`, `142fbb7`) y Ganancias del recetario (`aa5b117`; deploy de Netlify no confirmado, otra cuenta). Android del recetario no lo tiene: ahí se vería como devolución + cobro.
+- **Panel:** `POST /api/admin/pedidos/[id]/medio`, `updateOrderMethod` en el store (reemplaza el pedido con el que devuelve la base), `AdminOrder.medioEditable`. Un MP sin confirmar se marca "sin confirmar · no suma".
+- **Verificado:** SQL en la base con rollback (efectivo cobrado → transferencia → MP, pendiente → MP con cobro registrado, mismo medio sin cambios, tarjeta rechazada), tests de los tres proyectos, builds. **No visto:** la tabla en el panel (pide contraseña).
+
 ## El panel ya no se cierra a los 15 minutos (18/10/2026)
 
 - **Síntoma (dueño):** el panel se bloqueaba "cada 5 o 10 minutos" y había que volver a entrar con usuario y contraseña.
