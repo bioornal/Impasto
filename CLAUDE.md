@@ -1,5 +1,11 @@
 @AGENTS.md
 
+## Cerrar "¿Algo para tomar?" en el carrito (21/10/2026)
+
+- **Reclamo del dueño:** "los clientes podían quitar las bebidas con un botón y ya no". La ✕ que cierra las sugerencias de bebidas del carrito estaba **solo en `bb18d04`, dentro de la rama local `masa-al-molde`**, que nunca se publicó: los 25 últimos deploys de Netlify (hasta `e0fa509`, 19/10) salieron todos de `main` y el CSS de producción no tenía `.upsells-cerrar`. Lo vio en local, no en la web.
+- **Arreglo:** solo la ✕ pasa a `main`, sin la masa al molde (que sigue esperando al dueño): `CartDrawer.tsx` (`SIN_BEBIDAS`, `sessionStorage`: no vuelve a aparecer en esa visita; el pedido no cambia) y `.upsells-acciones` / `.upsells-cerrar` en `impasto.css`. Mismo código que `bb18d04`: **al mergear `masa-al-molde`, quedarse con una sola copia** (va a dar conflicto en esas líneas).
+- Verificado en local con la base real: la ✕ aparece, al tocarla se va "¿Algo para tomar?" y la pizza sigue en el pedido; carrito de prueba vaciado (`/api/cart/draft` con `items: []`). `pnpm test`, `tsc`, eslint del archivo y `pnpm build`.
+
 ## Corregir el medio de pago desde el Resumen diario (18/10/2026)
 
 - **Pedido del dueño:** el POS a veces carga mal el medio (efectivo / transferencia / Mercado Pago) y la rendición del efectivo del delivery no cierra. En **Resumen diario → "Pedidos de la noche"** cada pedido tiene un selector de medio (con confirmación). Los pagos con **tarjeta de la web** (`proveedor_pago = mercadopago`, `mp_order_id` o `id_pago`) no se tocan.

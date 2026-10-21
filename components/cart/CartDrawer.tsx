@@ -9,6 +9,9 @@ import { fmt } from "@/lib/utils";
 import type { BusinessConfig } from "@/lib/business";
 import type { Bebida } from "@/types";
 
+/** "¿Algo para tomar?" cerrado por el cliente: no vuelve a aparecer en esta visita. */
+const SIN_BEBIDAS = "impasto_sin_bebidas";
+
 /** Mismo corte que `@media (max-width:760px)` en impasto.css. */
 const esMobile = () => window.matchMedia("(max-width: 760px)").matches;
 
@@ -29,6 +32,13 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
   const railRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const [dragY, setDragY] = useState(0);
+  const [sinBebidas, setSinBebidas] = useState(() => {
+    try { return typeof window !== "undefined" && sessionStorage.getItem(SIN_BEBIDAS) === "1"; } catch { return false; }
+  });
+  const cerrarBebidas = () => {
+    setSinBebidas(true);
+    try { sessionStorage.setItem(SIN_BEBIDAS, "1"); } catch {}
+  };
   const arrastre = useRef<{ inicio: number; puntero: number } | null>(null);
 
   // Mobile: Esc cierra la hoja y el foco queda atrapado mientras está abierta.
@@ -195,13 +205,14 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
               {/* Sugerencias, no ítems del pedido: por eso otra forma (carrusel en
                   vez de filas), "Opcional" a la vista y el precio con "+". Antes
                   eran filas iguales a las del pedido y se confundían con él. */}
-              {upsells.length > 0 && (
+              {upsells.length > 0 && !sinBebidas && (
                 <section className="upsells" aria-labelledby="upsells-titulo">
                   <div className="upsells-head">
                     <div>
                       <h5 id="upsells-titulo">¿Algo para tomar?</h5>
                       <small>Opcional · no está en tu pedido</small>
                     </div>
+                    <div className="upsells-acciones">
                     {upsells.length > 3 && (
                       <div className="upsell-nav">
                         <button onClick={() => deslizar(-1)} aria-label="Ver bebidas anteriores">
@@ -212,6 +223,10 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
                         </button>
                       </div>
                     )}
+                      <button className="upsells-cerrar" onClick={cerrarBebidas} aria-label="Cerrar las sugerencias de bebidas" title="No, gracias">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                      </button>
+                    </div>
                   </div>
                   <div className="upsell-rail" ref={railRef}>
                     {upsells.map((bebida) => (

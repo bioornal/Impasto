@@ -1275,6 +1275,12 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 .upsells-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; margin-bottom:12px; padding:0 2px; }
 .upsells-head h5{ font-family:var(--font-body); font-size:15px; font-weight:600; letter-spacing:0; color:var(--ink); margin:0; }
 .upsells-head small{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+.upsells-acciones{ display:flex; align-items:center; gap:6px; flex:none; }
+.upsells-cerrar{
+  width:30px; height:30px; border-radius:999px; display:grid; place-items:center;
+  border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
+}
+.upsells-cerrar:hover{ background:var(--bg-2); border-color:var(--line-2); }
 .upsell-nav{ display:flex; gap:6px; flex:none; }
 .upsell-nav button{
   width:30px; height:30px; border-radius:999px; display:grid; place-items:center;
