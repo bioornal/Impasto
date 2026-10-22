@@ -122,8 +122,8 @@ export function OrdersTable({ pedidos, onAbrir, onAvanzar, onImprimir, imprimien
           const items = resumenItems(o.items, 40);
           return (
             <div key={o._dbId} className={`ord-card ${o.pagoEstado === "pendiente" && o.estado !== "cancelado" ? "pendiente" : ""}`} onClick={() => onAbrir(o)}>
-              <div className="ord-card-top"><b className="tbl-mono">{numeroCorto(o)}</b><span className={`chip chip-${o.estado}`}>{etiquetaEstado(o.estado, o.mode)}</span></div>
-              <div><b>{o.cliente}</b> · {o.mode === "delivery" ? "Delivery" : "Retiro"} · <b>{fmt(o.total)}</b> <span className="tbl-muted">· {hace(o.fecha)}</span></div>
+              <div className="ord-card-top"><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>{seleccionando && <input type="checkbox" aria-label={`Seleccionar el pedido ${numeroCorto(o)}`} checked={marcados.has(o._dbId)} onClick={(e) => e.stopPropagation()} onChange={(e) => onMarcar(o._dbId, e.target.checked)} />}<b className="tbl-mono">{numeroCorto(o)}</b></span><span className={`chip chip-${o.estado}`}>{etiquetaEstado(o.estado, o.mode)}</span></div>
+              <div><b>{o.cliente}</b> <TelCliente order={o} soloIcono /> · {o.mode === "delivery" ? "Delivery" : "Retiro"} · <b>{fmt(o.total)}</b> <span className="tbl-muted">· {hace(o.fecha)}</span></div>
               <div className="tbl-muted ord-card-items">{items.texto}{items.resto > 0 && ` +${items.resto}`}</div>
               <div className="tbl-muted">{medio(o)}<AvisoPago o={o} /></div>
               <div className="ord-card-acciones">{acciones(o, true)}</div>

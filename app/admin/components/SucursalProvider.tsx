@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useStore } from "./StoreProvider";
 import type { CuentaTransferencia } from "@/lib/cuentas-transferencia";
 
@@ -30,8 +30,13 @@ interface SucursalCtx {
   cargando: boolean;
   error: string;
   recargar: () => Promise<void>;
-  /** Interruptores y motivos del Arranque: se ve al instante y vuelve atrás si el servidor dice que no. */
+  /**
+   * Interruptores y motivos del Arranque: se ve al instante y vuelve atrás si el servidor dice que no.
+   * Si ese campo ya tiene un guardado en curso, se ignora (devuelve false): nunca hay dos PUT del mismo campo a la vez.
+   */
   cambiar: <K extends keyof Sucursal>(campo: K, valor: Sucursal[K], aviso?: string) => Promise<boolean>;
+  /** true mientras el guardado de ese campo está en curso (el interruptor se deshabilita). */
+  pendiente: (campo: keyof Sucursal) => boolean;
   /** Pestañas de Configuración: guarda varios campos juntos. */
   guardar: (parcial: Partial<Sucursal>) => Promise<boolean>;
 }
@@ -64,50 +69,81 @@ export function SucursalProvider({ children }: { children: React.ReactNode }) {
   const [sucursal, setSucursal] = useState<Sucursal | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  // Fuente de verdad síncrona de la fila (el estado de React llega un render tarde).
+  const sucursalRef = useRef<Sucursal | null>(null);
+  // Campos con un PUT en curso: el ref frena un segundo toque al instante; el estado dibuja el interruptor deshabilitado.
+  const pendientesRef = useRef<Set<keyof Sucursal>>(new Set());
+  const [pendientes, setPendientes] = useState<ReadonlySet<keyof Sucursal>>(() => new Set());
+  // Sube con cada inicio y fin de un guardado: una recarga que arrancó antes no puede pisar lo que cambió mientras tanto.
+  const versionRef = useRef(0);
+
+  const aplicar = useCallback((fn: (s: Sucursal | null) => Sucursal | null) => {
+    const nueva = fn(sucursalRef.current);
+    sucursalRef.current = nueva;
+    setSucursal(nueva);
+  }, []);
 
   const recargar = useCallback(async () => {
+    const version = versionRef.current;
     try {
       const res = await fetch("/api/admin/sucursal", { cache: "no-store" });
       const json = await res.json();
       if (!res.ok || !json.ok || !json.data) throw new Error(json.error || "No se pudo cargar el estado del local");
-      setSucursal(json.data);
+      // Si mientras tanto se guardó un interruptor, esta respuesta puede traer el valor viejo: se descarta.
+      if (version === versionRef.current && pendientesRef.current.size === 0) aplicar(() => json.data);
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar el estado del local");
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [aplicar]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial desde la API, como el resto del panel
     void recargar();
-    const alVolver = () => { if (document.visibilityState === "visible") void recargar(); };
+    const alVolver = () => {
+      // Con un guardado en curso no se recarga: pisaría el valor que se ve al instante.
+      if (document.visibilityState === "visible" && pendientesRef.current.size === 0) void recargar();
+    };
     document.addEventListener("visibilitychange", alVolver);
     return () => document.removeEventListener("visibilitychange", alVolver);
   }, [recargar]);
 
   const cambiar = useCallback(async <K extends keyof Sucursal>(campo: K, valor: Sucursal[K], aviso?: string) => {
-    if (!sucursal) return false;
-    const antes = sucursal[campo];
-    setSucursal((s) => (s ? { ...s, [campo]: valor } : s));
-    const fallo = await enviar({ [campo]: valor } as Partial<Sucursal>);
-    if (fallo) {
-      setSucursal((s) => (s ? { ...s, [campo]: antes } : s));
-      showToast(fallo);
-      return false;
+    const actual = sucursalRef.current;
+    if (!actual) return false;
+    if (pendientesRef.current.has(campo)) return false;
+    const antes = actual[campo];
+    pendientesRef.current.add(campo);
+    versionRef.current++;
+    setPendientes(new Set(pendientesRef.current));
+    aplicar((s) => (s ? { ...s, [campo]: valor } : s));
+    try {
+      const fallo = await enviar({ [campo]: valor } as Partial<Sucursal>);
+      if (fallo) {
+        aplicar((s) => (s ? { ...s, [campo]: antes } : s));
+        showToast(fallo);
+        return false;
+      }
+      if (aviso) showToast(aviso);
+      return true;
+    } finally {
+      pendientesRef.current.delete(campo);
+      versionRef.current++;
+      setPendientes(new Set(pendientesRef.current));
     }
-    if (aviso) showToast(aviso);
-    return true;
-  }, [sucursal, showToast]);
+  }, [aplicar, showToast]);
+
+  const pendiente = useCallback((campo: keyof Sucursal) => pendientes.has(campo), [pendientes]);
 
   const guardar = useCallback(async (parcial: Partial<Sucursal>) => {
     const fallo = await enviar(parcial);
     if (fallo) { showToast(fallo); return false; }
-    setSucursal((s) => (s ? { ...s, ...parcial } : s));
+    aplicar((s) => (s ? { ...s, ...parcial } : s));
     showToast("Cambios guardados");
     return true;
-  }, [showToast]);
+  }, [aplicar, showToast]);
 
-  return <Ctx.Provider value={{ sucursal, cargando, error, recargar, cambiar, guardar }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ sucursal, cargando, error, recargar, cambiar, pendiente, guardar }}>{children}</Ctx.Provider>;
 }

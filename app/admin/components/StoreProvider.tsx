@@ -6,6 +6,7 @@ import type { AdminState, AdminProduct, AdminEtiqueta, Testimonial, CambioTestim
 import { esCategoriaImpasto } from "@/lib/categorias";
 import { adaptOrder } from "@/lib/adapt-order";
 import { nombreMedio } from "@/lib/medio-pago";
+import { etiquetaEstado, numeroCorto } from "@/lib/admin-pedidos";
 import { loadAdminCustomers } from "@/lib/adapt-customer";
 import { confirmAdminMutation } from "@/lib/stabilization";
 import {
@@ -483,7 +484,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       } else {
         return false;
       }
-      showToast(`Pedido ${prevOrder?.id ?? ""} → ${estado}`);
+      showToast(prevOrder ? `Pedido ${numeroCorto(prevOrder)} → ${etiquetaEstado(estado, prevOrder.mode)}` : "Estado actualizado");
       return true;
     },
 

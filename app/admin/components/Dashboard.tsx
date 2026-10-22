@@ -37,7 +37,7 @@ export function Dashboard() {
     <>
       <div className="kpi-grid">
         <div className="kpi"><div className="kpi-label">Ventas esta noche</div><div className="kpi-value">{fmt(noche.actual)}</div>
-          <div className={`kpi-delta ${noche.pct === null ? "" : noche.pct >= 0 ? "up" : "down"}`}>{noche.pct === null ? "Sin semana previa" : `${noche.pct >= 0 ? "↑" : "↓"} ${Math.abs(noche.pct)}% vs la semana pasada`}</div></div>
+          <div className={`kpi-delta ${noche.pct === null || noche.actual === 0 ? "" : noche.pct >= 0 ? "up" : "down"}`}>{noche.pct === null ? "Sin semana previa" : noche.actual === 0 ? "Sin ventas todavía" : `${noche.pct >= 0 ? "↑" : "↓"} ${Math.abs(noche.pct)}% vs la semana pasada`}</div></div>
         <div className="kpi"><div className="kpi-label">Pedidos esta noche</div><div className="kpi-value">{noche.pedidos}</div><div className="kpi-delta">{noche.web} web · {noche.pos} POS</div></div>
         <div className="kpi"><div className="kpi-label">Ticket promedio</div><div className="kpi-value">{fmt(ticket)}</div><div className="kpi-delta">últimos 30 días</div></div>
         <div className="kpi"><div className="kpi-label">Activos ahora</div><div className="kpi-value">{activos.length}</div><div className={`kpi-delta ${sinCobrar ? "warn" : ""}`}>{sinCobrar ? `${sinCobrar} con pago pendiente` : "Al día"}</div></div>

@@ -130,6 +130,7 @@ a{ color:inherit; text-decoration:none; }
 .panel-head .panel-head-spacer{ flex:1; }
 .panel-body{ padding:14px; }
 .panel-body.no-pad{ padding:0; }
+.co-error{ padding:10px 12px; border-radius:8px; background:var(--a-danger-soft); color:var(--a-danger); font-size:13px; }
 
 /* ============ KPI ============ */
 .kpi-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:12px; }

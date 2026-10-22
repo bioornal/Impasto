@@ -20,7 +20,13 @@ export function BusquedaGlobal({ onElegir }: { onElegir: (r: ResultadoBusqueda) 
 
   useEffect(() => {
     const atajo = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key?.toLowerCase() === "k") { e.preventDefault(); input.current?.focus(); setAbierto(true); }
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key?.toLowerCase() === "k") {
+        // Con un modal abierto (ej. editar un producto con cambios sin guardar) el atajo no hace nada: abrir la búsqueda lo descartaría.
+        if (document.querySelector(".modal-bg")) return;
+        e.preventDefault();
+        input.current?.focus();
+        setAbierto(true);
+      }
     };
     window.addEventListener("keydown", atajo);
     return () => window.removeEventListener("keydown", atajo);

@@ -168,7 +168,7 @@ export function Products({ abrirId = null }: { abrirId?: string | null }) {
                   <tr key={p.id}>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                        <span className="row-thumb"><ProductThumb item={p} /></span>
+                        <span className="row-thumb"><ProductThumb item={p} size={32} /></span>
                         <div style={{ minWidth: 0 }}>
                           <div className="tbl-strong" style={{ whiteSpace: "nowrap" }}>{p.nombre}</div>
                           {p.desc && <div className="tbl-muted" style={{ maxWidth: 320, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.desc}</div>}

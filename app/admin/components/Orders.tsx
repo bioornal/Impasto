@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useStore } from "./StoreProvider";
 import { Icon } from "./Icons";
 import type { AdminOrder } from "./types";
@@ -9,6 +9,15 @@ import { configurePrinter, getPrinterSelection, imprimirCopias, mensajeCopias, n
 import { esActivo, numeroCorto } from "@/lib/admin-pedidos";
 import { OrdersTable } from "./OrdersTable";
 import { OrderDetail } from "./OrderDetail";
+
+// Estado de impresión a nivel módulo: el Arranque y Pedidos montan cada uno su <Orders>, pero son la misma pestaña del
+// panel y la misma impresora. Si fuera por instancia, un reintento desde la otra vista reimprimiría lo que ya salió,
+// y dos impresiones podrían correr a la vez. Copias que no salieron, por pedido, con sus claves: reintentar no duplica.
+const failedAttempts = new Map<string, PrintJob[]>();
+const sentOrders = new Set<string>();
+let impresionEnCurso = false;
+const tomarImpresion = () => { if (impresionEnCurso) return false; impresionEnCurso = true; return true; };
+const soltarImpresion = () => { impresionEnCurso = false; };
 
 const FILTERS: [string, string][] = [["activos","Activos"],["nuevo","Nuevos"],["preparando","Preparando"],["en-camino","En camino"],["entregado","Entregados"],["cancelado","Cancelados"],["todos","Todos"]];
 
@@ -34,31 +43,26 @@ export function Orders({ soloActivos = false, onVerTodos, abrir = null }: { solo
   const [seleccionando, setSeleccionando] = useState(false);
   const [menu, setMenu] = useState(false);
   const [avanzando, setAvanzando] = useState<Set<string>>(new Set());
-  const printingRef = useRef(false);
-  // Copias que no salieron, por pedido, con sus claves: reintentar no duplica lo que ya salió.
-  const failedAttempts = useRef(new Map<string, PrintJob[]>());
-  const sentOrders = useRef(new Set<string>());
   useEffect(() => { void getPrinterSelection().then(setPrinterSelection).catch(() => setPrinterSelection(null)); }, []);
 
   async function printOrder(order: AdminOrder, copias: readonly PrintCopy[] = ['cocina', 'cliente']) {
-    if (printingRef.current) return;
-    printingRef.current = true;
+    if (!tomarImpresion()) return;
     setPrinting(true);
     try {
-      const previas = failedAttempts.current.get(order._dbId) ?? [];
+      const previas = failedAttempts.get(order._dbId) ?? [];
       const reintento = previas.filter(job => copias.includes(job.copy ?? 'cocina'));
-      const jobs = reintento.length ? reintento : adminPrintJobs(order, newAttemptId(), sentOrders.current.has(order._dbId), copias);
+      const jobs = reintento.length ? reintento : adminPrintJobs(order, newAttemptId(), sentOrders.has(order._dbId), copias);
       const resultado = await imprimirCopias(jobs);
       const quedan = [...previas.filter(job => !jobs.includes(job)), ...resultado.pendientes];
-      if (quedan.length) failedAttempts.current.set(order._dbId, quedan);
-      else failedAttempts.current.delete(order._dbId);
-      if (resultado.pendientes.length < jobs.length) sentOrders.current.add(order._dbId);
+      if (quedan.length) failedAttempts.set(order._dbId, quedan);
+      else failedAttempts.delete(order._dbId);
+      if (resultado.pendientes.length < jobs.length) sentOrders.add(order._dbId);
       const mensaje = mensajeCopias(jobs, resultado);
       setPrintState({ orderId: order._dbId, message: mensaje.ok ? `${mensaje.texto} Revisá el papel para confirmar la impresión.` : mensaje.texto, error: !mensaje.ok });
     } catch (error) {
       setPrintState({ orderId: order._dbId, message: error instanceof Error ? error.message : 'No se pudo enviar la comanda.', error: true });
     } finally {
-      printingRef.current = false;
+      soltarImpresion();
       setPrinting(false);
     }
   }
@@ -146,7 +150,7 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
               <div className="toolbar">
                 <div className="seg">
                   {FILTERS.map(([k, l]) => (
-                    <button key={k} className={filter === k ? "active" : ""} onClick={() => setFilter(k)}>
+                    <button key={k} className={filter === k ? "active" : ""} onClick={() => { setFilter(k); setMarcados(new Set()); }}>
                       {l}<span className="count">{counts[k]}</span>
                     </button>
                   ))}
@@ -155,7 +159,7 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
               <div className="panel-head-spacer" />
               <div className="search-input">
                 <Icon.Search />
-                <input placeholder="Buscar N° de orden o cliente…" value={q} onChange={e => setQ(e.target.value)} />
+                <input placeholder="Buscar N° de orden o cliente…" value={q} onChange={e => { setQ(e.target.value); setMarcados(new Set()); }} />
               </div>
               <div className="menu-mas">
                 <button className="btn btn-ghost btn-icon" aria-label="Más opciones" aria-expanded={menu} onClick={() => setMenu(m => !m)}><Icon.More /></button>
