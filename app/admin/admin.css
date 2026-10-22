@@ -717,8 +717,16 @@ a{ color:inherit; text-decoration:none; }
 
 /* ============ CUPOS DE LA NOCHE ============ */
 .cupos-ayuda{ color:var(--a-muted); font-size:13px; line-height:1.5; padding-top:0; }
-.cupos-tbl tbody tr.cupo-poco{ background:var(--a-warn-soft); }
-.cupos-tbl tbody tr.cupo-agotado{ background:var(--a-danger-soft); }
+/* Celdas compactas de Cupos (Arranque): nombre a la izquierda, − n + a la derecha, en una línea */
+.cupos-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px; padding:12px; }
+.cupo-celda{ display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; padding:6px 10px; border:1px solid var(--a-line); border-radius:8px; background:var(--a-surface); }
+.cupo-celda.cupo-poco{ background:var(--a-warn-soft); }
+.cupo-celda.cupo-agotado{ background:var(--a-danger-soft); }
+.cupo-nombre{ display:flex; flex-direction:column; min-width:0; flex:1; }
+.cupo-nombre b{ font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cupo-nombre small{ font-size:11px; }
+.cupo-celda .cupo-ctrl{ flex-wrap:nowrap; flex:none; }
+.cupo-celda .cupo-ctrl small{ display:none; }
 /* − [número] + de "quedan esta noche" (CupoControl.tsx): tabla de Productos y Cupos */
 .cupo-ctrl{ display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap; justify-content:flex-end; }
 .cupo-ctrl button{
@@ -746,5 +754,5 @@ a{ color:inherit; text-decoration:none; }
 
 /* ============ ARRANQUE ============ */
 .arranque{ display:flex; flex-direction:column; gap:12px; }
-.arranque-grid{ display:grid; grid-template-columns:minmax(280px, 1fr) 2fr; gap:12px; align-items:start; }
-@media (max-width:1100px){ .arranque-grid{ grid-template-columns:1fr; } }
+.arranque > *{ min-width:0; }
+.arranque .tbl-wrap{ max-width:100%; }

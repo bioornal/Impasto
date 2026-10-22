@@ -13,7 +13,7 @@ function Motivo({ valor, placeholder, onGuardar }: { valor: string; placeholder:
   const guardar = () => { if (texto.trim() !== valor.trim()) onGuardar(texto.trim()); };
   return (
     <div className="field int-motivo">
-      <label>Lo que ve el cliente</label>
+      <label>Motivo que ve el cliente</label>
       <input value={texto} placeholder={placeholder} onChange={(e) => setTexto(e.target.value)} onBlur={guardar} onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} />
     </div>
   );
@@ -48,27 +48,25 @@ export function Arranque({ onVerPedidos }: { onVerPedidos: () => void }) {
             onChange={(v) => void cambiar("ventas_activas", v, v ? "Venta prendida" : "Venta pausada")} />
           <Interruptor checked={delivery} label="Delivery" detalle={delivery ? "Haciendo envíos" : "Solo retiro"}
             onChange={(v) => void cambiar("delivery_activo", v, v ? "Delivery prendido" : "Delivery pausado")} />
-          <Interruptor checked={napoletana} label="Masa napoletana" detalle={napoletana ? "Disponible" : "Agotada"} disabled={napoletana && !molde}
+          <Interruptor checked={napoletana} label="Masa napoletana" detalle={napoletana ? (molde ? "Disponible" : "Tiene que quedar una masa") : "Agotada"} disabled={napoletana && !molde}
             title={napoletana && !molde ? "La al molde está agotada: tiene que quedar al menos una masa" : undefined}
             onChange={(v) => void cambiar("masa_napoletana_activa", v, v ? "Napoletana disponible" : "Napoletana agotada")} />
-          <Interruptor checked={molde} label="Masa al molde" detalle={molde ? "Disponible" : "Agotada"} disabled={molde && !napoletana}
+          <Interruptor checked={molde} label="Masa al molde" detalle={molde ? (napoletana ? "Disponible" : "Tiene que quedar una masa") : "Agotada"} disabled={molde && !napoletana}
             title={molde && !napoletana ? "La napoletana está agotada: tiene que quedar al menos una masa" : undefined}
             onChange={(v) => void cambiar("masa_molde_activa", v, v ? "Al molde disponible" : "Al molde agotada")} />
           {!sucursal.ventas_activas && (
-            <Motivo key="cierre" valor={sucursal.mensaje_cierre || ""} placeholder="Cerramos por vacaciones hasta el 5 de enero"
+            <Motivo key={"cierre:" + (sucursal.mensaje_cierre || "")}valor={sucursal.mensaje_cierre || ""} placeholder="Cerramos por vacaciones hasta el 5 de enero"
               onGuardar={(t) => void cambiar("mensaje_cierre", t, "Motivo guardado")} />
           )}
           {!delivery && (
-            <Motivo key="delivery" valor={sucursal.mensaje_delivery || ""} placeholder={MENSAJE_DELIVERY_DEFAULT}
+            <Motivo key={"delivery:" + (sucursal.mensaje_delivery || "")}valor={sucursal.mensaje_delivery || ""} placeholder={MENSAJE_DELIVERY_DEFAULT}
               onGuardar={(t) => void cambiar("mensaje_delivery", t, "Motivo guardado")} />
           )}
           {avisoMasas && <div className="int-motivo tbl-muted">El cliente ve: “{avisoMasas}”</div>}
         </div>
       </section>
-      <div className="arranque-grid">
-        <Cupos />
-        <section className="panel"><Orders soloActivos onVerTodos={onVerPedidos} /></section>
-      </div>
+      <section className="panel"><Orders soloActivos onVerTodos={onVerPedidos} /></section>
+      <Cupos />
     </div>
   );
 }

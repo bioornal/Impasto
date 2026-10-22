@@ -1,26 +1,28 @@
 "use client";
 import { useStore } from "./StoreProvider";
 import { CupoControl, useCuposNoche } from "./CupoControl";
+import { quedanPizzas } from "@/lib/cupos";
 import { etiquetaDia } from "@/lib/resumen-diario";
 
 /**
  * Cupos de la noche (pedido del dueño, 18/10/2026): cuántas pizzas de cada sabor quedan para vender
  * esta noche. Todas arrancan en 100 (sin límite) y el dueño baja las que no tiene; cada venta, de la
  * web o del POS, descuenta sola. Controla la base. A las 06:00 todo vuelve a 100.
- * El mismo control está en la tabla de Productos.
+ * El mismo control está en la tabla de Productos. Solo lo usa el Arranque de la noche.
  */
 export function Cupos() {
   const { state } = useStore();
   const cupos = useCuposNoche();
-  // Agotadas primero, después las de 2 o menos, después el resto. `cupos` es un objeto nuevo en cada render
-  // (lo arma useCuposNoche), así que un useMemo con `cupos` no ahorraría nada: se ordena en cada render (~15 pizzas).
-  const prioridad = (id: string) => { const n = cupos.quedan(id); return n === 0 ? 0 : n <= 2 ? 1 : 2; };
+  // Agotadas primero, después las de 2 o menos, después el resto. Se ordena por lo GUARDADO (no por lo que
+  // el dueño acaba de tocar): si no, la fila se mueve bajo el dedo y el toque siguiente cae en otra pizza.
+  // Sin fila de cupo = sin límite = al final. Se ordena en cada render (~15 pizzas).
+  const prioridad = (id: string) => { const n = quedanPizzas(cupos.fila(id)); return n === 0 ? 0 : n <= 2 ? 1 : 2; };
   const pizzas = state.products
     .filter((p) => /pizz/i.test(p.categoria) && !p.archivado)
     .sort((a, b) => prioridad(a._dbId) - prioridad(b._dbId) || a.nombre.localeCompare(b.nombre));
 
   return (
-    <div className="panel">
+    <section className="panel">
       <div className="panel-head">
         <h3>Cupos {cupos.noche ? `· ${etiquetaDia(cupos.noche)}` : "de esta noche"}</h3>
         <div className="panel-head-spacer" />
@@ -30,23 +32,23 @@ export function Cupos() {
         Arrancan en 100 (sin límite). Bajá las que tenés pocas; cada venta descuenta sola y a las 06:00 vuelve todo a 100.
       </div>
       {cupos.error && <div className="panel-body" style={{ color: "var(--a-danger)", fontSize: 13 }}>{cupos.error}</div>}
-      <div className="panel-body no-pad tbl-wrap">
-        <table className="tbl cupos-tbl">
-          <thead><tr><th>Pizza</th><th className="right">Quedan esta noche</th></tr></thead>
-          <tbody>
-            {pizzas.map((p) => (
-              <tr key={p._dbId} className={cupos.quedan(p._dbId) === 0 ? "cupo-agotado" : cupos.quedan(p._dbId) <= 2 ? "cupo-poco" : ""}>
-                <td className="tbl-strong">
-                  {p.nombre}
-                  {!p.active && <span className="tbl-muted" style={{ fontSize: 12 }}> · marcada agotada en Productos</span>}
-                </td>
-                <td className="right"><CupoControl productoId={p._dbId} nombre={p.nombre} cupos={cupos} /></td>
-              </tr>
-            ))}
-            {pizzas.length === 0 && <tr><td colSpan={2} style={{ color: "var(--a-muted)" }}>No hay pizzas en la carta.</td></tr>}
-          </tbody>
-        </table>
+      <div className="cupos-grid">
+        {pizzas.map((p) => {
+          const n = cupos.quedan(p._dbId);
+          const fila = cupos.fila(p._dbId);
+          const nota = !p.active ? "Marcada agotada en Productos" : n === 0 ? "Agotada" : fila && fila.vendidas_mitades > 0 ? `Vendidas ${(fila.vendidas_mitades / 2).toLocaleString("es-AR", { maximumFractionDigits: 1 })}` : "";
+          return (
+            <div key={p._dbId} className={`cupo-celda ${n === 0 ? "cupo-agotado" : n <= 2 ? "cupo-poco" : ""}`}>
+              <div className="cupo-nombre">
+                <b title={p.nombre}>{p.nombre}</b>
+                {nota && <small className="tbl-muted">{nota}</small>}
+              </div>
+              <CupoControl productoId={p._dbId} nombre={p.nombre} cupos={cupos} />
+            </div>
+          );
+        })}
+        {pizzas.length === 0 && <div style={{ color: "var(--a-muted)" }}>No hay pizzas en la carta.</div>}
       </div>
-    </div>
+    </section>
   );
 }
