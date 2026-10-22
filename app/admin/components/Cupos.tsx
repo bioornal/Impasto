@@ -1,5 +1,4 @@
 "use client";
-import { useMemo } from "react";
 import { useStore } from "./StoreProvider";
 import { CupoControl, useCuposNoche } from "./CupoControl";
 import { etiquetaDia } from "@/lib/resumen-diario";
@@ -13,24 +12,22 @@ import { etiquetaDia } from "@/lib/resumen-diario";
 export function Cupos() {
   const { state } = useStore();
   const cupos = useCuposNoche();
-  const pizzas = useMemo(
-    () => state.products
-      .filter((p) => /pizz/i.test(p.categoria) && !p.archivado)
-      .sort((a, b) => a.nombre.localeCompare(b.nombre)),
-    [state.products],
-  );
+  // Agotadas primero, después las de 2 o menos, después el resto. `cupos` es un objeto nuevo en cada render
+  // (lo arma useCuposNoche), así que un useMemo con `cupos` no ahorraría nada: se ordena en cada render (~15 pizzas).
+  const prioridad = (id: string) => { const n = cupos.quedan(id); return n === 0 ? 0 : n <= 2 ? 1 : 2; };
+  const pizzas = state.products
+    .filter((p) => /pizz/i.test(p.categoria) && !p.archivado)
+    .sort((a, b) => prioridad(a._dbId) - prioridad(b._dbId) || a.nombre.localeCompare(b.nombre));
 
   return (
     <div className="panel">
       <div className="panel-head">
-        <h3>Quedan para vender {cupos.noche ? `la noche del ${etiquetaDia(cupos.noche)}` : "esta noche"}</h3>
+        <h3>Cupos {cupos.noche ? `· ${etiquetaDia(cupos.noche)}` : "de esta noche"}</h3>
         <div className="panel-head-spacer" />
         <button className="btn btn-ghost" onClick={cupos.recargar}>Actualizar</button>
       </div>
       <div className="panel-body cupos-ayuda">
-        Todas las pizzas arrancan la noche en <b>100</b> (sin límite). Bajá con − o escribí cuántas te quedan de las
-        que tenés pocas (de a media: 1,5). Cada venta de la web o del POS descuenta sola, y en 0 la pizza sale
-        <b> Agotado</b>. Si un pedido se cancela, vuelve. A las 06:00 todo vuelve a 100.
+        Arrancan en 100 (sin límite). Bajá las que tenés pocas; cada venta descuenta sola y a las 06:00 vuelve todo a 100.
       </div>
       {cupos.error && <div className="panel-body" style={{ color: "var(--a-danger)", fontSize: 13 }}>{cupos.error}</div>}
       <div className="panel-body no-pad tbl-wrap">
@@ -38,7 +35,7 @@ export function Cupos() {
           <thead><tr><th>Pizza</th><th className="right">Quedan esta noche</th></tr></thead>
           <tbody>
             {pizzas.map((p) => (
-              <tr key={p._dbId} className={cupos.quedan(p._dbId) === 0 ? "cupo-agotado" : ""}>
+              <tr key={p._dbId} className={cupos.quedan(p._dbId) === 0 ? "cupo-agotado" : cupos.quedan(p._dbId) <= 2 ? "cupo-poco" : ""}>
                 <td className="tbl-strong">
                   {p.nombre}
                   {!p.active && <span className="tbl-muted" style={{ fontSize: 12 }}> · marcada agotada en Productos</span>}

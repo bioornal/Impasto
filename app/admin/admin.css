@@ -717,6 +717,7 @@ a{ color:inherit; text-decoration:none; }
 
 /* ============ CUPOS DE LA NOCHE ============ */
 .cupos-ayuda{ color:var(--a-muted); font-size:13px; line-height:1.5; padding-top:0; }
+.cupos-tbl tbody tr.cupo-poco{ background:var(--a-warn-soft); }
 .cupos-tbl tbody tr.cupo-agotado{ background:var(--a-danger-soft); }
 /* − [número] + de "quedan esta noche" (CupoControl.tsx): tabla de Productos y Cupos */
 .cupo-ctrl{ display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap; justify-content:flex-end; }
@@ -742,3 +743,8 @@ a{ color:inherit; text-decoration:none; }
 .medio-select:disabled{ opacity:.5; cursor:wait; }
 .medio-aviso{ display:block; margin-top:3px; font-size:11px; color:var(--a-warn); font-weight:600; }
 .pedidos-noche td{ white-space:nowrap; }
+
+/* ============ ARRANQUE ============ */
+.arranque{ display:flex; flex-direction:column; gap:12px; }
+.arranque-grid{ display:grid; grid-template-columns:minmax(280px, 1fr) 2fr; gap:12px; align-items:start; }
+@media (max-width:1100px){ .arranque-grid{ grid-template-columns:1fr; } }

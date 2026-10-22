@@ -12,7 +12,7 @@ import { OrderDetail } from "./OrderDetail";
 
 const FILTERS: [string, string][] = [["activos","Activos"],["nuevo","Nuevos"],["preparando","Preparando"],["en-camino","En camino"],["entregado","Entregados"],["cancelado","Cancelados"],["todos","Todos"]];
 
-export function Orders({ soloActivos = false }: { soloActivos?: boolean }) {
+export function Orders({ soloActivos = false, onVerTodos }: { soloActivos?: boolean; onVerTodos?: () => void }) {
   const { state, updateOrderStatus, updateOrderPayment, deleteOrders, refundOrder, recordManualRefund, reload } = useStore();
   const [filter, setFilter] = useState("activos");
   const [q, setQ] = useState("");
@@ -124,12 +124,15 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
   ["nuevo","preparando","en-camino","entregado","cancelado"].forEach(k => { counts[k] = state.orders.filter(o => o.estado === k).length; });
   counts.activos = state.orders.filter(esActivo).length;
 
-  return (
-    <>
-      <div className="panel">
+  const contenido = (
+      <>
         <div className="panel-head">
           {soloActivos ? (
-            <h3>Pedidos activos</h3>
+            <>
+              <h3>Pedidos activos</h3>
+              <div className="panel-head-spacer" />
+              {onVerTodos && <button className="btn btn-ghost btn-sm" onClick={onVerTodos}>Ver todos los pedidos</button>}
+            </>
           ) : (
             <>
               <div className="toolbar">
@@ -207,7 +210,13 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
           />
           {filtered.length === 0 && <div className="empty"><b>{soloActivos || filter === "activos" ? "No hay pedidos activos" : "Sin pedidos"}</b><div>{soloActivos || filter === "activos" ? "Los pedidos nuevos aparecen acá solos." : "No hay pedidos con ese filtro."}</div></div>}
         </div>
-      </div>
+      </>
+  );
+
+  return (
+    <>
+      {/* Con soloActivos el Arranque ya lo envuelve en su propio panel: no anidar paneles. */}
+      {soloActivos ? <>{contenido}</> : <div className="panel">{contenido}</div>}
 
       {selected && (
         <OrderDetail

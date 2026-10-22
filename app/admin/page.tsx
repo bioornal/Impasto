@@ -13,7 +13,7 @@ import { Customers } from "./components/Customers";
 import { Testimonials } from "./components/Testimonials";
 import { Settings } from "./components/Settings";
 import { ResumenDiario } from "./components/ResumenDiario";
-import { Cupos } from "./components/Cupos";
+import { Arranque } from "./components/Arranque";
 import { seccionInicial, type SeccionAdmin } from "@/lib/inicio-admin";
 
 const CLAVE_SECCION = "impasto_admin_seccion";
@@ -59,7 +59,7 @@ function AdminApp() {
         <Topbar title={title} subtitle={subtitle} onMenu={() => setSidebarOpen(true)} onEstado={() => irA("arranque")} />
         <div className="content">
           {page === null && <div className="text-muted">Cargando…</div>}
-          {page === "arranque"      && <Cupos />}
+          {page === "arranque"      && <Arranque onVerPedidos={() => irA("pedidos")} />}
           {page === "pedidos"       && <><NotificationsRecovery /><Orders /></>}
           {page === "resumen"       && <ResumenDiario />}
           {page === "productos"     && <Products />}
