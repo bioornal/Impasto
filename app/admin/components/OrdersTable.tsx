@@ -16,11 +16,19 @@ const hace = (iso: string) => {
 const medio = (o: AdminOrder) => (o.pago === "mercadopago" ? "Mercado Pago" : o.pago.charAt(0).toUpperCase() + o.pago.slice(1));
 
 /** El teléfono en la lista: abre el chat de WhatsApp sin abrir el detalle. */
-export function TelCliente({ order }: { order: AdminOrder }) {
+export function TelCliente({ order, soloIcono = false }: { order: AdminOrder; soloIcono?: boolean }) {
   const numero = whatsappDeCliente(order.tel);
-  if (!numero) return <span className="tbl-muted">{order.tel}</span>;
+  if (!numero) return soloIcono ? null : <span className="tbl-muted">{order.tel}</span>;
+  const href = enlaceWhatsapp(numero, mensajeAlCliente(order.cliente, order.id));
+  if (soloIcono) {
+    return (
+      <a className="tbl-wa" href={href} target="_blank" rel="noreferrer" title={`${order.tel} · escribirle a ${order.cliente} por WhatsApp`} aria-label={`WhatsApp de ${order.cliente}: ${order.tel}`} onClick={(e) => e.stopPropagation()}>
+        <Icon.Whatsapp />
+      </a>
+    );
+  }
   return (
-    <a className="tbl-muted tbl-wa" href={enlaceWhatsapp(numero, mensajeAlCliente(order.cliente, order.id))} target="_blank" rel="noreferrer" title={`Escribirle a ${order.cliente} por WhatsApp`} onClick={(e) => e.stopPropagation()}>
+    <a className="tbl-muted tbl-wa" href={href} target="_blank" rel="noreferrer" title={`Escribirle a ${order.cliente} por WhatsApp`} onClick={(e) => e.stopPropagation()}>
       <Icon.Whatsapp /> {order.tel}
     </a>
   );
@@ -43,6 +51,8 @@ interface OrdersTableProps {
   onAvanzar: (o: AdminOrder, estado: string) => void;
   onImprimir: (o: AdminOrder) => void;
   imprimiendo: boolean;
+  /** Pedidos con un cambio de estado en curso: su "→" queda deshabilitado (evita el doble avance). */
+  avanzando: Set<string>;
   seleccionando: boolean;
   marcados: Set<string>;
   onMarcar: (id: string, marcado: boolean) => void;
@@ -50,14 +60,14 @@ interface OrdersTableProps {
 }
 
 /** Una fila por pedido (~44 px); en el celular, una tarjeta. Avanzar e imprimir sin abrir el detalle. */
-export function OrdersTable({ pedidos, onAbrir, onAvanzar, onImprimir, imprimiendo, seleccionando, marcados, onMarcar, onMarcarTodos }: OrdersTableProps) {
+export function OrdersTable({ pedidos, onAbrir, onAvanzar, onImprimir, imprimiendo, avanzando, seleccionando, marcados, onMarcar, onMarcarTodos }: OrdersTableProps) {
   const acciones = (o: AdminOrder, ancho = false) => {
     const sig = siguienteEstado(o);
     const cocina = esPedidoParaCocina(o);
     return (
       <>
         {sig && (
-          <button className="btn-next" style={ancho ? { flex: 1, justifyContent: "center" } : undefined} onClick={(e) => { e.stopPropagation(); onAvanzar(o, sig.estado); }}>
+          <button className="btn-next" disabled={avanzando.has(o._dbId)} style={ancho ? { flex: 1, justifyContent: "center" } : undefined} onClick={(e) => { e.stopPropagation(); onAvanzar(o, sig.estado); }}>
             → {sig.etiqueta}
           </button>
         )}
@@ -86,8 +96,8 @@ export function OrdersTable({ pedidos, onAbrir, onAvanzar, onImprimir, imprimien
                 <tr key={o._dbId} className={o.pagoEstado === "pendiente" && o.estado !== "cancelado" ? "order-payment-pending" : undefined} style={{ cursor: "pointer" }} onClick={() => onAbrir(o)}>
                   {seleccionando && <td onClick={(e) => e.stopPropagation()}><input type="checkbox" aria-label={`Seleccionar el pedido ${numeroCorto(o)}`} checked={marcados.has(o._dbId)} onChange={(e) => onMarcar(o._dbId, e.target.checked)} /></td>}
                   <td className="tbl-mono tbl-strong nowrap">{numeroCorto(o)}</td>
-                  <td className="nowrap"><span className="tbl-strong">{o.cliente}</span> <span className="tbl-muted">· {hace(o.fecha)}</span><div><TelCliente order={o} /></div></td>
-                  <td className="ellipsis" style={{ width: "32%" }} title={o.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}>{items.texto}{items.resto > 0 && <span className="tbl-muted"> +{items.resto}</span>}</td>
+                  <td className="nowrap"><span className="tbl-strong">{o.cliente}</span> <TelCliente order={o} soloIcono /> <span className="tbl-muted">· {hace(o.fecha)}</span></td>
+                  <td className="ord-items" title={o.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}>{items.texto}{items.resto > 0 && <span className="tbl-muted"> +{items.resto}</span>}</td>
                   <td className="nowrap"><span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>{o.mode === "delivery" ? <Icon.Truck /> : <Icon.Shop />}{o.mode === "delivery" ? "Delivery" : "Retiro"}</span></td>
                   <td className="nowrap">{medio(o)}<AvisoPago o={o} /></td>
                   <td className="right tbl-price nowrap">{fmt(o.total)}</td>

@@ -25,6 +25,7 @@ export function Orders({ soloActivos = false }: { soloActivos?: boolean }) {
   const [eliminando, setEliminando] = useState(false);
   const [seleccionando, setSeleccionando] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [avanzando, setAvanzando] = useState<Set<string>>(new Set());
   const printingRef = useRef(false);
   // Copias que no salieron, por pedido, con sus claves: reintentar no duplica lo que ya salió.
   const failedAttempts = useRef(new Map<string, PrintJob[]>());
@@ -76,6 +77,17 @@ export function Orders({ soloActivos = false }: { soloActivos?: boolean }) {
       try { setPrinterSelection(await getPrinterSelection()); } catch { /* Keep the last confirmed choice. */ }
       setPrintState({ orderId: '', message: error instanceof Error ? error.message : 'No se pudo guardar la impresora.', error: true });
     } finally { setPrinterBusy(false); }
+  }
+
+  /** "→" de la fila: un solo cambio por pedido a la vez, así un doble clic no salta dos estados. */
+  async function avanzar(order: AdminOrder, estado: string) {
+    if (avanzando.has(order._dbId)) return;
+    setAvanzando(prev => new Set(prev).add(order._dbId));
+    try {
+      await updateOrderStatus(order._dbId, estado);
+    } finally {
+      setAvanzando(prev => { const sig = new Set(prev); sig.delete(order._dbId); return sig; });
+    }
   }
 
   /** Irreversible: pide confirmación con la cantidad y avisa cuáles no se pudieron eliminar. */
@@ -184,9 +196,10 @@ Se borra de la base de datos y de las ventas y ganancias. No se puede deshacer.`
           <OrdersTable
             pedidos={filtered}
             onAbrir={setSelected}
-            onAvanzar={(o, estado) => void updateOrderStatus(o._dbId, estado)}
+            onAvanzar={(o, estado) => void avanzar(o, estado)}
             onImprimir={(o) => void printOrder(o)}
             imprimiendo={printing}
+            avanzando={avanzando}
             seleccionando={seleccionando && !soloActivos}
             marcados={marcados}
             onMarcar={(id, marcado) => setMarcados(prev => { const sig = new Set(prev); if (marcado) sig.add(id); else sig.delete(id); return sig; })}

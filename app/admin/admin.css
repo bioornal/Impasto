@@ -688,6 +688,7 @@ a{ color:inherit; text-decoration:none; }
 @media (max-width:560px){ .masas-fila{ grid-template-columns:80px 1fr; } .masas-fila > span{ grid-column:1 / -1; text-align:left; } }
 
 /* ============ PEDIDOS ============ */
+.tbl .ord-items{ min-width:180px; max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ord-cards{ display:none; }
 @media (max-width:760px){
   .ord-tabla{ display:none; }
