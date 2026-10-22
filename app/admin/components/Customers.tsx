@@ -66,15 +66,12 @@ export function Customers() {
                 {filtered.map(c => (
                   <tr key={c.id} style={{ cursor: "pointer" }} onClick={() => setSelected(c.id)}>
                     <td>
-                      <div className="flex" style={{ alignItems: "center", gap: 10 }}>
-                        <div className="avatar" style={{ background: "var(--a-bg-2)", color: "var(--a-ink)" }}>{c.nombre[0]}</div>
-                        <div className="tbl-strong">{c.nombre}</div>
-                      </div>
+                      <div className="tbl-strong" style={{ whiteSpace: "nowrap" }}>{c.nombre}</div>
                     </td>
-                    <td><div className="tbl-mono" style={{ fontSize: 12 }}>{c.tel}</div><div className="tbl-muted" style={{ fontSize: 12 }}>{c.email}</div></td>
-                    <td className="tbl-muted" style={{ textTransform: "capitalize" }}>{c.zona?.replace(/-/g, " ")}</td>
-                    <td className="tbl-muted">{c.notas || "—"}</td>
-                    <td className="right tbl-strong">{c.pedidos}{c.comprasSinImporte > 0 && <div className="tbl-muted" style={{ fontSize: 11 }}>{c.comprasSinImporte} sin importe documentado</div>}</td>
+                    <td className="nowrap"><span className="tbl-mono">{c.tel}</span>{c.email && <span className="tbl-muted"> · {c.email}</span>}</td>
+                    <td className="tbl-muted nowrap" style={{ textTransform: "capitalize" }}>{c.zona?.replace(/-/g, " ")}</td>
+                    <td className="tbl-muted ellipsis" style={{ width: "24%" }} title={c.notas}>{c.notas || "—"}</td>
+                    <td className="right tbl-strong" title={c.comprasSinImporte > 0 ? `${c.comprasSinImporte} sin importe documentado` : undefined}>{c.pedidos}{c.comprasSinImporte > 0 && <span className="tbl-muted">*</span>}</td>
                     <td className="right tbl-price">{fmt(c.total)}</td>
                     <td className="tbl-muted text-mono">{timeAgo(c.ultimo)}</td>
                     <td className="right"><button type="button" aria-label={`Ver contacto y compras de ${c.nombre}`} className="btn btn-icon btn-ghost" onClick={e => { e.stopPropagation(); setSelected(c.id); }}><Icon.Eye /></button></td>

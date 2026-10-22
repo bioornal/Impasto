@@ -5,7 +5,6 @@ import { Icon } from "./Icons";
 import { ProductThumb } from "./ProductThumb";
 import type { AdminProduct } from "./types";
 import { ordenarProductosAdmin } from "@/lib/orden-admin";
-import { CupoControl, useCuposNoche } from "./CupoControl";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 
@@ -110,24 +109,28 @@ function CeldaEtiquetas({ producto }: { producto: AdminProduct }) {
 
 export function Products() {
   const { state, updateProduct, createProduct, deleteProduct } = useStore();
-  const cupos = useCuposNoche();
   const [type, setType] = useState("todos");
+  // "En carta" (false) o "Dados de baja" (true): los archivados no se venden.
+  const [baja, setBaja] = useState(false);
   const [q, setQ] = useState("");
   const [edit, setEdit] = useState<AdminProduct | null>(null);
   const [creating, setCreating] = useState(false);
 
   const filtered = useMemo(() => {
     let list = ordenarProductosAdmin(state.products);
+    list = list.filter(p => !!p.archivado === baja);
     if (type !== "todos") list = list.filter(p => p.type === type);
     if (q.trim()) list = list.filter(p => p.nombre.toLowerCase().includes(q.toLowerCase()));
     return list;
-  }, [state.products, type, q]);
+  }, [state.products, baja, type, q]);
 
+  // Contadores de los tipos sobre la lista ya filtrada por En carta / Dados de baja.
+  const delGrupo = state.products.filter(p => !!p.archivado === baja);
   const counts = {
-    todos: state.products.length,
-    pizza: state.products.filter(p => p.type === "pizza").length,
-    empanada: state.products.filter(p => p.type === "empanada").length,
-    bebida: state.products.filter(p => p.type === "bebida").length,
+    todos: delGrupo.length,
+    pizza: delGrupo.filter(p => p.type === "pizza").length,
+    empanada: delGrupo.filter(p => p.type === "empanada").length,
+    bebida: delGrupo.filter(p => p.type === "bebida").length,
   };
 
   return (
@@ -141,6 +144,10 @@ export function Products() {
               <button className={type === "empanada" ? "active" : ""} onClick={() => setType("empanada")}>Empanadas<span className="count">{counts.empanada}</span></button>
               <button className={type === "bebida" ? "active" : ""} onClick={() => setType("bebida")}>Bebidas<span className="count">{counts.bebida}</span></button>
             </div>
+            <div className="seg">
+              <button className={!baja ? "active" : ""} onClick={() => setBaja(false)}>En carta</button>
+              <button className={baja ? "active" : ""} onClick={() => setBaja(true)}>Dados de baja<span className="count">{state.products.filter(p => p.archivado).length}</span></button>
+            </div>
           </div>
           <div className="panel-head-spacer" />
           <div className="search-input">
@@ -153,22 +160,23 @@ export function Products() {
           <div className="tbl-wrap">
             <table className="tbl">
               <thead>
-                <tr><th>Producto</th><th>Tipo</th><th>Etiquetas</th><th className="right">Precio</th><th className="right" title="Cuántas quedan para vender esta noche. Arranca en 100 (sin límite); bajá las que tenés pocas.">Quedan hoy</th><th>Disponibilidad</th><th></th></tr>
+                <tr><th>Producto</th><th>Tipo</th><th>Etiquetas</th><th className="right">Precio</th><th>Disponibilidad</th><th></th></tr>
               </thead>
               <tbody>
                 {filtered.map(p => (
                   <tr key={p.id}>
                     <td>
-                      <span className="row-thumb"><ProductThumb item={p} /></span>
-                      <span style={{ verticalAlign: "middle" }}>
-                        <div className="tbl-strong">{p.nombre}</div>
-                        {p.desc && <div className="tbl-muted" style={{ maxWidth: 360, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.desc}</div>}
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                        <span className="row-thumb"><ProductThumb item={p} /></span>
+                        <div style={{ minWidth: 0 }}>
+                          <div className="tbl-strong" style={{ whiteSpace: "nowrap" }}>{p.nombre}</div>
+                          {p.desc && <div className="tbl-muted" style={{ maxWidth: 320, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.desc}</div>}
+                        </div>
+                      </div>
                     </td>
-                    <td style={{ textTransform: "capitalize" }}>{p.type}</td>
+                    <td className="tbl-muted" style={{ textTransform: "capitalize" }}>{p.type}</td>
                     <td><CeldaEtiquetas producto={p} /></td>
                     <td className="right tbl-price">{fmt(p.precio || 0)}</td>
-                    <td className="right">{/pizz/i.test(p.categoria) ? <CupoControl productoId={p._dbId} nombre={p.nombre} cupos={cupos} /> : <span className="tbl-muted">—</span>}</td>
                     <td>
                       <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                         <div
@@ -176,21 +184,27 @@ export function Products() {
                           onClick={() => updateProduct(p.id, { active: !p.active })}
                           title={p.active ? "Disponible (clic para marcar como Agotado)" : "Agotado (clic para marcar como Disponible)"}
                         />
-                        <span style={{ fontSize: 11.5, fontWeight: 500, color: p.active ? "var(--a-accent)" : "var(--a-muted)" }}>
+                        <span style={{ fontSize: 11.5, fontWeight: 500, color: p.active ? "var(--a-success)" : "var(--a-muted)" }}>
                           {p.active ? "Disponible" : "Agotado"}
                         </span>
                       </div>
                     </td>
                     <td>
                       <div className="tbl-actions">
-                        <button className="btn btn-icon btn-ghost" onClick={() => setEdit(p)}><Icon.Edit /></button>
-                        <button className="btn btn-icon btn-ghost" onClick={() => { if (confirm("¿Eliminar " + p.nombre + "?")) deleteProduct(p.id); }}><Icon.Trash /></button>
+                        <button type="button" aria-label={`Editar ${p.nombre}`} className="btn btn-icon btn-ghost" onClick={() => setEdit(p)}><Icon.Edit /></button>
+                        <button type="button" aria-label={`Eliminar ${p.nombre}`} className="btn btn-icon btn-ghost" onClick={() => { if (confirm("¿Eliminar " + p.nombre + "?")) deleteProduct(p.id); }}><Icon.Trash /></button>
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {filtered.length === 0 && (
+              <div className="empty">
+                <b>{baja ? "No hay productos dados de baja" : "No hay productos en carta"}</b>
+                <div>{q.trim() || type !== "todos" ? "Ninguno coincide con el filtro o la búsqueda." : baja ? "Los productos que saques de la carta aparecen acá." : "Creá uno con “Nuevo producto”."}</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
