@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { StoreProvider } from "./components/StoreProvider";
+import { SucursalProvider } from "./components/SucursalProvider";
 import { Sidebar } from "./components/Sidebar";
 import { Topbar, Dashboard } from "./components/Dashboard";
 import { Orders } from "./components/Orders";
@@ -66,7 +67,9 @@ function AdminApp() {
 export default function AdminPage() {
   return (
     <StoreProvider>
-      <AdminApp />
+      <SucursalProvider>
+        <AdminApp />
+      </SucursalProvider>
     </StoreProvider>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/admin-auth";
+import { AdminSesion } from "./components/AdminSesion";
 import "./admin.css";
 
 export const metadata: Metadata = {
@@ -10,7 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  if (!await getCurrentAdmin()) redirect("/admin-login");
+  const admin = await getCurrentAdmin();
+  if (!admin) redirect("/admin-login");
   return (
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -19,7 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap"
         rel="stylesheet"
       />
-      {children}
+      <AdminSesion email={String(admin.email || "")}>{children}</AdminSesion>
     </>
   );
 }
