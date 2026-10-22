@@ -688,7 +688,9 @@ a{ color:inherit; text-decoration:none; }
 @media (max-width:560px){ .masas-fila{ grid-template-columns:80px 1fr; } .masas-fila > span{ grid-column:1 / -1; text-align:left; } }
 
 /* ============ PEDIDOS ============ */
-.tbl .ord-items{ min-width:180px; max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tbl .ord-items{ min-width:140px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tbl .ord-nombre{ display:inline-block; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:bottom; }
+@media (max-width:1280px){ .tbl .ord-col-items{ display:none; } }
 .ord-cards{ display:none; }
 @media (max-width:760px){
   .ord-tabla{ display:none; }

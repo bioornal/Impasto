@@ -86,19 +86,19 @@ export function OrdersTable({ pedidos, onAbrir, onAvanzar, onImprimir, imprimien
           <thead>
             <tr>
               {seleccionando && <th style={{ width: 32 }}><input type="checkbox" aria-label="Seleccionar todos" checked={pedidos.length > 0 && pedidos.every((o) => marcados.has(o._dbId))} onChange={(e) => onMarcarTodos(e.target.checked)} /></th>}
-              <th>#</th><th>Cliente</th><th>Pedido</th><th>Entrega</th><th>Pago</th><th className="right">Total</th><th>Estado</th><th className="right">Acciones</th>
+              <th>#</th><th>Cliente</th><th className="ord-col-items">Pedido</th><th>Entrega</th><th>Pago</th><th className="right">Total</th><th>Estado</th><th className="right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {pedidos.map((o) => {
               const items = resumenItems(o.items);
               return (
-                <tr key={o._dbId} className={o.pagoEstado === "pendiente" && o.estado !== "cancelado" ? "order-payment-pending" : undefined} style={{ cursor: "pointer" }} onClick={() => onAbrir(o)}>
+                <tr key={o._dbId} className={o.pagoEstado === "pendiente" && o.estado !== "cancelado" ? "order-payment-pending" : undefined} style={{ cursor: "pointer" }} title={o.items.map((i) => `${i.qty}× ${i.name}`).join(", ")} onClick={() => onAbrir(o)}>
                   {seleccionando && <td onClick={(e) => e.stopPropagation()}><input type="checkbox" aria-label={`Seleccionar el pedido ${numeroCorto(o)}`} checked={marcados.has(o._dbId)} onChange={(e) => onMarcar(o._dbId, e.target.checked)} /></td>}
                   <td className="tbl-mono tbl-strong nowrap">{numeroCorto(o)}</td>
-                  <td className="nowrap"><span className="tbl-strong">{o.cliente}</span> <TelCliente order={o} soloIcono /> <span className="tbl-muted">· {hace(o.fecha)}</span></td>
-                  <td className="ord-items" title={o.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}>{items.texto}{items.resto > 0 && <span className="tbl-muted"> +{items.resto}</span>}</td>
-                  <td className="nowrap"><span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>{o.mode === "delivery" ? <Icon.Truck /> : <Icon.Shop />}{o.mode === "delivery" ? "Delivery" : "Retiro"}</span></td>
+                  <td className="nowrap"><span className="tbl-strong ord-nombre" title={o.cliente}>{o.cliente}</span> <TelCliente order={o} soloIcono /> <span className="tbl-muted">· {hace(o.fecha)}</span></td>
+                  <td className="ord-items ord-col-items" title={o.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}>{items.texto}{items.resto > 0 && <span className="tbl-muted"> +{items.resto}</span>}</td>
+                  <td className="nowrap"><span style={{ display: "inline-flex", alignItems: "center" }} title={o.mode === "delivery" ? "Delivery" : "Retiro"} aria-label={o.mode === "delivery" ? "Delivery" : "Retiro"} role="img">{o.mode === "delivery" ? <Icon.Truck /> : <Icon.Shop />}</span></td>
                   <td className="nowrap">{medio(o)}<AvisoPago o={o} /></td>
                   <td className="right tbl-price nowrap">{fmt(o.total)}</td>
                   <td className="nowrap"><span className={`chip chip-${o.estado}`}>{etiquetaEstado(o.estado, o.mode)}</span></td>
