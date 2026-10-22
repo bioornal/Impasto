@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { EstadoDelivery } from "@/lib/hours";
+import { TODAS_LAS_MASAS, type EstadoMasas } from "@/lib/masa";
 
 export interface EstadoTiendaCliente {
   abierto: boolean;
@@ -8,11 +9,12 @@ export interface EstadoTiendaCliente {
   etiqueta: string;
   cierreManual: boolean;
   delivery: EstadoDelivery;
+  masas: EstadoMasas;
 }
 
 const DELIVERY_ACTIVO: EstadoDelivery = { activo: true, motivo: "" };
 
-const StoreStatusContext = createContext<EstadoTiendaCliente>({ abierto: true, motivo: "", etiqueta: "", cierreManual: false, delivery: DELIVERY_ACTIVO });
+const StoreStatusContext = createContext<EstadoTiendaCliente>({ abierto: true, motivo: "", etiqueta: "", cierreManual: false, delivery: DELIVERY_ACTIVO, masas: TODAS_LAS_MASAS });
 
 export const useStoreStatus = () => useContext(StoreStatusContext);
 
@@ -38,6 +40,7 @@ export function StoreStatusProvider({ inicial, children }: { inicial: EstadoTien
             etiqueta: datos.etiqueta,
             cierreManual: datos.cierreManual,
             delivery: datos.delivery ?? DELIVERY_ACTIVO,
+            masas: datos.masas ?? TODAS_LAS_MASAS,
           });
         }
       } catch { /* si falla la consulta se conserva el último estado conocido */ }

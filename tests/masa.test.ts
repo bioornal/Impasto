@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { cambiarMasa, contarMasas, detalleCocina, esMismaLinea, masaDe, nombreCocina, normalizarMasa } from "../lib/masa";
+import { TODAS_LAS_MASAS, ajustarMasas, cambiarMasa, contarMasas, detalleCocina, esMismaLinea, estadoMasas, masaDe, masaUnica, nombreCocina, normalizarMasa, validarMasas } from "../lib/masa";
 import { quoteItemsWithCatalog } from "../lib/order-quote";
 import type { CartItem, CatalogData } from "../types";
 
@@ -134,4 +134,42 @@ test("pedidos del POS: sin `type`, la masa igual se nombra y se cuenta", async (
   const order = adaptOrder({ id: "db2", numero_pedido: 3, productos, total: 31000, status: "normal", created_at: "2026-10-17T23:00:00Z" });
   assert.deepEqual(adminPrintJob(order, "a2", false).receipt.items.map(i => i.name), ["Muzza [AL MOLDE]", "Fugazza [NAPOLETANA]", "Coca-Cola"]);
   assert.deepEqual(contarMasas([order]), { napoletana: 2, molde: 1 });
+});
+
+/* ── masas agotadas desde el panel (22/10/2026) ── */
+const sinMolde = estadoMasas({ masaNapoletanaActiva: true, masaMoldeActiva: false });
+const sinNapo = estadoMasas({ masaNapoletanaActiva: false, masaMoldeActiva: true });
+
+test("estadoMasas: las dos por defecto; una apagada trae el aviso; las dos apagadas no corta la venta", () => {
+  assert.deepEqual(estadoMasas({}), TODAS_LAS_MASAS);
+  assert.equal(masaUnica(TODAS_LAS_MASAS), undefined);
+  assert.equal(masaUnica(sinMolde), "napoletana");
+  assert.match(sinMolde.aviso, /terminó la masa al molde/);
+  assert.equal(masaUnica(sinNapo), "molde");
+  assert.match(sinNapo.aviso, /terminó la masa napoletana/);
+  assert.deepEqual(estadoMasas({ masaNapoletanaActiva: false, masaMoldeActiva: false }), TODAS_LAS_MASAS);
+});
+
+test("ajustarMasas: pasa las pizzas a la masa que queda, junta líneas y no toca lo demás", () => {
+  const items = [pizza({ cartId: "a", masa: "molde", qty: 2 }), pizza({ cartId: "b", masa: "napoletana" }), { ...pizza({ cartId: "c", key: "b" }), type: "bebida" as const, masa: undefined }];
+  const ajustados = ajustarMasas(items, sinMolde);
+  assert.equal(ajustados.filter((i) => i.type === "pizza").length, 1);
+  assert.equal(ajustados.find((i) => i.type === "pizza")?.qty, 3);
+  assert.equal(ajustados.find((i) => i.type === "pizza")?.masa, "napoletana");
+  assert.equal(ajustados.find((i) => i.type === "bebida")?.masa, undefined);
+  // Sin masa elegida vale napoletana: sin napoletana, pasa al molde.
+  assert.equal(ajustarMasas([pizza()], sinNapo)[0].masa, "molde");
+  // Si no hay nada que cambiar devuelve el mismo arreglo (el carrito no se vuelve a guardar).
+  const ya = [pizza({ masa: "napoletana" })];
+  assert.equal(ajustarMasas(ya, sinMolde), ya);
+  assert.equal(ajustarMasas(items, TODAS_LAS_MASAS), items);
+});
+
+test("validarMasas: rechaza una pizza con la masa que se terminó, con un mensaje para el cliente", () => {
+  assert.throws(() => validarMasas(sinMolde, [pizza({ masa: "molde" })]), /terminó la masa al molde.*pasan a napoletana/);
+  assert.throws(() => validarMasas(sinNapo, [pizza()]), /terminó la masa napoletana/);
+  assert.doesNotThrow(() => validarMasas(sinMolde, [pizza()]));
+  assert.doesNotThrow(() => validarMasas(TODAS_LAS_MASAS, [pizza({ masa: "molde" })]));
+  // Las bebidas no llevan masa: no se rechazan.
+  assert.doesNotThrow(() => validarMasas(sinNapo, [{ type: "bebida" }]));
 });

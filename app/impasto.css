@@ -492,6 +492,9 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 }
 .masa h3{ font-family:var(--font-display); font-size:25px; letter-spacing:-.02em; font-weight:600; margin:8px 0 6px; }
 .masa p{ margin:0; font-size:13.5px; line-height:1.5; color:color-mix(in srgb, var(--bg) 70%, transparent); }
+/* La masa que se terminó hoy (panel → Masas): queda a la vista, apagada. */
+.masa.agotada{ opacity:.45; }
+.masa.agotada .masa-kicker{ color:color-mix(in srgb, var(--bg) 80%, transparent); }
 @media (max-width:980px){
   .masas-card{ grid-template-columns:1fr; padding:28px; }
   .masas-intro h2{ font-size:30px; }
@@ -1314,6 +1317,14 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 .ci-masa-opciones button.on{ background:var(--accent); color:var(--accent-ink); }
 .ci-masa-opciones button.on::before{ content:"✓ "; }
 .ci-masa-opciones button:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+/* Masa agotada desde el panel (22/10/2026): se ve, tachada, pero no se puede elegir. */
+.ci-masa-opciones button.agotada{ color:var(--muted); opacity:.55; cursor:not-allowed; }
+.ci-masa-opciones button.agotada small{ font-size:11px; font-weight:500; }
+.ci-masa-aviso{
+  margin:0 0 12px; padding:10px 12px; border-radius:var(--radius-sm);
+  background:var(--bg-2); border:1px solid var(--line-2); border-left:3px solid var(--accent);
+  font-size:13px; line-height:1.45; color:var(--ink);
+}
 .qty-pill{
   display:inline-flex; align-items:center; background:var(--surface);
   border:1px solid var(--line); border-radius:999px; overflow:hidden;

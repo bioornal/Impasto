@@ -48,6 +48,63 @@ export function cambiarMasa(items: CartItem[], cartId: string, masa: Masa): Cart
 export const detalleSinMasa = (detail: string | undefined) =>
   (detail || "").replace(` · ${DETALLE_MOLDE}`, "").replace(DETALLE_MOLDE, "");
 
+/**
+ * Qué masas hay hoy (desde el 22/10/2026). Si el local se queda sin una, el dueño la apaga
+ * desde el panel (Configuración → Masas) y todas las pizzas salen con la otra.
+ */
+export interface EstadoMasas {
+  napoletana: boolean;
+  molde: boolean;
+  /** Frase para el cliente; vacía mientras están las dos. */
+  aviso: string;
+}
+
+export const TODAS_LAS_MASAS: EstadoMasas = { napoletana: true, molde: true, aviso: "" };
+
+export const nombreMasa = (masa: Masa) => (masa === "molde" ? "al molde" : "napoletana");
+
+/**
+ * Sin las columnas (antes de la migración) cuentan como disponibles. Las dos apagadas no
+ * debería pasar (el panel y la API no lo dejan): ante la duda, se ofrecen las dos.
+ */
+export function estadoMasas(config: { masaNapoletanaActiva?: boolean; masaMoldeActiva?: boolean }): EstadoMasas {
+  const napoletana = config.masaNapoletanaActiva !== false;
+  const molde = config.masaMoldeActiva !== false;
+  if (napoletana === molde) return TODAS_LAS_MASAS;
+  return napoletana
+    ? { napoletana, molde, aviso: "Hoy se nos terminó la masa al molde: todas las pizzas salen con nuestra napoletana." }
+    : { napoletana, molde, aviso: "Hoy se nos terminó la masa napoletana: todas las pizzas salen al molde." };
+}
+
+/** La masa que queda cuando falta una; `undefined` si están las dos. */
+export const masaUnica = (estado: EstadoMasas): Masa | undefined =>
+  estado.napoletana && estado.molde ? undefined : estado.napoletana ? "napoletana" : "molde";
+
+/**
+ * Pasa a la masa que queda las pizzas que tienen la que se terminó (también las que todavía
+ * no eligieron: valen napoletana). Devuelve el mismo arreglo si no cambió nada.
+ */
+export function ajustarMasas(items: CartItem[], estado: EstadoMasas): CartItem[] {
+  const queda = masaUnica(estado);
+  if (!queda) return items;
+  let resultado = items;
+  for (const item of items) {
+    const masa = masaDe(item);
+    if (!masa || masa === queda) continue;
+    resultado = cambiarMasa(resultado, item.cartId, queda);
+  }
+  return resultado;
+}
+
+/** Rechaza un pedido con una masa que se terminó. Corre en la cotización y en `createPedido`. */
+export function validarMasas(estado: EstadoMasas, items: ReadonlyArray<{ type?: unknown; masa?: unknown }>): void {
+  const queda = masaUnica(estado);
+  if (!queda) return;
+  const otra: Masa = queda === "napoletana" ? "molde" : "napoletana";
+  if (!items.some((item) => masaDe(item) === otra)) return;
+  throw new Error(`Hoy se nos terminó la masa ${nombreMasa(otra)}. Abrí el carrito: tus pizzas pasan a ${nombreMasa(queda)}.`);
+}
+
 /** La masa como la lee la cocina; vacío si la línea no es pizza o es de antes de poder elegir. */
 export function masaCocina(item: { type?: unknown; masa?: unknown }): string {
   if (!puedeTenerMasa(item.type)) return "";

@@ -58,6 +58,22 @@ export async function PUT(req: NextRequest) {
   if (body.ventas_activas !== undefined) updates.ventas_activas = Boolean(body.ventas_activas);
   if (body.delivery_activo !== undefined) updates.delivery_activo = Boolean(body.delivery_activo);
 
+  // Masas: se puede apagar una (se terminó), nunca las dos. Si viene una sola, la otra se lee.
+  if (body.masa_napoletana_activa !== undefined || body.masa_molde_activa !== undefined) {
+    let actual: Record<string, unknown> = {};
+    if (body.masa_napoletana_activa === undefined || body.masa_molde_activa === undefined) {
+      const { data } = await db.database.from("sucursales").select("masa_napoletana_activa, masa_molde_activa").eq("id", SUCURSAL_ID).limit(1);
+      actual = (Array.isArray(data) ? data[0] : null) ?? {};
+    }
+    const napoletana = body.masa_napoletana_activa !== undefined ? Boolean(body.masa_napoletana_activa) : actual.masa_napoletana_activa !== false;
+    const molde = body.masa_molde_activa !== undefined ? Boolean(body.masa_molde_activa) : actual.masa_molde_activa !== false;
+    if (!napoletana && !molde) {
+      return NextResponse.json({ ok: false, error: "Tiene que quedar al menos una masa. Si no hay ninguna, pausá la venta." }, { status: 400 });
+    }
+    updates.masa_napoletana_activa = napoletana;
+    updates.masa_molde_activa = molde;
+  }
+
   // Reemplaza a `cbu`, `alias_cbu`, `banco` y `titular_cuenta`, que ya no se escriben.
   if (body.cuentas_transferencia !== undefined) {
     const cuentas = validarCuentas(body.cuentas_transferencia);

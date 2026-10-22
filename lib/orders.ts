@@ -3,6 +3,7 @@ import { quoteOrder, quoteCosteo } from "@/lib/order-quote";
 import { getBusinessConfig } from "@/lib/business-server";
 import { getCartSessionId } from "@/lib/cart-session";
 import { estadoTienda, fechaLocal, validarModalidad } from "@/lib/hours";
+import { validarMasas } from "@/lib/masa";
 import { validarCuando } from "@/lib/validar-cuando";
 import { SUCURSAL_ID } from "@/lib/business";
 import { nuevaReferencia } from "@/lib/referencia";
@@ -116,6 +117,8 @@ async function createPedidoNew(
   // Con el reparto pausado solo se aceptan pedidos para retirar. Corre antes
   // del INSERT y, con tarjeta, antes de contactar a Mercado Pago.
   validarModalidad(business, order.mode);
+  // Una masa que se terminó (apagada en el panel) tampoco entra, por ninguna vía de pago.
+  validarMasas(estado.masas, order.items);
 
   const quote = await quoteOrder(order.items, order.mode, business);
   if (payment.proveedorPago === "mercadopago") assertExpectedTotal(options.expectedTotal, quote.total);

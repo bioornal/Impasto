@@ -201,7 +201,9 @@ QUIÉNES SOMOS
   pizza, también la mitad y mitad. No se elige en la tarjeta de la pizza: se agrega la pizza y,
   al abrir el carrito, cada pizza tiene "Elegí la masa" con Napoletana o Al molde (viene marcada
   la napoletana).
-- ${ORIGEN_DEL_NOMBRE}
+${estado.masas.aviso ? `- HOY: ${estado.masas.aviso} No ofrezcas la otra masa; si la piden, explicalo con amabilidad.
+  Esto manda sobre lo de arriba y sobre las PREGUNTAS FRECUENTES.
+` : ""}- ${ORIGEN_DEL_NOMBRE}
 
 CÓMO HABLÁS
 - Español rioplatense, de vos. Profesional y ameno, sin exagerar los modismos.

@@ -170,6 +170,12 @@ chequear("y no ofrece envío gratis ni la tarifa", !/gratis a partir/i.test(prom
 chequear("con el delivery pausado omite la pregunta frecuente de delivery", !promptSinDelivery.includes("¿Hacen delivery"));
 chequear("con el delivery activo sí la incluye", prompt.includes("¿Hacen delivery"));
 
+/* ── masa agotada desde el panel (22/10/2026): el bot no ofrece la que no hay ── */
+const sinMolde: BusinessConfig = { ...business, masaMoldeActiva: false };
+const promptSinMolde = promptVendedor(catalogo, sinMolde, estadoTienda(sinMolde, new Date("2026-08-22T00:00:00Z")));
+chequear("con las dos masas no hay aviso de HOY", !/- HOY: /.test(prompt));
+chequear("sin masa al molde lo dice y que no la ofrezca", /- HOY: Hoy se nos terminó la masa al molde/.test(promptSinMolde) && /No ofrezcas la otra masa/.test(promptSinMolde));
+
 /* ── lo que el bot respondía "no lo tengo" (visto en producción el 01/10/2026) ── */
 chequear("sabe los medios de pago", /efectivo/i.test(prompt) && /transferencia/i.test(prompt) && /Mercado Pago/.test(prompt));
 chequear("no da datos bancarios", /nunca das datos bancarios/i.test(prompt));

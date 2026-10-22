@@ -185,6 +185,9 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
             </div>
           ) : (
             <>
+              {tienda.masas.aviso && items.some((item) => masaDe(item)) && (
+                <p className="ci-masa-aviso" role="status">{tienda.masas.aviso}</p>
+              )}
               {items.map((item) => (
                 <div className="cart-item" key={item.cartId}>
                   <div className="ci-media"><ItemMedia item={item} /></div>
@@ -211,10 +214,11 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
                             type="button"
                             role="radio"
                             aria-checked={masaDe(item) === m.id}
-                            className={masaDe(item) === m.id ? "on" : ""}
+                            className={masaDe(item) === m.id ? "on" : tienda.masas[m.id] ? "" : "agotada"}
+                            disabled={!tienda.masas[m.id]}
                             onClick={() => setMasa(item.cartId, m.id)}
                           >
-                            {m.nombre}
+                            {m.nombre}{!tienda.masas[m.id] && <small> · agotada</small>}
                           </button>
                         ))}
                       </div>

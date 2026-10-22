@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "./StoreProvider";
 import { MENSAJE_DELIVERY_DEFAULT } from "@/lib/hours";
+import { estadoMasas } from "@/lib/masa";
 import type { CuentaTransferencia } from "@/lib/cuentas-transferencia";
 
 interface Sucursal {
@@ -21,6 +22,8 @@ interface Sucursal {
   mensaje_cierre: string;
   delivery_activo?: boolean;
   mensaje_delivery?: string;
+  masa_napoletana_activa?: boolean;
+  masa_molde_activa?: boolean;
   cuentas_transferencia?: CuentaTransferencia[];
 }
 
@@ -56,6 +59,8 @@ export function Settings() {
 
   const diasActivos = String(config.dias_apertura || "").split(",").map(Number).filter((n) => !Number.isNaN(n));
   const deliveryActivo = config.delivery_activo !== false;
+  const hayNapoletana = config.masa_napoletana_activa !== false;
+  const hayMolde = config.masa_molde_activa !== false;
 
   // El editor trabaja sobre la lista tal como está, sin filtrarla: una cuenta a
   // medio tipear no puede desaparecer. La valida el servidor al guardar.
@@ -134,6 +139,38 @@ export function Settings() {
                   value={config.mensaje_cierre || ""}
                   onChange={(e) => set("mensaje_cierre", e.target.value)}
                 />
+              </div>
+            )}
+          </section>
+
+          <section>
+            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 4 }}>Masas</h4>
+            <div className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
+              Si te quedás sin una masa, marcala como agotada: los clientes dejan de poder elegirla,
+              las pizzas que ya tenían en el carrito pasan a la otra y la web les avisa. Tiene que
+              quedar al menos una; si no hay ninguna, pausá la venta.
+            </div>
+            <div className="flex gap-8" style={{ flexWrap: "wrap" }}>
+              <button
+                className={`btn ${hayNapoletana ? "btn-success" : "btn-danger"}`}
+                onClick={() => set("masa_napoletana_activa", !hayNapoletana)}
+                disabled={hayNapoletana && !hayMolde}
+                title={hayNapoletana && !hayMolde ? "La al molde está agotada: tiene que quedar al menos una masa" : undefined}
+              >
+                {hayNapoletana ? "✓ Napoletana disponible" : "✕ Napoletana agotada"}
+              </button>
+              <button
+                className={`btn ${hayMolde ? "btn-success" : "btn-danger"}`}
+                onClick={() => set("masa_molde_activa", !hayMolde)}
+                disabled={hayMolde && !hayNapoletana}
+                title={hayMolde && !hayNapoletana ? "La napoletana está agotada: tiene que quedar al menos una masa" : undefined}
+              >
+                {hayMolde ? "✓ Al molde disponible" : "✕ Al molde agotada"}
+              </button>
+            </div>
+            {(!hayNapoletana || !hayMolde) && (
+              <div className="text-muted" style={{ fontSize: 12, marginTop: 8 }}>
+                El cliente ve: “{estadoMasas({ masaNapoletanaActiva: hayNapoletana, masaMoldeActiva: hayMolde }).aviso}”
               </div>
             )}
           </section>
@@ -281,7 +318,7 @@ export function Settings() {
           </div>
 
           <div className="text-muted" style={{ fontSize: 12 }}>
-            Los cambios de horario, de venta y de delivery se ven en el sitio en menos de un minuto.
+            Los cambios de horario, de venta, de masas y de delivery se ven en el sitio en menos de un minuto.
           </div>
         </div>
       </div>

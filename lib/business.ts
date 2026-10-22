@@ -33,6 +33,9 @@ export interface BusinessConfig {
   deliveryActivo: boolean;
   /** Motivo mostrado al cliente cuando el delivery está pausado. */
   mensajeDelivery: string;
+  /** Si hay masa de cada tipo hoy. Ver `estadoMasas` en `lib/masa.ts`. */
+  masaNapoletanaActiva: boolean;
+  masaMoldeActiva: boolean;
   deliveryFee: number;
   /** Monto de subtotal a partir del cual el envío es gratis. */
   freeShippingFrom: number;
@@ -75,6 +78,8 @@ export const BUSINESS: BusinessConfig = {
   mensajeCierre: "",
   deliveryActivo: true,
   mensajeDelivery: "",
+  masaNapoletanaActiva: true,
+  masaMoldeActiva: true,
   deliveryFee: 3000,
   freeShippingFrom: 35000,
   deliveryEstimate: "30 a 50 min",

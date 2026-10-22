@@ -55,6 +55,9 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       // Sin la columna (antes de la migración) cuenta como delivery activo.
       deliveryActivo: branch.delivery_activo !== false,
       mensajeDelivery: String(branch.mensaje_delivery || ""),
+      // Igual que el delivery: sin la columna, la masa está.
+      masaNapoletanaActiva: branch.masa_napoletana_activa !== false,
+      masaMoldeActiva: branch.masa_molde_activa !== false,
       deliveryFee: nonNegativeRate(branch.delivery_fee, BUSINESS.deliveryFee),
       freeShippingFrom: nonNegativeRate(branch.envio_gratis_desde, BUSINESS.freeShippingFrom),
       deliveryEstimate: String(branch.tiempo_entrega || BUSINESS.deliveryEstimate),

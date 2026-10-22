@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { PizzaIllus } from "@/components/ui/PizzaIllus";
 import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
+import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
+import { masaUnica, nombreMasa } from "@/lib/masa";
 import { useTweaks } from "@/components/providers/TweakProvider";
 import { fmt } from "@/lib/utils";
 import { cartelitosDePizza, lineaDePizza } from "@/lib/ficha";
@@ -38,6 +40,7 @@ interface PizzaListProps {
 }
 
 export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, destacadaId, foco, onVerFicha }: PizzaListProps) {
+  const queda = masaUnica(useStoreStatus().masas);
   const [cat, setCat] = useState("todas");
   const [q, setQ] = useState("");
   // Ajuste de estado al cambiar la prop (patrón de React, sin efecto): la pizza
@@ -108,7 +111,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
             <div className="sec-index">{indice} — La carta</div>
             <h2>Pizzas</h2>
           </div>
-          <p>Elegí un gusto, o combiná dos en la misma pizza. Masa napoletana o al molde: la elegís en el carrito.</p>
+          <p>Elegí un gusto, o combiná dos en la misma pizza. {queda ? `Hoy todas salen con masa ${nombreMasa(queda)}.` : "Masa napoletana o al molde: la elegís en el carrito."}</p>
         </div>
       </div>
 

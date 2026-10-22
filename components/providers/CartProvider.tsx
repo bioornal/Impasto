@@ -1,8 +1,9 @@
 "use client";
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import type { CartItem, Masa } from "@/types";
 import { uid } from "@/lib/utils";
-import { cambiarMasa, esMismaLinea } from "@/lib/masa";
+import { ajustarMasas, cambiarMasa, esMismaLinea } from "@/lib/masa";
 
 interface CartCtx {
   items: CartItem[];
@@ -21,8 +22,17 @@ interface CartCtx {
 const CartCtx = createContext<CartCtx | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [guardados, setItems] = useState<CartItem[]>([]);
   const [ready, setReady] = useState(false);
+
+  // Si se terminó una masa (panel → Configuración → Masas), las pizzas del carrito pasan a la
+  // que queda, también las del borrador y las que se agregan después. El cliente lo lee en el
+  // aviso del carrito. Se deriva en vez de corregirse en un efecto: nunca hay un render con la
+  // masa agotada elegida. Cada cambio parte de lo que el cliente ve, así lo guardado se pone al día.
+  const { masas } = useStoreStatus();
+  const items = useMemo(() => ajustarMasas(guardados, masas), [guardados, masas]);
+  const cambiar = (cambio: (prev: CartItem[]) => CartItem[]) =>
+    setItems((prev) => cambio(ajustarMasas(prev, masas)));
 
   useEffect(() => {
     fetch("/api/cart/draft")
@@ -60,7 +70,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items, ready]);
 
   const add = (item: Omit<CartItem, "cartId">) =>
-    setItems((prev) => {
+    cambiar((prev) => {
       if (!item.unique) {
         const idx = prev.findIndex((p) => esMismaLinea(p, item));
         if (idx >= 0) {
@@ -73,9 +83,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
 
   const inc = (cartId: string) =>
-    setItems((p) => p.map((i) => i.cartId === cartId ? { ...i, qty: i.qty + 1 } : i));
+    cambiar((p) => p.map((i) => i.cartId === cartId ? { ...i, qty: i.qty + 1 } : i));
   const dec = (cartId: string) =>
-    setItems((p) => p.flatMap((i) => i.cartId === cartId ? (i.qty > 1 ? [{ ...i, qty: i.qty - 1 }] : []) : [i]));
+    cambiar((p) => p.flatMap((i) => i.cartId === cartId ? (i.qty > 1 ? [{ ...i, qty: i.qty - 1 }] : []) : [i]));
   // Una pizza puede estar en dos líneas (napoletana y al molde): el + de la tarjeta
   // suma en la primera y el − resta de la última, nunca de las dos a la vez.
   const incKey = (key: string) => {
@@ -86,8 +96,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const linea = items.findLast((i) => i.key === key);
     if (linea) dec(linea.cartId);
   };
-  const setMasa = (cartId: string, masa: Masa) => setItems((p) => cambiarMasa(p, cartId, masa));
-  const remove = (cartId: string) => setItems((p) => p.filter((i) => i.cartId !== cartId));
+  const setMasa = (cartId: string, masa: Masa) => cambiar((p) => cambiarMasa(p, cartId, masa));
+  const remove = (cartId: string) => cambiar((p) => p.filter((i) => i.cartId !== cartId));
   const clear = () => setItems([]);
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const count = items.reduce((s, i) => s + i.qty, 0);

@@ -1,5 +1,16 @@
 @AGENTS.md
 
+## Masa agotada desde el panel (22/10/2026)
+
+- **Pedido del dueño:** si se queda sin una de las dos masas (napoletana o al molde), apagarla desde el panel y que el cliente no la pueda elegir, con el mensaje correcto.
+- **Panel → Configuración → Masas:** "✓ Napoletana disponible / ✕ Napoletana agotada" y lo mismo para al molde, con "Guardar cambios" (como el delivery). **No se pueden apagar las dos**: el botón se deshabilita y `PUT /api/admin/sucursal` responde 400 ("si no hay ninguna, pausá la venta"). Debajo se ve el texto que lee el cliente.
+- **Base:** `sucursales.masa_napoletana_activa` y `masa_molde_activa` (`boolean not null default true`, migración `20261022122713_masas-disponibles.sql`, **aplicada el 22/10**). Sin la columna cuentan como disponibles. `BusinessConfig.masaNapoletanaActiva/masaMoldeActiva`.
+- **Lógica** en `lib/masa.ts` (con tests): `estadoMasas` (aviso "Hoy se nos terminó la masa al molde: todas las pizzas salen con nuestra napoletana." o al revés; las dos apagadas = las dos disponibles), `masaUnica`, `ajustarMasas` (pasa las pizzas a la que queda y junta líneas), `validarMasas`. Viaja en `EstadoTienda.masas` (página y `/api/store-status`, refresco cada 60 s y al volver a la pestaña).
+- **Cliente:** el carrito deriva sus ítems con `ajustarMasas` (`CartProvider`: `items` es un `useMemo` de lo guardado; cada cambio parte de lo ajustado), muestra el aviso arriba de los ítems y el botón de la masa agotada deshabilitado ("Al molde · agotada"). Si la masa vuelve en la misma visita, la pizza recupera la masa que el cliente había elegido. El bloque del home dice "Hoy, solo masa napoletana" con la otra en gris ("Hoy agotada") y el encabezado de Pizzas "Hoy todas salen con masa napoletana.". El bot recibe "- HOY: …" y no ofrece la otra.
+- **Servidor:** `validarMasas` en `/api/orders/quote` (el checkout se entera antes de confirmar) y en `createPedidoNew`, después de `validarModalidad`: ninguna vía de pago acepta una masa agotada. Mensaje: "Hoy se nos terminó la masa al molde. Abrí el carrito: tus pizzas pasan a napoletana."
+- **POS (Carro Fogón) no lo lee:** los operarios siguen viendo las dos masas.
+- **Verificado en local** (base real con las dos masas, `/api/store-status` interceptado en el navegador para simular cada masa agotada): carrito en escritorio (pizza al molde pasa a napoletana, aviso, botón deshabilitado; y al revés), home a 375 px, vuelta a las dos, cotización con molde 200, PUT del panel sin sesión 401; carrito de prueba vaciado. `pnpm test`, `tsc`, eslint de lo tocado, `pnpm build`. **No visto:** la sección del panel (pide la contraseña del dueño) ni el rechazo del servidor contra la base (el modo auto no dejó apagar la masa en la base compartida; lo cubren los tests).
+
 ## Masa al molde — web y POS publicados (22/10/2026)
 
 - **Pedido del dueño:** además de la napoletana (la de la casa), el cliente puede elegir masa **al molde**. Mismo precio, todas las pizzas (también la mitad y mitad), se elige **en el carrito, pizza por pizza**, con napoletana por defecto. Diseño: `docs/superpowers/specs/2026-10-17-masa-al-molde-design.md`. **El dueño aprobó cómo quedó todo** el 17/10.

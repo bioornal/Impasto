@@ -1,4 +1,6 @@
 "use client";
+import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
+import { masaUnica, nombreMasa } from "@/lib/masa";
 
 interface MasasAvisoProps {
   onNav: (section: string) => void;
@@ -9,26 +11,29 @@ interface MasasAvisoProps {
  * la de la casa: va primero y marcada así. La masa se elige en el carrito, por pizza.
  */
 export function MasasAviso({ onNav }: MasasAvisoProps) {
+  // Si el dueño marcó una masa como agotada, el bloque deja de anunciarla y lo dice.
+  const { masas } = useStoreStatus();
+  const queda = masaUnica(masas);
   return (
     <section className="masas" aria-labelledby="masas-titulo">
       <div className="container">
         <div className="masas-card">
           <div className="masas-intro">
-            <span className="promo-badge">Nuevo</span>
-            <h2 id="masas-titulo">Ahora también, al molde</h2>
+            <span className="promo-badge">{queda ? "Hoy" : "Nuevo"}</span>
+            <h2 id="masas-titulo">{queda ? `Hoy, solo masa ${nombreMasa(queda)}` : "Ahora también, al molde"}</h2>
             <p>
-              Dos masas bien distintas, al mismo precio. La elegís en el carrito, pizza por pizza.
+              {queda ? masas.aviso : "Dos masas bien distintas, al mismo precio. La elegís en el carrito, pizza por pizza."}
             </p>
             <button className="btn btn-primary btn-sm" onClick={() => onNav("pizzas")}>Ver pizzas</button>
           </div>
           <div className="masas-opciones">
-            <article className="masa">
-              <span className="masa-kicker">La de la casa</span>
+            <article className={`masa ${masas.napoletana ? "" : "agotada"}`}>
+              <span className="masa-kicker">{masas.napoletana ? "La de la casa" : "Hoy agotada"}</span>
               <h3>Napoletana</h3>
               <p>Estirada a mano y a la piedra, con el cornicione bien inflado: borde alto y liviano, base fina y tierna.</p>
             </article>
-            <article className="masa">
-              <span className="masa-kicker">Bien argentina</span>
+            <article className={`masa ${masas.molde ? "" : "agotada"}`}>
+              <span className="masa-kicker">{masas.molde ? "Bien argentina" : "Hoy agotada"}</span>
               <h3>Al molde</h3>
               <p>La pizza de molde de toda la vida: más alta y esponjosa, con el borde dorado.</p>
             </article>

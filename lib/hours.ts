@@ -1,4 +1,5 @@
 import type { BusinessConfig } from "@/lib/business";
+import { estadoMasas, type EstadoMasas } from "./masa";
 
 export interface HorarioConfig {
   /** Días abiertos con la numeración de JS: 0 = domingo … 6 = sábado. */
@@ -145,6 +146,8 @@ export interface EstadoTienda {
   cierreManual: boolean;
   /** Viaja con el estado de venta para llegar al cliente por el mismo camino. */
   delivery: EstadoDelivery;
+  /** Las masas que hay hoy: mismo camino que el delivery. */
+  masas: EstadoMasas;
 }
 
 /** "19:30" si abre hoy, "mañana 19:30" o "jue 19:30" si es otro día. */
@@ -169,6 +172,7 @@ function aperturaCorta(config: HorarioConfig, referencia: Date) {
  */
 export function estadoTienda(business: BusinessConfig, referencia = new Date()): EstadoTienda {
   const delivery = estadoDelivery(business);
+  const masas = estadoMasas(business);
 
   if (!business.ventasActivas) {
     return {
@@ -177,12 +181,13 @@ export function estadoTienda(business: BusinessConfig, referencia = new Date()):
       etiqueta: "Cerrado por ahora",
       cierreManual: true,
       delivery,
+      masas,
     };
   }
 
   const horario = horarioDe(business);
   if (estaAbierto(horario, referencia)) {
-    return { abierto: true, motivo: "", etiqueta: business.hours, cierreManual: false, delivery };
+    return { abierto: true, motivo: "", etiqueta: business.hours, cierreManual: false, delivery, masas };
   }
 
   return {
@@ -191,6 +196,7 @@ export function estadoTienda(business: BusinessConfig, referencia = new Date()):
     etiqueta: `Cerrado · abre ${aperturaCorta(horario, referencia)}`,
     cierreManual: false,
     delivery,
+    masas,
   };
 }
 
