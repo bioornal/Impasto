@@ -14,6 +14,8 @@ const hace = (iso: string) => {
   return h < 24 ? `hace ${h} h` : `hace ${Math.floor(h / 24)} d`;
 };
 const medio = (o: AdminOrder) => (o.pago === "mercadopago" ? "Mercado Pago" : o.pago.charAt(0).toUpperCase() + o.pago.slice(1));
+/** En la tabla, el medio abreviado (el nombre completo va en el title de la celda). */
+const medioCorto = (o: AdminOrder) => (o.pago === "mercadopago" ? "MP" : o.pago === "transferencia" ? "Transf." : medio(o));
 
 /** El teléfono en la lista: abre el chat de WhatsApp sin abrir el detalle. */
 export function TelCliente({ order, soloIcono = false }: { order: AdminOrder; soloIcono?: boolean }) {
@@ -34,15 +36,20 @@ export function TelCliente({ order, soloIcono = false }: { order: AdminOrder; so
   );
 }
 
-function AvisoPago({ o }: { o: AdminOrder }) {
+/** Aviso de pago pendiente. `corto` (tabla): solo un ícono, con el texto en el title; las tarjetas muestran las palabras. */
+function AvisoPago({ o, corto = false }: { o: AdminOrder; corto?: boolean }) {
   if (o.estado === "cancelado") return null;
+  let texto: string | null = null;
+  let icono = "⚠";
   if (o.pago === "transferencia" && o.pagoEstado === "pendiente") {
-    return <span className="order-payment-reminder">{o.comprobanteSubidoAt ? "📎 comprobante" : "sin comprobante"}</span>;
+    texto = o.comprobanteSubidoAt ? "📎 comprobante" : "sin comprobante";
+    if (o.comprobanteSubidoAt) icono = "📎";
+  } else if (o.pagoEstado === "pendiente") {
+    texto = o.estado === "entregado" ? "falta registrar pago" : "pago pendiente";
   }
-  if (o.pagoEstado === "pendiente") {
-    return <span className="order-payment-reminder">{o.estado === "entregado" ? "falta registrar pago" : "pago pendiente"}</span>;
-  }
-  return null;
+  if (!texto) return null;
+  if (corto) return <span className="order-payment-reminder" title={texto} aria-label={texto} role="img">{icono}</span>;
+  return <span className="order-payment-reminder">{texto}</span>;
 }
 
 interface OrdersTableProps {
@@ -99,7 +106,7 @@ export function OrdersTable({ pedidos, onAbrir, onAvanzar, onImprimir, imprimien
                   <td className="nowrap"><span className="tbl-strong ord-nombre" title={o.cliente}>{o.cliente}</span> <TelCliente order={o} soloIcono /> <span className="tbl-muted">· {hace(o.fecha)}</span></td>
                   <td className="ord-items ord-col-items" title={o.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}>{items.texto}{items.resto > 0 && <span className="tbl-muted"> +{items.resto}</span>}</td>
                   <td className="nowrap"><span style={{ display: "inline-flex", alignItems: "center" }} title={o.mode === "delivery" ? "Delivery" : "Retiro"} aria-label={o.mode === "delivery" ? "Delivery" : "Retiro"} role="img">{o.mode === "delivery" ? <Icon.Truck /> : <Icon.Shop />}</span></td>
-                  <td className="nowrap">{medio(o)}<AvisoPago o={o} /></td>
+                  <td className="nowrap" title={medio(o)}>{medioCorto(o)}<AvisoPago o={o} corto /></td>
                   <td className="right tbl-price nowrap">{fmt(o.total)}</td>
                   <td className="nowrap"><span className={`chip chip-${o.estado}`}>{etiquetaEstado(o.estado, o.mode)}</span></td>
                   <td className="right nowrap"><div className="tbl-actions" style={{ alignItems: "center" }}>{acciones(o)}</div></td>
