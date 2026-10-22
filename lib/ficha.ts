@@ -24,6 +24,8 @@ export interface FichaItem {
   agotado: boolean;
   tags: string[];
   foto?: string;
+  /** Cupo de la noche (solo pizzas): mitades que quedan. */
+  quedanMitades?: number;
 }
 
 /* ── cartelitos: los mismos en la foto de la tarjeta y en la ficha ── */
@@ -50,7 +52,7 @@ export function cartelitosDeEmpanada(e: Empanada): BadgeFicha[] {
 export function fichaDePizza(p: Pizza): FichaItem {
   return {
     id: p.id, tipo: "pizza", nombre: p.nombre, desc: p.desc, foto: p.foto,
-    precio: p.precio, precioTexto: fmt(p.precio), badges: cartelitosDePizza(p), agotado: p.disponible === false, tags: p.tags,
+    precio: p.precio, precioTexto: fmt(p.precio), badges: cartelitosDePizza(p), agotado: p.disponible === false, tags: p.tags, quedanMitades: p.quedanMitades,
   };
 }
 

@@ -18,6 +18,8 @@ export function Sidebar({ current, onNav, open, onClose }: SidebarProps) {
 
   const items = [
     { key: "dashboard", label: "Dashboard", icon: <Icon.Dashboard /> },
+    { key: "resumen", label: "Resumen diario", icon: <Icon.Revenue /> },
+    { key: "cupos", label: "Cupos de la noche", icon: <Icon.Pizza /> },
     { key: "orders", label: "Pedidos", icon: <Icon.Orders />, badge: newOrders },
     { key: "products", label: "Productos", icon: <Icon.Pizza /> },
     { key: "etiquetas", label: "Etiquetas", icon: <Icon.Pizza /> },

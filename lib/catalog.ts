@@ -8,6 +8,8 @@ import { PricingUnavailableError } from "@/lib/pricing-safety";
 import { agregarFotos } from "@/lib/fotos";
 import { listarFotos } from "@/lib/fotos-bucket";
 import { conservarCosteo } from "@/lib/catalog-costeo";
+import { aplicarCupos, type FilaCupo } from "@/lib/cupos";
+import { diaDeNegocio } from "@/lib/resumen-diario";
 
 export async function getCatalogData(): Promise<CatalogData> {
   try {
@@ -25,6 +27,7 @@ export async function getCatalogData(): Promise<CatalogData> {
       defaultsResult,
       costosFijosResult,
       costosVariablesResult,
+      cuposResult,
     ] = await Promise.all([
       // `archivado` es la baja de carta: el producto sigue en la base (y en el
       // recetario, para costos históricos) pero no se muestra más al cliente.
@@ -45,6 +48,8 @@ export async function getCatalogData(): Promise<CatalogData> {
       safeQuery(db.database.from("config_negocio").select("pizzas_objetivo_mes,precio_prepizza_default,precio_salsa_default,comision_tarjeta_pct,comision_en_precio").limit(1)),
       readPages((start, end) => db.database.from("costos_fijos").select("id,monto,activo").eq("activo", true).order("id", { ascending: true }).range(start, end)),
       readPages((start, end) => db.database.from("costos_variables").select("id,monto_referencia").order("id", { ascending: true }).range(start, end)),
+      safeQuery(db.database.from("cupos_noche").select("producto_id,cupo_mitades,vendidas_mitades")
+        .eq("proyecto_id", "impasto").eq("noche", diaDeNegocio(new Date().toISOString()))),
     ]);
     for (const [source, result] of [
       ["promociones", promosResult], ["testimonios", reviewsResult], ["etiquetas", etiquetasResult],
@@ -57,11 +62,13 @@ export async function getCatalogData(): Promise<CatalogData> {
       precios_venta: salePricesResult, config_negocio: defaultsResult, costos_fijos: costosFijosResult,
       costos_variables: costosVariablesResult,
     });
+    if (cuposResult.error) console.error("[catalog] cupos de la noche:", cuposResult.error);
+    const cupos = Array.isArray(cuposResult.data) && !cuposResult.error ? cuposResult.data as FilaCupo[] : [];
     // La foto más nueva de cada producto en el bucket; si el listado falla, viene vacío
     // y las ilustraciones usan el respaldo de siempre.
     // agregarFotos devuelve una copia: sin conservar el costeo, la cotización de cualquier
     // pedido fallaba con "Costeo de la venta no disponible" (03/10 al 06/10/2026).
-    return conservarCosteo(catalogo, agregarFotos(catalogo, await fotos));
+    return conservarCosteo(catalogo, aplicarCupos(agregarFotos(catalogo, await fotos), cupos));
   } catch (error) {
     if (error instanceof PricingUnavailableError) console.error(`[catalog] fuente crítica ${error.source} no disponible`);
     else console.error("[catalog] fallo al armar el catálogo:", error);

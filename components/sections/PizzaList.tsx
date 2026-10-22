@@ -6,6 +6,7 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { useTweaks } from "@/components/providers/TweakProvider";
 import { fmt } from "@/lib/utils";
 import { cartelitosDePizza, lineaDePizza } from "@/lib/ficha";
+import { AvisoCupo } from "@/components/ui/AvisoCupo";
 import type { Pizza } from "@/types";
 
 /**
@@ -65,6 +66,12 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
   const qtyOf = (id: string) => items.filter((i) => i.key === id && i.type === "pizza").reduce((s, i) => s + i.qty, 0);
 
   const addPizza = (pizza: Pizza) => {
+    // Cupo de la noche: queda media, no alcanza para una entera.
+    if (pizza.quedanMitades === 1) {
+      toast(`De la ${pizza.nombre} queda solo media: elegila en una mitad y mitad`);
+      onHalf(pizza);
+      return;
+    }
     add(lineaDePizza(pizza));
     toast(`${pizza.nombre} agregada`);
   };
@@ -152,6 +159,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
                       <h3>{pizza.nombre}</h3>
                     </div>
                     <p className="p-desc">{pizza.desc}</p>
+                    {!agotado && <AvisoCupo quedanMitades={pizza.quedanMitades} />}
                     <div className="p-actions">
                       {agotado ? (
                         <>
@@ -189,7 +197,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
                   <div className="lrow-media">
                     <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} src={pizza.foto} />
                     {botonFoto(pizza)}
-                    {agotado && <div className="media-agotado-bar">Agotado</div>}
+                    {agotado ? <div className="media-agotado-bar">Agotado</div> : <AvisoCupo quedanMitades={pizza.quedanMitades} formato="foto" />}
                   </div>
                   <div className="lrow-main">
                     <div className="lrow-title">
@@ -229,6 +237,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
                 <div className="p-feat-body">
                   <h3 className="p-feat-title">{pizza.nombre}</h3>
                   <p className="p-feat-desc">{pizza.desc}</p>
+                  {!agotado && <AvisoCupo quedanMitades={pizza.quedanMitades} />}
                   <div className="p-feat-actions">
                     {agotado ? (
                       <button className="p-feat-add" disabled>Agotado</button>
@@ -255,7 +264,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
                 <div className="p-row-media">
                   <PizzaIllus id={pizza.id} name={pizza.nombre} tags={pizza.tags} src={pizza.foto} />
                   {botonFoto(pizza)}
-                  {agotado && <div className="media-agotado-bar">Agotado</div>}
+                  {agotado ? <div className="media-agotado-bar">Agotado</div> : <AvisoCupo quedanMitades={pizza.quedanMitades} formato="foto" />}
                 </div>
                 <div className="p-row-main" onClick={() => verFicha(pizza.id)}>
                   <div className="p-row-title">

@@ -11,7 +11,6 @@ export interface AdminProduct {
   desc: string;
   tags: string[];
   popular: boolean;
-  stock: number;
   /** Baja de carta (la base lo llama archivado). Solo lo usa el orden del admin. */
   archivado?: boolean;
   /** Foto que ve el cliente (la más nueva del bucket, `lib/fotos.ts`). Sin ella, la miniatura usa el respaldo. */
@@ -49,6 +48,8 @@ export interface AdminOrder {
   pagoEstado: string;
   puedeDevolverMP?: boolean;
   puedeRegistrarDevolucionManual?: boolean;
+  /** Se puede corregir el medio de pago desde el Resumen diario (no es tarjeta de la web). */
+  medioEditable?: boolean;
   puedeConsultarMP?: boolean;
   pagoMpManual?: boolean;
   /** Nombre corto de la cuenta que vio el cliente, si pagó por transferencia. */
@@ -61,6 +62,8 @@ export interface AdminOrder {
   estado: string;
   fecha: string;
   notas: string;
+  /** Web (referencia IM-…) o POS (POS-… o vacía). */
+  canal?: "web" | "pos";
 }
 
 export interface AdminCustomer {

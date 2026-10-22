@@ -5,6 +5,7 @@ import { Icon } from "./Icons";
 import { ProductThumb } from "./ProductThumb";
 import type { AdminProduct } from "./types";
 import { ordenarProductosAdmin } from "@/lib/orden-admin";
+import { CupoControl, useCuposNoche } from "./CupoControl";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 
@@ -109,6 +110,7 @@ function CeldaEtiquetas({ producto }: { producto: AdminProduct }) {
 
 export function Products() {
   const { state, updateProduct, createProduct, deleteProduct } = useStore();
+  const cupos = useCuposNoche();
   const [type, setType] = useState("todos");
   const [q, setQ] = useState("");
   const [edit, setEdit] = useState<AdminProduct | null>(null);
@@ -151,7 +153,7 @@ export function Products() {
           <div className="tbl-wrap">
             <table className="tbl">
               <thead>
-                <tr><th>Producto</th><th>Tipo</th><th>Etiquetas</th><th className="right">Precio</th><th className="right">Stock</th><th>Disponibilidad</th><th></th></tr>
+                <tr><th>Producto</th><th>Tipo</th><th>Etiquetas</th><th className="right">Precio</th><th className="right" title="Cuántas quedan para vender esta noche. Arranca en 100 (sin límite); bajá las que tenés pocas.">Quedan hoy</th><th>Disponibilidad</th><th></th></tr>
               </thead>
               <tbody>
                 {filtered.map(p => (
@@ -166,7 +168,7 @@ export function Products() {
                     <td style={{ textTransform: "capitalize" }}>{p.type}</td>
                     <td><CeldaEtiquetas producto={p} /></td>
                     <td className="right tbl-price">{fmt(p.precio || 0)}</td>
-                    <td className="right tbl-mono">{p.stock}</td>
+                    <td className="right">{/pizz/i.test(p.categoria) ? <CupoControl productoId={p._dbId} nombre={p.nombre} cupos={cupos} /> : <span className="tbl-muted">—</span>}</td>
                     <td>
                       <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                         <div
@@ -259,7 +261,7 @@ function FotoProducto({ product, isNew }: { product?: AdminProduct; isNew?: bool
 }
 
 function ProductEdit({ product, onClose, onSave, isNew }: { product?: AdminProduct; onClose: () => void; onSave: (p: Partial<AdminProduct>) => void; isNew?: boolean }) {
-  const [data, setData] = useState<Partial<AdminProduct>>(product || { type: "pizza", nombre: "", desc: "", precio: 0, categoria: "pizzas", stock: 0, tags: [], active: true, popular: false });
+  const [data, setData] = useState<Partial<AdminProduct>>(product || { type: "pizza", nombre: "", desc: "", precio: 0, categoria: "pizzas", tags: [], active: true, popular: false });
   const set = <K extends keyof AdminProduct>(k: K, v: AdminProduct[K]) => setData(d => ({ ...d, [k]: v }));
   const setType = (t: AdminProduct["type"]) => setData(d => ({ ...d, type: t, categoria: TYPE_TO_CATEGORIA[t] }));
   const toggleTag = (t: string) => set("tags", (data.tags || []).includes(t) ? (data.tags || []).filter(x => x !== t) : [...(data.tags || []), t]);
@@ -291,7 +293,6 @@ function ProductEdit({ product, onClose, onSave, isNew }: { product?: AdminProdu
             </div>
             <div className="field full"><label>Descripción</label><textarea rows={3} value={data.desc || ""} onChange={e => set("desc", e.target.value)} placeholder="Ingredientes, detalles…" /></div>
             <div className="field"><label>Precio (ARS)</label><input type="number" value={data.precio || 0} onChange={e => set("precio", +e.target.value)} /></div>
-            <div className="field"><label>Stock</label><input type="number" value={data.stock || 0} onChange={e => set("stock", +e.target.value)} /></div>
             <div className="field full">
               <label>Etiquetas</label>
               <div className="flex gap-8" style={{ flexWrap: "wrap" }}>

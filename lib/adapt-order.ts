@@ -48,6 +48,8 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
     pagoEstado: pagoMpHistorico && !["rechazado", "reembolsado", "parcialmente_reembolsado"].includes(String(p.estado_pago))
       ? "aprobado" : String(p.estado_pago || "pendiente"),
     puedeRegistrarDevolucionManual: p.proveedor_pago !== 'mercadopago' && !p.mp_order_id && !p.id_pago,
+    // Misma regla que corregir_medio_pago: el pago con tarjeta de la web lo confirma Mercado Pago.
+    medioEditable: p.proveedor_pago !== 'mercadopago' && !p.mp_order_id && !p.id_pago,
     puedeDevolverMP: p.proveedor_pago === "mercadopago" && Boolean(p.mp_order_id),
     puedeConsultarMP: canReconcilePayment(p),
     pagoMpManual: p.metodo_pago === "mercadopago" && !p.mp_order_id && (!p.external_reference || String(p.external_reference).startsWith('POS-')),
@@ -60,5 +62,7 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
     estado: estadoPreparacion,
     fecha: String(p.created_at || new Date().toISOString()),
     notas: String(p.notas || ""),
+    // El id visible no sirve: a un pedido del POS sin referencia se le inventa "IM-0003".
+    canal: String(p.external_reference || "").startsWith("IM-") ? "web" : "pos",
   };
 }

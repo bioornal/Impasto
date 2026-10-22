@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const quote = await quoteOrder(body.items as CartItem[], "takeaway");
+    const quote = await quoteOrder(body.items as CartItem[], "takeaway", {}, { cupos: false });
     const session = await sessionId(req);
     const row = {
       session_id: session,

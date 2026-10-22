@@ -7,10 +7,11 @@ import { ItemMedia } from "@/components/ui/ItemMedia";
 import { DrinkIllus } from "@/components/ui/Illus";
 import { fmt } from "@/lib/utils";
 import { MASAS, detalleSinMasa, masaDe } from "@/lib/masa";
-
-const SIN_BEBIDAS = "impasto_sin_bebidas";
 import type { BusinessConfig } from "@/lib/business";
 import type { Bebida } from "@/types";
+
+/** "¿Algo para tomar?" cerrado por el cliente: no vuelve a aparecer en esta visita. */
+const SIN_BEBIDAS = "impasto_sin_bebidas";
 
 /** Mismo corte que `@media (max-width:760px)` en impasto.css. */
 const esMobile = () => window.matchMedia("(max-width: 760px)").matches;
