@@ -1,11 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StoreProvider } from "./components/StoreProvider";
-import { SucursalProvider } from "./components/SucursalProvider";
+import { SucursalProvider, useSucursal } from "./components/SucursalProvider";
 import { Sidebar } from "./components/Sidebar";
-import { Topbar, Dashboard } from "./components/Dashboard";
+import { Topbar } from "./components/Topbar";
+import { Dashboard } from "./components/Dashboard";
 import { Orders } from "./components/Orders";
-import { NotificationsRecovery } from './components/NotificationsRecovery';
+import { NotificationsRecovery } from "./components/NotificationsRecovery";
 import { Products } from "./components/Products";
 import { Etiquetas } from "./components/Etiquetas";
 import { Customers } from "./components/Customers";
@@ -13,51 +14,60 @@ import { Testimonials } from "./components/Testimonials";
 import { Settings } from "./components/Settings";
 import { ResumenDiario } from "./components/ResumenDiario";
 import { Cupos } from "./components/Cupos";
+import { seccionInicial, type SeccionAdmin } from "@/lib/inicio-admin";
 
-type Page = "dashboard" | "resumen" | "cupos" | "orders" | "products" | "etiquetas" | "customers" | "testimonials" | "settings";
+const CLAVE_SECCION = "impasto_admin_seccion";
 
-const TITLES: Record<Page, [string, string]> = {
-  dashboard:    ["Dashboard",      "Un vistazo general de tu negocio"],
-  resumen:      ["Resumen diario", "Pizzas, pedidos y cobros de cada noche, web y POS"],
-  cupos:        ["Cupos de la noche", "Cuántas pizzas de cada sabor se pueden vender esta noche"],
-  orders:       ["Pedidos",        "Administrá los pedidos entrantes"],
-  products:     ["Productos",      "Tu carta de pizzas, empanadas y bebidas"],
-  etiquetas:    ["Etiquetas",      "Los cartelitos que aparecen en las tarjetas del sitio"],
-  customers:    ["Clientes",       "Base de clientes y su historial"],
-  testimonials: ["Testimonios",    "Moderá las reseñas que aparecen en el sitio"],
-  settings:     ["Configuración",  "Datos del local y zonas de envío"],
+const TITLES: Record<SeccionAdmin, [string, string]> = {
+  arranque:      ["Arranque de la noche", "Venta, delivery, masas, cupos y pedidos activos"],
+  pedidos:       ["Pedidos", "Los pedidos de la web y del POS"],
+  resumen:       ["Resumen diario", "Pizzas, pedidos y cobros de cada noche"],
+  productos:     ["Productos", "Pizzas, empanadas y bebidas de la carta"],
+  etiquetas:     ["Etiquetas", "Los cartelitos de las tarjetas del sitio"],
+  dashboard:     ["Dashboard", "Cómo vienen las ventas"],
+  clientes:      ["Clientes", "Base de clientes y su historial"],
+  testimonios:   ["Testimonios", "Opiniones que aparecen en el sitio"],
+  configuracion: ["Configuración", "Horario, delivery, datos del local y cuentas"],
 };
 
+const leerGuardada = () => { try { return sessionStorage.getItem(CLAVE_SECCION); } catch { return null; } };
+
 function AdminApp() {
-  const [page, setPage] = useState<Page>("dashboard");
+  const { sucursal, cargando } = useSucursal();
+  const [page, setPage] = useState<SeccionAdmin | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [title, subtitle] = TITLES[page];
+
+  // La sección inicial depende de los días de apertura: se decide cuando llega la sucursal.
+  useEffect(() => {
+    if (page || cargando) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- se decide una sola vez, al cargar la sucursal
+    setPage(seccionInicial(sucursal?.dias_apertura, new Date(), leerGuardada()));
+  }, [page, cargando, sucursal]);
+
+  const irA = (seccion: SeccionAdmin) => {
+    setPage(seccion);
+    try { sessionStorage.setItem(CLAVE_SECCION, seccion); } catch { /* sin sessionStorage, no se recuerda */ }
+  };
+
+  const actual = page ?? "dashboard";
+  const [title, subtitle] = TITLES[actual];
 
   return (
     <div className="admin">
-      <Sidebar current={page} onNav={(p) => setPage(p as Page)} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar current={actual} onNav={irA} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="main">
-        <Topbar
-          title={title}
-          subtitle={subtitle}
-          onMenu={() => setSidebarOpen(true)}
-          right={page === "dashboard" ? (
-            <a className="btn btn-ghost" href="/" target="_blank">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              Ver sitio
-            </a>
-          ) : undefined}
-        />
+        <Topbar title={title} subtitle={subtitle} onMenu={() => setSidebarOpen(true)} onEstado={() => irA("arranque")} />
         <div className="content">
-          {page === "dashboard"    && <Dashboard />}
-          {page === "resumen"      && <ResumenDiario />}
-          {page === "cupos"        && <Cupos />}
-          {page === "orders"       && <><NotificationsRecovery /><Orders /></>}
-          {page === "products"     && <Products />}
-          {page === "etiquetas"    && <Etiquetas />}
-          {page === "customers"    && <Customers />}
-          {page === "testimonials" && <Testimonials />}
-          {page === "settings"     && <Settings />}
+          {page === null && <div className="text-muted">Cargando…</div>}
+          {page === "arranque"      && <Cupos />}
+          {page === "pedidos"       && <><NotificationsRecovery /><Orders /></>}
+          {page === "resumen"       && <ResumenDiario />}
+          {page === "productos"     && <Products />}
+          {page === "etiquetas"     && <Etiquetas />}
+          {page === "dashboard"     && <Dashboard />}
+          {page === "clientes"      && <Customers />}
+          {page === "testimonios"   && <Testimonials />}
+          {page === "configuracion" && <Settings />}
         </div>
       </div>
     </div>

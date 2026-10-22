@@ -1,11 +1,13 @@
 "use client";
-import { useStore } from "./StoreProvider";
-import { Icon } from "./Icons";
 import { useRouter } from "next/navigation";
+import { useStore } from "./StoreProvider";
+import { useAdminSesion } from "./AdminSesion";
+import { Icon } from "./Icons";
+import type { SeccionAdmin } from "@/lib/inicio-admin";
 
 interface SidebarProps {
-  current: string;
-  onNav: (page: string) => void;
+  current: SeccionAdmin;
+  onNav: (seccion: SeccionAdmin) => void;
   open: boolean;
   onClose: () => void;
 }
@@ -13,54 +15,54 @@ interface SidebarProps {
 export function Sidebar({ current, onNav, open, onClose }: SidebarProps) {
   const router = useRouter();
   const { state } = useStore();
-  const newOrders = state.orders.filter(o => o.estado === "nuevo").length;
-  const pendingReviews = state.testimonials.filter(t => t.estado === "pendiente").length;
+  const { email } = useAdminSesion();
+  const nuevos = state.orders.filter((o) => o.estado === "nuevo").length;
+  const opinionesPendientes = state.testimonials.filter((t) => t.estado === "pendiente").length;
 
-  const items = [
-    { key: "dashboard", label: "Dashboard", icon: <Icon.Dashboard /> },
-    { key: "resumen", label: "Resumen diario", icon: <Icon.Revenue /> },
-    { key: "cupos", label: "Cupos de la noche", icon: <Icon.Pizza /> },
-    { key: "orders", label: "Pedidos", icon: <Icon.Orders />, badge: newOrders },
-    { key: "products", label: "Productos", icon: <Icon.Pizza /> },
-    { key: "etiquetas", label: "Etiquetas", icon: <Icon.Pizza /> },
-    { key: "customers", label: "Clientes", icon: <Icon.Users /> },
-    { key: "testimonials", label: "Testimonios", icon: <Icon.Star />, badge: pendingReviews },
+  const grupos: { titulo: string; items: { key: SeccionAdmin; label: string; icon: React.ReactNode; badge?: number }[] }[] = [
+    { titulo: "Esta noche", items: [
+      { key: "arranque", label: "Arranque", icon: <Icon.Power /> },
+      { key: "pedidos", label: "Pedidos", icon: <Icon.Orders />, badge: nuevos },
+      { key: "resumen", label: "Resumen diario", icon: <Icon.Calendar /> },
+    ] },
+    { titulo: "Carta", items: [
+      { key: "productos", label: "Productos", icon: <Icon.Pizza /> },
+      { key: "etiquetas", label: "Etiquetas", icon: <Icon.Tag /> },
+    ] },
+    { titulo: "Negocio", items: [
+      { key: "dashboard", label: "Dashboard", icon: <Icon.Dashboard /> },
+      { key: "clientes", label: "Clientes", icon: <Icon.Users /> },
+      { key: "testimonios", label: "Testimonios", icon: <Icon.Star />, badge: opinionesPendientes },
+    ] },
+    { titulo: "Ajustes", items: [
+      { key: "configuracion", label: "Configuración", icon: <Icon.Settings /> },
+    ] },
   ];
 
   return (
-    <aside className={`sidebar ${open ? "open" : ""}`}>
-      <div className="sidebar-brand">
-        <div className="logo-mark">I</div>
-        <div className="sidebar-brand-name">Impasto<small>admin panel</small></div>
-      </div>
-
-      <div className="nav-section">Operación</div>
-      {items.map(i => (
-        <div key={i.key} className={`nav-item ${current === i.key ? "active" : ""}`} onClick={() => { onNav(i.key); onClose(); }}>
-          {i.icon}
-          <span>{i.label}</span>
-          {(i.badge ?? 0) > 0 && <span className="badge">{i.badge}</span>}
+    <>
+      <div className={`sidebar-overlay ${open ? "open" : ""}`} onClick={onClose} />
+      <aside className={`sidebar ${open ? "open" : ""}`}>
+        <div className="sidebar-brand">
+          <div className="logo-mark">I</div>
+          <div className="sidebar-brand-name">Impasto<small>Panel</small></div>
         </div>
-      ))}
-
-      <div className="nav-section" style={{ marginTop: 18 }}>Otros</div>
-      <a className="nav-item" href="/" target="_blank">
-        <Icon.ExternalLink />
-        <span>Ver sitio público</span>
-      </a>
-      <div className={`nav-item ${current === "settings" ? "active" : ""}`} onClick={() => { onNav("settings"); onClose(); }}>
-        <Icon.Settings />
-        <span>Configuración</span>
-      </div>
-
-      <div className="sidebar-footer">
-        <div className="avatar">M</div>
-        <div className="sidebar-footer-info">
-          <b>Mauro</b>
-          <small>Dueño · admin</small>
+        {grupos.map((g) => (
+          <div key={g.titulo}>
+            <div className="nav-group">{g.titulo}</div>
+            {g.items.map((i) => (
+              <button key={i.key} className={`nav-item ${current === i.key ? "active" : ""}`} aria-current={current === i.key ? "page" : undefined} onClick={() => { onNav(i.key); onClose(); }}>
+                {i.icon}<span>{i.label}</span>{(i.badge ?? 0) > 0 && <span className="badge">{i.badge}</span>}
+              </button>
+            ))}
+          </div>
+        ))}
+        <a className="nav-item" href="/" target="_blank" rel="noreferrer"><Icon.ExternalLink /><span>Ver sitio público</span></a>
+        <div className="sidebar-footer">
+          <div className="sidebar-footer-info"><b title={email}>{email || "Sesión iniciada"}</b><small>Administrador</small></div>
+          <button className="sidebar-signout" onClick={async () => { await fetch("/api/auth/sign-out", { method: "POST" }); router.replace("/admin-login"); router.refresh(); }}>Salir</button>
         </div>
-        <button className="sidebar-signout" title="Cerrar sesión" onClick={async () => { await fetch("/api/auth/sign-out", { method: "POST" }); router.replace("/admin-login"); router.refresh(); }}>Salir</button>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

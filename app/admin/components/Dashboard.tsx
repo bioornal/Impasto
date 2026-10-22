@@ -14,32 +14,6 @@ const timeAgo = (iso: string) => {
   return `hace ${Math.floor(h / 24)} d`;
 };
 
-export function Topbar({ title, subtitle, onMenu, right }: { title: string; subtitle: string; onMenu: () => void; right?: React.ReactNode }) {
-  const { soundEnabled, toggleSound } = useStore();
-  return (
-    <header className="topbar">
-      <button className="sidebar-toggle" onClick={onMenu}><Icon.Menu /></button>
-      <h1>{title}{subtitle && <small>{subtitle}</small>}</h1>
-      <div className="topbar-spacer" />
-      <div className="topbar-search">
-        <Icon.Search />
-        <input placeholder="Buscar pedido, cliente, producto…" />
-        <kbd>⌘K</kbd>
-      </div>
-      <button
-        className={`btn btn-sm ${soundEnabled ? "btn-ghost" : "btn-muted"}`}
-        onClick={toggleSound}
-        title={soundEnabled ? "Notificaciones sonoras activas (clic para silenciar)" : "Notificaciones sonoras silenciadas (clic para activar)"}
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px" }}
-      >
-        {soundEnabled ? <Icon.Volume2 /> : <Icon.VolumeX />}
-        <span style={{ fontSize: 12 }}>{soundEnabled ? "Sonido ON" : "Silenciado"}</span>
-      </button>
-      {right}
-    </header>
-  );
-}
-
 export function Dashboard() {
   const { state } = useStore();
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
