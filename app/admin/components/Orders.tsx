@@ -12,12 +12,19 @@ import { OrderDetail } from "./OrderDetail";
 
 const FILTERS: [string, string][] = [["activos","Activos"],["nuevo","Nuevos"],["preparando","Preparando"],["en-camino","En camino"],["entregado","Entregados"],["cancelado","Cancelados"],["todos","Todos"]];
 
-export function Orders({ soloActivos = false, onVerTodos, abrirId = null }: { soloActivos?: boolean; onVerTodos?: () => void; abrirId?: string | null }) {
+export function Orders({ soloActivos = false, onVerTodos, abrir = null }: { soloActivos?: boolean; onVerTodos?: () => void; abrir?: { id: string; n: number } | null }) {
   const { state, updateOrderStatus, updateOrderPayment, deleteOrders, refundOrder, recordManualRefund, reload } = useStore();
-  // Con abrirId (viene del buscador) el pedido se abre al montar y el filtro es "todos": uno viejo tiene que verse.
-  const [filter, setFilter] = useState(abrirId ? "todos" : "activos");
+  const [filter, setFilter] = useState("activos");
   const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<AdminOrder | null>(() => (abrirId ? state.orders.find((o) => o._dbId === abrirId) ?? null : null));
+  const [selected, setSelected] = useState<AdminOrder | null>(null);
+  // Pedido pedido por el buscador: cada elección trae un `n` nuevo. Se ajusta el estado al recibirlo (también en el
+  // primer montaje) sin remontar: acá viven los reintentos de impresión. El filtro pasa a "todos": uno viejo tiene que verse.
+  const [vistoN, setVistoN] = useState<number | null>(null);
+  if (abrir && abrir.n !== vistoN) {
+    setVistoN(abrir.n);
+    setSelected(state.orders.find((o) => o._dbId === abrir.id) ?? null);
+    setFilter("todos");
+  }
   const [printState, setPrintState] = useState<{ orderId: string; message: string; error: boolean } | null>(null);
   const [printing, setPrinting] = useState(false);
   const [printerSelection, setPrinterSelection] = useState<PrinterSelection | null>(null);

@@ -11,6 +11,7 @@ export interface ResultadoBusqueda {
 const normalizar = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 const digitos = (s: string) => s.replace(/\D/g, "");
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
+const TIPO_PRODUCTO: Record<AdminProduct["type"], string> = { pizza: "Pizza", empanada: "Empanada", bebida: "Bebida" };
 
 /**
  * Buscador de la barra superior: busca en lo que el panel ya tiene cargado, sin consultas nuevas.
@@ -38,9 +39,13 @@ export function buscar(
       resultados.push({ tipo: "cliente", id: c.id, titulo: c.nombre, detalle: c.tel });
     }
   }
-  for (const p of datos.productos) {
-    if (normalizar(p.nombre).includes(t)) {
-      resultados.push({ tipo: "producto", id: p.id, titulo: p.nombre, detalle: fmt(p.precio || 0) });
+  // Del producto no se muestra el precio: el de venta se calcula aparte (recetario) y la columna engaña.
+  // En carta primero, los dados de baja después; dentro de cada grupo se respeta el orden de entrada.
+  const coincidentes = datos.productos.filter((p) => normalizar(p.nombre).includes(t));
+  for (const baja of [false, true]) {
+    for (const p of coincidentes) {
+      if (!!p.archivado !== baja) continue;
+      resultados.push({ tipo: "producto", id: p.id, titulo: p.nombre, detalle: `${baja ? "Dado de baja" : "En carta"} · ${TIPO_PRODUCTO[p.type] ?? p.type}` });
     }
   }
   return resultados.slice(0, max);

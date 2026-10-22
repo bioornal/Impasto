@@ -37,3 +37,17 @@ test("buscar: tope de resultados", () => {
   assert.equal(buscar("muzza", muchos).length, 8);
   assert.equal(buscar("muzza", muchos, 3).length, 3);
 });
+
+test("buscar: productos sin precio, y los dados de baja van después de los de carta", () => {
+  const conBaja = {
+    ...datos,
+    productos: [
+      producto({ _dbId: "b1", id: "b1", nombre: "Muzza vieja", archivado: true }),
+      producto({ _dbId: "a1", id: "a1", nombre: "Muzza nueva" }),
+      producto({ _dbId: "a2", id: "a2", nombre: "Muzza de la casa", type: "empanada" }),
+    ],
+  };
+  const r = buscar("muzza", conBaja);
+  assert.deepEqual(r.map((x) => x.id), ["a1", "a2", "b1"]);
+  assert.deepEqual(r.map((x) => x.detalle), ["En carta · Pizza", "En carta · Empanada", "Dado de baja · Pizza"]);
+});

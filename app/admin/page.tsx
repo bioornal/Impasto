@@ -50,9 +50,10 @@ function AdminApp() {
   const puedeSalir = useRef<(() => boolean) | null>(null);
   const registrarSalida = useCallback((fn: (() => boolean) | null) => { puedeSalir.current = fn; }, []);
 
-  // Lo que eligió el buscador y la sección tiene que abrir al montarse. `n` cuenta las elecciones: elegir lo
-  // mismo dos veces cambia la `key` y vuelve a abrirlo. Navegar por el menú lo borra.
+  // Lo que eligió el buscador y la sección tiene que abrir. `n` cuenta las elecciones (nunca se repite): elegir lo
+  // mismo dos veces vuelve a abrirlo. Navegar por el menú lo borra.
   const [abrir, setAbrir] = useState<{ tipo: ResultadoBusqueda["tipo"]; id: string; n: number } | null>(null);
+  const eleccionesN = useRef(0);
 
   // Devuelve false si no navegó (cambios sin guardar en Configuración y el usuario eligió quedarse).
   const irA = (seccion: SeccionAdmin): boolean => {
@@ -66,8 +67,9 @@ function AdminApp() {
   const elegir = (r: ResultadoBusqueda) => {
     const seccion: SeccionAdmin = r.tipo === "pedido" ? "pedidos" : r.tipo === "cliente" ? "clientes" : "productos";
     if (!irA(seccion)) return;
-    setAbrir((previo) => ({ tipo: r.tipo, id: r.id, n: (previo?.n ?? 0) + 1 }));
+    setAbrir({ tipo: r.tipo, id: r.id, n: ++eleccionesN.current });
   };
+  // Clientes y Productos no guardan nada crítico: se remontan para abrir lo elegido (abrirId solo es estado inicial).
   const claveDe = (tipo: ResultadoBusqueda["tipo"]) => (abrir?.tipo === tipo ? `${abrir.id}-${abrir.n}` : "lista");
   const abrirDe = (tipo: ResultadoBusqueda["tipo"]) => (abrir?.tipo === tipo ? abrir.id : null);
 
@@ -82,7 +84,7 @@ function AdminApp() {
         <div className="content">
           {page === null && <div className="text-muted">Cargando…</div>}
           {page === "arranque"      && <Arranque onVerPedidos={() => irA("pedidos")} />}
-          {page === "pedidos"       && <><NotificationsRecovery /><Orders key={claveDe("pedido")} abrirId={abrirDe("pedido")} /></>}
+          {page === "pedidos"       && <><NotificationsRecovery /><Orders abrir={abrir?.tipo === "pedido" ? { id: abrir.id, n: abrir.n } : null} /></>}
           {page === "resumen"       && <ResumenDiario />}
           {page === "productos"     && <Products key={claveDe("producto")} abrirId={abrirDe("producto")} />}
           {page === "etiquetas"     && <Etiquetas />}

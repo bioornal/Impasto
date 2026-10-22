@@ -20,7 +20,7 @@ export function BusquedaGlobal({ onElegir }: { onElegir: (r: ResultadoBusqueda) 
 
   useEffect(() => {
     const atajo = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); input.current?.focus(); setAbierto(true); }
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key?.toLowerCase() === "k") { e.preventDefault(); input.current?.focus(); setAbierto(true); }
     };
     window.addEventListener("keydown", atajo);
     return () => window.removeEventListener("keydown", atajo);
