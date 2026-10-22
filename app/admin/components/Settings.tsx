@@ -1,66 +1,102 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useStore } from "./StoreProvider";
-import { MENSAJE_DELIVERY_DEFAULT } from "@/lib/hours";
-import { estadoMasas } from "@/lib/masa";
+import { useSucursal, type Sucursal } from "./SucursalProvider";
 import type { CuentaTransferencia } from "@/lib/cuentas-transferencia";
 
-interface Sucursal {
-  nombre: string;
-  ciudad: string;
-  direccion: string;
-  telefono: string;
-  email: string;
-  whatsapp: string;
-  horarios: string;
-  dias_apertura: string;
-  hora_apertura: string;
-  hora_cierre: string;
-  delivery_fee: number;
-  envio_gratis_desde: number;
-  ventas_activas: boolean;
-  mensaje_cierre: string;
-  delivery_activo?: boolean;
-  mensaje_delivery?: string;
-  masa_napoletana_activa?: boolean;
-  masa_molde_activa?: boolean;
-  cuentas_transferencia?: CuentaTransferencia[];
-}
-
 type CampoCuenta = "nombre" | "alias" | "cbu" | "banco" | "titular";
+
+type Pestana = "horario" | "delivery" | "datos" | "cuentas";
+
+const PESTANAS: [Pestana, string][] = [
+  ["horario", "Horario"],
+  ["delivery", "Delivery"],
+  ["datos", "Datos del local"],
+  ["cuentas", "Cuentas para transferencias"],
+];
+
+const CAMPOS: Record<Pestana, (keyof Sucursal)[]> = {
+  horario: ["dias_apertura", "hora_apertura", "hora_cierre", "horarios"],
+  delivery: ["delivery_fee", "envio_gratis_desde"],
+  datos: ["nombre", "telefono", "email", "whatsapp", "direccion", "ciudad"],
+  cuentas: ["cuentas_transferencia"],
+};
+
+const camposDe = (p: Pestana, c: Sucursal) => Object.fromEntries(CAMPOS[p].map((k) => [k, c[k]]));
 
 const DIAS: [number, string][] = [
   [1, "Lun"], [2, "Mar"], [3, "Mié"], [4, "Jue"], [5, "Vie"], [6, "Sáb"], [0, "Dom"],
 ];
 
 export function Settings() {
-  const { reset, showToast } = useStore();
-  const [config, setConfig] = useState<Sucursal | null>(null);
-  const [cargando, setCargando] = useState(true);
+  const { sucursal, cargando, error, recargar, guardar } = useSucursal();
+  const [pestana, setPestana] = useState<Pestana>("horario");
   const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState("");
+  // `base` es la última versión del servidor que el borrador conoce; `config` es lo que se está editando.
+  const [base, setBase] = useState<Sucursal | null>(sucursal);
+  const [config, setConfig] = useState<Sucursal | null>(sucursal);
+
+  const sucio =
+    !!config && !!base &&
+    JSON.stringify(camposDe(pestana, config)) !== JSON.stringify(camposDe(pestana, base));
+
+  // La sucursal cambia de identidad al llegar, al volver a la pestaña y cuando el Arranque mueve un
+  // interruptor. Sin cambios sin guardar en esta pestaña, el borrador la sigue; con cambios, no se pisa.
+  // Se compara por identidad y se ajusta una sola vez: tras el ajuste `base === sucursal`.
+  if (sucursal && base !== sucursal && !sucio) {
+    setBase(sucursal);
+    setConfig(sucursal);
+  }
 
   useEffect(() => {
-    fetch("/api/admin/sucursal")
-      .then((r) => r.json())
-      .then((r) => {
-        if (r?.ok && r.data) setConfig(r.data);
-        else setError(r?.error || "No se pudo cargar la configuración");
-      })
-      .catch(() => setError("No se pudo cargar la configuración"))
-      .finally(() => setCargando(false));
-  }, []);
+    if (!sucio) return;
+    const avisar = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", avisar);
+    return () => window.removeEventListener("beforeunload", avisar);
+  }, [sucio]);
 
-  if (cargando) return <div className="panel"><div className="panel-body">Cargando configuración…</div></div>;
-  if (!config) return <div className="panel"><div className="panel-body"><div className="co-error">{error}</div></div></div>;
+  if (!sucursal || !config) {
+    return (
+      <div className="panel">
+        <div className="panel-body">
+          {error ? (
+            <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <div className="co-error">{error}</div>
+              <button className="btn btn-ghost btn-sm" onClick={() => void recargar()}>Reintentar</button>
+            </div>
+          ) : cargando ? (
+            "Cargando configuración…"
+          ) : (
+            <button className="btn btn-ghost btn-sm" onClick={() => void recargar()}>Reintentar</button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const set = <K extends keyof Sucursal>(campo: K, valor: Sucursal[K]) =>
     setConfig((c) => (c ? { ...c, [campo]: valor } : c));
 
+  const irA = (p: Pestana) => {
+    if (p === pestana) return;
+    if (sucio) {
+      if (!confirm("Tenés cambios sin guardar en esta pestaña. ¿Descartarlos?")) return;
+      // Se vuelve a lo último que trajo el servidor, no a una base que pudo quedar vieja.
+      setBase(sucursal);
+      setConfig(sucursal);
+    }
+    setPestana(p);
+  };
+
+  const onGuardar = async () => {
+    setGuardando(true);
+    const parcial = camposDe(pestana, config) as Partial<Sucursal>;
+    if ("delivery_fee" in parcial) parcial.delivery_fee = Number(parcial.delivery_fee);
+    if ("envio_gratis_desde" in parcial) parcial.envio_gratis_desde = Number(parcial.envio_gratis_desde);
+    if (await guardar(parcial)) setBase((b) => ({ ...(b ?? config), ...parcial }));
+    setGuardando(false);
+  };
+
   const diasActivos = String(config.dias_apertura || "").split(",").map(Number).filter((n) => !Number.isNaN(n));
-  const deliveryActivo = config.delivery_activo !== false;
-  const hayNapoletana = config.masa_napoletana_activa !== false;
-  const hayMolde = config.masa_molde_activa !== false;
 
   // El editor trabaja sobre la lista tal como está, sin filtrarla: una cuenta a
   // medio tipear no puede desaparecer. La valida el servidor al guardar.
@@ -90,97 +126,27 @@ export function Settings() {
     set("dias_apertura", siguiente.sort((a, b) => a - b).join(","));
   };
 
-  const guardar = async () => {
-    setGuardando(true);
-    setError("");
-    try {
-      const respuesta = await fetch("/api/admin/sucursal", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...config,
-          delivery_fee: Number(config.delivery_fee),
-          envio_gratis_desde: Number(config.envio_gratis_desde),
-        }),
-      });
-      const resultado = await respuesta.json();
-      if (!respuesta.ok || !resultado.ok) throw new Error(resultado.error || "No se pudo guardar");
-      showToast("Configuración guardada");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo guardar");
-    } finally {
-      setGuardando(false);
-    }
-  };
-
   return (
     <div className="panel">
-      <div className="panel-head"><h3>Configuración</h3></div>
-      <div className="panel-body">
-        <div style={{ maxWidth: 620, display: "flex", flexDirection: "column", gap: 24 }}>
+      <div className="tabs" role="tablist">
+        {PESTANAS.map(([id, etiqueta]) => (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={pestana === id}
+            className={pestana === id ? "active" : ""}
+            onClick={() => irA(id)}
+          >
+            {etiqueta}
+          </button>
+        ))}
+      </div>
 
+      <div className="panel-body" style={{ maxWidth: 640 }}>
+        {pestana === "horario" && (
           <section>
-            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 4 }}>Venta</h4>
             <div className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
-              Cortá la venta por vacaciones o imprevistos. Manda por encima del horario:
-              con esto apagado no se toman pedidos aunque el local esté en horario.
-            </div>
-            <button
-              className={`btn ${config.ventas_activas ? "btn-success" : "btn-danger"}`}
-              onClick={() => set("ventas_activas", !config.ventas_activas)}
-            >
-              {config.ventas_activas ? "✓ Tomando pedidos" : "✕ Venta pausada"}
-            </button>
-            {!config.ventas_activas && (
-              <div className="field" style={{ marginTop: 12 }}>
-                <label>Motivo que ve el cliente</label>
-                <input
-                  placeholder="Cerramos por vacaciones hasta el 5 de enero"
-                  value={config.mensaje_cierre || ""}
-                  onChange={(e) => set("mensaje_cierre", e.target.value)}
-                />
-              </div>
-            )}
-          </section>
-
-          <section>
-            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 4 }}>Masas</h4>
-            <div className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
-              Si te quedás sin una masa, marcala como agotada: los clientes dejan de poder elegirla,
-              las pizzas que ya tenían en el carrito pasan a la otra y la web les avisa. Tiene que
-              quedar al menos una; si no hay ninguna, pausá la venta.
-            </div>
-            <div className="flex gap-8" style={{ flexWrap: "wrap" }}>
-              <button
-                className={`btn ${hayNapoletana ? "btn-success" : "btn-danger"}`}
-                onClick={() => set("masa_napoletana_activa", !hayNapoletana)}
-                disabled={hayNapoletana && !hayMolde}
-                title={hayNapoletana && !hayMolde ? "La al molde está agotada: tiene que quedar al menos una masa" : undefined}
-              >
-                {hayNapoletana ? "✓ Napoletana disponible" : "✕ Napoletana agotada"}
-              </button>
-              <button
-                className={`btn ${hayMolde ? "btn-success" : "btn-danger"}`}
-                onClick={() => set("masa_molde_activa", !hayMolde)}
-                disabled={hayMolde && !hayNapoletana}
-                title={hayMolde && !hayNapoletana ? "La napoletana está agotada: tiene que quedar al menos una masa" : undefined}
-              >
-                {hayMolde ? "✓ Al molde disponible" : "✕ Al molde agotada"}
-              </button>
-            </div>
-            {(!hayNapoletana || !hayMolde) && (
-              <div className="text-muted" style={{ fontSize: 12, marginTop: 8 }}>
-                El cliente ve: “{estadoMasas({ masaNapoletanaActiva: hayNapoletana, masaMoldeActiva: hayMolde }).aviso}”
-              </div>
-            )}
-          </section>
-
-          <section>
-            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 4 }}>Horario de atención</h4>
-            <div className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
-              El <b>último pedido</b> es la hora en que el sitio deja de aceptar pedidos, y no
-              tiene por qué coincidir con la de cierre del local: si se trabaja hasta las 00:00
-              pero el último pedido entra 23:45, poné 23:45 acá y 00:00 en el texto que se muestra.
+              El último pedido es la hora en que la web deja de aceptar pedidos; el texto es lo que se muestra.
             </div>
             <div className="flex gap-8" style={{ flexWrap: "wrap", marginBottom: 14 }}>
               {DIAS.map(([dia, etiqueta]) => (
@@ -208,33 +174,14 @@ export function Settings() {
               </div>
             </div>
           </section>
+        )}
 
+        {pestana === "delivery" && (
           <section>
-            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 4 }}>Delivery</h4>
             <div className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
-              Si hoy no podés hacer envíos, pausá el delivery: el sitio sigue vendiendo, pero solo
-              para retirar en el local, y el cliente ve el motivo antes de armar su pedido.
+              Para pausar el delivery, usá el Arranque.
             </div>
-            <button
-              className={`btn ${deliveryActivo ? "btn-success" : "btn-danger"}`}
-              onClick={() => set("delivery_activo", !deliveryActivo)}
-            >
-              {deliveryActivo ? "✓ Haciendo envíos" : "✕ Delivery pausado · solo retiro"}
-            </button>
-            {!deliveryActivo && (
-              <div className="field" style={{ marginTop: 12 }}>
-                <label>Motivo que ve el cliente</label>
-                <input
-                  placeholder={MENSAJE_DELIVERY_DEFAULT}
-                  value={config.mensaje_delivery || ""}
-                  onChange={(e) => set("mensaje_delivery", e.target.value)}
-                />
-                <div className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>
-                  Si lo dejás vacío, se muestra el texto de ejemplo.
-                </div>
-              </div>
-            )}
-            <div className="form-grid" style={{ marginTop: 16 }}>
+            <div className="form-grid">
               <div className="field">
                 <label>Tarifa de envío</label>
                 <input type="number" value={config.delivery_fee} onChange={(e) => set("delivery_fee", Number(e.target.value))} />
@@ -245,9 +192,10 @@ export function Settings() {
               </div>
             </div>
           </section>
+        )}
 
+        {pestana === "datos" && (
           <section>
-            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 10 }}>Datos del local</h4>
             <div className="form-grid">
               <div className="field"><label>Nombre</label><input value={config.nombre} onChange={(e) => set("nombre", e.target.value)} /></div>
               <div className="field"><label>Teléfono</label><input value={config.telefono} onChange={(e) => set("telefono", e.target.value)} /></div>
@@ -257,9 +205,10 @@ export function Settings() {
               <div className="field full"><label>Ciudad</label><input value={config.ciudad} onChange={(e) => set("ciudad", e.target.value)} /></div>
             </div>
           </section>
+        )}
 
+        {pestana === "cuentas" && (
           <section>
-            <h4 style={{ fontFamily: "var(--a-font-display)", fontSize: 18, marginBottom: 4 }}>Cuentas para transferencias</h4>
             <div className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
               Los clientes ven solo la cuenta <b>activa</b>, en la confirmación y en el seguimiento del pedido.
               Cada pedido guarda la cuenta que se le mostró: si cambiás la activa, los pedidos anteriores no cambian.
@@ -305,22 +254,14 @@ export function Settings() {
               </div>
             </div>
           </section>
+        )}
+      </div>
 
-          {error && <div className="co-error">{error}</div>}
-
-          <div className="flex gap-8" style={{ flexWrap: "wrap" }}>
-            <button className="btn btn-primary" onClick={guardar} disabled={guardando}>
-              {guardando ? "Guardando…" : "Guardar cambios"}
-            </button>
-            <button className="btn btn-ghost" onClick={() => { if (confirm("¿Recargar datos desde la base?")) reset(); }}>
-              Recargar datos
-            </button>
-          </div>
-
-          <div className="text-muted" style={{ fontSize: 12 }}>
-            Los cambios de horario, de venta, de masas y de delivery se ven en el sitio en menos de un minuto.
-          </div>
-        </div>
+      <div className="panel-body" style={{ borderTop: "1px solid var(--a-line)", display: "flex", gap: 8, alignItems: "center" }}>
+        <button className="btn btn-primary" disabled={!sucio || guardando} onClick={onGuardar}>
+          {guardando ? "Guardando…" : "Guardar cambios"}
+        </button>
+        {sucio && <span className="tbl-muted">Cambios sin guardar</span>}
       </div>
     </div>
   );
