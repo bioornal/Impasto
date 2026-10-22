@@ -17,11 +17,11 @@ const timeAgo = (iso: string | null) => {
 };
 const fmtDateTime = (iso: string) => new Date(iso).toLocaleDateString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
-export function Customers() {
+export function Customers({ abrirId = null }: { abrirId?: string | null }) {
   const { state, reloadCustomers } = useStore();
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("recientes");
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(abrirId ?? null);
 
   const filtered = useMemo(() => {
     let list = [...state.customers];

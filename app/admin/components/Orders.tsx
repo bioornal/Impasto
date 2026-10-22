@@ -12,11 +12,12 @@ import { OrderDetail } from "./OrderDetail";
 
 const FILTERS: [string, string][] = [["activos","Activos"],["nuevo","Nuevos"],["preparando","Preparando"],["en-camino","En camino"],["entregado","Entregados"],["cancelado","Cancelados"],["todos","Todos"]];
 
-export function Orders({ soloActivos = false, onVerTodos }: { soloActivos?: boolean; onVerTodos?: () => void }) {
+export function Orders({ soloActivos = false, onVerTodos, abrirId = null }: { soloActivos?: boolean; onVerTodos?: () => void; abrirId?: string | null }) {
   const { state, updateOrderStatus, updateOrderPayment, deleteOrders, refundOrder, recordManualRefund, reload } = useStore();
-  const [filter, setFilter] = useState("activos");
+  // Con abrirId (viene del buscador) el pedido se abre al montar y el filtro es "todos": uno viejo tiene que verse.
+  const [filter, setFilter] = useState(abrirId ? "todos" : "activos");
   const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<AdminOrder | null>(null);
+  const [selected, setSelected] = useState<AdminOrder | null>(() => (abrirId ? state.orders.find((o) => o._dbId === abrirId) ?? null : null));
   const [printState, setPrintState] = useState<{ orderId: string; message: string; error: boolean } | null>(null);
   const [printing, setPrinting] = useState(false);
   const [printerSelection, setPrinterSelection] = useState<PrinterSelection | null>(null);

@@ -14,7 +14,9 @@ import { Testimonials } from "./components/Testimonials";
 import { Settings } from "./components/Settings";
 import { ResumenDiario } from "./components/ResumenDiario";
 import { Arranque } from "./components/Arranque";
+import { BusquedaGlobal } from "./components/BusquedaGlobal";
 import { seccionInicial, type SeccionAdmin } from "@/lib/inicio-admin";
+import type { ResultadoBusqueda } from "@/lib/busqueda-admin";
 
 const CLAVE_SECCION = "impasto_admin_seccion";
 
@@ -48,11 +50,26 @@ function AdminApp() {
   const puedeSalir = useRef<(() => boolean) | null>(null);
   const registrarSalida = useCallback((fn: (() => boolean) | null) => { puedeSalir.current = fn; }, []);
 
-  const irA = (seccion: SeccionAdmin) => {
-    if (seccion !== page && puedeSalir.current && !puedeSalir.current()) return;
+  // Lo que eligió el buscador y la sección tiene que abrir al montarse. `n` cuenta las elecciones: elegir lo
+  // mismo dos veces cambia la `key` y vuelve a abrirlo. Navegar por el menú lo borra.
+  const [abrir, setAbrir] = useState<{ tipo: ResultadoBusqueda["tipo"]; id: string; n: number } | null>(null);
+
+  // Devuelve false si no navegó (cambios sin guardar en Configuración y el usuario eligió quedarse).
+  const irA = (seccion: SeccionAdmin): boolean => {
+    if (seccion !== page && puedeSalir.current && !puedeSalir.current()) return false;
+    setAbrir(null);
     setPage(seccion);
     try { sessionStorage.setItem(CLAVE_SECCION, seccion); } catch { /* sin sessionStorage, no se recuerda */ }
+    return true;
   };
+
+  const elegir = (r: ResultadoBusqueda) => {
+    const seccion: SeccionAdmin = r.tipo === "pedido" ? "pedidos" : r.tipo === "cliente" ? "clientes" : "productos";
+    if (!irA(seccion)) return;
+    setAbrir((previo) => ({ tipo: r.tipo, id: r.id, n: (previo?.n ?? 0) + 1 }));
+  };
+  const claveDe = (tipo: ResultadoBusqueda["tipo"]) => (abrir?.tipo === tipo ? `${abrir.id}-${abrir.n}` : "lista");
+  const abrirDe = (tipo: ResultadoBusqueda["tipo"]) => (abrir?.tipo === tipo ? abrir.id : null);
 
   const actual = page ?? "dashboard";
   const [title, subtitle] = TITLES[actual];
@@ -61,16 +78,16 @@ function AdminApp() {
     <div className="admin">
       <Sidebar current={actual} onNav={irA} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="main">
-        <Topbar title={title} subtitle={subtitle} onMenu={() => setSidebarOpen(true)} onEstado={() => irA("arranque")} />
+        <Topbar title={title} subtitle={subtitle} onMenu={() => setSidebarOpen(true)} onEstado={() => irA("arranque")} buscador={<BusquedaGlobal onElegir={elegir} />} />
         <div className="content">
           {page === null && <div className="text-muted">Cargando…</div>}
           {page === "arranque"      && <Arranque onVerPedidos={() => irA("pedidos")} />}
-          {page === "pedidos"       && <><NotificationsRecovery /><Orders /></>}
+          {page === "pedidos"       && <><NotificationsRecovery /><Orders key={claveDe("pedido")} abrirId={abrirDe("pedido")} /></>}
           {page === "resumen"       && <ResumenDiario />}
-          {page === "productos"     && <Products />}
+          {page === "productos"     && <Products key={claveDe("producto")} abrirId={abrirDe("producto")} />}
           {page === "etiquetas"     && <Etiquetas />}
           {page === "dashboard"     && <Dashboard />}
-          {page === "clientes"      && <Customers />}
+          {page === "clientes"      && <Customers key={claveDe("cliente")} abrirId={abrirDe("cliente")} />}
           {page === "testimonios"   && <Testimonials />}
           {page === "configuracion" && <Settings registrarSalida={registrarSalida} />}
         </div>

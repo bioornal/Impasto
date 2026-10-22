@@ -107,13 +107,14 @@ function CeldaEtiquetas({ producto }: { producto: AdminProduct }) {
   );
 }
 
-export function Products() {
+export function Products({ abrirId = null }: { abrirId?: string | null }) {
   const { state, updateProduct, createProduct, deleteProduct } = useStore();
   const [type, setType] = useState("todos");
   // "En carta" (false) o "Dados de baja" (true): los archivados no se venden.
-  const [baja, setBaja] = useState(false);
+  // Con abrirId (viene del buscador) se abre su edición al montar, en la pestaña donde está.
+  const [baja, setBaja] = useState(() => !!(abrirId && state.products.find((p) => p.id === abrirId)?.archivado));
   const [q, setQ] = useState("");
-  const [edit, setEdit] = useState<AdminProduct | null>(null);
+  const [edit, setEdit] = useState<AdminProduct | null>(() => (abrirId ? state.products.find((p) => p.id === abrirId) ?? null : null));
   const [creating, setCreating] = useState(false);
 
   const filtered = useMemo(() => {
