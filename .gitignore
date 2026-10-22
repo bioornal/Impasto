@@ -65,3 +65,6 @@ next-env.d.ts
 # Local thermal printer agent
 /printer-agent/bin/
 /printer-agent/config.local.json
+
+# Maquetas de brainstorming (superpowers)
+.superpowers/
