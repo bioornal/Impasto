@@ -85,7 +85,7 @@ test('imagen compartida, manifiesto, metadatos y resumen para asistentes siguen 
   const require = createRequire(import.meta.url);
   for (const visible of [false, true]) {
     const data = { ...catalogo, empanadas: visible ? [{ id: 'e', nombre: 'Carne', tags: [], disponible: true }] : [] };
-    for (const archivo of ['app/opengraph-image.tsx', 'app/manifest.ts', 'app/page.tsx', 'app/llms.txt/route.ts']) {
+    for (const archivo of ['app/opengraph-image.tsx', 'app/manifest.ts', 'app/(sitio)/page.tsx', 'app/llms.txt/route.ts']) {
       const compiled = ts.transpileModule(readFileSync(archivo, 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React },
       }).outputText;

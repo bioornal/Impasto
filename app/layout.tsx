@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import "./impasto.css";
 import { BUSINESS } from "@/lib/business";
 import { PALABRAS_CLAVE, descripcionSitio, tituloSitio } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";

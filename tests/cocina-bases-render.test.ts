@@ -51,7 +51,7 @@ test('the kitchen page renders linked salsa once with actual grams, a white base
   };
   // Only replace network/photo adapters; compile and render the actual page and recipe assembler.
   const require=createRequire(import.meta.url);
-  const source=readFileSync(new URL('../app/cocina/page.tsx',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../app/(sitio)/cocina/page.tsx',import.meta.url),'utf8');
   const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText;
   const exported:{default?:()=>Promise<React.ReactNode>}={};
   runInNewContext(compiled,{exports:exported,require:(name:string)=>{

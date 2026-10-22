@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { BUSINESS } from "../lib/business";
-import { enlaceWhatsapp, MENSAJE_PEDIDO_WHATSAPP } from "../lib/contacto";
-import { listaDeDias } from "../lib/hours";
+import { BUSINESS } from "@/lib/business";
+import { enlaceWhatsapp, MENSAJE_PEDIDO_WHATSAPP } from "@/lib/contacto";
+import { listaDeDias } from "@/lib/hours";
 import styles from "./error.module.css";
 
 export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
