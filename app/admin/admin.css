@@ -301,7 +301,7 @@ a{ color:inherit; text-decoration:none; }
 .select-input{ padding:5px 28px 5px 10px; border:1px solid var(--a-line); border-radius:7px; font-size:13px; background-color:var(--a-surface); }
 
 /* ============ TABS (Configuración) ============ */
-.tabs{ display:flex; gap:2px; border-bottom:1px solid var(--a-line); padding:0 14px; overflow-x:auto; }
+.tabs{ display:flex; gap:2px; border-bottom:1px solid var(--a-line); padding:0 14px; overflow-x:auto; overflow-y:hidden; }
 .tabs button{ padding:10px 12px; font-size:13px; font-weight:500; color:var(--a-muted); border-bottom:2px solid transparent; margin-bottom:-1px; white-space:nowrap; }
 .tabs button.active{ color:var(--a-ink); border-bottom-color:var(--a-ink); font-weight:600; }
 

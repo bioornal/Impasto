@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StoreProvider } from "./components/StoreProvider";
 import { SucursalProvider, useSucursal } from "./components/SucursalProvider";
 import { Sidebar } from "./components/Sidebar";
@@ -44,7 +44,12 @@ function AdminApp() {
     setPage(seccionInicial(sucursal?.dias_apertura, new Date(), leerGuardada()));
   }, [page, cargando, sucursal]);
 
+  // Configuración registra acá una pregunta que se hace antes de salir de la sección con cambios sin guardar.
+  const puedeSalir = useRef<(() => boolean) | null>(null);
+  const registrarSalida = useCallback((fn: (() => boolean) | null) => { puedeSalir.current = fn; }, []);
+
   const irA = (seccion: SeccionAdmin) => {
+    if (seccion !== page && puedeSalir.current && !puedeSalir.current()) return;
     setPage(seccion);
     try { sessionStorage.setItem(CLAVE_SECCION, seccion); } catch { /* sin sessionStorage, no se recuerda */ }
   };
@@ -67,7 +72,7 @@ function AdminApp() {
           {page === "dashboard"     && <Dashboard />}
           {page === "clientes"      && <Customers />}
           {page === "testimonios"   && <Testimonials />}
-          {page === "configuracion" && <Settings />}
+          {page === "configuracion" && <Settings registrarSalida={registrarSalida} />}
         </div>
       </div>
     </div>

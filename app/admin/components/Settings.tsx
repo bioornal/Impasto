@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSucursal, type Sucursal } from "./SucursalProvider";
 import type { CuentaTransferencia } from "@/lib/cuentas-transferencia";
 
@@ -21,13 +21,15 @@ const CAMPOS: Record<Pestana, (keyof Sucursal)[]> = {
   cuentas: ["cuentas_transferencia"],
 };
 
-const camposDe = (p: Pestana, c: Sucursal) => Object.fromEntries(CAMPOS[p].map((k) => [k, c[k]]));
+// Una lista de cuentas sin definir y una vacía son lo mismo: agregar y quitar una cuenta no ensucia la pestaña.
+const camposDe = (p: Pestana, c: Sucursal) =>
+  Object.fromEntries(CAMPOS[p].map((k) => [k, k === "cuentas_transferencia" ? (c[k] ?? []) : c[k]]));
 
 const DIAS: [number, string][] = [
   [1, "Lun"], [2, "Mar"], [3, "Mié"], [4, "Jue"], [5, "Vie"], [6, "Sáb"], [0, "Dom"],
 ];
 
-export function Settings() {
+export function Settings({ registrarSalida }: { registrarSalida: (fn: (() => boolean) | null) => void }) {
   const { sucursal, cargando, error, recargar, guardar } = useSucursal();
   const [pestana, setPestana] = useState<Pestana>("horario");
   const [guardando, setGuardando] = useState(false);
@@ -53,6 +55,14 @@ export function Settings() {
     window.addEventListener("beforeunload", avisar);
     return () => window.removeEventListener("beforeunload", avisar);
   }, [sucio]);
+
+  // Al salir de Configuración por el menú o la barra superior, la página pregunta antes si hay cambios sin guardar.
+  const sucioRef = useRef(false);
+  useEffect(() => { sucioRef.current = sucio; }, [sucio]);
+  useEffect(() => {
+    registrarSalida(() => !sucioRef.current || confirm("Tenés cambios sin guardar en Configuración. ¿Descartarlos?"));
+    return () => registrarSalida(null);
+  }, [registrarSalida]);
 
   if (!sucursal || !config) {
     return (
@@ -261,7 +271,7 @@ export function Settings() {
         <button className="btn btn-primary" disabled={!sucio || guardando} onClick={onGuardar}>
           {guardando ? "Guardando…" : "Guardar cambios"}
         </button>
-        {sucio && <span className="tbl-muted">Cambios sin guardar</span>}
+        {sucio && <span className="text-muted">Cambios sin guardar</span>}
       </div>
     </div>
   );
