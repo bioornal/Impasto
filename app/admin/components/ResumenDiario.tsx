@@ -47,7 +47,7 @@ export function ResumenDiario() {
         <div className="kpi">
           <div className="kpi-label"><div className="kpi-icon"><Icon.Pizza /></div>Unidades</div>
           <div className="kpi-value">{formatoUnidades(dia.unidades)}</div>
-          <span className="kpi-delta" style={{ background: "var(--a-bg-2)", color: "var(--a-muted)" }}>
+          <span className="kpi-delta">
             {dia.docenas > 0
               ? `${dia.pizzas} ${dia.pizzas === 1 ? "pizza" : "pizzas"} · ${formatoUnidades(dia.docenas)} ${dia.docenas === 1 ? "docena" : "docenas"}`
               : `Pizzas: web ${dia.pizzasWeb} · POS ${dia.pizzasPos}`}
@@ -60,7 +60,7 @@ export function ResumenDiario() {
         <div className="kpi">
           <div className="kpi-label"><div className="kpi-icon" style={{ background: "var(--a-success-soft)", color: "var(--a-success)" }}><Icon.Revenue /></div>Total vendido</div>
           <div className="kpi-value">{fmt(dia.total)}</div>
-          <span className="kpi-delta" style={{ background: "var(--a-bg-2)", color: "var(--a-muted)" }}>Con envíos</span>
+          <span className="kpi-delta">Con envíos</span>
         </div>
       </div>
 

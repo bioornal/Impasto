@@ -55,7 +55,7 @@ export function Etiquetas() {
       </div>
 
       <div className="panel-body">
-        <div className="toolbar" style={{ gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+        <div className="toolbar eti-nueva" style={{ marginBottom: 12 }}>
           <input
             value={nuevo}
             onChange={e => setNuevo(e.target.value)}
@@ -77,7 +77,7 @@ export function Etiquetas() {
           </button>
         </div>
 
-        <table className="table">
+        <div className="tbl-wrap"><table className="tbl eti-tbl">
           <thead>
             <tr>
               <th>Orden</th><th>Etiqueta</th><th>Color</th><th>Dónde se ve</th><th>Usos</th><th></th>
@@ -86,7 +86,7 @@ export function Etiquetas() {
           <tbody>
             {ordenadas.map((eti, i) => (
               <tr key={eti._dbId}>
-                <td>
+                <td className="eti-orden">
                   <button className="btn btn-sm btn-ghost" disabled={i === 0} onClick={() => mover(eti, -1)}>↑</button>
                   <button className="btn btn-sm btn-ghost" disabled={i === ordenadas.length - 1} onClick={() => mover(eti, 1)}>↓</button>
                 </td>
@@ -114,7 +114,7 @@ export function Etiquetas() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );

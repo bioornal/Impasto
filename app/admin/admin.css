@@ -481,6 +481,18 @@ a{ color:inherit; text-decoration:none; }
 .text-muted{ color:var(--a-muted); }
 .text-mono{ font-family:var(--a-font-mono); }
 
+/* ============ ETIQUETAS ============ */
+.eti-tbl th{ text-align:left; }
+.eti-tbl input, .eti-tbl select, .eti-nueva input, .eti-nueva select{
+  padding:5px 8px; border:1px solid var(--a-line-strong); border-radius:6px; font-size:13px;
+  background:var(--a-surface); color:var(--a-ink); outline:0;
+}
+.eti-tbl input:focus, .eti-tbl select:focus, .eti-nueva input:focus, .eti-nueva select:focus{
+  border-color:var(--a-ink); box-shadow:0 0 0 3px rgba(17,24,39,.08);
+}
+.eti-orden{ white-space:nowrap; }
+.eti-orden .btn + .btn{ margin-left:4px; }
+
 /* ============ COMANDA THERMAL PRINT (80mm / 58mm) ============ */
 .comanda-print-ticket {
   display: none;

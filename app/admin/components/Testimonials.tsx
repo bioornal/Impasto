@@ -126,10 +126,10 @@ export function Testimonials() {
           {filtered.map(t => {
             const pedido = t.pedidoId ? pedidos.get(t.pedidoId) : undefined;
             return (
-              <div key={t.id} style={{ padding: 18, border: "1px solid var(--a-line)", borderRadius: 14, background: "var(--a-surface)", display: "flex", flexDirection: "column" }}>
+              <div key={t.id} style={{ padding: 14, border: "1px solid var(--a-line)", borderRadius: 10, background: "var(--a-surface)", display: "flex", flexDirection: "column" }}>
                 <div className="flex" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                   <span className={`chip chip-${t.estado}`}>{t.estado}</span>
-                  <span className="tbl-muted text-mono" style={{ fontSize: 11 }}>{timeAgo(t.fecha)}</span>
+                  <span className="tbl-muted" style={{ fontSize: 12 }}>{timeAgo(t.fecha)}</span>
                 </div>
                 <div className="stars" style={{ fontSize: 16, marginBottom: 8 }}>
                   {"★".repeat(t.rating)}<span className="stars-empty">{"★".repeat(5 - t.rating)}</span>
