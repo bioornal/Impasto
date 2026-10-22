@@ -687,6 +687,19 @@ a{ color:inherit; text-decoration:none; }
 .masas-barra span{ display:block; height:100%; background:var(--a-accent); border-radius:999px; }
 @media (max-width:560px){ .masas-fila{ grid-template-columns:80px 1fr; } .masas-fila > span{ grid-column:1 / -1; text-align:left; } }
 
+/* ============ PEDIDOS ============ */
+.ord-cards{ display:none; }
+@media (max-width:760px){
+  .ord-tabla{ display:none; }
+  .ord-cards{ display:flex; flex-direction:column; gap:8px; padding:10px; }
+  .ord-card{ background:var(--a-surface); border:1px solid var(--a-line); border-radius:var(--a-radius); padding:10px 12px; display:flex; flex-direction:column; gap:4px; font-size:13px; }
+  .ord-card.pendiente{ border-left:3px solid var(--a-warn); }
+  .ord-card-top{ display:flex; justify-content:space-between; align-items:center; }
+  .ord-card-items{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ord-card-acciones{ display:flex; gap:6px; align-items:center; margin-top:4px; }
+  .ord-card-acciones .btn-next{ padding:8px 10px; font-size:13px; }
+}
+
 /* ============ RESUMEN DIARIO ============ */
 .resumen-nav{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
 .resumen-nav > div{ display:flex; flex-direction:column; min-width:150px; }

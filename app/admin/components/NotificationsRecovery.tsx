@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 type Row = {id:string;referencia:string;canal:string;estado:string;motivo:string;intentos:number};
 export function NotificationsRecovery() {
   const [rows,setRows]=useState<Row[]>([]); const [busy,setBusy]=useState(false); const [loaded,setLoaded]=useState(false); const [error,setError]=useState('');
@@ -16,7 +16,11 @@ export function NotificationsRecovery() {
     try {const response=await fetch(`/api/admin/notificaciones/${row.id}/recuperar`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirmarDuplicado:uncertain})});const body=await response.json();if(!response.ok || !body.ok) throw new Error(body.error || 'No se pudo recuperar el aviso');await load();}
     catch(err){setError(err instanceof Error ? err.message : 'No se pudo recuperar el aviso');}finally{setBusy(false);}
   }
-  return <section className="card" style={{padding:16,marginBottom:16}} aria-label="Recuperación de avisos">
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- una consulta al abrir Pedidos
+  useEffect(() => { void load(); }, []);
+  if (loaded && rows.length === 0 && !error) return null;
+  if (!loaded && !error) return null;
+  return <section className="panel" style={{padding:12,marginBottom:12}} aria-label="Recuperación de avisos">
     <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center'}}><strong>Avisos pendientes de entrega</strong><button className="btn btn-ghost" disabled={busy} onClick={()=>load()}>{busy?'Consultando…':loaded?'Actualizar avisos':'Consultar avisos'}</button></div>
     <p style={{fontSize:13}}>Podés recuperar avisos de email y Telegram. Los enviados no se vuelven a enviar. Revisá los casos sin entrega confirmada antes de reintentarlos.</p>
     {error && <p role="alert">{error}</p>}
