@@ -60,7 +60,7 @@ export function Sidebar({ current, onNav, open, onClose }: SidebarProps) {
         <a className="nav-item" href="/" target="_blank" rel="noreferrer"><Icon.ExternalLink /><span>Ver sitio público</span></a>
         <div className="sidebar-footer">
           <div className="sidebar-footer-info"><b title={email}>{email || "Sesión iniciada"}</b><small>Administrador</small></div>
-          <button className="sidebar-signout" onClick={async () => { await fetch("/api/auth/sign-out", { method: "POST" }); router.replace("/admin-login"); router.refresh(); }}>Salir</button>
+          <button className="sidebar-signout" title="Cerrar sesión" onClick={async () => { await fetch("/api/auth/sign-out", { method: "POST" }); router.replace("/admin-login"); router.refresh(); }}>Salir</button>
         </div>
       </aside>
     </>

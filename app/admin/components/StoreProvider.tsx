@@ -180,7 +180,7 @@ export const useStore = () => {
 function LoadingScreen({ error }: { error: string | null }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", flexDirection: "column", gap: 16, background: "var(--a-bg)", fontFamily: "var(--a-font-body)" }}>
-      <div style={{ width: 42, height: 42, borderRadius: 12, background: "linear-gradient(135deg, var(--a-accent), var(--a-gold))", color: "white", display: "grid", placeItems: "center", fontFamily: "var(--a-font-display)", fontWeight: 700, fontSize: 22, transform: "rotate(-6deg)", boxShadow: "0 4px 12px rgba(255,77,31,.35)" }}>I</div>
+      <div style={{ width: 42, height: 42, borderRadius: 12, background: "var(--a-ink)", color: "white", display: "grid", placeItems: "center", fontWeight: 700, fontSize: 22 }}>I</div>
       {error
         ? <div style={{ color: "var(--a-danger)", fontSize: 13.5, maxWidth: 340, textAlign: "center", lineHeight: 1.5 }}>
             <b style={{ display: "block", marginBottom: 6 }}>No se pudo conectar con el servidor</b>

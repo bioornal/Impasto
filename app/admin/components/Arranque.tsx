@@ -55,11 +55,11 @@ export function Arranque({ onVerPedidos }: { onVerPedidos: () => void }) {
             title={molde && !napoletana ? "La napoletana está agotada: tiene que quedar al menos una masa" : undefined}
             onChange={(v) => void cambiar("masa_molde_activa", v, v ? "Al molde disponible" : "Al molde agotada")} />
           {!sucursal.ventas_activas && (
-            <Motivo key={"cierre:" + (sucursal.mensaje_cierre || "")}valor={sucursal.mensaje_cierre || ""} placeholder="Cerramos por vacaciones hasta el 5 de enero"
+            <Motivo key={"cierre:" + (sucursal.mensaje_cierre || "")} valor={sucursal.mensaje_cierre || ""} placeholder="Cerramos por vacaciones hasta el 5 de enero"
               onGuardar={(t) => void cambiar("mensaje_cierre", t, "Motivo guardado")} />
           )}
           {!delivery && (
-            <Motivo key={"delivery:" + (sucursal.mensaje_delivery || "")}valor={sucursal.mensaje_delivery || ""} placeholder={MENSAJE_DELIVERY_DEFAULT}
+            <Motivo key={"delivery:" + (sucursal.mensaje_delivery || "")} valor={sucursal.mensaje_delivery || ""} placeholder={MENSAJE_DELIVERY_DEFAULT}
               onGuardar={(t) => void cambiar("mensaje_delivery", t, "Motivo guardado")} />
           )}
           {avisoMasas && <div className="int-motivo tbl-muted">El cliente ve: “{avisoMasas}”</div>}

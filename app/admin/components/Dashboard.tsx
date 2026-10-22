@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { useStore } from "./StoreProvider";
-import { diaDeNegocio, resumenPorDia } from "@/lib/resumen-diario";
+import { diaDeNegocio, formatoUnidades, resumenPorDia } from "@/lib/resumen-diario";
 import { comparacionNoche, masVendidas, nochesParaGrafico, restarDias } from "@/lib/admin-dashboard";
 import { esPedidoValidoParaVentas } from "@/lib/pedido-visible";
 import { esActivo } from "@/lib/admin-pedidos";
@@ -37,7 +37,7 @@ export function Dashboard() {
     <>
       <div className="kpi-grid">
         <div className="kpi"><div className="kpi-label">Ventas esta noche</div><div className="kpi-value">{fmt(noche.actual)}</div>
-          <div className={`kpi-delta ${noche.pct === null ? "" : noche.pct >= 0 ? "up" : "down"}`}>{noche.pct === null ? "Sin la misma noche de la semana pasada" : `${noche.pct >= 0 ? "↑" : "↓"} ${Math.abs(noche.pct)}% vs la semana pasada`}</div></div>
+          <div className={`kpi-delta ${noche.pct === null ? "" : noche.pct >= 0 ? "up" : "down"}`}>{noche.pct === null ? "Sin semana previa" : `${noche.pct >= 0 ? "↑" : "↓"} ${Math.abs(noche.pct)}% vs la semana pasada`}</div></div>
         <div className="kpi"><div className="kpi-label">Pedidos esta noche</div><div className="kpi-value">{noche.pedidos}</div><div className="kpi-delta">{noche.web} web · {noche.pos} POS</div></div>
         <div className="kpi"><div className="kpi-label">Ticket promedio</div><div className="kpi-value">{fmt(ticket)}</div><div className="kpi-delta">últimos 30 días</div></div>
         <div className="kpi"><div className="kpi-label">Activos ahora</div><div className="kpi-value">{activos.length}</div><div className={`kpi-delta ${sinCobrar ? "warn" : ""}`}>{sinCobrar ? `${sinCobrar} con pago pendiente` : "Al día"}</div></div>
@@ -63,7 +63,7 @@ export function Dashboard() {
           <div className="panel-head"><h3>Más vendidas</h3><span className="tbl-muted">últimas {noches} noches</span></div>
           <div className="panel-body">
             <div className="top-list">
-              {top.map((t, i) => <div className="top-row" key={t.nombre}><span className="top-rank">{i + 1}</span><span>{t.nombre}</span><span className="top-val">×{t.cantidad}</span></div>)}
+              {top.map((t, i) => <div className="top-row" key={t.nombre}><span className="top-rank">{i + 1}</span><span>{t.nombre}</span><span className="top-val">×{formatoUnidades(t.cantidad)}</span></div>)}
               {top.length === 0 && <div className="tbl-muted">Sin ventas en el período.</div>}
             </div>
             <h3 style={{ fontSize: 13, fontWeight: 600, margin: "14px 0 6px" }}>Masas</h3>

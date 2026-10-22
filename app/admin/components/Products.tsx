@@ -146,7 +146,7 @@ export function Products({ abrirId = null }: { abrirId?: string | null }) {
               <button className={type === "bebida" ? "active" : ""} onClick={() => setType("bebida")}>Bebidas<span className="count">{counts.bebida}</span></button>
             </div>
             <div className="seg">
-              <button className={!baja ? "active" : ""} onClick={() => setBaja(false)}>En carta</button>
+              <button className={!baja ? "active" : ""} onClick={() => setBaja(false)}>En carta<span className="count">{state.products.filter(p => !p.archivado).length}</span></button>
               <button className={baja ? "active" : ""} onClick={() => setBaja(true)}>Dados de baja<span className="count">{state.products.filter(p => p.archivado).length}</span></button>
             </div>
           </div>
