@@ -24,6 +24,8 @@ export interface ResumenDia {
   /** Fecha de la noche, AAAA-MM-DD. */
   dia: string;
   pedidos: number;
+  /** Pedidos del POS esa noche (el resto son de la web). */
+  pedidosPos: number;
   pizzas: number;
   docenas: number;
   /** Pizzas + docenas de empanadas. */
@@ -100,14 +102,14 @@ export function resumenPorDia(orders: ReadonlyArray<AdminOrder>, carta: CartaRes
     const dia = diaDeNegocio(o.fecha);
     let r = porDia.get(dia);
     if (!r) {
-      r = { dia, pedidos: 0, pizzas: 0, docenas: 0, unidades: 0, pizzasWeb: 0, pizzasPos: 0, total: 0,
+      r = { dia, pedidos: 0, pedidosPos: 0, pizzas: 0, docenas: 0, unidades: 0, pizzasWeb: 0, pizzasPos: 0, total: 0,
         medios: { efectivo: vacio(), transferencia: vacio(), mercadopago: vacio(), otro: vacio() } };
       porDia.set(dia, r);
     }
     const pizzas = pizzasDeItems(o.items, carta.pizzas);
     const docenas = docenasDeItems(o.items, carta.empanadas);
     const fila = r.medios[medioDe(o.pago)];
-    r.pedidos++; r.pizzas += pizzas; r.docenas += docenas; r.unidades += pizzas + docenas; r.total += o.total;
+    r.pedidos++; if (o.canal === "pos") r.pedidosPos++; r.pizzas += pizzas; r.docenas += docenas; r.unidades += pizzas + docenas; r.total += o.total;
     if (o.canal === "pos") r.pizzasPos += pizzas; else r.pizzasWeb += pizzas;
     fila.pedidos++; fila.pizzas += pizzas; fila.docenas += docenas; fila.total += o.total;
   }

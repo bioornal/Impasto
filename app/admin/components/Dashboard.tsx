@@ -1,216 +1,78 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useStore } from "./StoreProvider";
-import { Icon } from "./Icons";
+import { diaDeNegocio, resumenPorDia } from "@/lib/resumen-diario";
+import { comparacionNoche, masVendidas, nochesParaGrafico, restarDias } from "@/lib/admin-dashboard";
 import { esPedidoValidoParaVentas } from "@/lib/pedido-visible";
+import { esActivo } from "@/lib/admin-pedidos";
 import { contarMasas } from "@/lib/masa";
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
-const timeAgo = (iso: string) => {
-  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (s < 60) return "hace un momento";
-  const m = Math.floor(s / 60); if (m < 60) return `hace ${m} min`;
-  const h = Math.floor(m / 60); if (h < 24) return `hace ${h} h`;
-  return `hace ${Math.floor(h / 24)} d`;
-};
+const PERIODOS = [7, 14, 30] as const;
 
 export function Dashboard() {
   const { state } = useStore();
-  const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
-
-  // Calcs for today and yesterday
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const startOfYesterday = startOfToday - 86400000;
-
-  const validOrders = state.orders.filter(o => esPedidoValidoParaVentas(o));
-  const todayOrders = validOrders.filter(o => new Date(o.fecha).getTime() >= startOfToday);
-  const yesterdayOrders = validOrders.filter(o => {
-    const t = new Date(o.fecha).getTime();
-    return t >= startOfYesterday && t < startOfToday;
-  });
-
-  const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
-  const yesterdayRevenue = yesterdayOrders.reduce((s, o) => s + o.total, 0);
-
-  const revDiff = todayRevenue - yesterdayRevenue;
-  const revPct = yesterdayRevenue > 0
-    ? Math.round((revDiff / yesterdayRevenue) * 100)
-    : todayRevenue > 0 ? 100 : 0;
-
-  const ordersDiff = todayOrders.length - yesterdayOrders.length;
-  const activeOrders = state.orders.filter(o => ["nuevo", "preparando", "en-camino"].includes(o.estado)).length;
-  const avgTicket = validOrders.length ? validOrders.reduce((s, o) => s + o.total, 0) / validOrders.length : 0;
-
-  // Chart calculation based on selected period
-  const dayCount = period === "7d" ? 7 : period === "30d" ? 14 : 30;
-  const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-
-  const chartBars = Array.from({ length: dayCount }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (dayCount - 1 - i));
-    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-    const dayEnd = dayStart + 86400000;
-    const rev = validOrders
-      .filter(o => {
-        const t = new Date(o.fecha).getTime();
-        return t >= dayStart && t < dayEnd;
-      })
-      .reduce((s, o) => s + o.total, 0);
-
-    return {
-      label: period === "7d" ? dayNames[d.getDay()] : `${d.getDate()}/${d.getMonth() + 1}`,
-      rev,
-    };
-  });
-
-  const maxChartRev = Math.max(...chartBars.map(b => b.rev), 1);
-
-  // Masas elegidas en el mismo período del gráfico (solo pedidos con masa: desde el 17/10/2026)
-  const desdeMasas = startOfToday - (dayCount - 1) * 86400000;
-  const masas = contarMasas(validOrders.filter(o => new Date(o.fecha).getTime() >= desdeMasas));
+  const [noches, setNoches] = useState<(typeof PERIODOS)[number]>(7);
+  const carta = useMemo(() => ({
+    pizzas: new Set(state.products.filter((p) => /pizz/i.test(p.categoria)).map((p) => p.nombre)),
+    empanadas: new Set(state.products.filter((p) => /empan/i.test(p.categoria)).map((p) => p.nombre)),
+  }), [state.products]);
+  const dias = useMemo(() => resumenPorDia(state.orders, carta), [state.orders, carta]);
+  const hoy = diaDeNegocio(new Date().toISOString());
+  const noche = comparacionNoche(dias, hoy);
+  const grafico = nochesParaGrafico(dias, noches);
+  const max = Math.max(1, ...grafico.map((g) => g.total));
+  const validos = state.orders.filter(esPedidoValidoParaVentas);
+  const desde30 = restarDias(hoy, 30);
+  const ultimos30 = validos.filter((o) => diaDeNegocio(o.fecha) >= desde30);
+  const ticket = ultimos30.length ? ultimos30.reduce((s, o) => s + o.total, 0) / ultimos30.length : 0;
+  const activos = state.orders.filter(esActivo);
+  const sinCobrar = activos.filter((o) => o.pagoEstado === "pendiente").length;
+  const desde = grafico[0]?.dia;
+  const masas = contarMasas(desde ? validos.filter((o) => diaDeNegocio(o.fecha) >= desde) : []);
   const totalMasas = masas.napoletana + masas.molde;
-  const pctMasa = (n: number) => (totalMasas ? Math.round((n / totalMasas) * 100) : 0);
-
-  // Top products from non-cancelled orders
-  const counts: Record<string, number> = {};
-  validOrders.forEach(o => o.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + i.qty; }));
-  const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const top = masVendidas(desde ? validos.filter((o) => diaDeNegocio(o.fecha) >= desde) : [], carta);
 
   return (
     <>
       <div className="kpi-grid">
-        <div className="kpi">
-          <div className="kpi-label"><div className="kpi-icon"><Icon.Revenue /></div>Ventas hoy</div>
-          <div className="kpi-value">{fmt(todayRevenue)}</div>
-          <span className={`kpi-delta ${revDiff >= 0 ? "up" : "down"}`}>
-            {yesterdayRevenue > 0
-              ? `${revDiff >= 0 ? "↑" : "↓"} ${Math.abs(revPct)}% vs ayer`
-              : todayRevenue > 0
-              ? "↑ Primera venta hoy"
-              : "Sin ventas hoy aún"}
-          </span>
-        </div>
-        <div className="kpi">
-          <div className="kpi-label"><div className="kpi-icon" style={{ background: "var(--a-info-soft)", color: "var(--a-info)" }}><Icon.Orders /></div>Pedidos hoy</div>
-          <div className="kpi-value">{todayOrders.length}</div>
-          <span className={`kpi-delta ${ordersDiff >= 0 ? "up" : "down"}`}>
-            {ordersDiff > 0
-              ? `↑ ${ordersDiff} más que ayer`
-              : ordersDiff < 0
-              ? `↓ ${Math.abs(ordersDiff)} menos que ayer`
-              : "= igual que ayer"}
-          </span>
-        </div>
-        <div className="kpi">
-          <div className="kpi-label"><div className="kpi-icon" style={{ background: "var(--a-warn-soft)", color: "var(--a-warn)" }}><Icon.Clock /></div>En preparación</div>
-          <div className="kpi-value">{activeOrders}</div>
-          <span className="kpi-delta" style={{ background: "var(--a-bg-2)", color: "var(--a-muted)" }}>
-            {activeOrders > 0 ? "Requieren atención" : "Al día"}
-          </span>
-        </div>
-        <div className="kpi">
-          <div className="kpi-label"><div className="kpi-icon" style={{ background: "#ede5fa", color: "#6b3fbf" }}><Icon.Box /></div>Ticket promedio</div>
-          <div className="kpi-value">{fmt(avgTicket)}</div>
-          <span className="kpi-delta" style={{ background: "var(--a-bg-2)", color: "var(--a-muted)" }}>
-            {validOrders.length} pedido{validOrders.length !== 1 ? "s" : ""} facturado{validOrders.length !== 1 ? "s" : ""}
-          </span>
-        </div>
+        <div className="kpi"><div className="kpi-label">Ventas esta noche</div><div className="kpi-value">{fmt(noche.actual)}</div>
+          <div className={`kpi-delta ${noche.pct === null ? "" : noche.pct >= 0 ? "up" : "down"}`}>{noche.pct === null ? "Sin la misma noche de la semana pasada" : `${noche.pct >= 0 ? "↑" : "↓"} ${Math.abs(noche.pct)}% vs la semana pasada`}</div></div>
+        <div className="kpi"><div className="kpi-label">Pedidos esta noche</div><div className="kpi-value">{noche.pedidos}</div><div className="kpi-delta">{noche.web} web · {noche.pos} POS</div></div>
+        <div className="kpi"><div className="kpi-label">Ticket promedio</div><div className="kpi-value">{fmt(ticket)}</div><div className="kpi-delta">últimos 30 días</div></div>
+        <div className="kpi"><div className="kpi-label">Activos ahora</div><div className="kpi-value">{activos.length}</div><div className={`kpi-delta ${sinCobrar ? "warn" : ""}`}>{sinCobrar ? `${sinCobrar} con pago pendiente` : "Al día"}</div></div>
       </div>
-
       <div className="dash-grid">
         <div className="panel">
-          <div className="panel-head">
-            <h3>Ventas {period === "7d" ? "últimos 7 días" : period === "30d" ? "últimos 14 días" : "últimos 30 días"}</h3>
-            <div className="panel-head-spacer" />
-            <div className="seg">
-              <button className={period === "7d" ? "active" : ""} onClick={() => setPeriod("7d")}>7d</button>
-              <button className={period === "30d" ? "active" : ""} onClick={() => setPeriod("30d")}>14d</button>
-              <button className={period === "90d" ? "active" : ""} onClick={() => setPeriod("90d")}>30d</button>
-            </div>
+          <div className="panel-head"><h3>Ventas por noche</h3><div className="panel-head-spacer" />
+            <div className="seg">{PERIODOS.map((p) => <button key={p} className={noches === p ? "active" : ""} onClick={() => setNoches(p)}>{p} noches</button>)}</div>
           </div>
-          <div className="panel-body" style={{ paddingBottom: 36 }}>
-            <div className="chart">
-              {chartBars.map((b, i) => (
-                <div
-                  key={i}
-                  className="chart-bar"
-                  style={{ height: b.rev > 0 ? `${Math.max(10, (b.rev / maxChartRev) * 100)}%` : "4px" }}
-                  data-label={b.label}
-                  title={`${b.label}: ${fmt(b.rev)}`}
-                >
-                  <span className="val">{b.rev > 0 ? fmt(b.rev) : "$0"}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel-head"><h3>Top productos</h3></div>
-          <div className="panel-body" style={{ padding: 8 }}>
-            <div className="top-list">
-              {top.map(([name, qty], i) => (
-                <div className="top-row" key={name}>
-                  <div className="top-rank">{i + 1}</div>
-                  <div><b>{name}</b><small>{qty} unidades vendidas</small></div>
-                  <div className="top-val">×{qty}</div>
-                </div>
-              ))}
-              {top.length === 0 && <div style={{ padding: 20, color: "var(--a-muted)", fontSize: 13 }}>Sin datos de pedidos aún</div>}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="panel mt-20">
-        <div className="panel-head">
-          <h3>Masas elegidas · {period === "7d" ? "últimos 7 días" : period === "30d" ? "últimos 14 días" : "últimos 30 días"}</h3>
-        </div>
-        <div className="panel-body">
-          {totalMasas === 0 ? (
-            <div style={{ color: "var(--a-muted)", fontSize: 13 }}>Todavía no hay pizzas pedidas con masa elegida en este período.</div>
-          ) : (
-            <div className="masas-conteo">
-              {([["Napoletana", masas.napoletana], ["Al molde", masas.molde]] as const).map(([nombre, n]) => (
-                <div className="masas-fila" key={nombre}>
-                  <b>{nombre}</b>
-                  <div className="masas-barra"><span style={{ width: `${pctMasa(n)}%` }} /></div>
-                  <span>{n} {n === 1 ? "pizza" : "pizzas"} · {pctMasa(n)}%</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="panel mt-20">
-        <div className="panel-head">
-          <h3>Pedidos recientes</h3>
-          <div className="panel-head-spacer" />
-        </div>
-        <div className="panel-body no-pad">
-          <div className="tbl-wrap">
-            <table className="tbl">
-              <thead>
-                <tr><th>Pedido</th><th>Cliente</th><th>Items</th><th>Modalidad</th><th className="right">Total</th><th>Estado</th><th>Hace</th></tr>
-              </thead>
-              <tbody>
-                {state.orders.slice(0, 5).map(o => (
-                  <tr key={o._dbId}>
-                    <td className="tbl-mono tbl-strong">{o.id}</td>
-                    <td>{o.cliente}</td>
-                    <td className="tbl-muted">{o.items.length} ítem{o.items.length !== 1 ? "s" : ""}</td>
-                    <td>{o.mode === "delivery" ? "Delivery" : "Retiro"}</td>
-                    <td className="right tbl-price">{fmt(o.total)}</td>
-                    <td><span className={`chip chip-${o.estado}`}>{o.estado.replace("-", " ")}</span></td>
-                    <td className="tbl-muted text-mono">{timeAgo(o.fecha)}</td>
-                  </tr>
+          <div className="panel-body">
+            {grafico.length === 0 ? <div className="tbl-muted">Todavía no hay ventas.</div> : (
+              <div className="chart">
+                {grafico.map((g) => (
+                  <div key={g.dia} className="chart-bar" style={{ height: `${Math.max(3, (g.total / max) * 100)}%` }} data-label={g.etiqueta} title={`${g.etiqueta}: ${fmt(g.total)}`}>
+                    <span className="val">{fmt(g.total)}</span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-            {state.orders.length === 0 && (
-              <div className="empty"><div className="empty-icon"><Icon.Orders /></div><b>Sin pedidos</b><div>Los pedidos del sitio aparecerán aquí</div></div>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="panel">
+          <div className="panel-head"><h3>Más vendidas</h3><span className="tbl-muted">últimas {noches} noches</span></div>
+          <div className="panel-body">
+            <div className="top-list">
+              {top.map((t, i) => <div className="top-row" key={t.nombre}><span className="top-rank">{i + 1}</span><span>{t.nombre}</span><span className="top-val">×{t.cantidad}</span></div>)}
+              {top.length === 0 && <div className="tbl-muted">Sin ventas en el período.</div>}
+            </div>
+            <h3 style={{ fontSize: 13, fontWeight: 600, margin: "14px 0 6px" }}>Masas</h3>
+            {totalMasas === 0 ? <div className="tbl-muted">Sin pizzas con masa elegida en el período.</div> : (
+              <div className="masas-conteo">
+                {([["Napoletana", masas.napoletana], ["Al molde", masas.molde]] as const).map(([nombre, n]) => (
+                  <div className="masas-fila" key={nombre}><b>{nombre}</b><div className="masas-barra"><span style={{ width: `${Math.round((n / totalMasas) * 100)}%` }} /></div><span>{n} · {Math.round((n / totalMasas) * 100)}%</span></div>
+                ))}
+              </div>
             )}
           </div>
         </div>

@@ -681,10 +681,10 @@ a{ color:inherit; text-decoration:none; }
 
 /* Masas elegidas (napoletana / al molde) en el Dashboard */
 .masas-conteo{ display:flex; flex-direction:column; gap:12px; }
-.masas-fila{ display:grid; grid-template-columns:100px 1fr 140px; align-items:center; gap:12px; font-size:13.5px; }
+.masas-fila{ display:grid; grid-template-columns:84px 1fr 80px; align-items:center; gap:12px; font-size:12.5px; }
 .masas-fila > span{ color:var(--a-muted); font-size:12.5px; text-align:right; }
 .masas-barra{ height:10px; border-radius:999px; background:var(--a-bg-2); overflow:hidden; }
-.masas-barra span{ display:block; height:100%; background:var(--a-accent); border-radius:999px; }
+.masas-barra span{ display:block; height:100%; background:var(--a-ink); border-radius:999px; }
 @media (max-width:560px){ .masas-fila{ grid-template-columns:80px 1fr; } .masas-fila > span{ grid-column:1 / -1; text-align:left; } }
 
 /* ============ PEDIDOS ============ */
