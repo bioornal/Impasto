@@ -19,10 +19,13 @@ export const esSeccionAdmin = (valor: unknown): valor is SeccionAdmin =>
  */
 export function seccionInicial(diasApertura: string | null | undefined, ahora: Date, guardada: string | null): SeccionAdmin {
   if (esSeccionAdmin(guardada)) return guardada;
+  if (Number.isNaN(ahora.getTime())) return "dashboard";
+  // Solo cuentan los tokens que son exactamente un día 0-6: "" o " " no son el domingo.
   const dias = String(diasApertura || "")
     .split(",")
-    .map((d) => Number(d.trim()))
-    .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+    .map((d) => d.trim())
+    .filter((d) => /^[0-6]$/.test(d))
+    .map(Number);
   const noche = diaDeNegocio(ahora.toISOString());
   const diaSemana = new Date(`${noche}T12:00:00Z`).getUTCDay();
   return dias.includes(diaSemana) ? "arranque" : "dashboard";
