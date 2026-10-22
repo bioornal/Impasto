@@ -7,7 +7,7 @@ import { SITE_URL } from "@/lib/site";
 /**
  * Metadatos de respaldo (la home los adapta a la carta vigente): salen de `BUSINESS` y no de la base, para que el layout
  * no dependa de una consulta. Los datos que Google realmente usa para el
- * horario y el teléfono son los del JSON-LD de `app/page.tsx`, que sí lee la
+ * horario y el teléfono son los del JSON-LD de `app/(sitio)/page.tsx`, que sí lee la
  * configuración viva del panel.
  */
 const TITULO = tituloSitio(BUSINESS);

@@ -1,5 +1,22 @@
 @AGENTS.md
 
+## Panel rediseñado (22/10/2026)
+
+- **Pedido del dueño:** el panel era lento de usar: los títulos de sección no se veían, Pedidos medía 5.566 px de alto a 1366 px, Productos 8.496 y no había un lugar donde prender la noche. Quería un panel **compacto, que se use igual de bien en la compu y en el celular**. Spec: `docs/superpowers/specs/2026-10-22-panel-admin-rediseno-design.md`. Plan: `docs/superpowers/plans/2026-10-22-panel-admin-rediseno.md`. Rama `panel-rediseno`.
+- **Decisiones:**
+  - **Menú por momento de uso** (no por tabla de la base), con el estado del local arriba (píldoras) y una sección inicial según la noche: abre en la última sección de la sesión; si no hay, en noche de apertura abre **Arranque** y el resto de los días **Dashboard** (`seccionInicial`).
+  - **Arranque** (`Arranque.tsx`): lo que se toca al abrir y cerrar, en bloques: venta, delivery y masas con interruptor (`Interruptor.tsx`), cupos de la noche (`Cupos.tsx`, `CupoControl.tsx`) y los pedidos activos. **Los interruptores ya no están en Configuración**: Configuración quedó en 4 pestañas (Horario, Delivery, Datos del local, Cuentas para transferencias), solo con lo que casi no cambia, y avisa si se sale con cambios sin guardar.
+  - **Tabla compacta de pedidos:** una línea por pedido (40–44 px), con avanzar estado e imprimir en la misma fila; el detalle se abre aparte (`OrderDetail.tsx`). Productos y Clientes también en filas de una línea. Dashboard por noche de servicio.
+  - **Estilo neutro:** fondo `#f6f7f9`, superficie blanca, bordes `#e3e6eb`, Inter en todo, radios 8–10 px. Sin Playfair, sin naranja en el panel (la pantalla de carga tampoco).
+  - **Buscador global** en la barra superior (`BusquedaGlobal.tsx`): pedidos, clientes y productos; buscar no pierde el estado de Pedidos.
+  - Se usa en compu y en celular (≤ 760 px, menú por hamburguesa).
+- **Causa del título invisible y arreglo:** `app/layout.tsx` importaba `impasto.css` para todas las rutas y su `.topbar` (más `.btn` y `h1…h5`) pisaba las del panel: el título salía `rgb(246,241,231)` sobre blanco. Arreglo (`07b428e`): la web pública pasó a `app/(sitio)/` (home, `pedido/`, `terminos/`, `privacidad/`, `reembolso/`, `cocina/`, `error.tsx`) con su propio layout, que es el único que importa `impasto.css`. Las URLs no cambian. **No volver a importar `impasto.css` en `app/layout.tsx`**: el panel (`/admin`, `/admin-login`) vuelve a quedar con los títulos invisibles. Lo que use una página nueva de la web va dentro de `app/(sitio)/`.
+- **Módulos nuevos:** `lib/admin-pedidos.ts` (activos, siguiente estado, número corto; tests), `lib/inicio-admin.ts` (sección inicial según la noche), `lib/admin-dashboard.ts` (comparación de la noche, más vendidas, noches para el gráfico), `lib/busqueda-admin.ts` (búsqueda global). Componentes: `SucursalProvider` (estado del local compartido: sucursal, interruptor y mail de la sesión), `OrdersTable`, `OrderDetail`, `Arranque`, `BusquedaGlobal`. Reglas que no cambian: `esPedidoParaCocina` bloquea avanzar e imprimir una tarjeta sin acreditar; `updateOrderStatus` es el único camino para cambiar estados; `useCuposNoche` guarda a los 700 ms; `@media print` y `.comanda-print-ticket` intactos.
+- **Medido (22/10/2026, sesión del dueño, base real):** Pedidos (Todos) **5.566 → 2.582 px** a 1366 px; Productos **8.496 → 1.282**; Dashboard **1.247 → 477**; el Arranque entra en **697 px**; sin desborde horizontal en ninguna sección. Verificado también: `pnpm test`, `tsc`, eslint de lo tocado y `pnpm build`.
+- **Detalles del repaso final:** toast con ícono alineado, pantalla de carga neutra, "Sin semana previa" en el KPI, cantidades de "Más vendidas" con `formatoUnidades` (docenas de empanadas fraccionarias), avisos sin entregar en una barra de una línea ("Ver" / "Ocultar"), "En carta" con su contador, tooltip en "Salir".
+- **No verificado todavía:** los interruptores del Arranque contra la base real (prender y apagar delivery y una masa), el panel en un **celular real** (a 375 px en el navegador del escritorio no es lo mismo que el teléfono), y la **impresión desde el botón nuevo de la fila** de Pedidos (el agente térmico no se probó con la tabla nueva).
+- **Sin publicar:** la rama `panel-rediseno` no se pusheó; el push a `main` (que publica en Netlify) lo autoriza el dueño después de ver las capturas.
+
 ## Masa agotada desde el panel (22/10/2026)
 
 - **Pedido del dueño:** si se queda sin una de las dos masas (napoletana o al molde), apagarla desde el panel y que el cliente no la pueda elegir, con el mensaje correcto.

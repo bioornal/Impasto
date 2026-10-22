@@ -36,7 +36,7 @@ class ErrorServidor extends Error {
  * El bot **no arma pedidos**: recomienda y dice dónde está el producto. El que
  * agrega al carrito es siempre el cliente.
  *
- * `disponible` lo calcula el servidor en `app/page.tsx`. Sin key, el widget no
+ * `disponible` lo calcula el servidor en `app/(sitio)/page.tsx`. Sin key, el widget no
  * se muestra: no vale la pena fingir que hay un bot ni intentar una request que
  * se sabe que va a fallar, y el botón de WhatsApp ya está a la vista.
  */
@@ -85,7 +85,7 @@ export function ChatWidget({ business, disponible, oculto = false }: { business:
    * El asistente se dio por caído para lo que queda de esta visita.
    *
    * Es de sesión, no del sitio: `disponible` lo calcula el servidor en
-   * `app/page.tsx` y solo mira si hay key, así que el próximo visitante vuelve
+   * `app/(sitio)/page.tsx` y solo mira si hay key, así que el próximo visitante vuelve
    * a ver el bot hasta que él también choque. Dejarlo así es a propósito —
    * apagar el bot para todos exigiría estado compartido en la base—, y el
    * aviso por Telegram de `lib/aviso-sistema.ts` cubre el hueco: el dueño se
