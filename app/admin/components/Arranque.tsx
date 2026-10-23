@@ -53,9 +53,9 @@ export function Arranque({ onVerPedidos }: { onVerPedidos: () => void }) {
           <Interruptor checked={napoletana} label="Masa napoletana" detalle={napoletana ? (molde ? "Disponible" : "Tiene que quedar una masa") : "Agotada"} disabled={(napoletana && !molde) || pendiente("masa_napoletana_activa")}
             title={napoletana && !molde ? "La al molde está agotada: tiene que quedar al menos una masa" : undefined}
             onChange={(v) => void cambiar("masa_napoletana_activa", v, v ? "Napoletana disponible" : "Napoletana agotada")} />
-          <Interruptor checked={molde} label="Masa al molde" detalle={molde ? (napoletana ? "Disponible" : "Tiene que quedar una masa") : "Agotada"} disabled={(molde && !napoletana) || pendiente("masa_molde_activa")}
+          <Interruptor checked={molde} label="Masa al molde" detalle={molde ? (napoletana ? "Disponible" : "Tiene que quedar una masa") : "Oculta en la web"} disabled={(molde && !napoletana) || pendiente("masa_molde_activa")}
             title={molde && !napoletana ? "La napoletana está agotada: tiene que quedar al menos una masa" : undefined}
-            onChange={(v) => void cambiar("masa_molde_activa", v, v ? "Al molde disponible" : "Al molde agotada")} />
+            onChange={(v) => void cambiar("masa_molde_activa", v, v ? "Al molde disponible" : "Al molde oculta en la web")} />
           {!sucursal.ventas_activas && (
             <Motivo key={"cierre:" + (sucursal.mensaje_cierre || "")} valor={sucursal.mensaje_cierre || ""} placeholder="Cerramos por vacaciones hasta el 5 de enero" disabled={pendiente("mensaje_cierre")}
               onGuardar={(t) => void cambiar("mensaje_cierre", t, "Motivo guardado")} />
@@ -65,6 +65,7 @@ export function Arranque({ onVerPedidos }: { onVerPedidos: () => void }) {
               onGuardar={(t) => void cambiar("mensaje_delivery", t, "Motivo guardado")} />
           )}
           {avisoMasas && <div className="int-motivo tbl-muted">El cliente ve: “{avisoMasas}”</div>}
+          {!molde && napoletana && <div className="int-motivo tbl-muted">La masa al molde no aparece en la web: el cliente no ve la opción. Prendela cuando vuelvas a tenerla.</div>}
         </div>
       </section>
       <section className="panel"><Orders soloActivos onVerTodos={onVerPedidos} /></section>

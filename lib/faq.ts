@@ -63,11 +63,12 @@ export function preguntasFrecuentes(business: BusinessConfig, hayEmpanadas = tru
         + `estirado a mano sin moldes y horno a la piedra a ${horno.cifra}. `
         + "El resultado es un borde alto y liviano, el cornicione, y una base fina y tierna. Y arriba, al gusto argentino: mucha muzzarella y toppings abundantes.",
     },
-    {
+    // Con el molde apagado en el Arranque la pregunta no se muestra (ni en el sitio ni en el FAQPage del SEO).
+    ...(business.masaMoldeActiva !== false ? [{
       pregunta: "¿Puedo pedir la pizza al molde?",
       respuesta: "Sí. Nuestra masa de la casa es la napoletana, pero cualquier pizza (también la mitad y mitad) se puede pedir al molde, "
         + "la pizza de molde bien argentina, más alta y esponjosa. Va al mismo precio y la elegís en el carrito, pizza por pizza.",
-    },
+    }] : []),
     {
       pregunta: "¿Se puede pedir pizza mitad y mitad?",
       respuesta: `${REGLA_MITAD_Y_MITAD} Escribinos por WhatsApp o elegí la opción "mitad y mitad" al armar el pedido.`,

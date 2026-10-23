@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { TODAS_LAS_MASAS, ajustarMasas, cambiarMasa, contarMasas, detalleCocina, esMismaLinea, estadoMasas, masaDe, masaUnica, nombreCocina, normalizarMasa, validarMasas } from "../lib/masa";
+import { TODAS_LAS_MASAS, masasVisibles, ajustarMasas, cambiarMasa, contarMasas, detalleCocina, esMismaLinea, estadoMasas, masaDe, masaUnica, nombreCocina, normalizarMasa, validarMasas } from "../lib/masa";
 import { quoteItemsWithCatalog } from "../lib/order-quote";
 import type { CartItem, CatalogData } from "../types";
 
@@ -144,7 +144,11 @@ test("estadoMasas: las dos por defecto; una apagada trae el aviso; las dos apaga
   assert.deepEqual(estadoMasas({}), TODAS_LAS_MASAS);
   assert.equal(masaUnica(TODAS_LAS_MASAS), undefined);
   assert.equal(masaUnica(sinMolde), "napoletana");
-  assert.match(sinMolde.aviso, /terminó la masa al molde/);
+  // Sin molde la web no avisa nada: la opción desaparece (pedido del dueño, 23/10/2026).
+  assert.equal(sinMolde.aviso, "");
+  assert.equal(masasVisibles(sinMolde), false);
+  assert.equal(masasVisibles(sinNapo), true);
+  assert.equal(masasVisibles(TODAS_LAS_MASAS), true);
   assert.equal(masaUnica(sinNapo), "molde");
   assert.match(sinNapo.aviso, /terminó la masa napoletana/);
   assert.deepEqual(estadoMasas({ masaNapoletanaActiva: false, masaMoldeActiva: false }), TODAS_LAS_MASAS);

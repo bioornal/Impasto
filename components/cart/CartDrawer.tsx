@@ -204,7 +204,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
                     </div>
                   </div>
                   <b className="ci-price">{fmt(item.price * item.qty)}</b>
-                  {masaDe(item) && (
+                  {masaDe(item) && tienda.masas.molde && (
                     <div className="ci-masa">
                       <span className="ci-masa-titulo" id={`masa-${item.cartId}`}>Elegí la masa{item.qty > 1 ? ` (las ${item.qty})` : ""}</span>
                       <div className="ci-masa-opciones" role="radiogroup" aria-labelledby={`masa-${item.cartId}`}>

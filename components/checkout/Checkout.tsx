@@ -78,7 +78,7 @@ function AvisoRetiro() {
 
 export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }: CheckoutProps) {
   const { items, count, subtotal: localSubtotal } = useCart();
-  const { delivery } = useStoreStatus();
+  const { delivery, masas } = useStoreStatus();
   const [data, setData] = useState<CheckoutData>({
     mode: delivery.activo ? "delivery" : "takeaway", when: "asap", nombre: "", tel: "", email: "", dir: "", ref: "",
     pago: "efectivo", cambio: "", notas: "",
@@ -369,7 +369,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
                   <div className="co-sum-media"><ItemMedia item={item} /></div>
                   <div style={{ minWidth: 0 }}>
                     <b>{item.name}</b>
-                    <small>×{item.qty}{masaDe(item) && ` · masa ${masaDe(item) === "molde" ? "al molde" : "napoletana"}`}</small>
+                    <small>×{item.qty}{masas.molde && masaDe(item) && ` · masa ${masaDe(item) === "molde" ? "al molde" : "napoletana"}`}</small>
                   </div>
                   <span className="line">{fmt(item.price * item.qty)}</span>
                 </div>
@@ -463,7 +463,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
                   <div className="co-sum-media"><ItemMedia item={item} /></div>
                   <div className="co-summary-item-main">
                     <b>{item.name}</b>
-                    <small>×{item.qty}{masaDe(item) && ` · masa ${masaDe(item) === "molde" ? "al molde" : "napoletana"}`}</small>
+                    <small>×{item.qty}{masas.molde && masaDe(item) && ` · masa ${masaDe(item) === "molde" ? "al molde" : "napoletana"}`}</small>
                   </div>
                   <span className="co-summary-price">{fmt(item.price * item.qty)}</span>
                 </div>

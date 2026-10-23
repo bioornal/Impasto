@@ -49,13 +49,15 @@ export const detalleSinMasa = (detail: string | undefined) =>
   (detail || "").replace(` · ${DETALLE_MOLDE}`, "").replace(DETALLE_MOLDE, "");
 
 /**
- * Qué masas hay hoy (desde el 22/10/2026). Si el local se queda sin una, el dueño la apaga
- * desde el panel (Configuración → Masas) y todas las pizzas salen con la otra.
+ * Qué masas hay hoy (desde el 22/10/2026). El dueño las prende y apaga desde el Arranque.
+ * - Sin napoletana (la de la casa): todas salen al molde y la web lo avisa.
+ * - Sin molde (23/10/2026, pedido del dueño): la web no la muestra en ningún lado, ni avisa que
+ *   falta; para el cliente la opción no existe. Todas salen napoletanas.
  */
 export interface EstadoMasas {
   napoletana: boolean;
   molde: boolean;
-  /** Frase para el cliente; vacía mientras están las dos. */
+  /** Frase para el cliente; vacía mientras están las dos y cuando el molde está oculto. */
   aviso: string;
 }
 
@@ -72,9 +74,15 @@ export function estadoMasas(config: { masaNapoletanaActiva?: boolean; masaMoldeA
   const molde = config.masaMoldeActiva !== false;
   if (napoletana === molde) return TODAS_LAS_MASAS;
   return napoletana
-    ? { napoletana, molde, aviso: "Hoy se nos terminó la masa al molde: todas las pizzas salen con nuestra napoletana." }
+    ? { napoletana, molde, aviso: "" }
     : { napoletana, molde, aviso: "Hoy se nos terminó la masa napoletana: todas las pizzas salen al molde." };
 }
+
+/**
+ * Si el cliente ve algo de las masas (bloque del home, selector del carrito, texto del asistente).
+ * Con el molde apagado, no: la opción desaparece de la web.
+ */
+export const masasVisibles = (estado: Pick<EstadoMasas, "molde">) => estado.molde;
 
 /** La masa que queda cuando falta una; `undefined` si están las dos. */
 export const masaUnica = (estado: EstadoMasas): Masa | undefined =>

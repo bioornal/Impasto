@@ -1,5 +1,13 @@
 @AGENTS.md
 
+## Masa al molde oculta cuando está apagada (23/10/2026)
+
+- **Pedido del dueño:** esta semana no puede preparar masa al molde y prefiere que los clientes **ni sepan que existe** (antes, con el molde apagado, la web avisaba "se nos terminó la masa al molde"). La semana que viene la vuelve a prender.
+- **Cómo funciona:** el mismo interruptor "Masa al molde" del **Arranque**. Apagado = la opción desaparece de toda la web: sin bloque en el home (`MasasAviso` no se muestra), el encabezado de Pizzas no nombra las masas, el carrito no muestra el selector, el checkout no dice "masa napoletana", el asistente no habla de masas y la pregunta "¿Puedo pedir la pizza al molde?" sale del FAQ (y del `FAQPage` del SEO). Todas las pizzas salen napoletanas (`ajustarMasas`, `validarMasas` siguen igual). En el Arranque el interruptor dice "Oculta en la web".
+- **Sin napoletana** (la de la casa) sigue como antes: el cliente ve que todas salen al molde.
+- **Código:** `estadoMasas` devuelve aviso vacío con el molde apagado; `masasVisibles(estado)` en `lib/masa.ts`; `lib/faq.ts` lee `business.masaMoldeActiva`. Tests en `tests/masa.test.ts` y `tests/chat-prompt.test.ts`.
+- **Verificado en local** con `/api/store-status` interceptado: bloque del home oculto, encabezado de Pizzas sin masas, carrito sin selector; carrito de prueba vaciado. El FAQ depende de la base (se ve sin la pregunta recién con el molde apagado de verdad). `pnpm test`, `tsc`, eslint de lo tocado.
+
 ## Panel rediseñado (22/10/2026)
 
 - **Pedido del dueño:** el panel era lento de usar: los títulos de sección no se veían, Pedidos medía 5.566 px de alto a 1366 px, Productos 8.496 y no había un lugar donde prender la noche. Quería un panel **compacto, que se use igual de bien en la compu y en el celular**. Spec: `docs/superpowers/specs/2026-10-22-panel-admin-rediseno-design.md`. Plan: `docs/superpowers/plans/2026-10-22-panel-admin-rediseno.md`. Rama `panel-rediseno`.

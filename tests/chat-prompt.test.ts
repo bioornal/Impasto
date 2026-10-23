@@ -174,7 +174,11 @@ chequear("con el delivery activo sí la incluye", prompt.includes("¿Hacen deliv
 const sinMolde: BusinessConfig = { ...business, masaMoldeActiva: false };
 const promptSinMolde = promptVendedor(catalogo, sinMolde, estadoTienda(sinMolde, new Date("2026-08-22T00:00:00Z")));
 chequear("con las dos masas no hay aviso de HOY", !/- HOY: /.test(prompt));
-chequear("sin masa al molde lo dice y que no la ofrezca", /- HOY: Hoy se nos terminó la masa al molde/.test(promptSinMolde) && /No ofrezcas la otra masa/.test(promptSinMolde));
+chequear("sin masa al molde el bot ni la nombra (ni en el FAQ)", !/al molde|masa de molde|Dos masas/i.test(promptSinMolde));
+chequear("con las dos masas sí la ofrece y está en el FAQ", /al molde/.test(prompt) && prompt.includes("¿Puedo pedir la pizza al molde?"));
+const sinNapo: BusinessConfig = { ...business, masaNapoletanaActiva: false };
+const promptSinNapo = promptVendedor(catalogo, sinNapo, estadoTienda(sinNapo, new Date("2026-08-22T00:00:00Z")));
+chequear("sin napoletana sí avisa que todas salen al molde", /- HOY: Hoy se nos terminó la masa napoletana/.test(promptSinNapo));
 
 /* ── lo que el bot respondía "no lo tengo" (visto en producción el 01/10/2026) ── */
 chequear("sabe los medios de pago", /efectivo/i.test(prompt) && /transferencia/i.test(prompt) && /Mercado Pago/.test(prompt));
