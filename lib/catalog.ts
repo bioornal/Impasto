@@ -9,6 +9,7 @@ import { agregarFotos } from "@/lib/fotos";
 import { listarFotos } from "@/lib/fotos-bucket";
 import { conservarCosteo } from "@/lib/catalog-costeo";
 import { aplicarCupos, type FilaCupo } from "@/lib/cupos";
+import { aplicarMasas, quedanMasas, type FilaMasas } from "@/lib/masas-noche";
 import { diaDeNegocio } from "@/lib/resumen-diario";
 
 export async function getCatalogData(): Promise<CatalogData> {
@@ -28,6 +29,7 @@ export async function getCatalogData(): Promise<CatalogData> {
       costosFijosResult,
       costosVariablesResult,
       cuposResult,
+      masasResult,
     ] = await Promise.all([
       // `archivado` es la baja de carta: el producto sigue en la base (y en el
       // recetario, para costos históricos) pero no se muestra más al cliente.
@@ -50,6 +52,8 @@ export async function getCatalogData(): Promise<CatalogData> {
       readPages((start, end) => db.database.from("costos_variables").select("id,monto_referencia").order("id", { ascending: true }).range(start, end)),
       safeQuery(db.database.from("cupos_noche").select("producto_id,cupo_mitades,vendidas_mitades")
         .eq("proyecto_id", "impasto").eq("noche", diaDeNegocio(new Date().toISOString()))),
+      safeQuery(db.database.from("masas_noche").select("cupo,vendidas")
+        .eq("proyecto_id", "impasto").eq("noche", diaDeNegocio(new Date().toISOString())).limit(1)),
     ]);
     for (const [source, result] of [
       ["promociones", promosResult], ["testimonios", reviewsResult], ["etiquetas", etiquetasResult],
@@ -64,11 +68,14 @@ export async function getCatalogData(): Promise<CatalogData> {
     });
     if (cuposResult.error) console.error("[catalog] cupos de la noche:", cuposResult.error);
     const cupos = Array.isArray(cuposResult.data) && !cuposResult.error ? cuposResult.data as FilaCupo[] : [];
+    // Masas de la noche (24/10/2026): como los cupos, no crítico; si falla la lectura, sin límite (la base igual controla).
+    if (masasResult.error) console.error("[catalog] masas de la noche:", masasResult.error);
+    const masas = Array.isArray(masasResult.data) && !masasResult.error ? masasResult.data[0] as FilaMasas | undefined : undefined;
     // La foto más nueva de cada producto en el bucket; si el listado falla, viene vacío
     // y las ilustraciones usan el respaldo de siempre.
     // agregarFotos devuelve una copia: sin conservar el costeo, la cotización de cualquier
     // pedido fallaba con "Costeo de la venta no disponible" (03/10 al 06/10/2026).
-    return conservarCosteo(catalogo, aplicarCupos(agregarFotos(catalogo, await fotos), cupos));
+    return conservarCosteo(catalogo, aplicarMasas(aplicarCupos(agregarFotos(catalogo, await fotos), cupos), quedanMasas(masas)));
   } catch (error) {
     if (error instanceof PricingUnavailableError) console.error(`[catalog] fuente crítica ${error.source} no disponible`);
     else console.error("[catalog] fallo al armar el catálogo:", error);

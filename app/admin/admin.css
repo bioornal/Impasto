@@ -765,6 +765,35 @@ a{ color:inherit; text-decoration:none; }
 .medio-aviso{ display:block; margin-top:3px; font-size:11px; color:var(--a-warn); font-weight:600; }
 .pedidos-noche td{ white-space:nowrap; }
 
+/* ============ MASAS DE LA NOCHE (Arranque) ============ */
+.masas-body{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.masas-estado{ display:flex; flex-direction:column; gap:3px; min-width:0; flex:1 1 260px; font-size:13px; color:var(--a-muted); line-height:1.45; }
+.masas-titulo{ font-size:17px; font-weight:700; color:var(--a-ink); letter-spacing:-.01em; }
+.masas-error{ color:var(--a-danger); }
+.masas-ctrl{ display:flex; align-items:center; gap:10px; flex:none; }
+.masas-ctrl label{ font-size:13px; font-weight:600; color:var(--a-ink-2); }
+.masas-stepper{ display:inline-flex; align-items:center; gap:6px; }
+.masas-stepper button{
+  width:40px; height:40px; border-radius:10px; border:1px solid var(--a-line);
+  background:var(--a-surface); color:var(--a-ink); font-size:20px; font-weight:700; line-height:1; cursor:pointer;
+}
+.masas-stepper button:hover:not(:disabled){ background:var(--a-bg-2); }
+.masas-stepper button:disabled{ opacity:.35; cursor:default; }
+.masas-stepper input{
+  width:76px; height:40px; padding:0 8px; border:1px solid var(--a-line-strong); border-radius:10px;
+  text-align:center; font-family:var(--a-font-mono); font-size:20px; font-weight:700; color:var(--a-ink); background:var(--a-surface);
+}
+.masas-stepper input::placeholder{ color:var(--a-muted); font-weight:400; }
+.masas-sin-cargar{ border-color:var(--a-warn); box-shadow:inset 4px 0 0 var(--a-warn); }
+.masas-sin-cargar .masas-titulo{ color:var(--a-warn); }
+.masas-pocas{ background:var(--a-warn-soft); border-color:#fcd34d; }
+.masas-pocas .masas-titulo{ color:var(--a-warn); }
+.masas-agotado{ background:var(--a-danger-soft); border-color:#fecaca; }
+.masas-agotado .masas-titulo, .masas-agotado .masas-stepper input{ color:var(--a-danger); }
+@media (max-width:760px){
+  .masas-ctrl{ width:100%; justify-content:space-between; }
+}
+
 /* ============ ARRANQUE ============ */
 .arranque{ display:flex; flex-direction:column; gap:12px; }
 .arranque > *{ min-width:0; }

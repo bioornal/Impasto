@@ -1,4 +1,5 @@
 import { avisoQuedan } from "@/lib/cupos";
+import { avisoMasas } from "@/lib/masas-noche";
 
 /**
  * Aviso del cupo de la noche (18/10/2026) cuando quedan 2 pizzas o menos.
@@ -12,6 +13,18 @@ export function AvisoCupo({ quedanMitades, formato = "franja" }: { quedanMitades
   if (formato === "foto") return <div className="cupo-foto-bar" role="status">{texto}</div>;
   return (
     <p className="cupo-aviso" role="status">
+      <span className="cupo-aviso-pulso" aria-hidden="true" />
+      {texto}
+    </p>
+  );
+}
+
+/** Masas de la noche (24/10/2026): arriba de las pizzas, cuando quedan 3 o menos o se terminaron. */
+export function AvisoMasas({ quedan, hayEmpanadas }: { quedan?: number; hayEmpanadas: boolean }) {
+  const texto = avisoMasas(quedan, hayEmpanadas);
+  if (!texto) return null;
+  return (
+    <p className="cupo-aviso masas-aviso" role="status">
       <span className="cupo-aviso-pulso" aria-hidden="true" />
       {texto}
     </p>

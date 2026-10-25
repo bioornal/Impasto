@@ -13,7 +13,7 @@ import { detalleCocina, masaCocina, nombreCocina } from "@/lib/masa";
 /** El chat con el cliente, con el saludo y el pedido ya escritos. Null si el número no se reconoce. */
 const whatsappDelPedido = (o: AdminOrder) => {
   const numero = whatsappDeCliente(o.tel);
-  return numero ? enlaceWhatsapp(numero, mensajeAlCliente(o.cliente, o.id)) : null;
+  return numero ? enlaceWhatsapp(numero, mensajeAlCliente(o.cliente, o.id, o.mode)) : null;
 };
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");

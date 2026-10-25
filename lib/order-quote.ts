@@ -4,6 +4,7 @@ import {catalogCosteo} from './catalog-costeo';
 import {costeoCarrito} from './costeo-capture';
 import { DETALLE_MOLDE, normalizarMasa } from "./masa";
 import { validarCupos } from "./cupos";
+import { validarMasasNoche } from "./masas-noche";
 
 interface QuoteResult {
   items: CartItem[];
@@ -150,7 +151,7 @@ export async function quoteOrder(
   const { getCatalogData } = await import("@/lib/catalog");
   const data = await getCatalogData();
   const items = quoteItemsWithCatalog(rawItems, data);
-  if (cupos) validarCupos(items, data);
+  if (cupos) { validarCupos(items, data); validarMasasNoche(items, data); }
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const freeShipping = subtotal >= applied.freeShippingFrom;
   const shipping = mode === "delivery" && !freeShipping ? applied.deliveryFee : 0;

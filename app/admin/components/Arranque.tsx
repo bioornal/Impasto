@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useSucursal } from "./SucursalProvider";
 import { Interruptor } from "./Interruptor";
 import { Cupos } from "./Cupos";
+import { MasasNoche } from "./MasasNoche";
 import { Orders } from "./Orders";
 import { estadoMasas } from "@/lib/masa";
 import { MENSAJE_DELIVERY_DEFAULT } from "@/lib/hours";
@@ -21,7 +22,7 @@ function Motivo({ valor, placeholder, disabled, onGuardar }: { valor: string; pl
 
 /**
  * Lo que se toca al empezar la noche (pedido del dueño, 22/10/2026): venta, delivery y masas
- * (se guardan al tocarlos), cupos y los pedidos activos.
+ * (se guardan al tocarlos), cupos y los pedidos activos. Arriba de todo, las masas de la noche (24/10/2026).
  */
 export function Arranque({ onVerPedidos }: { onVerPedidos: () => void }) {
   const { sucursal, error, recargar, cambiar, pendiente } = useSucursal();
@@ -41,6 +42,7 @@ export function Arranque({ onVerPedidos }: { onVerPedidos: () => void }) {
 
   return (
     <div className="arranque">
+      <MasasNoche />
       <section className="panel">
         <div className="panel-head"><h3>Interruptores</h3><span className="tbl-muted">Se guardan al tocarlos</span></div>
         <div className="panel-body int-grid">

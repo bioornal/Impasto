@@ -8,7 +8,7 @@ import { masasVisibles, masaUnica, nombreMasa } from "@/lib/masa";
 import { useTweaks } from "@/components/providers/TweakProvider";
 import { fmt } from "@/lib/utils";
 import { cartelitosDePizza, lineaDePizza } from "@/lib/ficha";
-import { AvisoCupo } from "@/components/ui/AvisoCupo";
+import { AvisoCupo, AvisoMasas } from "@/components/ui/AvisoCupo";
 import type { Pizza } from "@/types";
 
 /**
@@ -37,9 +37,11 @@ interface PizzaListProps {
   foco?: { id: string; vez: number } | null;
   /** Abre la ficha de producto recorriendo la lista que se está viendo. */
   onVerFicha: (ids: string[], indice: number) => void;
+  /** Pizzas que quedan esta noche según las masas (24/10/2026); sin límite, no viene. */
+  masasQuedan?: number;
 }
 
-export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, destacadaId, foco, onVerFicha }: PizzaListProps) {
+export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, destacadaId, foco, onVerFicha, masasQuedan }: PizzaListProps) {
   const { masas } = useStoreStatus();
   const queda = masaUnica(masas);
   const [cat, setCat] = useState("todas");
@@ -114,6 +116,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
           </div>
           <p>Elegí un gusto, o combiná dos en la misma pizza. {!masasVisibles(masas) ? "" : queda ? `Hoy todas salen con masa ${nombreMasa(queda)}.` : "Masa napoletana o al molde: la elegís en el carrito."}</p>
         </div>
+        <AvisoMasas quedan={masasQuedan} hayEmpanadas={hayEmpanadas} />
       </div>
 
       <div className="menubar">

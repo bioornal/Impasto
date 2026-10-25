@@ -396,7 +396,7 @@ function SiteContent({ data, business, chatDisponible, destacadaId }: { data: Ca
         <Features freeShippingFrom={business.freeShippingFrom} desde={desde} />
         <MasasAviso onNav={goSection} />
         <Promos hayEmpanadas={visible.hayEmpanadas} promos={visible.promos} onNav={goSection} />
-        {data.pizzas.length > 0 && <PizzaList indice={visible.indice("pizzas")} hayEmpanadas={visible.hayEmpanadas} pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} foco={focoPizza} onVerFicha={abrirFicha("pizzas")} />}
+        {data.pizzas.length > 0 && <PizzaList indice={visible.indice("pizzas")} hayEmpanadas={visible.hayEmpanadas} pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} foco={focoPizza} onVerFicha={abrirFicha("pizzas")} masasQuedan={data.masasQuedan} />}
         <EmpanadasSection
           indice={visible.indice("empanadas")}
           empanadas={data.empanadas}

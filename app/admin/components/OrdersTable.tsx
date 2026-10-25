@@ -21,7 +21,7 @@ const medioCorto = (o: AdminOrder) => (o.pago === "mercadopago" ? "MP" : o.pago 
 export function TelCliente({ order, soloIcono = false }: { order: AdminOrder; soloIcono?: boolean }) {
   const numero = whatsappDeCliente(order.tel);
   if (!numero) return soloIcono ? null : <span className="tbl-muted">{order.tel}</span>;
-  const href = enlaceWhatsapp(numero, mensajeAlCliente(order.cliente, order.id));
+  const href = enlaceWhatsapp(numero, mensajeAlCliente(order.cliente, order.id, order.mode));
   if (soloIcono) {
     return (
       <a className="tbl-wa" href={href} target="_blank" rel="noreferrer" title={`${order.tel} · escribirle a ${order.cliente} por WhatsApp`} aria-label={`WhatsApp de ${order.cliente}: ${order.tel}`} onClick={(e) => e.stopPropagation()}>
