@@ -43,7 +43,7 @@ export function HalfModal({ startPizza, pizzas, business: _business, onClose }: 
       toast("Una de las variedades elegidas está agotada");
       return;
     }
-    add({
+    const entro = add({
       key: `half-${left.id}-${right.id}`,
       unique: true,
       type: "pizza-half",
@@ -54,6 +54,7 @@ export function HalfModal({ startPizza, pizzas, business: _business, onClose }: 
       illus: left.id,
       variant: { kind: "half", ids: [left.id, right.id] },
     });
+    if (!entro) return;
     toast("Mitad y mitad agregada");
     onClose();
   };

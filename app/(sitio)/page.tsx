@@ -47,7 +47,7 @@ export default async function Page() {
     <>
       {/* Horario, teléfono, dirección y carta con precios, para Google. */}
       <JsonLd data={jsonLdSitio(business, data)} />
-      <Shell data={data} business={business} estadoInicial={estado} chatDisponible={hayChat()} destacadaId={destacadaId} />
+      <Shell data={data} business={business} estadoInicial={{ ...estado, masasNoche: data.masasQuedan ?? null }} chatDisponible={hayChat()} destacadaId={destacadaId} />
     </>
   );
 }

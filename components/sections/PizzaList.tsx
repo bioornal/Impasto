@@ -78,8 +78,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
       onHalf(pizza);
       return;
     }
-    add(lineaDePizza(pizza));
-    toast(`${pizza.nombre} agregada`);
+    if (add(lineaDePizza(pizza))) toast(`${pizza.nombre} agregada`);
   };
 
   // La ficha recorre `list`: respeta el filtro y la búsqueda, con la destacada primero.

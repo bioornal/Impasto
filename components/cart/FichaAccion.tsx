@@ -37,8 +37,7 @@ export function FichaAccion({ item, onHalf, caja }: FichaAccionProps) {
   const tipoCarrito = item.tipo === "bebida" ? "bebida" : "pizza";
   const qty = items.filter((i) => i.key === item.id && i.type === tipoCarrito).reduce((s, i) => s + i.qty, 0);
   const agregar = () => {
-    add(item.tipo === "bebida" ? lineaDeBebida(item) : lineaDePizza(item));
-    toast(`${item.nombre} agregada`);
+    if (add(item.tipo === "bebida" ? lineaDeBebida(item) : lineaDePizza(item))) toast(`${item.nombre} agregada`);
   };
 
   return (

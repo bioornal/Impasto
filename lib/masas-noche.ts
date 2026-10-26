@@ -60,6 +60,25 @@ export function avisoMasas(quedan: number | undefined, hayEmpanadas = false): st
   return quedan === 1 ? "¡Queda la última pizza de la noche!" : `¡Quedan solo ${quedan} pizzas esta noche!`;
 }
 
+const nosQuedan = (quedan: number) => quedan === 1 ? "Esta noche nos queda solo 1 pizza" : `Esta noche nos quedan solo ${quedan} pizzas`;
+
+/**
+ * Carrito (25/10/2026, el dueño vio que se podían sumar más pizzas que las masas): null si se
+ * puede sumar `agregar` pizzas a las `enCarrito`; si no, el aviso para el cliente.
+ */
+export function topeDePizzas(enCarrito: number, agregar: number, quedan: number | null | undefined): string | null {
+  if (quedan === null || quedan === undefined || enCarrito + agregar <= quedan) return null;
+  return quedan <= 0 ? "Por esta noche se terminaron las pizzas." : `${nosQuedan(quedan)}: no se pueden sumar más.`;
+}
+
+/** El carrito ya tiene más pizzas que las que quedan (bajaron mientras armaba el pedido). */
+export function excesoEnCarrito(enCarrito: number, quedan: number | null | undefined): string | null {
+  if (quedan === null || quedan === undefined || enCarrito <= quedan) return null;
+  return quedan <= 0
+    ? "Por esta noche se terminaron las pizzas. Sacalas del pedido para seguir."
+    : `${nosQuedan(quedan)}. Sacá ${enCarrito - quedan} del pedido para seguir.`;
+}
+
 /** Lo que carga el panel: entero de 0 a 2000; vacío = sin límite (null); inválido = undefined. */
 export function masasDesdeTexto(valor: unknown): number | null | undefined {
   if (valor === null || valor === undefined || String(valor).trim() === "") return null;

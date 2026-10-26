@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-  MasasAgotadasError, aplicarMasas, avisoMasas, errorDeMasasDeLaBase, masasDesdeTexto, pizzasDelCarrito, quedanMasas, validarMasasNoche,
+  MasasAgotadasError, aplicarMasas, avisoMasas, errorDeMasasDeLaBase, excesoEnCarrito, topeDePizzas, masasDesdeTexto, pizzasDelCarrito, quedanMasas, validarMasasNoche,
 } from "../lib/masas-noche";
 import type { CartItem, CatalogData, Pizza } from "../types";
 
@@ -72,6 +72,23 @@ test("avisoMasas: solo con 3 o menos, o sin masas", () => {
   assert.equal(avisoMasas(1), "¡Queda la última pizza de la noche!");
   assert.equal(avisoMasas(0), "Por esta noche se terminaron las pizzas.");
   assert.equal(avisoMasas(0, true), "Por esta noche se terminaron las pizzas. Todavía podés pedir empanadas.");
+});
+
+test("topeDePizzas: el carrito no suma más pizzas que las masas que quedan", () => {
+  assert.equal(topeDePizzas(3, 1, null), null);
+  assert.equal(topeDePizzas(3, 1, 4), null);
+  assert.equal(topeDePizzas(4, 1, 4), "Esta noche nos quedan solo 4 pizzas: no se pueden sumar más.");
+  assert.equal(topeDePizzas(0, 1, 1), null);
+  assert.equal(topeDePizzas(1, 1, 1), "Esta noche nos queda solo 1 pizza: no se pueden sumar más.");
+  assert.equal(topeDePizzas(0, 1, 0), "Por esta noche se terminaron las pizzas.");
+});
+
+test("excesoEnCarrito: si el carrito ya tiene de más, cuántas sacar", () => {
+  assert.equal(excesoEnCarrito(5, null), null);
+  assert.equal(excesoEnCarrito(4, 4), null);
+  assert.equal(excesoEnCarrito(5, 4), "Esta noche nos quedan solo 4 pizzas. Sacá 1 del pedido para seguir.");
+  assert.equal(excesoEnCarrito(6, 1), "Esta noche nos queda solo 1 pizza. Sacá 5 del pedido para seguir.");
+  assert.equal(excesoEnCarrito(2, 0), "Por esta noche se terminaron las pizzas. Sacalas del pedido para seguir.");
 });
 
 test("masasDesdeTexto: enteros de 0 a 2000; vacío es sin límite", () => {

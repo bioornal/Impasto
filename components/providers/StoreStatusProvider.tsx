@@ -10,6 +10,8 @@ export interface EstadoTiendaCliente {
   cierreManual: boolean;
   delivery: EstadoDelivery;
   masas: EstadoMasas;
+  /** Pizzas que quedan esta noche según las masas (24/10/2026); null = sin límite. */
+  masasNoche?: number | null;
 }
 
 const DELIVERY_ACTIVO: EstadoDelivery = { activo: true, motivo: "" };
@@ -41,6 +43,7 @@ export function StoreStatusProvider({ inicial, children }: { inicial: EstadoTien
             cierreManual: datos.cierreManual,
             delivery: datos.delivery ?? DELIVERY_ACTIVO,
             masas: datos.masas ?? TODAS_LAS_MASAS,
+            masasNoche: typeof datos.masasNoche === "number" ? datos.masasNoche : null,
           });
         }
       } catch { /* si falla la consulta se conserva el último estado conocido */ }

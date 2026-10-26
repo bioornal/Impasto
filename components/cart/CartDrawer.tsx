@@ -7,6 +7,7 @@ import { ItemMedia } from "@/components/ui/ItemMedia";
 import { DrinkIllus } from "@/components/ui/Illus";
 import { fmt } from "@/lib/utils";
 import { MASAS, detalleSinMasa, masaDe } from "@/lib/masa";
+import { excesoEnCarrito, pizzasDelCarrito } from "@/lib/masas-noche";
 import type { BusinessConfig } from "@/lib/business";
 import type { Bebida } from "@/types";
 
@@ -29,6 +30,8 @@ interface CartDrawerProps {
 export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onBrowse, business, bebidas }: CartDrawerProps) {
   const { items, add, inc, dec, setMasa, remove, subtotal } = useCart();
   const tienda = useStoreStatus();
+  // Masas de la noche: si bajaron mientras armaba el pedido, se avisa y no se puede seguir.
+  const sobranPizzas = excesoEnCarrito(pizzasDelCarrito(items), tienda.masasNoche);
   const toast = useToast();
   const railRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -185,6 +188,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
             </div>
           ) : (
             <>
+              {sobranPizzas && <p className="ci-masa-aviso" role="alert">{sobranPizzas}</p>}
               {tienda.masas.aviso && items.some((item) => masaDe(item)) && (
                 <p className="ci-masa-aviso" role="status">{tienda.masas.aviso}</p>
               )}
@@ -297,7 +301,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
               <span className="mono">Total</span>
               <b>{fmt(subtotal + shipping)}</b>
             </div>
-            <button className="drawer-cta" onClick={onCheckout} disabled={!tienda.abierto}>
+            <button className="drawer-cta" onClick={onCheckout} disabled={!tienda.abierto || Boolean(sobranPizzas)}>
               {tienda.abierto ? "Continuar con el pedido" : "Cerrado por ahora"}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14" /><path d="m13 5 7 7-7 7" /></svg>
             </button>

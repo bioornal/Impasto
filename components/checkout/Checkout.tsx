@@ -76,6 +76,9 @@ function AvisoRetiro() {
   );
 }
 
+/** El servidor rechazó la cotización por algo que el cliente arregla en el carrito (409). */
+class MotivoDelCarrito extends Error {}
+
 export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }: CheckoutProps) {
   const { items, count, subtotal: localSubtotal } = useCart();
   const { delivery, masas } = useStoreStatus();
@@ -112,13 +115,15 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
     })
       .then(async (response) => {
         const result = await response.json();
+        // 409 = no alcanzan las masas o el cupo de un sabor: el cliente tiene que leer el motivo.
+        if (response.status === 409 && result.error) throw new MotivoDelCarrito(result.error);
         if (!response.ok || !result.ok) throw new Error(result.error || "No se pudo actualizar el total");
         if (active) {
           setQuote({ key: quoteKey, items: result.items, subtotal: result.subtotal, shipping: result.shipping, total: result.total });
           setQuoteError("");
         }
       })
-      .catch(() => { if (active) { setQuote(null); setQuoteError("No se pudo actualizar el total. Intentá nuevamente."); } });
+      .catch((error) => { if (active) { setQuote(null); setQuoteError(error instanceof MotivoDelCarrito ? error.message : "No se pudo actualizar el total. Intentá nuevamente."); } });
     return () => { active = false; };
   }, [mode, items, quoteKey, quoteRevision]);
 
@@ -418,7 +423,9 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             <button className="co-cta" onClick={confirm} disabled={submitting || (!pendingManual && (quoteLoading || Boolean(quoteError)))}>
               {submitting
                 ? "Registrando pedido…"
-                : quoteLoading
+                : quoteError && !pendingManual
+                  ? "Revisá tu pedido"
+                  : quoteLoading
                   ? "Actualizando total…"
                   : data.pago === "mercadopago"
                     ? `Pagar con tarjeta · ${fmt(total)}`
@@ -595,7 +602,9 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
           <button className="co-footbar-cta" onClick={confirm} disabled={submitting || (!pendingManual && (quoteLoading || Boolean(quoteError)))}>
             {submitting
               ? "Registrando pedido…"
-              : quoteLoading
+              : quoteError && !pendingManual
+                ? "Revisá tu pedido"
+                : quoteLoading
                 ? "Actualizando total…"
                 : data.pago === "mercadopago"
                   ? "Pagar con tarjeta"
