@@ -90,6 +90,7 @@ export function whatsappDeCliente(telefono: string): string | null {
  * referencia va solo si es de la web (`IM-107345-K7QD`): la del POS
  * (`IM-3`) el cliente nunca la vio. Desde Pedidos se pasa la modalidad y el
  * mensaje ya avisa que va en camino o que está listo para retirar (dueño, 24/10/2026).
+ * Sin emojis: el 🛵 del final se veía como "�" en el WhatsApp del cliente (dueño, 25/10/2026).
  */
 export function mensajeAlCliente(nombre: string, referencia?: string, modalidad?: "delivery" | "takeaway"): string {
   const primero = String(nombre || "").trim().split(/\s+/)[0];
@@ -97,7 +98,7 @@ export function mensajeAlCliente(nombre: string, referencia?: string, modalidad?
   const refVisible = referencia !== undefined && /^IM-\d{6}-\w+$/.test(referencia);
   if (referencia !== undefined && modalidad) {
     const pedido = refVisible ? `tu pedido ${referencia}` : "tu pedido";
-    const estado = modalidad === "delivery" ? "ya está en camino. 🛵" : "ya está listo para retirar.";
+    const estado = modalidad === "delivery" ? "ya está en camino. Por favor, estate atento: enseguida te va a estar llegando." : "ya está listo para retirar.";
     return `${saludo} Te escribimos de Impasto: ${pedido} ${estado}`;
   }
   const pedido = referencia === undefined ? "" : refVisible ? ` por tu pedido ${referencia}` : " por tu pedido";

@@ -63,8 +63,9 @@ chequear("mensaje con el nombre y la referencia web", mensajeAlCliente("Juan Pé
 chequear("pedido del POS: sin referencia que el cliente no conoce", mensajeAlCliente("Ana", "IM-3"), "¡Hola, Ana! Te escribimos de Impasto por tu pedido.");
 chequear("sin pedido (desde Clientes)", mensajeAlCliente("Ana"), "¡Hola, Ana! Te escribimos de Impasto.");
 chequear("sin nombre", mensajeAlCliente("—", "IM-107345-K7QD"), "¡Hola! Te escribimos de Impasto por tu pedido IM-107345-K7QD.");
-chequear("delivery: en camino", mensajeAlCliente("Juan Pérez", "IM-107345-K7QD", "delivery"), "¡Hola, Juan! Te escribimos de Impasto: tu pedido IM-107345-K7QD ya está en camino. 🛵");
-chequear("delivery del POS: en camino sin referencia", mensajeAlCliente("Ana", "IM-3", "delivery"), "¡Hola, Ana! Te escribimos de Impasto: tu pedido ya está en camino. 🛵");
+chequear("delivery: en camino", mensajeAlCliente("Juan Pérez", "IM-107345-K7QD", "delivery"), "¡Hola, Juan! Te escribimos de Impasto: tu pedido IM-107345-K7QD ya está en camino. Por favor, estate atento: enseguida te va a estar llegando.");
+chequear("delivery del POS: en camino sin referencia", mensajeAlCliente("Ana", "IM-3", "delivery"), "¡Hola, Ana! Te escribimos de Impasto: tu pedido ya está en camino. Por favor, estate atento: enseguida te va a estar llegando.");
+chequear("el mensaje no lleva emojis (algunos WhatsApp los muestran como �)", /[\u{1F000}-\u{1FFFF}]/u.test(mensajeAlCliente("Ana", "IM-3", "delivery")), false);
 chequear("retiro: listo para retirar", mensajeAlCliente("Juan", "IM-107345-K7QD", "takeaway"), "¡Hola, Juan! Te escribimos de Impasto: tu pedido IM-107345-K7QD ya está listo para retirar.");
 chequear("retiro sin nombre", mensajeAlCliente("—", "IM-3", "takeaway"), "¡Hola! Te escribimos de Impasto: tu pedido ya está listo para retirar.");
 
