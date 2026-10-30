@@ -22,9 +22,9 @@ export function MasasAviso({ onNav }: MasasAvisoProps) {
         <div className="masas-card">
           <div className="masas-intro">
             <span className="promo-badge">{queda ? "Hoy" : "Nuevo"}</span>
-            <h2 id="masas-titulo">{queda ? `Hoy, solo masa ${nombreMasa(queda)}` : "Ahora también, al molde"}</h2>
+            <h2 id="masas-titulo">{queda ? `Hoy, solo masa ${nombreMasa(queda)}` : "¿Preferís la masa tradicional al molde?"}</h2>
             <p>
-              {queda ? masas.aviso : "Dos masas bien distintas, al mismo precio. La elegís en el carrito, pizza por pizza."}
+              {queda ? masas.aviso : "Ya la tenemos, al mismo precio. En el carrito elegís el tipo de masa para cada pizza."}
             </p>
             <button className="btn btn-primary btn-sm" onClick={() => onNav("pizzas")}>Ver pizzas</button>
           </div>
