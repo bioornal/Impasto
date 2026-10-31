@@ -14,7 +14,7 @@ Fecha: 31/10/2026. Pedido del dueño: el contador de masas es uno solo y no disc
 
 - `masas_noche` pasa a una fila por masa: columna `masa` (`napoletana` | `molde`), clave `(proyecto_id, noche, masa)`. Las filas viejas quedan como `napoletana` y no se usan más.
 - `pedidos.masas_molde integer`: cuántas de `masas_consumo` (que sigue siendo el total) son al molde. Sin valor = 0. Así los pedidos viejos se devuelven a la fila napoletana de su noche.
-- `masas_molde(productos, proyecto)`: cuenta las pizzas al molde con el mismo criterio de `masas_consumo`.
+- `masas_molde(productos)`: cuenta las pizzas al molde, con el mismo criterio de web y POS que `masas_consumo`.
 - `masas_mover(proyecto, noche, masas, molde, signo)`: mueve las dos filas. Los triggers de cupos pasan a usarla.
 - `fijar_masas_restantes(proyecto, masa, quedan)`: cupo = vendidas + quedan en un paso, para esa masa. `quedan` ya no admite NULL.
 - `quitar_limite_masas(proyecto)`: deja las dos sin cargar.
