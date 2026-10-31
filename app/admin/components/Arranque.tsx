@@ -4,8 +4,10 @@ import { useSucursal } from "./SucursalProvider";
 import { Interruptor } from "./Interruptor";
 import { Cupos } from "./Cupos";
 import { MasasNoche } from "./MasasNoche";
+import { useMasasNoche } from "./MasasNocheProvider";
 import { Orders } from "./Orders";
 import { estadoMasas } from "@/lib/masa";
+import { conMasasDeLaNoche } from "@/lib/masas-noche";
 import { MENSAJE_DELIVERY_DEFAULT } from "@/lib/hours";
 
 /** Un motivo para el cliente: se guarda al salir del campo o con Enter, no en cada tecla. */
@@ -22,10 +24,12 @@ function Motivo({ valor, placeholder, disabled, onGuardar }: { valor: string; pl
 
 /**
  * Lo que se toca al empezar la noche (pedido del dueño, 22/10/2026): venta, delivery y masas
- * (se guardan al tocarlos), cupos y los pedidos activos. Arriba de todo, las masas de la noche (24/10/2026).
+ * (se guardan al tocarlos), cupos y los pedidos activos. Arriba de todo, las masas de la noche por tipo
+ * (31/10/2026): con números cargados mandan ellos y los interruptores de masa quedan bloqueados.
  */
 export function Arranque({ onVerPedidos }: { onVerPedidos: () => void }) {
   const { sucursal, error, recargar, cambiar, pendiente } = useSucursal();
+  const { quedan } = useMasasNoche();
 
   if (!sucursal) {
     return (
@@ -38,7 +42,7 @@ export function Arranque({ onVerPedidos }: { onVerPedidos: () => void }) {
   const delivery = sucursal.delivery_activo !== false;
   const napoletana = sucursal.masa_napoletana_activa !== false;
   const molde = sucursal.masa_molde_activa !== false;
-  const avisoMasas = estadoMasas({ masaNapoletanaActiva: napoletana, masaMoldeActiva: molde }).aviso;
+  const avisoMasas = estadoMasas(conMasasDeLaNoche({ masaNapoletanaActiva: napoletana, masaMoldeActiva: molde }, quedan)).aviso;
 
   return (
     <div className="arranque">
@@ -52,11 +56,15 @@ export function Arranque({ onVerPedidos }: { onVerPedidos: () => void }) {
           <Interruptor checked={delivery} label="Delivery" detalle={delivery ? "Haciendo envíos" : "Solo retiro"}
             disabled={pendiente("delivery_activo")}
             onChange={(v) => void cambiar("delivery_activo", v, v ? "Delivery prendido" : "Delivery pausado")} />
-          <Interruptor checked={napoletana} label="Masa napoletana" detalle={napoletana ? (molde ? "Disponible" : "Tiene que quedar una masa") : "Agotada"} disabled={(napoletana && !molde) || pendiente("masa_napoletana_activa")}
-            title={napoletana && !molde ? "La al molde está agotada: tiene que quedar al menos una masa" : undefined}
+          <Interruptor checked={quedan ? quedan.napoletana > 0 : napoletana} label="Masa napoletana"
+            detalle={quedan ? `Manda el número: quedan ${quedan.napoletana}` : napoletana ? (molde ? "Disponible" : "Tiene que quedar una masa") : "Agotada"}
+            disabled={Boolean(quedan) || (napoletana && !molde) || pendiente("masa_napoletana_activa")}
+            title={quedan ? "Se maneja con el número de Masas de la noche" : napoletana && !molde ? "La al molde está agotada: tiene que quedar al menos una masa" : undefined}
             onChange={(v) => void cambiar("masa_napoletana_activa", v, v ? "Napoletana disponible" : "Napoletana agotada")} />
-          <Interruptor checked={molde} label="Masa al molde" detalle={molde ? (napoletana ? "Disponible" : "Tiene que quedar una masa") : "Oculta en la web"} disabled={(molde && !napoletana) || pendiente("masa_molde_activa")}
-            title={molde && !napoletana ? "La napoletana está agotada: tiene que quedar al menos una masa" : undefined}
+          <Interruptor checked={quedan ? quedan.molde > 0 : molde} label="Masa al molde"
+            detalle={quedan ? `Manda el número: quedan ${quedan.molde}` : molde ? (napoletana ? "Disponible" : "Tiene que quedar una masa") : "Oculta en la web"}
+            disabled={Boolean(quedan) || (molde && !napoletana) || pendiente("masa_molde_activa")}
+            title={quedan ? "Se maneja con el número de Masas de la noche" : molde && !napoletana ? "La napoletana está agotada: tiene que quedar al menos una masa" : undefined}
             onChange={(v) => void cambiar("masa_molde_activa", v, v ? "Al molde disponible" : "Al molde oculta en la web")} />
           {!sucursal.ventas_activas && (
             <Motivo key={"cierre:" + (sucursal.mensaje_cierre || "")} valor={sucursal.mensaje_cierre || ""} placeholder="Cerramos por vacaciones hasta el 5 de enero" disabled={pendiente("mensaje_cierre")}
@@ -67,7 +75,7 @@ export function Arranque({ onVerPedidos }: { onVerPedidos: () => void }) {
               onGuardar={(t) => void cambiar("mensaje_delivery", t, "Motivo guardado")} />
           )}
           {avisoMasas && <div className="int-motivo tbl-muted">El cliente ve: “{avisoMasas}”</div>}
-          {!molde && napoletana && <div className="int-motivo tbl-muted">La masa al molde no aparece en la web: el cliente no ve la opción. Prendela cuando vuelvas a tenerla.</div>}
+          {!quedan && !molde && napoletana && <div className="int-motivo tbl-muted">La masa al molde no aparece en la web: el cliente no ve la opción. Prendela cuando vuelvas a tenerla.</div>}
         </div>
       </section>
       <section className="panel"><Orders soloActivos onVerTodos={onVerPedidos} /></section>

@@ -1,82 +1,104 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useStore } from "./StoreProvider";
-import { quedanMasas, type FilaMasas } from "@/lib/masas-noche";
+import { useMasasNoche } from "./MasasNocheProvider";
+import { MASAS } from "@/lib/masa";
 import { etiquetaDia } from "@/lib/resumen-diario";
+import type { Masa } from "@/types";
 
 /** Espera entre el último toque de flechita y el guardado: varios toques seguidos son un solo PUT. */
 const ESPERA_GUARDADO_MS = 700;
 const POCAS = 3;
 
 /**
- * Masas de esta noche (pedido del dueño, 24/10/2026): cuántas pizzas en total se pueden vender según
- * las masas que hay. El número es "cuántas me quedan AHORA": se carga al abrir o en cualquier momento
- * de la noche, y cada pizza vendida (web o POS) descuenta una. En 0 la web y el POS dejan de vender
- * pizzas. Sin cargar = sin límite. Controla la base; a las 06:00 empieza una noche nueva sin cargar.
+ * Masas de esta noche (pedido del dueño, 24/10/2026; por tipo desde el 31/10/2026): cuántas pizzas de
+ * cada masa se pueden vender. Cada número es "cuántas me quedan AHORA": se carga al abrir o en cualquier
+ * momento de la noche, y cada pizza vendida (web o POS) descuenta una de su masa. Si se carga una sola,
+ * la otra no se vende. Sin ninguna cargada = sin límite. Controla la base; a las 06:00 empieza una noche nueva.
  */
 export function MasasNoche() {
   const { showToast } = useStore();
-  const [fila, setFila] = useState<FilaMasas | null>(null);
-  const [noche, setNoche] = useState<string | null>(null);
-  const [cargado, setCargado] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  /** Lo que el dueño acaba de tocar y todavía no se guardó (undefined = nada pendiente). */
-  const [tocado, setTocado] = useState<number | null | undefined>(undefined);
-  const [texto, setTexto] = useState<string | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { quedan, noche, error, recargar } = useMasasNoche();
+  const sinCargar = quedan === null;
 
-  const recargar = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/masas");
-      const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json.error || "No se pudieron leer las masas");
-      setFila(json.data);
-      setNoche(json.noche);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudieron leer las masas");
-    } finally {
-      setCargado(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial desde la API, como el resto del panel
-    recargar();
-    const id = setInterval(recargar, 30_000);
-    return () => { clearInterval(id); if (timer.current) clearTimeout(timer.current); };
-  }, [recargar]);
-
-  const guardar = useCallback(async (quedan: number | null) => {
+  const quitarLimite = async () => {
     try {
       const res = await fetch("/api/admin/masas", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quedan }),
+        body: JSON.stringify({ quedan: null }),
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "No se pudo guardar");
-      showToast(quedan === null ? "Masas: sin límite esta noche" : quedan === 0 ? "Sin masas: la venta de pizzas quedó cortada" : `Masas: quedan ${quedan} para esta noche`);
+      showToast("Masas: sin límite esta noche");
+      await recargar();
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "No se pudo guardar");
+    }
+  };
+
+  return (
+    <section className={`panel masas ${sinCargar ? "masas-sin-cargar" : ""}`} aria-labelledby="masas-titulo">
+      <div className="panel-head">
+        <h3 id="masas-titulo">Masas de la noche{noche ? ` · ${etiquetaDia(noche)}` : ""}</h3>
+        <div className="panel-head-spacer" />
+        {!sinCargar && <button className="btn btn-ghost btn-sm" onClick={() => void quitarLimite()} title="La web y el POS vuelven a vender pizzas sin tope">Quitar límite</button>}
+      </div>
+      <div className="panel-body">
+        {sinCargar && <p className="masas-aviso">Cargá cuántas tenés de cada masa. Sin números, la web y el POS venden sin límite.</p>}
+        <div className="masas-body">
+          {MASAS.map((m) => <ContadorMasa key={m.id} masa={m.id} nombre={m.nombre} />)}
+        </div>
+        {error && <p className="masas-error">{error}</p>}
+      </div>
+    </section>
+  );
+}
+
+function ContadorMasa({ masa, nombre }: { masa: Masa; nombre: string }) {
+  const { showToast } = useStore();
+  const { filas, quedan: numeros, cargado, recargar } = useMasasNoche();
+  /** Lo que el dueño acaba de tocar y todavía no se guardó (undefined = nada pendiente). */
+  const [tocado, setTocado] = useState<number | undefined>(undefined);
+  const [texto, setTexto] = useState<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const guardar = useCallback(async (valor: number) => {
+    try {
+      const res = await fetch("/api/admin/masas", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ masa, quedan: valor }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || "No se pudo guardar");
+      showToast(valor === 0 ? `${nombre}: en 0, no se vende más esta noche` : `${nombre}: quedan ${valor} para esta noche`);
       await recargar();
     } catch (e) {
       showToast(e instanceof Error ? e.message : "No se pudo guardar");
     } finally {
       setTocado(undefined);
     }
-  }, [recargar, showToast]);
+  }, [masa, nombre, recargar, showToast]);
 
-  const fijar = (quedan: number | null, inmediato = false) => {
-    setTocado(quedan);
+  const fijar = (valor: number, inmediato = false) => {
+    setTocado(valor);
     if (timer.current) clearTimeout(timer.current);
-    if (inmediato) { timer.current = null; void guardar(quedan); return; }
-    timer.current = setTimeout(() => { timer.current = null; void guardar(quedan); }, ESPERA_GUARDADO_MS);
+    if (inmediato) { timer.current = null; void guardar(valor); return; }
+    timer.current = setTimeout(() => { timer.current = null; void guardar(valor); }, ESPERA_GUARDADO_MS);
   };
 
-  const guardado = quedanMasas(fila);
+  const fila = filas.find((f) => f.masa === masa);
+  const cargada = fila?.cupo !== null && fila?.cupo !== undefined;
+  const guardado = numeros && cargada ? numeros[masa] : null;
   const quedan = tocado !== undefined ? tocado : guardado;
   const vendidas = fila?.vendidas ?? 0;
-  const sinLimite = quedan === null;
-  const estado = sinLimite ? "sin-cargar" : quedan === 0 ? "agotado" : quedan <= POCAS ? "pocas" : "ok";
+  const estado = quedan === null ? "sin-cargar" : quedan === 0 ? "agotado" : quedan <= POCAS ? "pocas" : "ok";
+  const titulo = quedan === null
+    ? (numeros ? "Sin cargar · no se vende" : "Sin cargar")
+    : quedan === 0 ? "Agotada · no se vende" : `Quedan ${quedan}`;
 
   const confirmarTexto = () => {
     if (texto === null) return;
@@ -88,49 +110,33 @@ export function MasasNoche() {
     if (n !== quedan) fijar(n, true);
   };
 
+  const id = `masas-quedan-${masa}`;
   return (
-    <section className={`panel masas masas-${estado}`} aria-labelledby="masas-titulo">
-      <div className="panel-head">
-        <h3 id="masas-titulo">Masas de la noche{noche ? ` · ${etiquetaDia(noche)}` : ""}</h3>
-        <div className="panel-head-spacer" />
-        {!sinLimite && <button className="btn btn-ghost btn-sm" onClick={() => fijar(null, true)} title="La web y el POS vuelven a vender pizzas sin tope">Quitar límite</button>}
+    <div className={`masa-contador masas-${estado}`}>
+      <div className="masas-estado">
+        <span className="masas-nombre">{nombre}</span>
+        <b className="masas-titulo">{cargado ? titulo : "Cargando…"}</b>
+        <span>Vendidas {vendidas}</span>
       </div>
-      <div className="panel-body masas-body">
-        <div className="masas-estado">
-          {!cargado ? <span className="tbl-muted">Cargando…</span> : sinLimite ? (
-            <>
-              <b className="masas-titulo">Sin cargar · sin límite</b>
-              <span>Cargá cuántas masas tenés: al llegar a 0, la web y el POS dejan de vender pizzas.{vendidas > 0 ? ` Ya se vendieron ${vendidas} esta noche: poné las que te quedan ahora.` : ""}</span>
-            </>
-          ) : (
-            <>
-              <b className="masas-titulo">{quedan === 0 ? "Sin masas · pizzas cortadas" : `Quedan ${quedan} ${quedan === 1 ? "pizza" : "pizzas"}`}</b>
-              <span>Vendidas {vendidas} · {quedan === 0 ? "la web y el POS no venden más pizzas esta noche" : "cada pizza que se vende descuenta una"}</span>
-            </>
-          )}
-          {error && <span className="masas-error">{error}</span>}
-        </div>
-        <div className="masas-ctrl">
-          <label htmlFor="masas-quedan">Me quedan</label>
-          <div className="masas-stepper">
-            <button type="button" onClick={() => quedan !== null && fijar(Math.max(0, quedan - 1))} disabled={!cargado || quedan === null || quedan === 0} aria-label="Una masa menos">−</button>
-            <input
-              id="masas-quedan"
-              type="text"
-              inputMode="numeric"
-              placeholder="—"
-              value={texto ?? (quedan === null ? "" : String(quedan))}
-              disabled={!cargado}
-              onFocus={(e) => { setTexto(quedan === null ? "" : String(quedan)); e.target.select(); }}
-              onChange={(e) => setTexto(e.target.value.replace(/\D/g, ""))}
-              onBlur={confirmarTexto}
-              onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") { setTexto(null); (e.target as HTMLInputElement).blur(); } }}
-              aria-describedby="masas-titulo"
-            />
-            <button type="button" onClick={() => quedan !== null && fijar(Math.min(2000, quedan + 1))} disabled={!cargado || quedan === null} aria-label="Una masa más">+</button>
-          </div>
+      <div className="masas-ctrl">
+        <label htmlFor={id}>Me quedan</label>
+        <div className="masas-stepper">
+          <button type="button" onClick={() => quedan !== null && fijar(Math.max(0, quedan - 1))} disabled={!cargado || quedan === null || quedan === 0} aria-label={`Una masa ${nombre.toLowerCase()} menos`}>−</button>
+          <input
+            id={id}
+            type="text"
+            inputMode="numeric"
+            placeholder="—"
+            value={texto ?? (quedan === null ? "" : String(quedan))}
+            disabled={!cargado}
+            onFocus={(e) => { setTexto(quedan === null ? "" : String(quedan)); e.target.select(); }}
+            onChange={(e) => setTexto(e.target.value.replace(/\D/g, ""))}
+            onBlur={confirmarTexto}
+            onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") { setTexto(null); (e.target as HTMLInputElement).blur(); } }}
+          />
+          <button type="button" onClick={() => fijar(Math.min(2000, (quedan ?? 0) + 1))} disabled={!cargado} aria-label={`Una masa ${nombre.toLowerCase()} más`}>+</button>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

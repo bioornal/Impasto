@@ -7,7 +7,7 @@ import { ItemMedia } from "@/components/ui/ItemMedia";
 import { DrinkIllus } from "@/components/ui/Illus";
 import { fmt } from "@/lib/utils";
 import { MASAS, detalleSinMasa, masaDe } from "@/lib/masa";
-import { excesoEnCarrito, pizzasDelCarrito } from "@/lib/masas-noche";
+import { excesoEnCarrito } from "@/lib/masas-noche";
 import type { BusinessConfig } from "@/lib/business";
 import type { Bebida } from "@/types";
 
@@ -31,7 +31,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
   const { items, add, inc, dec, setMasa, remove, subtotal } = useCart();
   const tienda = useStoreStatus();
   // Masas de la noche: si bajaron mientras armaba el pedido, se avisa y no se puede seguir.
-  const sobranPizzas = excesoEnCarrito(pizzasDelCarrito(items), tienda.masasNoche);
+  const sobranPizzas = excesoEnCarrito(items, tienda.masasNoche);
   const toast = useToast();
   const railRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);

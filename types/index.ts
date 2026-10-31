@@ -64,8 +64,8 @@ export interface CatalogData {
   reviews: Review[];
   preciosNoDisponibles?: string[];
   empanadaBoxNoDisponibles?: Array<6 | 12 | 24>;
-  /** Pizzas que quedan para vender esta noche según las masas (`lib/masas-noche.ts`); sin límite, no viene. */
-  masasQuedan?: number;
+  /** Pizzas que quedan para vender esta noche por masa (`lib/masas-noche.ts`); sin límite, no viene. */
+  masasQuedan?: Record<Masa, number>;
 }
 
 /** Masa de la pizza; ver `lib/masa.ts`. */

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StoreProvider } from "./components/StoreProvider";
 import { SucursalProvider, useSucursal } from "./components/SucursalProvider";
+import { MasasNocheProvider } from "./components/MasasNocheProvider";
 import { Sidebar } from "./components/Sidebar";
 import { Topbar } from "./components/Topbar";
 import { Dashboard } from "./components/Dashboard";
@@ -102,7 +103,9 @@ export default function AdminPage() {
   return (
     <StoreProvider>
       <SucursalProvider>
-        <AdminApp />
+        <MasasNocheProvider>
+          <AdminApp />
+        </MasasNocheProvider>
       </SucursalProvider>
     </StoreProvider>
   );

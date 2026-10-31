@@ -1,6 +1,8 @@
 import { db } from "@/lib/insforge";
 import { BUSINESS, SUCURSAL_ID, type BusinessConfig } from "@/lib/business";
 import { cuentaActiva, leerCuentas } from "@/lib/cuentas-transferencia";
+import { conMasasDeLaNoche, quedanMasas, type FilaMasas, type QuedanMasas } from "@/lib/masas-noche";
+import { diaDeNegocio } from "@/lib/resumen-diario";
 import { nonNegativeRate } from "@/lib/stabilization";
 
 function parseDias(valor: unknown): number[] | null {
@@ -19,19 +21,32 @@ function normalizarWhatsapp(valor: unknown): string {
   return digitos;
 }
 
+/** Masas de esta noche (null = sin límite). Si falla la lectura, sin límite: la base igual controla al guardar. */
+async function masasDeLaNoche(): Promise<QuedanMasas | null> {
+  try {
+    const { data, error } = await db.database.from("masas_noche").select("masa,cupo,vendidas")
+      .eq("proyecto_id", "impasto").eq("noche", diaDeNegocio(new Date().toISOString()));
+    if (error) return null;
+    return quedanMasas(Array.isArray(data) ? data as FilaMasas[] : []);
+  } catch { return null; }
+}
+
 export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<BusinessConfig> {
   try {
-    const { data, error } = await db.database
-      .from("sucursales")
-      .select("*")
-      .eq("id", branchId)
-      .limit(1);
+    const [{ data, error }, masasNoche] = await Promise.all([
+      db.database
+        .from("sucursales")
+        .select("*")
+        .eq("id", branchId)
+        .limit(1),
+      masasDeLaNoche(),
+    ]);
     const branch = Array.isArray(data) ? data[0] as Record<string, unknown> | undefined : undefined;
     // Ante un error de base o una fila faltante, el resto de los datos cae a los
     // valores del código, pero las ventas se cierran: es preferible no tomar
     // pedidos que aceptarlos cuando no se pudo confirmar que el local esté abierto.
     if (error || !branch) return { ...BUSINESS, ventasActivas: false };
-    return {
+    return conMasasDeLaNoche({
       id: String(branch.id || branchId),
       name: String(branch.nombre || BUSINESS.name),
       city: String(branch.ciudad || BUSINESS.city),
@@ -64,7 +79,8 @@ export async function getBusinessConfig(branchId = SUCURSAL_ID): Promise<Busines
       // Las columnas viejas (`cbu`, `alias_cbu`, `banco`, `titular_cuenta`) ya no
       // se leen: la migración 20260925141945 las pasó a esta lista.
       cuentaTransferencia: cuentaActiva(leerCuentas(branch.cuentas_transferencia)),
-    };
+      masasNoche,
+    }, masasNoche);
   } catch {
     return { ...BUSINESS, ventasActivas: false };
   }

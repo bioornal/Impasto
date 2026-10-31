@@ -3,8 +3,8 @@ import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import type { CartItem, Masa } from "@/types";
 import { uid } from "@/lib/utils";
-import { ajustarMasas, cambiarMasa, esMismaLinea } from "@/lib/masa";
-import { pizzasDelCarrito, topeDePizzas } from "@/lib/masas-noche";
+import { ajustarMasas, cambiarMasa, esMismaLinea, masaDe, masaUnica } from "@/lib/masa";
+import { avisoOtraMasa, masaParaSumar, topeDePizzas } from "@/lib/masas-noche";
 import { useToast } from "@/components/providers/ToastProvider";
 
 interface CartCtx {
@@ -73,17 +73,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }).catch(() => {});
   }, [items, ready]);
 
-  // Masas de la noche (25/10/2026): el carrito no suma más pizzas que las que quedan. La base igual
-  // controla al guardar; esto evita que el cliente arme un pedido que después no puede confirmar.
-  const hayMasas = (item: Pick<CartItem, "type">, cantidad: number) => {
-    if (item.type !== "pizza" && item.type !== "pizza-half") return true;
-    const aviso = topeDePizzas(pizzasDelCarrito(items), cantidad, masasNoche);
+  // Masas de la noche (31/10/2026): el carrito no suma más pizzas de cada masa que las que quedan. La
+  // base igual controla al guardar; esto evita que el cliente arme un pedido que no puede confirmar.
+  const hayMasas = (item: Pick<CartItem, "type" | "masa">, cantidad: number) => {
+    const masa = masaDe(item);
+    const aviso = masa ? topeDePizzas(items, masa, cantidad, masasNoche) : null;
     if (aviso) toast(aviso);
     return !aviso;
   };
 
-  const add = (item: Omit<CartItem, "cartId">) => {
-    if (!hayMasas(item, item.qty || 1)) return false;
+  const add = (pedido: Omit<CartItem, "cartId">) => {
+    let item = pedido;
+    const masa = masaDe(pedido);
+    if (masa) {
+      // Si su masa está llena y la otra tiene lugar, la pizza entra en la otra. Si se terminó una, la que queda.
+      const preferida = masaUnica(masas) ?? masa;
+      const entra = masaParaSumar(items, preferida, pedido.qty || 1, masasNoche);
+      if (!entra) return hayMasas({ ...pedido, masa: preferida }, pedido.qty || 1);
+      if (entra !== preferida) {
+        item = { ...pedido, masa: entra };
+        // Después del toast del que llamó ("agregada"), que si no taparía este aviso.
+        setTimeout(() => toast(avisoOtraMasa(entra)), 0);
+      }
+    }
     cambiar((prev) => {
       if (!item.unique) {
         const idx = prev.findIndex((p) => esMismaLinea(p, item));
@@ -106,17 +118,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
   const dec = (cartId: string) =>
     cambiar((p) => p.flatMap((i) => i.cartId === cartId ? (i.qty > 1 ? [{ ...i, qty: i.qty - 1 }] : []) : [i]));
-  // Una pizza puede estar en dos líneas (napoletana y al molde): el + de la tarjeta
-  // suma en la primera y el − resta de la última, nunca de las dos a la vez.
+  // Una pizza puede estar en dos líneas (napoletana y al molde): el + de la tarjeta suma en la
+  // primera con lugar y el − resta de la última, nunca de las dos a la vez. Sin lugar en ninguna,
+  // pasa por `add`, que la lleva a la otra masa si puede.
   const incKey = (key: string) => {
-    const linea = items.find((i) => i.key === key);
-    return linea ? inc(linea.cartId) : false;
+    const lineas = items.filter((i) => i.key === key);
+    if (lineas.length === 0) return false;
+    const conLugar = lineas.find((i) => {
+      const masa = masaDe(i);
+      return !masa || !topeDePizzas(items, masa, 1, masasNoche);
+    });
+    return conLugar ? inc(conLugar.cartId) : add({ ...lineas[0], qty: 1 });
   };
   const decKey = (key: string) => {
     const linea = items.findLast((i) => i.key === key);
     if (linea) dec(linea.cartId);
   };
-  const setMasa = (cartId: string, masa: Masa) => cambiar((p) => cambiarMasa(p, cartId, masa));
+  const setMasa = (cartId: string, masa: Masa) => {
+    const linea = items.find((i) => i.cartId === cartId);
+    if (linea && masaDe(linea) !== masa && !hayMasas({ ...linea, masa }, linea.qty)) return;
+    cambiar((p) => cambiarMasa(p, cartId, masa));
+  };
   const remove = (cartId: string) => cambiar((p) => p.filter((i) => i.cartId !== cartId));
   const clear = () => setItems([]);
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);

@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { EstadoDelivery } from "@/lib/hours";
 import { TODAS_LAS_MASAS, type EstadoMasas } from "@/lib/masa";
+import type { QuedanMasas } from "@/lib/masas-noche";
 
 export interface EstadoTiendaCliente {
   abierto: boolean;
@@ -10,8 +11,8 @@ export interface EstadoTiendaCliente {
   cierreManual: boolean;
   delivery: EstadoDelivery;
   masas: EstadoMasas;
-  /** Pizzas que quedan esta noche según las masas (24/10/2026); null = sin límite. */
-  masasNoche?: number | null;
+  /** Pizzas que quedan esta noche por masa (31/10/2026); null = sin límite. */
+  masasNoche?: QuedanMasas | null;
 }
 
 const DELIVERY_ACTIVO: EstadoDelivery = { activo: true, motivo: "" };
@@ -43,7 +44,7 @@ export function StoreStatusProvider({ inicial, children }: { inicial: EstadoTien
             cierreManual: datos.cierreManual,
             delivery: datos.delivery ?? DELIVERY_ACTIVO,
             masas: datos.masas ?? TODAS_LAS_MASAS,
-            masasNoche: typeof datos.masasNoche === "number" ? datos.masasNoche : null,
+            masasNoche: datos.masasNoche && typeof datos.masasNoche === "object" ? datos.masasNoche : null,
           });
         }
       } catch { /* si falla la consulta se conserva el último estado conocido */ }

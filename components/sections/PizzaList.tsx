@@ -5,6 +5,7 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { masasVisibles, masaUnica, nombreMasa } from "@/lib/masa";
+import type { QuedanMasas } from "@/lib/masas-noche";
 import { useTweaks } from "@/components/providers/TweakProvider";
 import { fmt } from "@/lib/utils";
 import { cartelitosDePizza, lineaDePizza } from "@/lib/ficha";
@@ -37,8 +38,8 @@ interface PizzaListProps {
   foco?: { id: string; vez: number } | null;
   /** Abre la ficha de producto recorriendo la lista que se está viendo. */
   onVerFicha: (ids: string[], indice: number) => void;
-  /** Pizzas que quedan esta noche según las masas (24/10/2026); sin límite, no viene. */
-  masasQuedan?: number;
+  /** Pizzas que quedan esta noche por masa (31/10/2026); sin límite, no viene. */
+  masasQuedan?: QuedanMasas;
 }
 
 export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, destacadaId, foco, onVerFicha, masasQuedan }: PizzaListProps) {

@@ -1,4 +1,5 @@
 import type { DatosTransferencia } from "./cuentas-transferencia";
+import type { QuedanMasas } from "./masas-noche";
 
 export interface BusinessConfig {
   id: string;
@@ -36,6 +37,8 @@ export interface BusinessConfig {
   /** Si hay masa de cada tipo hoy. Ver `estadoMasas` en `lib/masa.ts`. */
   masaNapoletanaActiva: boolean;
   masaMoldeActiva: boolean;
+  /** Masas que quedan esta noche por tipo; null o ausente = sin límite. Ver `lib/masas-noche.ts`. */
+  masasNoche?: QuedanMasas | null;
   deliveryFee: number;
   /** Monto de subtotal a partir del cual el envío es gratis. */
   freeShippingFrom: number;
