@@ -182,14 +182,14 @@ function marcaCorta(business: BusinessConfig): string {
  * cliente en el sitio y el bot en el prompt.
  */
 export function descripcionSitio(business: BusinessConfig, hayEmpanadas = true): string {
-  // `argumentoConCifra`, no `argumento`: las dos se interpolan en el
-  // template literal de abajo, y ahí un `cifra` faltante compilaría igual.
+  // `argumentoConCifra`, no `argumento`: se interpola en el template literal
+  // de abajo, y ahí un `cifra` faltante compilaría igual.
   const fermentacion = argumentoConCifra("fermentacion");
-  const empanadaPeso = argumentoConCifra("empanadas-peso").cifra;
-  // Abre con "Pizzería en Puerto Iguazú", como el título, y entra en los ~160
-  // caracteres que muestra Google (con empanadas se pasa un poco).
+  // Abre con "Pizzería en Puerto Iguazú", como el título, y no pasa de 160
+  // caracteres en ningún caso: Bing marca como error una de 161 (03/11/2026).
+  // Por eso no lleva "Pedí online" ni el peso de las empanadas.
   return `Pizzería en ${partesUbicacion(business).localidad}: pizza a la piedra con técnica napoletana, masa madurada en frío ${fermentacion.cifra} `
-    + `y mucha muzzarella. ${hayEmpanadas ? `Empanadas de ${empanadaPeso}. ` : ""}Delivery propio y take away. Pedí online.`;
+    + `y mucha muzzarella. ${hayEmpanadas ? "Empanadas, delivery" : "Delivery"} propio y take away.`;
 }
 
 /**

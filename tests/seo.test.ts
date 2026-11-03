@@ -114,7 +114,9 @@ chequear("sin usuario de Instagram no inventa una URL", sinRedes.sameAs === unde
 
 /* ── la descripción ── */
 chequear("la descripción nombra la ciudad", descripcionSitio(business).includes("Puerto Iguazú"));
-chequear("la descripción sin empanadas entra en lo que muestra Google", descripcionSitio(business, false).length <= 165);
+chequear("la descripción entra en 160 caracteres, con y sin empanadas (Bing marca error desde 161)",
+  descripcionSitio({ ...business, city: "Puerto Iguazú, Misiones" }, false).length <= 160
+  && descripcionSitio({ ...business, city: "Puerto Iguazú, Misiones" }, true).length <= 160);
 
 /* ── el título ── */
 const titulo = tituloSitio({ ...business, city: "Puerto Iguazú, Misiones" });

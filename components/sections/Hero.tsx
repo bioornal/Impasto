@@ -28,7 +28,9 @@ export function Hero({ onCta, onHalf, featured, varieties: _varieties, hayEmpana
       <div className="hero-bg" aria-hidden="true">
         <img
           src={STOCK_IMAGES.hero.main}
-          alt=""
+          // El fondo está oculto para lectores de pantalla (`aria-hidden`), pero
+          // Google y Bing leen el alt: vacío, Bing lo marca como falta.
+          alt="Pizza a la piedra de Impasto con quesos y un hilo de miel, recién salida del horno"
           className="hero-bg-img"
         />
         <div className="hero-bg-overlay" />
