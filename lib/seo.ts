@@ -3,7 +3,6 @@ import type { BusinessConfig } from "@/lib/business";
 import type { CatalogData, Empanada, Pizza } from "@/types";
 import { SITE_URL } from "@/lib/site";
 import { LEMA, argumentoConCifra } from "@/lib/marca";
-import { LOGO } from "@/lib/logo";
 import { STOCK_IMAGES, getDrinkImage, getEmpanadaImage, getPizzaImage } from "@/lib/stock-images";
 import { preguntasFrecuentes } from "@/lib/faq";
 
@@ -156,16 +155,24 @@ function carta(data: CatalogData) {
 
 /**
  * Título del sitio, reusado en el `<title>`, el Open Graph y el JSON-LD.
- * Arranca con la búsqueda real ("pizza napolitana" + ciudad) y recién después
- * la marca: un negocio nuevo no tiene todavía quién lo busque por nombre, pero
- * sí mucha gente buscando dónde comer pizza napolitana en Iguazú.
+ * Arranca con la búsqueda real y recién después la marca: un negocio nuevo no
+ * tiene todavía quién lo busque por nombre. Desde el 03/11/2026 abre con
+ * "Pizzería" + ciudad y suma "delivery", que es lo que más se busca en Iguazú
+ * (pedido del dueño); antes medía 100 caracteres y Google cortaba "Delivery".
+ * Tiene que entrar en ~65: por eso va la marca corta ("Impasto"), sin
+ * provincia y sin "Pizzas a la piedra", que ya dice la descripción.
  *
  * Es, junto con `PALABRAS_CLAVE`, el único lugar que dice "napolitana": el
  * resto del sitio dice "napoletana" (pedido del dueño, 19/09/2026), pero en
  * Google se busca "napolitana". Si se cambia, se cambia a propósito.
  */
 export function tituloSitio(business: BusinessConfig): string {
-  return `Pizza napolitana en ${business.city} · ${business.name} — Delivery y Take Away`;
+  return `Pizzería en ${partesUbicacion(business).localidad} · Pizza napolitana y delivery | ${marcaCorta(business)}`;
+}
+
+/** "Impasto - Pizzas a la piedra" → "Impasto". */
+function marcaCorta(business: BusinessConfig): string {
+  return business.name.split(/\s+[-–—·|]\s+/)[0].trim() || business.name;
 }
 
 /**
@@ -179,9 +186,23 @@ export function descripcionSitio(business: BusinessConfig, hayEmpanadas = true):
   // template literal de abajo, y ahí un `cifra` faltante compilaría igual.
   const fermentacion = argumentoConCifra("fermentacion");
   const empanadaPeso = argumentoConCifra("empanadas-peso").cifra;
-  return `Pizza a la piedra con técnica napoletana en ${business.city}: masa madurada en frío ${fermentacion.cifra}, `
-    + `con mucha muzzarella y toppings abundantes. ${hayEmpanadas ? `Empanadas de ${empanadaPeso}, ` : ""}Delivery propio y take away. Pedí online.`;
+  // Abre con "Pizzería en Puerto Iguazú", como el título, y entra en los ~160
+  // caracteres que muestra Google (con empanadas se pasa un poco).
+  return `Pizzería en ${partesUbicacion(business).localidad}: pizza a la piedra con técnica napoletana, masa madurada en frío ${fermentacion.cifra} `
+    + `y mucha muzzarella. ${hayEmpanadas ? `Empanadas de ${empanadaPeso}. ` : ""}Delivery propio y take away. Pedí online.`;
 }
+
+/**
+ * Esquina de la cocina (Santa María del Iguazú y Obispo Angelelli), tomada del
+ * nodo donde se cruzan las dos calles en OpenStreetMap (03/11/2026). Es la
+ * señal "geo" más fuerte que lee Google: ata el sitio a un punto del mapa de
+ * Puerto Iguazú. **Si la cocina se muda, cambiarla junto con la dirección del
+ * panel**: una coordenada que no coincide con la dirección resta confianza.
+ */
+export const UBICACION_COCINA = { latitud: -25.61606, longitud: -54.57422 };
+
+/** Logo cuadrado (la llama), el que Google prefiere para la ficha del negocio. */
+export const LOGO_CUADRADO = "/logo-cuadrado.png";
 
 /** La ficha de Google Maps más cercana al domicilio, sin necesidad de un place_id. */
 function mapaUrl(business: BusinessConfig): string {
@@ -195,13 +216,18 @@ function mapaUrl(business: BusinessConfig): string {
  * y los motores internos del sitio lo usan para entender de qué se trata.
  */
 export const PALABRAS_CLAVE = [
+  "pizzería Puerto Iguazú",
+  "pizza Puerto Iguazú",
+  "delivery Puerto Iguazú",
+  "delivery de pizza Puerto Iguazú",
+  "pizza a domicilio Puerto Iguazú",
+  "delivery de comida Puerto Iguazú",
+  "dónde comer pizza en Puerto Iguazú",
   "mejor pizza de Puerto Iguazú",
   "pizza napoletana Iguazú",
   "pizza napolitana Iguazú",
   "pizza artesanal Puerto Iguazú",
-  "pizzería Puerto Iguazú",
   "pizza a la piedra Iguazú",
-  "delivery de pizza Puerto Iguazú",
   "empanadas Puerto Iguazú",
   "pedir pizza online Iguazú",
   "take away Puerto Iguazú",
@@ -223,7 +249,8 @@ export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {
     description: descripcionSitio(business, hayEmpanadas),
     url: SITE_URL,
     image: [STOCK_IMAGES.hero.main, `${SITE_URL}/opengraph-image`],
-    logo: LOGO.src,
+    // Absoluto: Google no resuelve una ruta relativa ("/logo.png") en el JSON-LD.
+    logo: `${SITE_URL}${LOGO_CUADRADO}`,
     telephone: telefonoInternacional(business),
     email: business.email,
     servesCuisine: ["Pizza", "Italiana", ...(hayEmpanadas ? ["Empanadas"] : []), "Argentina"],
@@ -232,6 +259,11 @@ export function jsonLdSitio(business: BusinessConfig, data: CatalogData) {
     paymentAccepted: "Efectivo, Transferencia, Tarjeta de crédito, Tarjeta de débito, Mercado Pago",
     keywords: PALABRAS_CLAVE.filter(p => hayEmpanadas || !mencionaEmpanadas(p)).join(", "),
     address: direccion(business),
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: UBICACION_COCINA.latitud,
+      longitude: UBICACION_COCINA.longitud,
+    },
     hasMap: mapaUrl(business),
     areaServed: { "@type": "City", name: partesUbicacion(business).localidad },
     openingHoursSpecification: horarios(business),

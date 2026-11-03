@@ -1,4 +1,4 @@
-import { jsonLdSitio, descripcionSitio, serializarJsonLd } from "../lib/seo";
+import { jsonLdSitio, descripcionSitio, serializarJsonLd, tituloSitio } from "../lib/seo";
 import { BUSINESS, type BusinessConfig } from "../lib/business";
 import { preguntasFrecuentes } from "../lib/faq";
 import { SITE_URL } from "../lib/site";
@@ -93,7 +93,10 @@ chequear("cada respuesta de la FAQ es un Answer",
   faq.mainEntity.every((q: Nodo) => q.acceptedAnswer["@type"] === "Answer" && q.acceptedAnswer.text.length > 0));
 chequear("publica la acción de pedido online",
   local.potentialAction["@type"] === "OrderAction" && local.potentialAction.target.urlTemplate === SITE_URL);
-chequear("declara el logo de la marca", typeof local.logo === "string" && local.logo.length > 0);
+chequear("declara el logo de la marca con URL absoluta", typeof local.logo === "string" && local.logo.startsWith(`${SITE_URL}/`));
+chequear("ubica la cocina en el mapa de Puerto Iguazú",
+  local.geo["@type"] === "GeoCoordinates"
+  && Math.abs(local.geo.latitude - -25.616) < 0.01 && Math.abs(local.geo.longitude - -54.574) < 0.01);
 chequear("declara que no toma reservas", local.acceptsReservations === false);
 chequear("cada ítem de la carta lleva imagen",
   secciones.every((s: Nodo) => s.hasMenuItem.every((i: Nodo) => typeof i.image === "string" && i.image.length > 0)));
@@ -111,6 +114,13 @@ chequear("sin usuario de Instagram no inventa una URL", sinRedes.sameAs === unde
 
 /* ── la descripción ── */
 chequear("la descripción nombra la ciudad", descripcionSitio(business).includes("Puerto Iguazú"));
+chequear("la descripción sin empanadas entra en lo que muestra Google", descripcionSitio(business, false).length <= 165);
+
+/* ── el título ── */
+const titulo = tituloSitio({ ...business, city: "Puerto Iguazú, Misiones" });
+chequear("el título abre con pizzería y la ciudad, sin provincia", titulo.startsWith("Pizzería en Puerto Iguazú ·"));
+chequear("el título nombra el delivery y la marca", /delivery/i.test(titulo) && titulo.endsWith("| Impasto"));
+chequear("el título entra en lo que muestra Google (≤ 70)", titulo.length <= 70);
 
 /* ── el escape del script ── */
 const peligroso = jsonLdSitio(business, {

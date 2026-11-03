@@ -27,8 +27,9 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     lang: "es-AR",
     categories: ["food", "shopping"],
     icons: [
-      { src: "/favicon.ico", sizes: "any", type: "image/x-icon" },
-      { src: "/logo-blanco-v2.png", sizes: "1200x383", type: "image/png" },
+      { src: "/favicon.ico", sizes: "16x16 32x32 48x48", type: "image/x-icon" },
+      { src: "/icono-192.png", sizes: "192x192", type: "image/png" },
+      { src: "/logo-cuadrado.png", sizes: "512x512", type: "image/png" },
     ],
   };
 }

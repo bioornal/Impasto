@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { BUSINESS } from "@/lib/business";
-import { PALABRAS_CLAVE, descripcionSitio, tituloSitio } from "@/lib/seo";
+import { PALABRAS_CLAVE, UBICACION_COCINA, descripcionSitio, tituloSitio } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";
 
 /**
@@ -55,13 +55,18 @@ export const metadata: Metadata = {
       : {}),
   },
   appleWebApp: { capable: true, title: BUSINESS.name, statusBarStyle: "default" },
-  icons: { icon: "/favicon.ico", apple: "/favicon.ico" },
+  // Sin `icons`: los íconos salen de `app/favicon.ico`, `app/icon.png` y
+  // `app/apple-icon.png` (la llama del logo sobre crema). Hasta el 03/11/2026
+  // `favicon.ico` era el de ejemplo de Next y Google mostraba ese.
   formatDetection: { telephone: true, address: false, email: false },
   // Señales geográficas: AR-N es el código ISO 3166-2 de Misiones. Ayudan a
   // atar el sitio a Puerto Iguazú cuando el dominio todavía es nuevo.
+  // `geo.position` e `ICBM` son la misma coordenada del JSON-LD (`UBICACION_COCINA`).
   other: {
     "geo.region": "AR-N",
     "geo.placename": BUSINESS.city,
+    "geo.position": `${UBICACION_COCINA.latitud};${UBICACION_COCINA.longitud}`,
+    ICBM: `${UBICACION_COCINA.latitud}, ${UBICACION_COCINA.longitud}`,
   },
 };
 

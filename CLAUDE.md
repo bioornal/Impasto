@@ -1,5 +1,13 @@
 @AGENTS.md
 
+## SEO local, GEO y favicon (03/11/2026)
+
+- **Pedido del dueño:** que aparezca bien al buscar pizza, delivery, comida o pizzería en Puerto Iguazú; revisar el "geo"; y el favicon que mostraba Google no era el logo.
+- **Cómo estaba (medido el 03/11 en Google y Bing):** Google tenía indexada solo la home; "pizzería puerto iguazú" → ~6º orgánico, sin estar en el mapa (Impasto **no existe en Google Maps**: no hay ficha de Google Business Profile publicada); "delivery de pizza puerto iguazú" → fuera de la primera página. **Bing: cero páginas indexadas** (ChatGPT y Copilot buscan con Bing). El `app/favicon.ico` era el de ejemplo de Next desde el primer commit.
+- **Cambios:** favicon y íconos con la llama del logo sobre crema (`app/favicon.ico` 16/32/48, `app/icon.png` 512, `app/apple-icon.png` 180, `public/logo-cuadrado.png`, `public/icono-192.png`; se sacó `icons` de `layout.tsx` para que mandan los archivos). Título "Pizzería en Puerto Iguazú · Pizza napolitana y delivery | Impasto" (65 caracteres; antes 100 y Google cortaba "Delivery"); descripción que abre con "Pizzería en Puerto Iguazú". JSON-LD con `geo` (`UBICACION_COCINA`, la esquina Santa María del Iguazú y Obispo Angelelli según OpenStreetMap) y `logo` absoluto y cuadrado (antes `/logo.png` relativo). Metas `geo.position` e `ICBM`. Palabras clave con delivery, a domicilio y comida; FAQ "delivery propio de pizza a domicilio". Clave de IndexNow en `public/61be94dcf93e066d876e48ceba023c9f.txt` (es pública a propósito: así Bing comprueba que el aviso es nuestro).
+- **Si la cocina se muda:** cambiar `UBICACION_COCINA` (`lib/seo.ts`) junto con la dirección del panel.
+- **Fuera del código, a cargo del dueño (es lo que más mueve):** crear y verificar la ficha de **Google Business Profile** como negocio con zona de servicio (sin local a la calle se puede ocultar la dirección), categoría "Pizzería", con web, horario vie–dom y fotos; pedir reseñas ahí. Verificar el sitio en **Google Search Console** y **Bing Webmaster Tools** (`NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` / `NEXT_PUBLIC_BING_SITE_VERIFICATION` y reconstruir, o por DNS en Hostinger). Google tarda días o semanas en cambiar el favicon del resultado.
+
 ## Masas de la noche por tipo (31/10/2026)
 
 - **Pedido del dueño:** el contador único no discriminaba; cada noche carga cuántas tiene de **napoletana** y cuántas **al molde**, y no se puede vender más de ninguna. Reemplaza el "un solo número" de la sección siguiente. Spec: `docs/superpowers/specs/2026-10-31-masas-por-tipo-design.md`.

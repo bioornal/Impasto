@@ -53,7 +53,7 @@ export function preguntasFrecuentes(business: BusinessConfig, hayEmpanadas = tru
     {
       pregunta: "¿Hacen delivery en Puerto Iguazú?",
       soloConDelivery: true,
-      respuesta: `Sí, hacemos delivery propio en ${business.locationLabel}. El envío cuesta ${fmt(business.deliveryFee)} `
+      respuesta: `Sí, hacemos delivery propio de pizza a domicilio en ${business.locationLabel}. El envío cuesta ${fmt(business.deliveryFee)} `
         + `y es gratis a partir de ${fmt(business.freeShippingFrom)} de subtotal. El tiempo estimado es de ${business.deliveryEstimate}, `
         + "siempre como estimado: el clima, el tránsito y la cantidad de pedidos pueden variar la demora.",
     },
