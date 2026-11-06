@@ -471,48 +471,85 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
 }
 
 /* ============ AVISO DE MASAS (napoletana / al molde) ============ */
+/* Desde el 06/11/2026: foto de las prepizzas al molde a la izquierda y, a la derecha, el
+   texto del dueño + los tres pasos de cómo se hace (salen de MASA_MOLDE en lib/marca.ts). */
 .masas{ padding:56px 0 0; }
 .masas-card{
-  display:grid; grid-template-columns:1fr 1.3fr; gap:28px; align-items:center;
-  background:var(--ink); color:var(--bg); border-radius:var(--radius-lg); padding:36px;
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.12fr); align-items:stretch;
+  background:var(--ink); color:var(--bg); border-radius:var(--radius-lg); overflow:hidden;
+  min-height:400px;
 }
-.masas-intro h2{
+.masas-foto{ position:relative; margin:0; min-height:260px; overflow:hidden; }
+.masas-foto img{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:40% 50%;
+  transition:transform .8s cubic-bezier(.2,.7,.2,1);
+}
+.masas-card:hover .masas-foto img{ transform:scale(1.03); }
+/* Funde la foto con el fondo de la card y deja leer la leyenda de abajo. */
+.masas-foto::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    linear-gradient(90deg, transparent 62%, var(--ink) 100%),
+    linear-gradient(0deg, rgba(18,16,13,.62) 0%, transparent 38%);
+}
+.masas-sello{
+  position:absolute; z-index:1; top:22px; left:22px; width:86px; height:86px; border-radius:50%;
+  display:grid; place-items:center; text-align:center;
+  background:var(--gold); color:var(--ink-deep);
+  font-family:var(--font-mono); font-size:10px; line-height:1.35; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase;
+  transform:rotate(-10deg); box-shadow:0 10px 24px rgba(0,0,0,.35);
+  outline:1.5px dashed color-mix(in srgb, var(--ink-deep) 35%, transparent); outline-offset:-7px;
+}
+.masas-foto figcaption{
+  position:absolute; z-index:1; left:24px; bottom:20px;
+  font-family:var(--font-mono); font-size:10px; letter-spacing:.24em; text-transform:uppercase;
+  color:rgba(246,241,231,.88);
+}
+.masas-cuerpo{ padding:40px 44px 40px 28px; display:flex; flex-direction:column; justify-content:center; }
+.masas-cuerpo h2{
   font-family:var(--font-display); font-size:38px; line-height:1.05;
-  letter-spacing:-.03em; font-weight:600; margin:0 0 10px;
+  letter-spacing:-.03em; font-weight:600; margin:0 0 10px; text-wrap:balance;
 }
-.masas-intro p{ margin:0 0 18px; font-size:14.5px; line-height:1.5; color:color-mix(in srgb, var(--bg) 75%, transparent); max-width:38ch; }
-.masas-opciones{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.masa{
-  border:1px solid color-mix(in srgb, var(--bg) 18%, transparent); border-radius:var(--radius);
-  padding:20px; background:color-mix(in srgb, var(--bg) 6%, transparent);
+.masas-lede{ margin:0; font-size:14.5px; line-height:1.5; color:color-mix(in srgb, var(--bg) 75%, transparent); max-width:44ch; }
+.masas-pasos{
+  list-style:none; margin:24px 0 26px; padding:0;
+  display:grid; grid-template-columns:repeat(3, minmax(0,1fr));
+  border-top:1px solid color-mix(in srgb, var(--bg) 16%, transparent);
 }
-.masa-kicker{
-  font-family:var(--font-mono); font-size:9.5px; letter-spacing:.24em;
-  text-transform:uppercase; color:var(--gold);
+.masas-pasos li{ padding:16px 16px 0 0; display:flex; flex-direction:column; gap:4px; }
+.masas-pasos li + li{ padding-left:16px; border-left:1px solid color-mix(in srgb, var(--bg) 12%, transparent); }
+.masas-paso-num{ font-family:var(--font-mono); font-size:9.5px; letter-spacing:.24em; color:var(--gold); }
+.masas-pasos b{ font-family:var(--font-display); font-size:19px; line-height:1.15; letter-spacing:-.01em; font-weight:600; }
+.masas-pasos li > span:last-child{ font-size:13px; line-height:1.45; color:color-mix(in srgb, var(--bg) 66%, transparent); }
+.masas-pie{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+.masas-nota{ margin:0; font-size:12.5px; line-height:1.45; color:color-mix(in srgb, var(--bg) 58%, transparent); max-width:36ch; }
+@media (prefers-reduced-motion: reduce){
+  .masas-foto img{ transition:none; }
+  .masas-card:hover .masas-foto img{ transform:none; }
 }
-.masa h3{ font-family:var(--font-display); font-size:25px; letter-spacing:-.02em; font-weight:600; margin:8px 0 6px; }
-.masa p{ margin:0; font-size:13.5px; line-height:1.5; color:color-mix(in srgb, var(--bg) 70%, transparent); }
-/* La masa que se terminó hoy (panel → Masas): queda a la vista, apagada. */
-.masa.agotada{ opacity:.45; }
-.masa.agotada .masa-kicker{ color:color-mix(in srgb, var(--bg) 80%, transparent); }
 @media (max-width:980px){
-  .masas-card{ grid-template-columns:1fr; padding:28px; }
-  .masas-intro h2{ font-size:30px; }
+  .masas-card{ grid-template-columns:1fr; min-height:0; }
+  .masas-foto{ min-height:0; aspect-ratio:16/7; }
+  .masas-foto::after{ background:linear-gradient(0deg, var(--ink) 0%, rgba(18,16,13,.35) 30%, transparent 60%); }
+  .masas-cuerpo{ padding:8px 28px 30px; }
+  .masas-cuerpo h2{ font-size:30px; }
 }
-/* Celular: franja compacta (pedido del dueño, 17/10/2026). Las dos masas quedan como dos
-   chips en una fila, sin descripción, y sin botón: la carta empieza justo abajo. */
+/* Celular: franja compacta (pedido del dueño, 17/10/2026: la versión grande le pareció una
+   "guarangada"). La foto queda como miniatura a la izquierda, con el título y una frase; sin
+   pasos ni botón: la carta empieza justo abajo. */
 @media (max-width:760px){
   .masas{ padding-top:20px; }
-  .masas-card{ padding:16px; gap:12px; border-radius:16px; }
-  .masas-intro .promo-badge{ margin-bottom:8px; padding:4px 9px; font-size:8.5px; }
-  .masas-intro h2{ font-size:22px; margin:0 0 4px; }
-  .masas-intro p{ font-size:13px; margin:0; }
-  .masas-intro .btn{ display:none; }
-  .masas-opciones{ grid-template-columns:1fr 1fr; gap:8px; }
-  .masa{ padding:9px 12px; border-radius:12px; }
-  .masa-kicker{ font-size:8px; letter-spacing:.18em; }
-  .masa h3{ font-size:17px; margin:2px 0 0; }
-  .masa p{ display:none; }
+  .masas-card{ grid-template-columns:108px minmax(0,1fr); border-radius:16px; }
+  .masas-foto{ aspect-ratio:auto; min-height:100%; }
+  .masas-foto img{ object-position:30% 50%; }
+  .masas-foto::after{ background:linear-gradient(90deg, transparent 70%, var(--ink) 100%); }
+  .masas-sello, .masas-foto figcaption{ display:none; }
+  .masas-cuerpo{ padding:14px 16px 14px 12px; }
+  .masas-cuerpo .promo-badge{ margin-bottom:8px; padding:4px 9px; font-size:8.5px; }
+  .masas-cuerpo h2{ font-size:20px; margin:0 0 4px; }
+  .masas-lede{ font-size:13px; }
+  .masas-pasos, .masas-pie{ display:none; }
 }
 
 /* ============ ENCABEZADO DE SECCIÓN ============ */

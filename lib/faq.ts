@@ -1,4 +1,4 @@
-import { argumentoConCifra } from "@/lib/marca";
+import { MASA_MOLDE, argumentoConCifra } from "@/lib/marca";
 import { REGLA_MITAD_Y_MITAD, TAMANIOS_CAJA_EMPANADAS, listaConO } from "@/lib/reglas-carta";
 import { fmt } from "@/lib/utils";
 import { diasCerrados } from "@/lib/hours";
@@ -67,7 +67,7 @@ export function preguntasFrecuentes(business: BusinessConfig, hayEmpanadas = tru
     ...(business.masaMoldeActiva !== false ? [{
       pregunta: "¿Puedo pedir la pizza al molde?",
       respuesta: "Sí. Nuestra masa de la casa es la napoletana, pero cualquier pizza (también la mitad y mitad) se puede pedir al molde, "
-        + "la pizza de molde bien argentina, más alta y esponjosa. Va al mismo precio y la elegís en el carrito, pizza por pizza.",
+        + `${MASA_MOLDE.resumen}. ${MASA_MOLDE.proceso}. Va al mismo precio y la elegís en el carrito, pizza por pizza.`,
     }] : []),
     {
       pregunta: "¿Se puede pedir pizza mitad y mitad?",

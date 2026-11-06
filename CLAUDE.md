@@ -1,5 +1,13 @@
 @AGENTS.md
 
+## Bloque de la masa al molde con foto y proceso real (06/11/2026)
+
+- **Pedido del dueño:** la card del molde del home era "muy genérica" (dos cajas de texto); usar su foto `Pictures\Impasto\Prepizzas argentinas al molde.png`.
+- **Foto:** convertida a JPG (sharp, q80) en dos tamaños y subida al bucket `DB` con keys nuevas: `masa-al-molde-1200.jpg` (168 KB) y `masa-al-molde-480.jpg` (34 KB); sha1 de la URL pública igual al archivo. URLs en `STOCK_IMAGES.molde` (`lib/stock-images.ts`); el `<img>` usa `srcSet`, así el celular baja la chica.
+- **Texto:** `MASA_MOLDE` en `lib/marca.ts` (resumen, proceso y tres pasos), sacado de la calculadora del recetario ("Al molde con poolish", 06/11): poolish de 24 h en frío, leva en el molde ya con la salsa, molde bien aceitado y horno fuerte. Lo leen `MasasAviso`, la respuesta del FAQ "¿Puedo pedir la pizza al molde?" y el prompt del asistente. Va aparte de `ARGUMENTOS_MARCA` (esos son de la napoletana y se muestran siempre). Título y bajada del bloque siguen siendo los del dueño (30/10).
+- **Bloque (`MasasAviso` + `.masas-*` en `impasto.css`):** escritorio = foto a la izquierda con sello dorado "Mismo precio" y leyenda "Al molde · bien argentina"; a la derecha badge, título, bajada, los tres pasos numerados y "Ver pizzas" + "La napoletana sigue siendo la de la casa: viene marcada y la cambiás en el carrito." ≤980 px: foto arriba (16:7). **≤760 px sigue siendo franja compacta** (162 px medidos a 375): miniatura de la foto, badge, título y bajada; sin pasos ni botón. Sin napoletana: "Hoy, solo masa al molde" + aviso, sin la nota de la napoletana. Molde apagado: el bloque no se muestra (igual que antes). Encabezado de Pizzas: "Masa napoletana o al molde, al mismo precio: la elegís en el carrito." El selector del carrito no se tocó (el dueño lo quiere chico).
+- **Verificado en local** con la base real: 1366, 1024, 820 y 375 px sin desborde; los tres estados con `/api/store-status` interceptado (dos masas, solo molde, molde apagado → oculto); consola sin errores. `pnpm test`, `tsc`, eslint de lo tocado (solo el aviso de `<img>`, como el hero) y `pnpm build`.
+
 ## SEO local, GEO y favicon (03/11/2026)
 
 - **Pedido del dueño:** que aparezca bien al buscar pizza, delivery, comida o pizzería en Puerto Iguazú; revisar el "geo"; y el favicon que mostraba Google no era el logo.

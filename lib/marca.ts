@@ -34,6 +34,27 @@ export const LEMA = "Pizza a la piedra, técnica napoletana";
 export const ORIGEN_DEL_NOMBRE = "En italiano, impasto es la masa, y por ella elegimos el nombre: "
   + "es la base de todo lo que hacemos.";
 
+/**
+ * La masa al molde (desde el 17/10/2026; con poolish desde el 06/11/2026). Sale
+ * del proceso real del recetario (calculadora de masa → "Al molde con poolish"):
+ * poolish de 24 h en heladera, leva en el molde con la salsa y lo crujiente lo
+ * da el molde bien aceitado. Va aparte de `ARGUMENTOS_MARCA` porque esos hablan
+ * de la napoletana y se muestran siempre; esto solo con el molde prendido en el
+ * Arranque. Lo leen el bloque del home (`MasasAviso`), el FAQ y el asistente.
+ */
+export const MASA_MOLDE = {
+  /** Qué es, en media frase (FAQ y asistente). */
+  resumen: "la pizza de molde bien argentina: alta, esponjosa y crujiente abajo",
+  /** Cómo se hace, en una frase. */
+  proceso: "Lleva un poolish de 24 h en frío, que le da más sabor, y leva en el molde ya con la salsa",
+  /** Los tres pasos del bloque del home: titular + detalle. */
+  pasos: [
+    { titulo: "Poolish de 24 h", detalle: "Prefermento en frío: más sabor." },
+    { titulo: "Leva en el molde", detalle: "Ya con la salsa: sale alta y esponjosa." },
+    { titulo: "Crujiente abajo", detalle: "Molde bien aceitado y horno fuerte." },
+  ],
+} as const;
+
 export interface ArgumentoMarca {
   /** Slug estable. No se muestra: es lo que usa un componente para pedir un
    *  argumento puntual con `argumento()`, sin depender del orden del array. */

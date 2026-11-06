@@ -10,6 +10,11 @@ export const STOCK_IMAGES = {
     productoId: "c0ab17be-8cde-47fd-8be5-576abe4ccf3d", // Quattro Formaggi e Noci
     chip: "https://api.impastopizzas.com/api/storage/buckets/DB/objects/hero-quattro-formaggi.jpg",
   },
+  // Bloque de la masa al molde del home (06/11/2026). Dos tamaños: la chica va al celular.
+  molde: {
+    grande: "https://api.impastopizzas.com/api/storage/buckets/DB/objects/masa-al-molde-1200.jpg",
+    chica: "https://api.impastopizzas.com/api/storage/buckets/DB/objects/masa-al-molde-480.jpg",
+  },
   story: {
     dough: "https://api.impastopizzas.com/api/storage/buckets/DB/objects/nosotros.jpg",
     kneading: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1000&q=85",

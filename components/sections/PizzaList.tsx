@@ -114,7 +114,7 @@ export function PizzaList({ indice = "01", hayEmpanadas = true, pizzas, onHalf, 
             <div className="sec-index">{indice} — La carta</div>
             <h2>Pizzas</h2>
           </div>
-          <p>Elegí un gusto, o combiná dos en la misma pizza. {!masasVisibles(masas) ? "" : queda ? `Hoy todas salen con masa ${nombreMasa(queda)}.` : "Masa napoletana o al molde: la elegís en el carrito."}</p>
+          <p>Elegí un gusto, o combiná dos en la misma pizza. {!masasVisibles(masas) ? "" : queda ? `Hoy todas salen con masa ${nombreMasa(queda)}.` : "Masa napoletana o al molde, al mismo precio: la elegís en el carrito."}</p>
         </div>
         <AvisoMasas quedan={masasQuedan} hayEmpanadas={hayEmpanadas} />
       </div>
