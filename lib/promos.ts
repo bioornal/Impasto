@@ -32,6 +32,7 @@ export interface PedidoAnalisis {
 }
 type TotalesAnalisis = Record<"precioNormal" | "paga" | "ahorroCliente" | "ahorroClientePct" | "costo" | "teQueda" | "gananciaPct" | "gananciaNormal" | "resignas", RangoOferta> & { conTarjeta: RangoOferta | null };
 export interface AnalisisOferta {
+  casosGrafico?: PedidoAnalisis[]; peorPedido?: PedidoAnalisis;
   margen: MargenOferta;
   resumen: { ahorroCliente: number | null; ahorroClientePct: number | null; teQueda: number | null; resignas: number | null };
   totales: TotalesAnalisis; productos: ProductoAnalisis[]; pedidos: PedidoAnalisis[];
@@ -78,6 +79,15 @@ export function analisisOferta(oferta: OfertaInput, productos: readonly Producto
     // Con precio fijo, costo y ahorro tienen extremos independientes; ganancia normal conserva la correlación precio/costo.
     casos = [pedido("Combo", precioMin, oferta.config.precio, costoMax), pedido("Combo", precioMax, oferta.config.precio, costoMin)];
     a.totales.gananciaNormal = { min: normalMin, max: normalMax };
+    // Cada barra debe conservar precio y costo de las mismas opciones reales.
+    a.casosGrafico = [true, false].map(peor => {
+      let normal = 0, costo = 0;
+      oferta.config.lugares.forEach(l => {
+        const opciones = l.productos.map(producto).sort((x, y) => peor ? y.costo - x.costo || y.precio - x.precio : x.costo - y.costo || x.precio - y.precio);
+        normal += l.cantidad * opciones[0].precio; costo += l.cantidad * opciones[0].costo;
+      });
+      return pedido(peor ? "Peor caso" : "Mejor caso", normal, oferta.config.precio, costo);
+    });
     if (pizzasCombo.length) {
       const barata = [...pizzasCombo].sort((x, y) => x.precio - y.precio || y.costo - x.costo)[0];
       a.conviertePedidoUnaPizza = { min: casos[0].teQueda - (barata.precio - barata.costo), max: casos[1].teQueda - (barata.precio - barata.costo) };
@@ -105,6 +115,9 @@ export function analisisOferta(oferta: OfertaInput, productos: readonly Producto
     });
     a.pedidos = [ordenadas[0], ordenadas[ordenadas.length - 1]].flatMap(p => c.opciones.map(o => regaloPedido(p, o)));
   }
+  const reales = a.casosGrafico ?? casos;
+  a.peorPedido = reales.reduce((peor, p) => p.teQueda < peor.teQueda || (p.teQueda === peor.teQueda && p.resignas > peor.resignas) ? p : peor);
+  a.casosGrafico ??= a.pedidos.length ? a.pedidos : reales;
   const campos = {
     precioNormal: (p: PedidoAnalisis) => p.paga + p.resignas, paga: (p: PedidoAnalisis) => p.paga,
     ahorroCliente: (p: PedidoAnalisis) => p.resignas, ahorroClientePct: (p: PedidoAnalisis) => p.ahorroPct,
@@ -226,4 +239,15 @@ export function resumenOferta(o: OfertaInput, productos: readonly ProductoOferta
     if (o.tipo === "descuento_cantidad") return `Cada ${o.config.cada} pizzas, la más barata al ${o.config.porcentaje}% de descuento`;
     return `Con ${o.config.minimoPizzas} pizzas, ${o.config.cantidad} bebida(s) de regalo`;
   } catch { return "Revisá la configuración"; }
+}
+
+/** Rankings sobre las filas visibles. Conserva el orden de entrada en empates exactos. */
+export function rankingOfertas<T extends { analisis: AnalisisOferta }>(filas: readonly T[]): { vos: T[]; cliente: T[] } {
+  const invalida = (f: T) => f.analisis.margen.errores.length > 0 || f.analisis.margen.semaforo === "rojo";
+  const ordenar = (criterio: (x: AnalisisOferta, y: AnalisisOferta) => number) => [...filas].sort((x, y) =>
+    Number(invalida(x)) - Number(invalida(y)) || (invalida(x) && invalida(y) ? 0 : criterio(x.analisis, y.analisis)));
+  return {
+    vos: ordenar((x, y) => y.totales.teQueda.min - x.totales.teQueda.min || x.totales.resignas.max - y.totales.resignas.max || y.totales.gananciaPct.min - x.totales.gananciaPct.min),
+    cliente: ordenar((x, y) => y.totales.ahorroClientePct.min - x.totales.ahorroClientePct.min || y.totales.ahorroCliente.min - x.totales.ahorroCliente.min),
+  };
 }

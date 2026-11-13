@@ -895,3 +895,55 @@ a{ color:inherit; text-decoration:none; }
   .oferta-form input:not([type=checkbox]),.oferta-form textarea,.oferta-form select{ font-size:16px; }
   .oferta-dialog button,.ofertas-panel button{ min-height:40px; }
 }
+
+/* Promociones: comparación con escala compartida y orden local. */
+.promo-orden { display:flex; align-items:center; gap:8px; margin-left:auto; font-size:13px; }
+.promo-orden select { max-width:100%; padding:7px; border:1px solid var(--a-line); border-radius:6px; background:var(--a-surface); color:var(--a-ink); }
+.promo-ayuda { color:var(--a-ink-2); font-size:12px; line-height:1.6; margin:12px 0 24px; }
+.promo-rankings { display:flex; flex-wrap:wrap; gap:6px; }
+.promo-rankings small { padding:2px 7px; border:1px solid var(--a-line); border-radius:5px; font-size:11px; }
+.promo-graficos { margin:20px 0 30px; }
+.promo-graficos h4, .promo-grafico-detalle h4 { margin:0 0 8px; font-size:15px; }
+.promo-graficos section > p { font-size:12px; line-height:1.6; margin:0 0 16px; }
+.promo-leyenda { display:flex; flex-wrap:wrap; list-style:none; padding:0; gap:12px 20px; font-size:12px; margin:14px 0; }
+.promo-leyenda li { display:flex; align-items:center; gap:6px; }
+.promo-leyenda i { width:10px; height:10px; border-radius:2px; }
+.promo-serie-0 { background:#2a78d6; }
+.promo-serie-1 { background:#eb6834; }
+.promo-serie-2 { background:#1baf7a; }
+.promo-referencia-texto { font-size:12px; color:var(--a-ink-2); margin:10px 0 20px; }
+.promo-eje, .promo-grafico-fila { display:grid; grid-template-columns:165px minmax(0,1fr); column-gap:16px; }
+.promo-eje { font-size:10px; margin:0 15px 8px 0; color:var(--a-ink-2); }
+.promo-eje > div { position:relative; height:18px; }
+.promo-eje > div > span { position:absolute; transform:translateX(-50%); white-space:nowrap; }
+.promo-eje > div > span:first-child { transform:none; }
+.promo-grafico-fila { position:relative; align-items:center; min-height:42px; padding-right:15px; }
+.promo-nombre { overflow-wrap:anywhere; font-size:12px; line-height:1.4; padding:6px 0; }
+.promo-plot { position:relative; min-width:0; height:42px; }
+.promo-grilla { position:absolute; top:0; bottom:0; border-left:1px solid #eceef0; pointer-events:none; }
+.promo-referencia { position:absolute; top:0; bottom:0; border-left:1px dashed #616975; pointer-events:none; z-index:1; }
+.promo-barra-boton { display:flex; align-items:center; width:100%; height:42px; padding:0; border:0; background:transparent; cursor:pointer; position:relative; text-align:left; }
+.promo-barra-boton:focus-visible { outline:2px solid #242a33; outline-offset:2px; }
+.promo-barra { display:flex; height:18px; border-radius:0 4px 4px 0; overflow:hidden; position:relative; }
+.promo-segmento { display:flex; justify-content:center; align-items:center; flex-shrink:0; box-sizing:border-box; color:#111; font-size:10px; font-weight:600; white-space:nowrap; overflow:hidden; }
+.promo-segmento + .promo-segmento { border-left:2px solid white; }
+.promo-sin-barra { font-size:11px; background:var(--a-surface); position:relative; }
+.promo-tooltip { position:absolute; right:15px; top:100%; z-index:5; display:grid; gap:5px; max-width:calc(100% - 15px); box-sizing:border-box; padding:12px 16px; background:#fff; color:#242a33; border:1px solid #cdd1d6; border-radius:6px; box-shadow:0 6px 18px #0002; font-size:12px; pointer-events:none; overflow-wrap:anywhere; }
+.promo-noche { margin-top:30px; max-width:620px; }
+.promo-noche-fila { display:grid; grid-template-columns:165px minmax(0,1fr); gap:16px; align-items:center; margin:12px 0; font-size:12px; }
+.promo-noche-fila > span { overflow-wrap:anywhere; }
+.promo-noche-fila > div { display:flex; align-items:center; gap:8px; padding-right:50px; min-width:0; }
+.promo-noche-fila i { height:16px; background:#2a78d6; border-radius:0 4px 4px 0; flex-shrink:0; }
+.promo-noche-fila b { font-size:12px; white-space:nowrap; }
+.promo-grafico-detalle { margin:16px 0 24px; min-width:0; }
+@media(max-width:600px) {
+  .promo-orden { margin-left:0; flex-wrap:wrap; width:100%; }
+  .promo-eje { grid-template-columns:1fr; margin-top:24px; }
+  .promo-eje > span { display:none; }
+  .promo-eje > div > span { font-size:9px; }
+  .promo-grafico-fila { grid-template-columns:minmax(0,1fr); padding-top:8px; }
+  .promo-nombre { padding-bottom:0; }
+  .promo-noche-fila { grid-template-columns:minmax(0,1fr); gap:6px; }
+  .promo-leyenda { gap:8px 14px; font-size:11px; }
+}
+.promo-eje > div > span:last-child { transform:translateX(-100%); }

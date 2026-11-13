@@ -2,6 +2,8 @@
 import { useId, useState, type ReactNode } from "react";
 import type { AnalisisOferta, OfertaInput, RangoOferta } from "@/lib/promos";
 
+import { GraficoDetalleOferta } from "./GraficoOfertas";
+
 export const dineroOferta = (n: number | null) => n === null ? "Sin dato" : `$${Math.round(n).toLocaleString("es-AR")}`;
 const porcentaje = (n: number) => `${Math.round(n)} %`;
 const rango = (r: RangoOferta | null, formato: (n: number) => string = dineroOferta) => !r ? "Sin dato" : r.min === r.max ? formato(r.min) : `${formato(r.min)} a ${formato(r.max)}`;
@@ -33,6 +35,7 @@ export function OfertaNumeros({ analisis: a, tipo, desplegable = false }: { anal
     <dl className="oferta-cifras">{cifras.map(([label, valor]) => <div key={label}><dt>{label}</dt><dd>{valor}</dd></div>)}</dl>
     {desplegable && <button type="button" className="btn btn-sm" aria-expanded={abierto} aria-controls={id} onClick={() => setAbierto(!abierto)}>{abierto ? "Ocultar números" : "Ver números"}</button>}
     {(!desplegable || abierto) && <div className="oferta-detalle" id={id}>
+      <GraficoDetalleOferta analisis={a} />
       {tipo === "combo" && <Tabla titulo="Productos del combo · precios y costos por unidad" columnas={["Lugar / producto", "Cantidad", "Precio normal", "Costo"]} filas={a.productos.map(p => [`${p.lugar} · ${p.nombre}`, p.cantidad, dineroOferta(p.precio), dineroOferta(p.costo)])} />}
       {tipo === "descuento_cantidad" && <Tabla titulo="Qué deja cada pizza cuando es la descontada" columnas={["Pizza", "Precio normal", "Costo", "Te queda normal", "Precio descontado", "Te queda descontada", "Resignás"]} filas={a.productos.map(p => [p.nombre, dineroOferta(p.precio), dineroOferta(p.costo), dineroOferta(p.gananciaNormal!), dineroOferta(p.precioDescuento!), dineroOferta(p.teQueda!), dineroOferta(p.resignas!)])} />}
       {tipo === "regalo" && <><Tabla titulo="Opciones de regalo · precio, costo y suplemento por unidad" columnas={["Bebida", "Cantidad", "Precio normal", "Costo", "Suplemento", "Te cuesta regalarla (total)", "Resignás si ya iba a pedirla"]} filas={a.productos.map(p => [p.nombre, p.cantidad, dineroOferta(p.precio), dineroOferta(p.costo), dineroOferta(p.suplemento!), dineroOferta(p.costoRegalo!), dineroOferta(p.resignas!)])} /><p>Te cuesta regalarla = costo menos suplemento, por la cantidad de regalos.</p></>}

@@ -1,7 +1,9 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { analisisOferta, margenOferta, resumenOferta, validarOferta, type AnalisisOferta, type ContextoNegocioLeido, type MargenOferta, type Oferta, type OfertaInput, type ProductoOferta } from "@/lib/promos";
+import { analisisOferta, rankingOfertas, margenOferta, resumenOferta, validarOferta, type AnalisisOferta, type ContextoNegocioLeido, type MargenOferta, type Oferta, type OfertaInput, type ProductoOferta } from "@/lib/promos";
 import { OfertaNumeros, dineroOferta } from "./OfertaNumeros";
+
+import { GraficoOfertas } from "./GraficoOfertas";
 
 type Fila = Oferta & { margen: MargenOferta; analisis: AnalisisOferta };
 const sinContexto: ContextoNegocioLeido = { gastoFijoNoche: null, envio: null, envioGratisDesde: null, comisionPct: null, pedidosPorNoche: null, ticketPromedio: null };
@@ -123,6 +125,18 @@ export function Promociones() {
   const { ofertas, productos, contexto, cargando, error, recargar } = usePromociones();
   const [filtro, setFiltro] = useState("pendiente"), [editor, setEditor] = useState<OfertaInput | Oferta | null>(null);
   const [ocupado, setOcupado] = useState(false), [fallo, setFallo] = useState("");
+  const [orden, setOrden] = useState("vos");
+  useEffect(() => {
+    try {
+      const guardado = localStorage.getItem("promociones-orden");
+      // Restaurar una preferencia local después de hidratar.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (guardado && ["vos", "cliente", "propio"].includes(guardado)) setOrden(guardado);
+    } catch { /* Preferencia opcional: storage puede estar bloqueado. */ }
+  }, []);
+  const visibles = ofertas.filter(o => filtro === "todas" || o.estado === filtro);
+  const ranking = rankingOfertas(visibles);
+  const ordenadas = orden === "propio" ? [...visibles].sort((a,b) => a.orden-b.orden) : orden === "cliente" ? ranking.cliente : ranking.vos;
   // Al volver de Productos, refresca disponibilidad y costos antes de mostrar acciones.
   useEffect(() => {
     void recargar();
@@ -144,11 +158,13 @@ export function Promociones() {
     <div className="panel-head"><h3>Promociones</h3><div className="oferta-acciones"><button className="btn btn-ghost" disabled={cargando || ocupado} onClick={() => void recargar()}>Actualizar</button><button className="btn btn-primary" disabled={cargando || !!error || ocupado} onClick={() => { setFallo(""); setEditor(nueva()); }}>Nueva promoción</button></div></div>
     <div className="panel-body">
       {!cargando && !error && <p className="oferta-contexto">Gasto fijo por noche (delivery + luz): {dinero(contexto.gastoFijoNoche)} · Hoy: {contexto.pedidosPorNoche === null ? "Sin dato" : contexto.pedidosPorNoche.toLocaleString("es-AR", { maximumFractionDigits: 1 })} pedidos por noche, ticket {dinero(contexto.ticketPromedio)} (últimas 4 semanas, noches con ventas). Envío: {dinero(contexto.envio)} · Gratis desde {dinero(contexto.envioGratisDesde)}.</p>}
-      <div className="oferta-filtros" aria-label="Filtrar promociones">{[["pendiente", "Pendientes"], ["aprobada", "Aprobadas"], ["pausada", "Pausadas"], ["todas", "Todas"]].map(([v, label]) => <button key={v} className={`btn btn-sm ${filtro === v ? "btn-primary" : "btn-ghost"}`} aria-pressed={filtro === v} onClick={() => setFiltro(v)}>{label}</button>)}</div>
+      <div className="oferta-filtros" aria-label="Filtrar promociones">{[["pendiente", "Pendientes"], ["aprobada", "Aprobadas"], ["pausada", "Pausadas"], ["todas", "Todas"]].map(([v, label]) => <button key={v} className={`btn btn-sm ${filtro === v ? "btn-primary" : "btn-ghost"}`} aria-pressed={filtro === v} onClick={() => setFiltro(v)}>{label}</button>)}<label className="promo-orden">Ordenar:<select value={orden} onChange={e => { setOrden(e.target.value); try { localStorage.setItem("promociones-orden",e.target.value); } catch { /* Sin persistencia. */ } }}><option value="vos">Lo mejor para vos</option><option value="cliente">Lo mejor para el cliente</option><option value="propio">Orden propio</option></select></label></div>
+      <p className="promo-ayuda">Para vos: primero el pedido que más te deja en el peor caso; si empatan, el que menos resigna y luego el de mayor margen del cobro. Para el cliente: mayor ahorro % garantizado y luego mayor ahorro mínimo en $. Las promos con errores o en rojo quedan al final. Orden propio usa el número que elegiste al editar.</p>
+      {!cargando && !error && <GraficoOfertas filas={ordenadas} productos={productos} gastoFijoNoche={contexto.gastoFijoNoche} />}
       {(error || fallo) && <p className="oferta-error" role="alert">{error || fallo} {error && <button className="btn btn-sm" disabled={cargando} onClick={() => void recargar()}>Reintentar</button>}</p>}
       {cargando && <p role="status">Cargando promociones…</p>}
-      {!cargando && !error && <ul className="ofertas-lista">{ofertas.filter(o => filtro === "todas" || o.estado === filtro).map(o => <li key={o.id}>
-        <div className="oferta-info"><strong>{o.nombre}</strong><span className="text-muted">{tipos[o.tipo]} · {resumenOferta(o, productos)}</span><small>{dias.filter(([d]) => o.dias.includes(d)).map(([, n]) => n).join(" · ")}{o.desde ? ` · Desde ${o.desde}` : ""}{o.hasta ? ` · Hasta ${o.hasta}` : ""}</small><small>{estados[o.estado]}{o.margen.errores.length ? " · Revisar" : ""} · Última edición: {new Date(o.actualizada_en).toLocaleString("es-AR")}</small></div>
+      {!cargando && !error && <ul className="ofertas-lista">{ordenadas.map(o => <li key={o.id}>
+        <div className="oferta-info"><strong>{o.nombre}</strong><div className="promo-rankings"><small>#{ranking.vos.findIndex(f=>f.id===o.id)+1} para vos</small><small>#{ranking.cliente.findIndex(f=>f.id===o.id)+1} para el cliente</small></div><span className="text-muted">{tipos[o.tipo]} · {resumenOferta(o, productos)}</span><small>{dias.filter(([d]) => o.dias.includes(d)).map(([, n]) => n).join(" · ")}{o.desde ? ` · Desde ${o.desde}` : ""}{o.hasta ? ` · Hasta ${o.hasta}` : ""}</small><small>{estados[o.estado]}{o.margen.errores.length ? " · Revisar" : ""} · Última edición: {new Date(o.actualizada_en).toLocaleString("es-AR")}</small></div>
         <OfertaNumeros analisis={o.analisis} tipo={o.tipo} desplegable />
         <Margen margen={o.margen} tipo={o.tipo} />
         <div className="oferta-acciones">
