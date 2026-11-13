@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { validarOferta, margenOferta, puedeAprobar, resumenOferta, cambioEstadoOferta, type OfertaInput, type ProductoOferta } from "../lib/promos";
+import { analisisOferta, validarOferta, margenOferta, puedeAprobar, resumenOferta, cambioEstadoOferta, type OfertaInput, type ProductoOferta } from "../lib/promos";
 
 const productos: ProductoOferta[] = [
   { id: "m", nombre: "Muzzarella Impasto", categoria: "pizzas", precio: 15500, costo: 3791 },
@@ -12,6 +12,66 @@ const productos: ProductoOferta[] = [
 const duo: OfertaInput = { tipo: "combo", nombre: "Dúo", titulo: "Dúo Muzza", descripcion: "Para compartir", dias: [5, 6, 0], desde: null, hasta: null, orden: 0, config: { precio: 26900, lugares: [{ cantidad: 2, productos: ["m"] }] } };
 const descuento: OfertaInput = { ...duo, tipo: "descuento_cantidad", config: { cada: 2, porcentaje: 50, productos: null } };
 const regalo: OfertaInput = { ...duo, tipo: "regalo", config: { minimoPizzas: 2, cantidad: 1, opciones: [{ producto: "p", suplemento: 0 }, { producto: "c", suplemento: 2000 }] } };
+const negocio = { gastoFijoNoche: 54231, envio: 3000, envioGratisDesde: 35000, comisionPct: 10, pedidosPorNoche: 4, ticketPromedio: 28000 };
+
+test("análisis Dúo: pedido completo, ahorro, tarjeta, envío y cobertura", () => {
+  const a = analisisOferta(duo, productos, negocio);
+  assert.deepEqual(a.resumen, { ahorroCliente: 4100, ahorroClientePct: 13, teQueda: 19318, resignas: 4100 });
+  assert.equal(a.combosParaCubrirNoche, 3);
+  assert.equal(a.totales.gananciaNormal.min, 23418);
+  assert.equal(a.totales.conTarjeta!.min, 16628);
+  assert.equal(a.envio!.pagaCliente.min, 3000);
+  assert.equal(a.envio!.resignas.max, 0);
+  assert.equal(a.conviertePedidoUnaPizza?.min, 7609);
+  assert.match(a.veredicto, /19\.318/);
+});
+test("análisis descuento: 3 ejemplos y tabla por pizza, no confundir pizza con pedido", () => {
+  const a = analisisOferta(descuento, productos, negocio);
+  assert.equal(a.productos.length, 3); assert.equal(a.pedidos.length, 3);
+  assert.equal(a.pedidos[0].paga, 23250); assert.equal(a.pedidos[0].teQueda, 15668); assert.equal(a.pedidos[0].resignas, 7750);
+  assert.equal(a.pedidos[1].paga, 31750); assert.equal(a.pedidos[2].paga, 36000);
+  assert.equal(a.pedidos[2].envio!.resignas, 3000);
+  assert.equal(a.resumen.teQueda, 15668);
+});
+test("análisis regalo: opciones, mínimos baratos/caros y unidades con suplemento", () => {
+  const a = analisisOferta(regalo, productos, negocio);
+  assert.equal(a.productos[0].costoRegalo, 2550); assert.equal(a.productos[1].costoRegalo, 1667);
+  assert.equal(a.productos[1].resignas, 4500);
+  assert.equal(a.pedidos.length, 4);
+  assert.equal(a.pedidos[0].paga, 31000); assert.equal(a.pedidos[0].teQueda, 20868);
+  assert.equal(a.pedidos[0].regaloPct, 2550 / 31000 * 100);
+  const doble = analisisOferta({ ...regalo, config: { ...regalo.config, cantidad: 2, opciones: [{ producto: "c", suplemento: 2000 }] } }, productos, negocio);
+  assert.equal(doble.productos[0].costoRegalo, 3334); assert.equal(doble.productos[0].resignas, 9000);
+});
+test("análisis rangos, umbral inclusivo, validación y falta de gasto fijo", () => {
+  const a = analisisOferta({ ...duo, config: { precio: 35000, lugares: [{ cantidad: 2, productos: ["m", "s"] }] } }, productos, negocio);
+  assert.deepEqual(a.totales.teQueda, { min: 16294, max: 27418 });
+  assert.deepEqual(a.totales.gananciaNormal, { min: 23418, max: 29294 });
+  assert.equal(a.envio!.resignas.min, 3000); assert.equal(a.envio!.pagaCliente.max, 0);
+  assert.equal(analisisOferta(duo, productos, { ...negocio, gastoFijoNoche: null }).combosParaCubrirNoche, null);
+  assert.equal(analisisOferta({ ...duo, config: { ...duo.config, precio: 7582 } }, productos, negocio).combosParaCubrirNoche, null);
+  const rota = analisisOferta({ ...duo, config: null } as never, productos, negocio);
+  assert.equal(rota.resumen.teQueda, null); assert.ok(rota.margen.errores.length);
+});
+test("envío gratis desde cero y contexto ausente no inventan importes", () => {
+  const gratis = analisisOferta(duo, productos, { ...negocio, envioGratisDesde: 0 });
+  assert.equal(gratis.envio!.pagaCliente.min, 0); assert.equal(gratis.envio!.resignas.max, 3000);
+  const sinDatos = analisisOferta(duo, productos, { ...negocio, envio: null, comisionPct: null });
+  assert.equal(sinDatos.envio, null); assert.equal(sinDatos.totales.conTarjeta, null); assert.equal(sinDatos.resumen.teQueda, 19318);
+});
+test("rangos conservan correlación de precio y costo, y cada N descuenta una sola pizza", () => {
+  const ps: ProductoOferta[] = [
+    { id: "a", nombre: "A", categoria: "pizzas", precio: 10000, costo: 1000 },
+    { id: "b", nombre: "B", categoria: "pizzas", precio: 12000, costo: 11000 },
+  ];
+  const combo = analisisOferta({ ...duo, config: { precio: 18000, lugares: [{ cantidad: 2, productos: ["a", "b"] }] } }, ps, negocio);
+  assert.deepEqual(combo.totales.gananciaNormal, { min: 2000, max: 18000 });
+  const cadaTres = analisisOferta({ ...descuento, config: { cada: 3, porcentaje: 50, productos: ["m", "s"] } }, productos, negocio);
+  assert.equal(cadaTres.pedidos[0].paga, 38750); assert.equal(cadaTres.pedidos[0].resignas, 7750);
+  assert.equal(cadaTres.pedidos[1].paga, 55750); assert.equal(cadaTres.pedidos[2].paga, 60000);
+  const otro = analisisOferta({ ...descuento, config: { cada: 3, porcentaje: 50, productos: null } }, ps, negocio);
+  assert.equal(otro.resumen.teQueda, -3000);
+});
 
 test("Dúo Muzza deja $19.318 y ahorra $4.100", () => {
   assert.deepEqual(validarOferta(duo, productos), []);

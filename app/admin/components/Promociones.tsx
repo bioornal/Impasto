@@ -1,12 +1,15 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { margenOferta, resumenOferta, validarOferta, type MargenOferta, type Oferta, type OfertaInput, type ProductoOferta } from "@/lib/promos";
+import { analisisOferta, margenOferta, resumenOferta, validarOferta, type AnalisisOferta, type ContextoNegocioLeido, type MargenOferta, type Oferta, type OfertaInput, type ProductoOferta } from "@/lib/promos";
+import { OfertaNumeros, dineroOferta } from "./OfertaNumeros";
 
-type Fila = Oferta & { margen: MargenOferta };
+type Fila = Oferta & { margen: MargenOferta; analisis: AnalisisOferta };
+const sinContexto: ContextoNegocioLeido = { gastoFijoNoche: null, envio: null, envioGratisDesde: null, comisionPct: null, pedidosPorNoche: null, ticketPromedio: null };
 const Contexto = createContext<ReturnType<typeof useDatos> | null>(null);
 function useDatos() {
   const [ofertas, setOfertas] = useState<Fila[]>([]), [productos, setProductos] = useState<ProductoOferta[]>([]);
   const [comisionPct, setComision] = useState(7.99), [cargando, setCargando] = useState(true), [error, setError] = useState("");
+  const [contexto, setContexto] = useState<ContextoNegocioLeido>(sinContexto);
   const solicitud = useRef(0);
   const recargar = useCallback(async () => {
     const turno = ++solicitud.current;
@@ -17,6 +20,7 @@ function useDatos() {
       if (!res.ok || !data.ok) throw new Error(data.error || "No se pudieron cargar las promociones.");
       if (turno !== solicitud.current) return false;
       setOfertas(data.data); setProductos(data.productos); setComision(data.comisionPct); setError("");
+      setContexto(data.contexto ?? sinContexto);
       return true;
     } catch (e) { if (turno === solicitud.current) setError(e instanceof Error ? e.message : "No se pudieron cargar las promociones."); return false; }
     finally { if (turno === solicitud.current) setCargando(false); }
@@ -26,11 +30,11 @@ function useDatos() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void recargar();
   }, [recargar]);
-  return { ofertas, productos, comisionPct, cargando, error, recargar };
+  return { ofertas, productos, comisionPct, contexto, cargando, error, recargar };
 }
 export function PromocionesProvider({ children }: { children: ReactNode }) { const datos = useDatos(); return <Contexto.Provider value={datos}>{children}</Contexto.Provider>; }
 export function usePromociones() { const datos = useContext(Contexto); if (!datos) throw new Error("Falta PromocionesProvider"); return datos; }
-const dinero = (n: number | null) => n === null ? "Sin calcular" : `$${n.toLocaleString("es-AR", { maximumFractionDigits: 2 })}`;
+const dinero = dineroOferta;
 const tipos = { combo: "Combo", descuento_cantidad: "Descuento por cantidad", regalo: "Regalo" };
 const dias = [[1, "Lu"], [2, "Ma"], [3, "Mi"], [4, "Ju"], [5, "Vi"], [6, "Sá"], [0, "Do"]] as const;
 const estados = { pendiente: "Pendiente", aprobada: "Aprobada", pausada: "Pausada" };
@@ -65,7 +69,7 @@ function SelectorProductos({ productos, seleccionados, onChange, categoria }: { 
 }
 
 function Editor({ inicial, guardar, cerrar, ocupado, error }: { inicial: OfertaInput; guardar: (o: OfertaInput) => void; cerrar: () => void; ocupado: boolean; error: string }) {
-  const { productos, comisionPct } = usePromociones(); const [o, set] = useState<OfertaInput>(() => structuredClone(inicial));
+  const { productos, comisionPct, contexto } = usePromociones(); const [o, set] = useState<OfertaInput>(() => structuredClone(inicial));
   const ref = useRef<HTMLDialogElement>(null); const id = useId();
   useEffect(() => { const dialog = ref.current!; dialog.showModal(); return () => dialog.close(); }, []);
   const errores = validarOferta(o, productos), margen = margenOferta(o, productos, comisionPct);
@@ -108,7 +112,7 @@ function Editor({ inicial, guardar, cerrar, ocupado, error }: { inicial: OfertaI
         <div className="oferta-fechas"><label>Desde (opcional)<input type="date" value={o.desde ?? ""} onChange={e => set({ ...o, desde: e.target.value || null })} /></label><label>Hasta (opcional)<input type="date" value={o.hasta ?? ""} onChange={e => set({ ...o, hasta: e.target.value || null })} /></label></div>
         <label>Orden<input type="number" step={1} value={o.orden} onChange={e => set({ ...o, orden: Number(e.target.value) })} /></label>
       </fieldset>
-      <div className="oferta-preview" aria-live="polite"><h4>Margen en vivo</h4><Margen margen={margen} detalle tipo={o.tipo} /><small>Comisión de tarjeta: {comisionPct}%. El semáforo usa el margen sin tarjeta.</small></div>
+      <div className="oferta-preview" aria-live="polite"><h4>Números en vivo</h4><Margen margen={margen} tipo={o.tipo} /><OfertaNumeros analisis={analisisOferta(o, productos, contexto)} tipo={o.tipo} /><small>Comisión de tarjeta: {contexto.comisionPct === null ? "Sin dato" : `${contexto.comisionPct.toLocaleString("es-AR")} %`}.</small></div>
       {error && <p role="alert" className="oferta-error">{error}</p>}
       <div className="oferta-dialog-foot"><small>{"id" in inicial ? "Al guardar se mantiene el estado actual." : "Se guarda como pendiente. Después la aprobás desde la lista."}</small><button className="btn btn-primary" type="submit" disabled={ocupado || errores.length > 0}>{ocupado ? "Guardando…" : "Guardar promoción"}</button></div>
     </form>
@@ -116,7 +120,7 @@ function Editor({ inicial, guardar, cerrar, ocupado, error }: { inicial: OfertaI
 }
 
 export function Promociones() {
-  const { ofertas, productos, cargando, error, recargar } = usePromociones();
+  const { ofertas, productos, contexto, cargando, error, recargar } = usePromociones();
   const [filtro, setFiltro] = useState("pendiente"), [editor, setEditor] = useState<OfertaInput | Oferta | null>(null);
   const [ocupado, setOcupado] = useState(false), [fallo, setFallo] = useState("");
   // Al volver de Productos, refresca disponibilidad y costos antes de mostrar acciones.
@@ -139,11 +143,13 @@ export function Promociones() {
     <p className="oferta-aviso">Todavía no se muestran en la web: eso es la próxima etapa.</p>
     <div className="panel-head"><h3>Promociones</h3><div className="oferta-acciones"><button className="btn btn-ghost" disabled={cargando || ocupado} onClick={() => void recargar()}>Actualizar</button><button className="btn btn-primary" disabled={cargando || !!error || ocupado} onClick={() => { setFallo(""); setEditor(nueva()); }}>Nueva promoción</button></div></div>
     <div className="panel-body">
+      {!cargando && !error && <p className="oferta-contexto">Gasto fijo por noche (delivery + luz): {dinero(contexto.gastoFijoNoche)} · Hoy: {contexto.pedidosPorNoche === null ? "Sin dato" : contexto.pedidosPorNoche.toLocaleString("es-AR", { maximumFractionDigits: 1 })} pedidos por noche, ticket {dinero(contexto.ticketPromedio)} (últimas 4 semanas, noches con ventas). Envío: {dinero(contexto.envio)} · Gratis desde {dinero(contexto.envioGratisDesde)}.</p>}
       <div className="oferta-filtros" aria-label="Filtrar promociones">{[["pendiente", "Pendientes"], ["aprobada", "Aprobadas"], ["pausada", "Pausadas"], ["todas", "Todas"]].map(([v, label]) => <button key={v} className={`btn btn-sm ${filtro === v ? "btn-primary" : "btn-ghost"}`} aria-pressed={filtro === v} onClick={() => setFiltro(v)}>{label}</button>)}</div>
       {(error || fallo) && <p className="oferta-error" role="alert">{error || fallo} {error && <button className="btn btn-sm" disabled={cargando} onClick={() => void recargar()}>Reintentar</button>}</p>}
       {cargando && <p role="status">Cargando promociones…</p>}
       {!cargando && !error && <ul className="ofertas-lista">{ofertas.filter(o => filtro === "todas" || o.estado === filtro).map(o => <li key={o.id}>
         <div className="oferta-info"><strong>{o.nombre}</strong><span className="text-muted">{tipos[o.tipo]} · {resumenOferta(o, productos)}</span><small>{dias.filter(([d]) => o.dias.includes(d)).map(([, n]) => n).join(" · ")}{o.desde ? ` · Desde ${o.desde}` : ""}{o.hasta ? ` · Hasta ${o.hasta}` : ""}</small><small>{estados[o.estado]}{o.margen.errores.length ? " · Revisar" : ""} · Última edición: {new Date(o.actualizada_en).toLocaleString("es-AR")}</small></div>
+        <OfertaNumeros analisis={o.analisis} tipo={o.tipo} desplegable />
         <Margen margen={o.margen} tipo={o.tipo} />
         <div className="oferta-acciones">
           {o.estado === "pendiente" && <button className="btn btn-sm btn-primary" disabled={ocupado || o.margen.semaforo === "rojo"} onClick={() => void mutar(`/api/admin/ofertas/${o.id}/estado`, "POST", { accion: "aprobar" })}>Aprobar</button>}

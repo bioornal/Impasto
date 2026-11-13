@@ -13,11 +13,120 @@ export interface MargenOferta {
   pedidoMinimo: number | null; costoRegalo: number | null; conTarjetaPeor: number | null;
   semaforo: "rojo" | "ambar" | "verde"; errores: string[];
 }
+export interface ContextoNegocio {
+  gastoFijoNoche: number | null; envio: number; envioGratisDesde: number; comisionPct: number;
+  pedidosPorNoche: number | null; ticketPromedio: number | null;
+}
+/** Una lectura fallida se informa como dato ausente, nunca como cero. */
+export type ContextoNegocioLeido = { [K in keyof ContextoNegocio]: ContextoNegocio[K] | null };
+export interface RangoOferta { min: number; max: number }
+export interface ProductoAnalisis {
+  nombre: string; cantidad: number; precio: number; costo: number; lugar?: string;
+  gananciaNormal?: number; precioDescuento?: number; teQueda?: number; resignas?: number;
+  suplemento?: number; costoRegalo?: number;
+}
+export interface PedidoAnalisis {
+  nombre: string; paga: number; costo: number; teQueda: number; resignas: number; gananciaNormal: number;
+  ahorroPct: number; gananciaPct: number; conTarjeta: number | null;
+  envio: { pagaCliente: number; resignas: number } | null; costoRegalo?: number; regaloPct?: number;
+}
+type TotalesAnalisis = Record<"precioNormal" | "paga" | "ahorroCliente" | "ahorroClientePct" | "costo" | "teQueda" | "gananciaPct" | "gananciaNormal" | "resignas", RangoOferta> & { conTarjeta: RangoOferta | null };
+export interface AnalisisOferta {
+  margen: MargenOferta;
+  resumen: { ahorroCliente: number | null; ahorroClientePct: number | null; teQueda: number | null; resignas: number | null };
+  totales: TotalesAnalisis; productos: ProductoAnalisis[]; pedidos: PedidoAnalisis[];
+  envio: { pagaCliente: RangoOferta; resignas: RangoOferta } | null;
+  conviertePedidoUnaPizza: RangoOferta | null; combosParaCubrirNoche: number | null; veredicto: string;
+}
+
+/** Receta + caja. Los rangos abarcan opciones reales, sin enumerar combinaciones de lugares. */
+export function analisisOferta(oferta: OfertaInput, productos: readonly ProductoOferta[], contexto: ContextoNegocioLeido): AnalisisOferta {
+  const margen = margenOferta(oferta, productos, contexto.comisionPct ?? undefined);
+  const rango = (vs: number[]): RangoOferta => ({ min: Math.min(...vs), max: Math.max(...vs) });
+  const a: AnalisisOferta = {
+    margen, resumen: { ahorroCliente: null, ahorroClientePct: null, teQueda: null, resignas: null },
+    totales: {} as TotalesAnalisis, productos: [], pedidos: [], envio: null,
+    conviertePedidoUnaPizza: null, combosParaCubrirNoche: null, veredicto: "Completá los datos y revisá los productos para ver los números.",
+  };
+  if (margen.errores.length) return a;
+  const ps = productos as readonly (ProductoOferta & { costo: number })[];
+  const producto = (id: string) => ps.find(p => p.id === id)!;
+  const pizzas = ps.filter(p => p.categoria === "pizzas");
+  const tasa = numero(contexto.comisionPct) && contexto.comisionPct >= 0 && contexto.comisionPct < 100 ? contexto.comisionPct / 100 : null;
+  const envio = (paga: number) => {
+    if (contexto.envio === null || contexto.envioGratisDesde === null) return null;
+    const gratis = paga >= contexto.envioGratisDesde;
+    return { pagaCliente: gratis ? 0 : contexto.envio, resignas: gratis ? contexto.envio : 0 };
+  };
+  const pedido = (nombre: string, normal: number, paga: number, costo: number, costoRegalo?: number): PedidoAnalisis => ({
+    nombre, paga, costo, teQueda: paga - costo, resignas: normal - paga, gananciaNormal: normal - costo,
+    ahorroPct: (normal - paga) / normal * 100, gananciaPct: (paga - costo) / paga * 100,
+    conTarjeta: tasa === null ? null : paga * (1 - tasa) - costo, envio: envio(paga),
+    ...(costoRegalo === undefined ? {} : { costoRegalo, regaloPct: costoRegalo / paga * 100 }),
+  });
+  let casos: PedidoAnalisis[] = [];
+  if (oferta.tipo === "combo") {
+    let precioMin = 0, precioMax = 0, costoMin = 0, costoMax = 0, normalMin = 0, normalMax = 0;
+    const pizzasCombo: typeof pizzas[number][] = [];
+    oferta.config.lugares.forEach((l, i) => {
+      const opciones = l.productos.map(producto), n = l.cantidad;
+      precioMin += n * Math.min(...opciones.map(p => p.precio)); precioMax += n * Math.max(...opciones.map(p => p.precio));
+      costoMin += n * Math.min(...opciones.map(p => p.costo)); costoMax += n * Math.max(...opciones.map(p => p.costo));
+      normalMin += n * Math.min(...opciones.map(p => p.precio - p.costo)); normalMax += n * Math.max(...opciones.map(p => p.precio - p.costo));
+      opciones.forEach(p => { a.productos.push({ nombre: p.nombre, cantidad: n, precio: p.precio, costo: p.costo, lugar: l.etiqueta || `Lugar ${i + 1}` }); if (p.categoria === "pizzas") pizzasCombo.push(p); });
+    });
+    // Con precio fijo, costo y ahorro tienen extremos independientes; ganancia normal conserva la correlación precio/costo.
+    casos = [pedido("Combo", precioMin, oferta.config.precio, costoMax), pedido("Combo", precioMax, oferta.config.precio, costoMin)];
+    a.totales.gananciaNormal = { min: normalMin, max: normalMax };
+    if (pizzasCombo.length) {
+      const barata = [...pizzasCombo].sort((x, y) => x.precio - y.precio || y.costo - x.costo)[0];
+      a.conviertePedidoUnaPizza = { min: casos[0].teQueda - (barata.precio - barata.costo), max: casos[1].teQueda - (barata.precio - barata.costo) };
+    }
+  } else if (oferta.tipo === "descuento_cantidad") {
+    const c = oferta.config, elegibles = [...(c.productos === null ? pizzas : c.productos.map(producto))].sort((x, y) => x.precio - y.precio || y.costo - x.costo);
+    elegibles.forEach(p => {
+      const descontado = p.precio * (1 - c.porcentaje / 100);
+      a.productos.push({ nombre: p.nombre, cantidad: 1, precio: p.precio, costo: p.costo, gananciaNormal: p.precio - p.costo, precioDescuento: descontado, teQueda: descontado - p.costo, resignas: p.precio - descontado });
+      // La descontada debe ser la más barata del grupo. Extremos lineales y de cocientes ocurren en estos vértices.
+      elegibles.filter(q => q.precio >= p.precio).forEach(q => casos.push(pedido("", p.precio + (c.cada - 1) * q.precio, descontado + (c.cada - 1) * q.precio, p.costo + (c.cada - 1) * q.costo)));
+    });
+    const barata = elegibles[0], cara = elegibles[elegibles.length - 1];
+    a.pedidos = [[barata, barata], [barata, cara], [cara, cara]].map(([p, q]) => pedido(`${p.nombre} + ${c.cada - 1} × ${q.nombre}`, p.precio + (c.cada - 1) * q.precio, p.precio * (1 - c.porcentaje / 100) + (c.cada - 1) * q.precio, p.costo + (c.cada - 1) * q.costo));
+  } else {
+    const c = oferta.config, ordenadas = [...pizzas].sort((x, y) => x.precio - y.precio || y.costo - x.costo);
+    const regaloPedido = (p: typeof pizzas[number], o: typeof c.opciones[number]) => {
+      const bebida = producto(o.producto), neto = c.cantidad * (bebida.costo - o.suplemento);
+      return pedido(`${c.minimoPizzas} × ${p.nombre} + ${c.cantidad} × ${bebida.nombre}`, c.minimoPizzas * p.precio + c.cantidad * bebida.precio, c.minimoPizzas * p.precio + c.cantidad * o.suplemento, c.minimoPizzas * p.costo + c.cantidad * bebida.costo, neto);
+    };
+    c.opciones.forEach(o => {
+      const p = producto(o.producto);
+      a.productos.push({ nombre: p.nombre, cantidad: c.cantidad, precio: p.precio, costo: p.costo, suplemento: o.suplemento, costoRegalo: c.cantidad * (p.costo - o.suplemento), resignas: c.cantidad * (p.precio - o.suplemento) });
+      pizzas.forEach(p => casos.push(regaloPedido(p, o)));
+    });
+    a.pedidos = [ordenadas[0], ordenadas[ordenadas.length - 1]].flatMap(p => c.opciones.map(o => regaloPedido(p, o)));
+  }
+  const campos = {
+    precioNormal: (p: PedidoAnalisis) => p.paga + p.resignas, paga: (p: PedidoAnalisis) => p.paga,
+    ahorroCliente: (p: PedidoAnalisis) => p.resignas, ahorroClientePct: (p: PedidoAnalisis) => p.ahorroPct,
+    costo: (p: PedidoAnalisis) => p.costo, teQueda: (p: PedidoAnalisis) => p.teQueda, gananciaPct: (p: PedidoAnalisis) => p.gananciaPct,
+    resignas: (p: PedidoAnalisis) => p.resignas,
+  };
+  for (const [k, fn] of Object.entries(campos)) a.totales[k as keyof typeof campos] = rango(casos.map(fn));
+  if (oferta.tipo !== "combo") a.totales.gananciaNormal = rango(casos.map(p => p.gananciaNormal));
+  a.totales.conTarjeta = tasa === null ? null : rango(casos.map(p => p.conTarjeta!));
+  if (casos.every(p => p.envio !== null)) a.envio = { pagaCliente: rango(casos.map(p => p.envio!.pagaCliente)), resignas: rango(casos.map(p => p.envio!.resignas)) };
+  a.resumen = { ahorroCliente: a.totales.ahorroCliente.min, ahorroClientePct: Math.round(a.totales.ahorroClientePct.min), teQueda: a.totales.teQueda.min, resignas: a.totales.resignas.max };
+  const teQueda = a.totales.teQueda.min, resignas = a.totales.resignas.max;
+  if (contexto.gastoFijoNoche !== null && Number.isFinite(contexto.gastoFijoNoche) && contexto.gastoFijoNoche >= 0 && teQueda > 0) a.combosParaCubrirNoche = Math.ceil(contexto.gastoFijoNoche / teQueda);
+  const monto = (n: number) => `$${Math.round(n).toLocaleString("es-AR")}`;
+  a.veredicto = `Te queda al menos ${monto(teQueda)} por pedido${a.combosParaCubrirNoche === null ? "; falta un gasto fijo válido o una ganancia positiva para calcular cuántos cubren la noche" : `; cubrís la noche con ${a.combosParaCubrirNoche} ${oferta.tipo === "combo" ? "combos" : "pedidos"}`}. Si el cliente ya iba a comprar lo mismo, resignás hasta ${monto(resignas)}${a.envio && a.envio.resignas.max > 0 ? `, más ${monto(a.envio.resignas.max)} de envío cuando llega al envío gratis` : ""}.`;
+  return a;
+}
 const obj = (v: unknown): Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : {};
 const numero = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const cantidad = (v: unknown): v is number => numero(v) && Number.isSafeInteger(v) && v >= 1 && v <= 100;
 const fecha = (v: unknown) => v === null || (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v);
-const pesos = (v: number) => `$${v.toLocaleString("es-AR", { maximumFractionDigits: 2 })}`;
+const pesos = (v: number) => `$${v.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
 const redondear = (v: number) => Math.round(v * 100) / 100;
 
 export function validarOferta(input: unknown, productosElegibles: readonly ProductoOferta[]): string[] {

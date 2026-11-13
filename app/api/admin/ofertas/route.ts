@@ -2,19 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/insforge";
 import { requireAdmin } from "@/lib/admin-auth";
 import { readPages } from "@/lib/read-pages";
-import { camposOferta, COLUMNAS_OFERTAS, productosParaOfertas } from "@/lib/ofertas-admin";
-import { margenOferta, validarOferta, type Oferta, type OfertaInput } from "@/lib/promos";
+import { camposOferta, COLUMNAS_OFERTAS, contextoNegocio, productosParaOfertas } from "@/lib/ofertas-admin";
+import { analisisOferta, margenOferta, validarOferta, type Oferta, type OfertaInput } from "@/lib/promos";
 
 export async function GET() {
   const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
   try {
-    const [{ data, error }, { productos, comisionPct }] = await Promise.all([
+    const [{ data, error }, { productos, comisionPct }, contexto] = await Promise.all([
       readPages((start, end) => db.database.from("ofertas").select(COLUMNAS_OFERTAS).eq("proyecto_id", "impasto").order("orden").order("id", { ascending: true }).range(start, end)),
       productosParaOfertas(),
+      contextoNegocio(),
     ]);
     if (error) throw error;
-    return NextResponse.json({ ok: true, data: (data as Oferta[]).map(o => ({ ...o, margen: margenOferta(o, productos, comisionPct) })), productos, comisionPct });
+    return NextResponse.json({ ok: true, data: (data as Oferta[]).map(o => ({ ...o, margen: margenOferta(o, productos, comisionPct), analisis: analisisOferta(o, productos, contexto) })), productos, comisionPct, contexto });
   } catch (error) {
     console.error("[ofertas] lectura", error);
     return NextResponse.json({ ok: false, error: "No se pudieron cargar las promociones y sus costos. Reintentá." }, { status: 500 });

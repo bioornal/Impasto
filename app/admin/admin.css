@@ -815,6 +815,34 @@ a{ color:inherit; text-decoration:none; }
 @media (max-width:900px){ .busqueda .search-input{ min-width:0; width:100%; } .busqueda{ order:6; width:100%; } }
 
 /* Promociones privadas: extensión del panel neutro. */
+.oferta-contexto{ margin:0 0 16px; padding:12px 0; border-bottom:1px solid var(--a-line); color:var(--a-ink-2); font-size:13px; line-height:1.6; }
+.oferta-numeros{ grid-column:1/-1; min-width:0; max-width:100%; }
+.ofertas-lista .oferta-info{ grid-column:1/-1; }
+.ofertas-lista>li>.oferta-acciones{ grid-column:2/-1; justify-content:flex-end; }
+.oferta-cifras{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin:0 0 12px; font-variant-numeric:tabular-nums; }
+.oferta-cifras dt{ font-size:12px; color:var(--a-ink-2); margin-bottom:4px; }
+.oferta-cifras dd{ margin:0; font-size:20px; font-weight:650; line-height:1.35; overflow-wrap:anywhere; }
+.oferta-detalle{ display:grid; gap:16px; margin-top:16px; min-width:0; font-size:13px; line-height:1.5; }
+.oferta-detalle p{ margin:0; }
+.oferta-tabla-scroll{ min-width:0; max-width:100%; overflow-x:auto; border:1px solid var(--a-line); border-radius:6px; scrollbar-color:var(--a-muted) var(--a-bg); }
+.oferta-tabla{ width:100%; border-collapse:collapse; font-size:12px; font-variant-numeric:tabular-nums; }
+.oferta-tabla caption{ text-align:left; padding:10px; font-weight:600; color:var(--a-ink); }
+.oferta-tabla th,.oferta-tabla td{ padding:8px 10px; text-align:right; white-space:nowrap; border-top:1px solid var(--a-line); }
+.oferta-tabla th:first-child{ text-align:left; white-space:normal; min-width:150px; }
+.oferta-tabla thead th{ background:var(--a-bg); font-weight:600; }
+.oferta-tabla tbody th{ font-weight:500; }
+.oferta-totales{ margin:0; font-variant-numeric:tabular-nums; }
+.oferta-totales>div{ display:flex; justify-content:space-between; gap:12px; padding:5px 0; border-bottom:1px solid var(--a-line); }
+.oferta-totales dd{ margin:0; text-align:right; font-weight:600; }
+.oferta-veredicto{ background:var(--a-bg); padding:14px; border-radius:6px; font-weight:600; }
+.oferta-detalle small{ color:var(--a-ink-2); }
+@media(max-width:600px){
+  .ofertas-lista>li>.oferta-acciones{ grid-column:1/-1; justify-content:flex-start; }
+  .oferta-cifras{ grid-template-columns:minmax(0,1fr); gap:10px; }
+  .oferta-cifras>div{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:4px 12px; }
+  .oferta-cifras dd{ font-size:20px; }
+  .oferta-totales>div{ flex-wrap:wrap; }
+}
 .oferta-aviso{ margin:0; padding:12px 16px; background:var(--a-info-soft); color:var(--a-info); font-size:13px; }
 .oferta-filtros,.oferta-acciones{ display:flex; gap:6px; flex-wrap:wrap; }
 .oferta-filtros{ margin-bottom:12px; }
