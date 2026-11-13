@@ -1,5 +1,13 @@
 @AGENTS.md
 
+## Servidor de InsForge en Hostinger (13/11/2026)
+
+- **Dónde:** desde el 13/11/2026 InsForge OSS 2.3.4 corre en un **VPS de Hostinger** (KVM 1: 1 vCPU, 4 GB, Ubuntu 24.04, datacenter Boston), detrás del mismo **`https://api.impastopizzas.com`**. La URL y las claves no cambiaron: Netlify, Vercel, el recetario y Android siguen igual. Proxy **nginx** + certificado Let's Encrypt (Certbot) que se renueva solo. IP, accesos y procedimientos en la memoria de Claude, no acá (repo público).
+- **Oracle se dio de baja entero** ese día (puente, disco y red; la cuenta quedó vacía y sin medio de pago). Nunca hubo capacidad para la ARM gratis en São Paulo (más de 11.000 intentos del 16/10 al 13/11) y el puente pago con créditos de prueba vencía el 12/11. Lo de abajo sobre Oracle es historia.
+- **Cómo se mudó:** misma instalación (carpeta, imagen exacta y volúmenes de la base y de los archivos copiados con el stack parado); corte de ~10 min y el registro `A api` de Hostinger cambiado a la IP nueva. Respaldo nocturno y copia diaria a la PC del dueño: siguen igual. El aviso de caídas (`vigilar-servidor.yml`) usa el dominio, no hizo falta tocarlo.
+- **Latencia:** Boston queda a ~120-150 ms de Iguazú (Oracle São Paulo daba ~40 ms). Si el panel o el POS se sienten lentos, la salida es mover el VPS a una ubicación más cercana desde hPanel.
+- **Pendiente:** probar a fondo el login del recetario, el POS de Carro Fogón y un pedido de prueba contra el servidor nuevo (el dueño confirmó que la web funciona); subir los pedidos del modo `/sin-base`.
+
 ## Bloque de la masa al molde con foto y proceso real (06/11/2026)
 
 - **Pedido del dueño:** la card del molde del home era "muy genérica" (dos cajas de texto); usar su foto `Pictures\Impasto\Prepizzas argentinas al molde.png`.
@@ -138,15 +146,15 @@
 - **Asistente (chat) probado en producción el 14/10** con la base nueva: "¿qué días abren?", "¿puedo pedir el martes?", "¿delivery el sábado?" y "¿están abiertos ahora?" → responde viernes a domingo 19:30–00:00, último pedido 23:45, lunes a jueves cerrado, y que hoy está cerrado.
 - **Instagram oficial: `@pizzas.impasto`, con punto** (verificado en instagram.com el 14/10/2026: "Impasto · Pizzas a la piedra"). `@impasto.iguazu` (lo que tenía la web) no es de Impasto. El 14/10 se publicó por error `@pizzasimpasto` sin punto (`30a3b2e`) por un mensaje tipeado sin el punto; el dueño avisó que no abría y se volvió a `@pizzas.impasto`. Sale de `BUSINESS.instagram` (footer, chat, `llms.txt`, `sameAs` del JSON-LD); también `info_empresa_impasto`.
 
-## InsForge propio en Oracle Cloud: `api.impastopizzas.com` (14/10/2026)
+## InsForge propio en Oracle Cloud: `api.impastopizzas.com` (14/10/2026 al 13/11/2026, histórico: ver "Servidor de InsForge en Hostinger")
 
 - **Por qué:** InsForge cloud dejó la organización `blocked` aun con el ciclo nuevo en 0 GB (`projects restore` → "Organization is blocked"; su FAQ: pausado "until you upgrade"). El dueño no quiere pagar Pro. Se mudó la base a **InsForge OSS 2.3.4** (mismo código y API: solo cambian URL y claves) en Oracle Cloud São Paulo, detrás de **`https://api.impastopizzas.com`** (registro `A api` en Hostinger; Caddy con Let's Encrypt).
-- **Máquina actual = puente pago con créditos de prueba** (`VM.Standard.E3.Flex`, 1 OCPU/8 GB, ~US$27/mes de lista). **Vence con la prueba (~12/11/2026)**: hay que mudarla a la ARM Always Free (`VM.Standard.A1.Flex`). Los reintentos para conseguirla corren desde la PC del dueño (`PROYECTOS/servidor-impasto`, tarea de Windows "Impasto - pedir servidor ARM"). Detalle operativo (SSH, respaldos, restauración) en la memoria de Claude, no acá: este repo es público.
+- **Máquina de entonces = puente pago con créditos de prueba** (`VM.Standard.E3.Flex`, 1 OCPU/8 GB, ~US$27/mes de lista). **Vence con la prueba (~12/11/2026)**: hay que mudarla a la ARM Always Free (`VM.Standard.A1.Flex`). Los reintentos para conseguirla corren desde la PC del dueño (`PROYECTOS/servidor-impasto`, tarea de Windows "Impasto - pedir servidor ARM"). Detalle operativo (SSH, respaldos, restauración) en la memoria de Claude, no acá: este repo es público.
 - **Datos:** las 29 tablas de `public` con las mismas filas que el backup del 12/10, los 2 usuarios reales con su contraseña, metadatos de storage y las 54 migraciones propias. **Fotos:** el backup de InsForge no las trae; se recuperaron 66 de la PC del dueño (comparadas por tamaño exacto). Sin archivo quedaron `2.png`, `3.png`, `Cinque Formaggi.jpg`, `Diavola al Miele Piccante v2.jpg` (sin uso) y 4 comprobantes de transferencia de clientes.
 - **Migraciones:** InsForge OSS las corre como `project_admin`; los objetos de `public` se pasaron a ese dueño (si no, "must be owner of table"). `migrations/20261013200000_pedidos-updated-at.sql` **ya está aplicada** (14/10/2026, por CLI): el panel ya sondea incremental. `.insforge/project.json` apunta al servidor nuevo (copia de la conexión vieja en `.insforge/project.cloud-3agqcygs.json.bak`).
 - **Producción:** Netlify `INSFORGE_API_BASE_URL`/`INSFORGE_API_KEY` nuevas; fotos fijas y CSP/`remotePatterns` al host nuevo (`765986c`). Verificado el 14/10: home con carta y 24 fotos del host nuevo, sin referencias a `3agqcygs`. Carro Fogón (Vercel `INSFORGE_URL`/`INSFORGE_ANON_KEY`, server-only) y el recetario (Netlify, ahora con la **anon key real**: antes publicaba la `ik_` admin en el navegador) redeployados. **El dueño confirmó el 14/10/2026 que los tres funcionan.**
 - **Aviso de caídas:** `.github/workflows/vigilar-servidor.yml` revisa cada 10 min `api.impastopizzas.com/api/health` y `/api/store-status` de la web (3 intentos) y manda un mail por Resend **solo al cambiar de estado** (caído / volvió). Destinatario y key en los secrets `ALERTA_EMAIL` y `RESEND_API_KEY`. Mail de prueba: correr el workflow a mano con `probar_mail` (probado el 14/10/2026). GitHub desactiva los cron de un repo público tras 60 días sin actividad.
-- **Pendiente:** apps Android (recompilar con URL y clave nuevas; el dueño autoriza los builds), subir los pedidos del modo `/sin-base`, y que el dueño pruebe login y guardado en el recetario con la anon key.
+- **Pendiente de entonces:** apps Android (hecho: APK 0.3.4 del 14/10 con la URL nueva y la anon key), subir los pedidos del modo `/sin-base` y que el dueño pruebe login y guardado en el recetario con la anon key.
 
 ## Base pausada por InsForge: límite de egress del plan free (12/10/2026)
 
