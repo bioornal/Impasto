@@ -107,3 +107,36 @@ cada promo con su margen calculado y la lista de productos elegibles (pizzas y b
 migración probada en la base real dentro de `BEGIN … ROLLBACK` antes de aplicarla; el panel en local
 con la sesión del dueño (escritorio y 375 px). **Aplicar la migración en producción y publicar
 requieren el OK del dueño.**
+
+## Agregado 13/11/2026: "Ver números" (pedido del dueño)
+
+El dueño encontró la información "muy escueta": necesita ver cuánto gana, qué resigna y el contexto para
+decidir qué promo activar. Cada fila muestra tres cifras y un botón **Ver números** que despliega el detalle
+(también en vivo dentro del editor). Todo sale de una función pura `analisisOferta(oferta, productos, contexto)`
+en `lib/promos.ts`, con tests.
+
+**Contexto del negocio** (lo devuelve el GET, leído de la base al momento):
+- `gastoFijoNoche`: Σ costos fijos activos mensuales ÷ noches del mes (Delivery `monto ÷ monto_por_noche`).
+- `envio` y `envioGratisDesde` de la sucursal (como la cotización).
+- `comisionPct`.
+- Últimas 4 semanas (pedidos no cancelados de `proyecto_id = impasto`, noche de 06:00 a 05:59 UTC-3):
+  pedidos por noche y ticket promedio.
+
+**Fila (siempre visible):** "El cliente ahorra $X (Y %)" · "Te queda $Z por pedido" · "Resignás $W contra precio normal".
+
+**Detalle por tipo:**
+- **Combo:** tabla de productos (precio normal, costo; en lugares a elección, una fila por opción);
+  precio normal total, precio combo, descuento $ y %, costo total, ganancia $ y %, ganancia si se vendiera a
+  precio normal y lo que se resigna; con tarjeta; envío (si llega al envío gratis, se resigna además el envío);
+  "si convierte un pedido de 1 pizza" (+$ contra vender solo la pizza más barata del combo);
+  "con N combos por noche cubrís delivery y luz".
+- **Descuento por cantidad:** tabla por pizza elegible (precio, costo, ganancia normal, precio con descuento,
+  ganancia de esa pizza, lo que resignás) y tres pedidos de ejemplo (2 de la más barata; la más barata + la más
+  cara; 2 de la más cara): paga el cliente, ganancia, resignás, envío.
+- **Regalo:** tabla por opción (precio normal, costo, suplemento, lo que te cuesta regalarla) y pedido mínimo con
+  las pizzas más baratas y con las más caras: paga, ganancia, costo del regalo y qué % del pedido se va en el regalo.
+  Si el cliente ya iba a pedir esa bebida, se resigna precio − suplemento.
+- **Veredicto en una oración**, armado con los números (no inventado): ganancia por pedido, cuántos cubren la
+  noche y el riesgo de resignar a quien ya compraba eso.
+
+Costos: receta + caja (como hoy); sin delivery ni luz dentro del margen, que van aparte en "cubrís la noche".
