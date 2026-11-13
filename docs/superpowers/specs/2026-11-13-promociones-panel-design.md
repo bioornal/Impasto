@@ -140,3 +140,30 @@ en `lib/promos.ts`, con tests.
   noche y el riesgo de resignar a quien ya compraba eso.
 
 Costos: receta + caja (como hoy); sin delivery ni luz dentro del margen, que van aparte en "cubrís la noche".
+
+## Requisito para la etapa 2: que las ganancias del recetario entiendan las promos (13/11/2026)
+
+Pedido del dueño: al activar promos cambian las ganancias del mes, y el recetario (`recetario-napolitano`,
+página Ganancias) tiene que saber qué se vendió con promo para no calcular mal.
+
+Cómo calcula hoy Ganancias (`src/utils/ganancias.ts`): parte de lo **cobrado real** de cada pedido no
+cancelado y lo reparte entre comida, bebidas y envío **en proporción a los precios de las líneas**
+(`desglosePedido`); el costo sale de `pedido_costeos` (receta + caja + bebidas) y los fijos por noche aparte.
+Consecuencias para el diseño:
+
+1. **El descuento va dentro de los precios de las líneas, nunca como una línea negativa ni como descuento
+   suelto del pedido.** Si el cobrado baja pero las líneas siguen a precio de lista, el reparto proporcional
+   le resta parte del descuento al envío y a las bebidas. Combo: precio prorrateado entre sus líneas (la suma
+   da exacto el precio del combo). 2ª al X %: la línea descontada lleva su precio rebajado. Regalo: la bebida
+   va como línea con precio = suplemento (0 si es gratis); su costo igual entra en `pedido_costeos`.
+2. **Cada línea con promo guarda el rastro:** `promo: { id, nombre, tipo, precioLista }` dentro del ítem de
+   `pedidos.productos`, y el pedido guarda la promo aplicada y el total resignado (columna o jsonb; a definir
+   en el spec de la etapa 2). Así se puede reconstruir qué se vendió con promo y cuánto se resignó.
+3. **Ganancias del recetario suma un bloque "Promociones"** del mes: por promo, pedidos, unidades, cobrado,
+   resignado contra precio de lista, costo y lo que dejaron; y el total del mes con y sin esos pedidos. Las
+   unidades de pizzas y bebidas se siguen contando igual (las líneas son normales). La bebida regalada cuenta
+   como unidad vendida con $0 de ingreso y su costo.
+4. **El POS (Carro Fogón) también aplica las promos**, con las mismas reglas del servidor: los pedidos que
+   lleguen por WhatsApp desde los anuncios se cargan ahí. Si el operario cargara a precio de lista y cobrara
+   menos, el recetario repartiría mal el descuento.
+5. Android del recetario no tiene las reglas nuevas de Ganancias (ya pasaba antes); queda anotado.
