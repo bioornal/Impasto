@@ -398,7 +398,7 @@ function SiteContent({ data: inicial, business, chatDisponible, destacadaId }: {
         <Hero hayEmpanadas={visible.hayEmpanadas} onCta={goSection} onHalf={() => openHalf()} featured={featured} varieties={data.pizzas.length} />
         <Features freeShippingFrom={business.freeShippingFrom} desde={desde} />
         <MasasAviso onNav={goSection} />
-        <Promos hayEmpanadas={visible.hayEmpanadas} promos={visible.promos} onNav={goSection} />
+        <Promos hayEmpanadas={visible.hayEmpanadas} promos={visible.promos} onNav={goSection} onAdded={() => setDrawerOpen(true)} />
         {data.pizzas.length > 0 && <PizzaList indice={visible.indice("pizzas")} hayEmpanadas={visible.hayEmpanadas} pizzas={data.pizzas} onHalf={openHalf} destacadaId={destacadaId} foco={focoPizza} onVerFicha={abrirFicha("pizzas")} masasQuedan={data.masasQuedan} />}
         <EmpanadasSection
           indice={visible.indice("empanadas")}
@@ -667,9 +667,9 @@ export function Shell({ data, business, estadoInicial, chatDisponible, destacada
   business = negocioDeCarta(business, data.empanadas.length > 0);
   return (
     <TweakProvider>
-      <StoreStatusProvider inicial={{ ...estadoInicial, stockBebidas: data.stockBebidas ?? {} }}>
+      <StoreStatusProvider inicial={{ ...estadoInicial, stockBebidas: data.stockBebidas ?? {}, ofertas: data.ofertas ?? [] }}>
         <ToastProvider>
-          <CartProvider>
+          <CartProvider data={data}>
             <FotosProvider data={data}>
               <SiteContent data={data} business={business} chatDisponible={chatDisponible} destacadaId={destacadaId} />
             </FotosProvider>

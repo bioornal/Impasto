@@ -4,6 +4,7 @@ import { getBusinessConfig } from "@/lib/business-server";
 import { estadoMasas, validarMasas } from "@/lib/masa";
 import { limitar } from "@/lib/rate-limit";
 import type { CartItem } from "@/types";
+import { normalizarSeleccionPromo } from "@/lib/promos-web";
 import { pricingHttpError } from "@/lib/pricing-http";
 
 export async function POST(req: NextRequest) {
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
     const business = await getBusinessConfig();
     // El checkout se entera acá, antes de confirmar, si se terminó una masa.
     validarMasas(estadoMasas(business), Array.isArray(body.items) ? body.items : []);
-    const quote = await quoteOrder(body.items as CartItem[], body.mode, business);
+    const quote = await quoteOrder(body.items as CartItem[], body.mode, business, { promo: normalizarSeleccionPromo(body.promo) });
     return NextResponse.json({ ok: true, ...quote });
   } catch (error: unknown) {
     const failure = pricingHttpError(error);

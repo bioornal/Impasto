@@ -13,6 +13,7 @@ import { assertExpectedTotal } from "@/lib/stabilization";
 import type { EstadoPago } from "@/lib/mercadopago";
 import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
 import type { CartItem } from "@/types";
+import { normalizarSeleccionPromo, type PedidoPromo, type PedidoPromoSeleccion } from "./promos-web";
 import { executeManualAttempt, manualAttemptKey, ManualAttemptConflict } from './manual-attempt';
 import { matchesManualOrder, restoredManualOrder } from './manual-order-data';
 import {createCostedPedido} from './create-costed-pedido';
@@ -21,6 +22,7 @@ import { errorDeMasasDeLaBase } from './masas-noche';
 import { errorDeStockDeLaBase } from './stock-bebidas';
 
 export interface OrderPayload {
+  promo?: PedidoPromoSeleccion | null;
   nombre: string;
   tel: string;
   email: string;
@@ -34,6 +36,7 @@ export interface OrderPayload {
 }
 
 export interface CreatedOrder {
+  promo?: PedidoPromo | null;
   recovered?: boolean;
   id: string;
   numero: number;
@@ -70,6 +73,7 @@ export function validateOrderPayload(order: Record<string, unknown>): OrderPaylo
     mode: order.mode,
     when: validarCuando(order.when),
     items: order.items as CartItem[],
+    promo: normalizarSeleccionPromo(order.promo),
   };
 }
 
@@ -89,7 +93,7 @@ export async function createPedido(
   const result = await executeManualAttempt<CreatedOrder>({
     lookup: async () => {
       const {data,error} = await db.database.from('pedidos')
-        .select('id,numero_pedido,external_reference,nombre_cliente,telefono_cliente,email_cliente,direccion,modalidad,cuando,notas,referencia,cambio,metodo_pago,productos,subtotal,envio,total,cuenta_transferencia')
+        .select('id,numero_pedido,external_reference,nombre_cliente,telefono_cliente,email_cliente,direccion,modalidad,cuando,notas,referencia,cambio,metodo_pago,productos,subtotal,envio,total,cuenta_transferencia,promo')
         .eq('external_reference', reference).eq('proyecto_id','impasto').limit(1);
       if (error || !Array.isArray(data)) throw new Error('No se pudo verificar el intento pendiente. Reintentá el mismo pedido.');
       const row = data[0] as Record<string,unknown> | undefined;
@@ -122,7 +126,7 @@ async function createPedidoNew(
   // Una masa que se terminó (apagada en el panel) tampoco entra, por ninguna vía de pago.
   validarMasas(estado.masas, order.items);
 
-  const quote = await quoteOrder(order.items, order.mode, business);
+  const quote = await quoteOrder(order.items, order.mode, business, { promo: order.promo });
   if (payment.proveedorPago === "mercadopago") assertExpectedTotal(options.expectedTotal, quote.total);
 
   // El número sigue siendo el que ve el local en la comanda; la referencia
@@ -146,6 +150,7 @@ async function createPedidoNew(
       email_cliente: order.email,
       direccion: order.dir || "Retiro en local",
       productos: quote.items,
+      promo: quote.promo,
       total: quote.total,
       total_con_descuento: quote.total,
       status: "normal",

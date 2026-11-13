@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/providers/CartProvider";
+import type { PedidoPromo, PedidoPromoSeleccion } from "@/lib/promos-web";
+import { sufijoRegalo } from "@/lib/promo-presentacion";
 import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import { ItemMedia } from "@/components/ui/ItemMedia";
 import { CardPayment, type CardFormData } from "@/components/checkout/CardPayment";
@@ -25,6 +27,7 @@ export interface CheckoutData {
 export interface CheckoutOrder extends CheckoutData {
   items: CartItem[];
   expectedTotal?: number;
+  promo?: PedidoPromoSeleccion | null;
 }
 
 interface CheckoutProps {
@@ -80,14 +83,14 @@ function AvisoRetiro() {
 class MotivoDelCarrito extends Error {}
 
 export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }: CheckoutProps) {
-  const { items, count, subtotal: localSubtotal } = useCart();
+  const { items, count, subtotal: localSubtotal, promo } = useCart();
   const { delivery, masas } = useStoreStatus();
   const [data, setData] = useState<CheckoutData>({
     mode: delivery.activo ? "delivery" : "takeaway", when: "asap", nombre: "", tel: "", email: "", dir: "", ref: "",
     pago: "efectivo", cambio: "", notas: "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutData, string>>>({});
-  const [quote, setQuote] = useState<{ key: string; items: CartItem[]; subtotal: number; shipping: number; total: number } | null>(null);
+  const [quote, setQuote] = useState<{ key: string; items: CartItem[]; subtotal: number; shipping: number; total: number; promo: PedidoPromo | null } | null>(null);
   const [quoteError, setQuoteError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -104,14 +107,14 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
   // Con el reparto pausado el pedido es para retirar aunque el cliente hubiera
   // elegido delivery antes de la pausa. Derivado, no un efecto que pise el estado.
   const mode: CheckoutData["mode"] = delivery.activo ? data.mode : "takeaway";
-  const quoteKey = JSON.stringify({ items, mode });
+  const quoteKey = JSON.stringify({ items, mode, promo });
 
   useEffect(() => {
     let active = true;
     fetch("/api/orders/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items, mode }),
+      body: JSON.stringify({ items, mode, promo }),
     })
       .then(async (response) => {
         const result = await response.json();
@@ -119,7 +122,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
         if (response.status === 409 && result.error) throw new MotivoDelCarrito(result.error);
         if (!response.ok || !result.ok) throw new Error(result.error || "No se pudo actualizar el total");
         if (active) {
-          setQuote({ key: quoteKey, items: result.items, subtotal: result.subtotal, shipping: result.shipping, total: result.total });
+          setQuote({ key: quoteKey, items: result.items, subtotal: result.subtotal, shipping: result.shipping, total: result.total, promo: result.promo ?? null });
           setQuoteError("");
         }
       })
@@ -178,7 +181,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
     setSubmitting(true);
     setPendingManual({...data,mode,items:[...items]});
     try {
-      await onConfirm({ ...data, mode, items: [...items] });
+      await onConfirm({ ...data, mode, items: [...items], promo });
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "No se pudo registrar el pedido");
       try {
@@ -192,7 +195,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
 
   const payWithCard = async (card: CardFormData) => {
     try {
-      await onCardConfirm({ ...data, mode, items: [...items], expectedTotal: total }, card);
+      await onCardConfirm({ ...data, mode, items: [...items], promo, expectedTotal: total }, card);
     } catch (error) {
       if (error instanceof Error && error.name === "QuoteChangedError") {
         setBrickOpen(false);
@@ -373,7 +376,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
                 <div className="co-sum-item" key={item.cartId}>
                   <div className="co-sum-media"><ItemMedia item={item} /></div>
                   <div style={{ minWidth: 0 }}>
-                    <b>{item.name}</b>
+                    <b>{item.name}{sufijoRegalo(item)}</b>
                     <small>×{item.qty}{masas.molde && masaDe(item) && ` · masa ${masaDe(item) === "molde" ? "al molde" : "napoletana"}`}</small>
                   </div>
                   <span className="line">{fmt(item.price * item.qty)}</span>
@@ -400,6 +403,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             )}
 
             <div className="co-lines" style={{ paddingTop: 14, borderTop: "1px solid rgba(246,241,231,.16)" }}>
+              {!quoteLoading && quote?.promo && <div className="co-promo"><span>Incluye {quote.promo.nombre}</span><span>ahorrás {fmt(quote.promo.ahorro)}</span></div>}
               <div><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
               <div>
                 <span>{isDelivery ? "Envío" : "Retiro en nuestra cocina"}</span>
@@ -469,12 +473,13 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
                 <div className="co-summary-item" key={item.cartId}>
                   <div className="co-sum-media"><ItemMedia item={item} /></div>
                   <div className="co-summary-item-main">
-                    <b>{item.name}</b>
+                    <b>{item.name}{sufijoRegalo(item)}</b>
                     <small>×{item.qty}{masas.molde && masaDe(item) && ` · masa ${masaDe(item) === "molde" ? "al molde" : "napoletana"}`}</small>
                   </div>
                   <span className="co-summary-price">{fmt(item.price * item.qty)}</span>
                 </div>
               ))}
+              {!quoteLoading && quote?.promo && <div className="co-summary-line co-promo"><span>Incluye {quote.promo.nombre}</span><span>ahorrás {fmt(quote.promo.ahorro)}</span></div>}
               <div className="co-summary-line"><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
               <div className="co-summary-line">
                 <span>{isDelivery ? "Envío" : "Retiro en nuestra cocina"}</span>

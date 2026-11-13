@@ -11,6 +11,7 @@ import { excesoEnCarrito } from "@/lib/masas-noche";
 import { excesoDeBebidas } from '@/lib/stock-bebidas';
 import type { BusinessConfig } from "@/lib/business";
 import type { Bebida } from "@/types";
+import { TuPromo } from "@/components/cart/TuPromo";
 
 /** "¿Algo para tomar?" cerrado por el cliente: no vuelve a aparecer en esta visita. */
 const SIN_BEBIDAS = "impasto_sin_bebidas";
@@ -29,7 +30,7 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onBrowse, business, bebidas }: CartDrawerProps) {
-  const { items, add, inc, dec, setMasa, remove, subtotal } = useCart();
+  const { items, previewItems, promoError, add, inc, dec, setMasa, remove, subtotal } = useCart();
   const tienda = useStoreStatus();
   // Masas de la noche: si bajaron mientras armaba el pedido, se avisa y no se puede seguir.
   const sobranPizzas = excesoEnCarrito(items, tienda.masasNoche);
@@ -57,7 +58,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
       if (evento.key === "Escape") { onClose(); return; }
       if (evento.key !== "Tab" || !sheetRef.current) return;
       const focusables = sheetRef.current.querySelectorAll<HTMLElement>(
-        "button:not(:disabled), input, a[href], textarea",
+        "button:not(:disabled), input, select, a[href], textarea",
       );
       if (focusables.length === 0) return;
       const primero = focusables[0];
@@ -210,7 +211,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
                       <button className="ci-remove" aria-label={`Quitar ${item.name} del pedido`} onClick={() => remove(item.cartId)}>Quitar</button>
                     </div>
                   </div>
-                  <b className="ci-price">{fmt(item.price * item.qty)}</b>
+                  <b className="ci-price">{fmt(previewItems.filter(p => p.cartId === item.cartId || p.cartId.startsWith(`${item.cartId}-`)).reduce((s, p) => s + p.price * p.qty, 0) || item.price * item.qty)}</b>
                   {masaDe(item) && tienda.masas.molde && (
                     <div className="ci-masa">
                       <span className="ci-masa-titulo" id={`masa-${item.cartId}`}>Elegí la masa{item.qty > 1 ? ` (las ${item.qty})` : ""}</span>
@@ -231,6 +232,13 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
                       </div>
                     </div>
                   )}
+                </div>
+              ))}
+
+              <TuPromo />
+              {previewItems.filter(item => item.type === "bebida" && item.promo?.tipo === "regalo").map(item => (
+                <div className="cart-regalo" key={item.cartId}>
+                  <span>{item.qty} x {item.name} (regalo)</span><b>{item.price ? fmt(item.price * item.qty) : "Sin cargo"}</b>
                 </div>
               ))}
 
@@ -303,7 +311,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
               <span className="mono">Total</span>
               <b>{fmt(subtotal + shipping)}</b>
             </div>
-            <button className="drawer-cta" onClick={onCheckout} disabled={!tienda.abierto || Boolean(sobranPizzas || sobranBebidas)}>
+            <button className="drawer-cta" onClick={onCheckout} disabled={!tienda.abierto || Boolean(sobranPizzas || sobranBebidas || promoError)}>
               {tienda.abierto ? "Continuar con el pedido" : "Cerrado por ahora"}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14" /><path d="m13 5 7 7-7 7" /></svg>
             </button>

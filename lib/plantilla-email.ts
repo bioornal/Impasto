@@ -3,6 +3,7 @@ import { esperaComprobante } from "@/lib/transferencia-pendiente";
 import { urlAbsoluta } from "@/lib/site";
 import type { BusinessConfig } from "@/lib/business";
 import type { AvisoPedido, TipoAviso } from "@/lib/aviso-local";
+import { sufijoRegalo, textoPromo } from "./promo-presentacion";
 
 /**
  * La plantilla del mail al cliente. Vive aparte de `lib/notifications.ts` (que arrastra
@@ -35,7 +36,7 @@ export function plantilla(aviso: AvisoPedido, business: BusinessConfig, tipo: Ti
   const filas = aviso.items.map((item) => `
     <tr>
       <td style="padding:8px 0;border-bottom:1px solid #eee;">
-        <strong>${escape(item.name)}</strong>${item.detail ? `<br><span style="color:#7a6f65;font-size:13px;">${escape(item.detail)}</span>` : ""}
+        <strong>${escape(item.name + sufijoRegalo(item))}</strong>${item.detail ? `<br><span style="color:#7a6f65;font-size:13px;">${escape(item.detail)}</span>` : ""}
         <br><span style="color:#7a6f65;font-size:13px;">×${item.qty}</span>
       </td>
       <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;white-space:nowrap;">${fmt(item.price * item.qty)}</td>
@@ -53,6 +54,7 @@ export function plantilla(aviso: AvisoPedido, business: BusinessConfig, tipo: Ti
   <p style="margin:0 0 20px;color:#7a6f65;font-size:14px;">Pedido <strong style="color:#b2472a;">${escape(aviso.referencia)}</strong></p>
 
   <table style="width:100%;border-collapse:collapse;font-size:14px;">${filas}</table>
+  ${aviso.promo ? `<p style="font-size:14px;color:#5a5048;">${escape(textoPromo(aviso.promo))}</p>` : ""}
 
   <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:12px;">
     <tr><td style="padding:3px 0;color:#7a6f65;">Subtotal</td><td style="text-align:right;">${fmt(aviso.subtotal)}</td></tr>

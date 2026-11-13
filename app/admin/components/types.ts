@@ -1,4 +1,6 @@
 import type { Masa } from "../../../types";
+import type { MarcaPromo } from "@/lib/promos-aplicar";
+import type { PedidoPromo } from "@/lib/promos-web";
 
 export interface AdminProduct {
   _dbId: string;
@@ -18,6 +20,7 @@ export interface AdminProduct {
 }
 
 export interface OrderItem {
+  promo?: MarcaPromo;
   name: string;
   qty: number;
   price: number;
@@ -31,6 +34,7 @@ export interface OrderItem {
 }
 
 export interface AdminOrder {
+  promo?: PedidoPromo | null;
   _dbId: string;
   id: string;
   /** numero_pedido tal cual (6 cifras en la web, 1, 2, 3… en el POS): lo que se imprime en la comanda. */

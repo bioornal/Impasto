@@ -9,6 +9,7 @@ import { esPedidoParaCocina } from "@/lib/pedido-visible";
 import { etiquetaEstado, numeroCorto } from "@/lib/admin-pedidos";
 import { enlaceWhatsapp, mensajeAlCliente, whatsappDeCliente } from "@/lib/contacto";
 import { detalleCocina, masaCocina, nombreCocina } from "@/lib/masa";
+import { sufijoRegalo, textoPromo } from "@/lib/promo-presentacion";
 
 /** El chat con el cliente, con el saludo y el pedido ya escritos. Null si el número no se reconoce. */
 const whatsappDelPedido = (o: AdminOrder) => {
@@ -171,7 +172,7 @@ export function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onP
               <div className="od-row" key={idx} style={{ flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
                   <span>
-                    {i.qty}× {i.name}
+                    {i.qty}× {i.name}{sufijoRegalo(i)}
                     {masaCocina(i) && (
                       <b style={{ marginLeft: 6, fontSize: 11, padding: "1px 6px", borderRadius: 4, background: i.masa === "molde" ? "var(--a-warn)" : "var(--a-bg-2)", color: i.masa === "molde" ? "white" : "var(--a-ink)" }}>
                         {masaCocina(i)}
@@ -187,6 +188,7 @@ export function OrderDetail({ order, onClose, onUpdate, onPayment, onRefund, onP
                 ) : null}
               </div>
             ))}
+            {order.promo && <div className="od-row"><span>{textoPromo(order.promo)}</span></div>}
             <div className="od-row"><span>Subtotal</span><span>{fmt(order.subtotal)}</span></div>
             {order.shipping > 0 && <div className="od-row"><span>Envío</span><span>{fmt(order.shipping)}</span></div>}
             <div className="od-row tot"><span>Total</span><span>{fmt(order.total)}</span></div>
@@ -286,7 +288,7 @@ export function ComandaTicket({ order }: { order: AdminOrder }) {
           <div key={idx} className="c-item">
             <div className="c-item-qty">{item.qty}×</div>
             <div className="c-item-info">
-              <div className="c-item-name">{nombreCocina(item)}</div>
+              <div className="c-item-name">{nombreCocina(item)}{sufijoRegalo(item)}</div>
               {detalleCocina(item) ? <div className="c-item-detail">{detalleCocina(item)}</div> : null}
             </div>
             <div className="c-item-price">{fmt(item.price * item.qty)}</div>
@@ -304,6 +306,7 @@ export function ComandaTicket({ order }: { order: AdminOrder }) {
       <div className="c-divider" />
 
       <div className="c-summary">
+        {order.promo && <div className="c-row">{textoPromo(order.promo)}</div>}
         <div className="c-row"><span>Subtotal:</span> <span>{fmt(order.subtotal)}</span></div>
         {order.shipping > 0 && (
           <div className="c-row"><span>Costo de envío:</span> <span>{fmt(order.shipping)}</span></div>

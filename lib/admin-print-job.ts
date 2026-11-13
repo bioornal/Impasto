@@ -2,13 +2,14 @@ import type { AdminOrder } from '../app/admin/components/types';
 import { esPedidoParaCocina } from './pedido-visible';
 import { detalleCocina, nombreCocina } from './masa';
 import type { PrintCopy, PrintJob } from './local-printer';
+import { sufijoRegalo, textoPromo } from './promo-presentacion';
 
 export function adminPrintJob(order: AdminOrder, attemptId: string, reprint = true, copy: PrintCopy = 'cocina'): PrintJob {
   const cliente = copy === 'cliente';
   const address = order.mode === 'delivery'
     ? [order.dir, order.referencia].filter(Boolean).join(' · ')
     : '';
-  const notes = [order.notas, order.cuando === 'asap' ? '' : `Horario: ${order.cuando}`]
+  const notes = [order.notas, order.cuando === 'asap' ? '' : `Horario: ${order.cuando}`, order.promo ? textoPromo(order.promo) : '']
     .filter(Boolean).join(' · ');
   return {
     attemptId: cliente ? `${attemptId}:cliente` : attemptId,
@@ -26,7 +27,7 @@ export function adminPrintJob(order: AdminOrder, attemptId: string, reprint = tr
       address,
       notes,
       items: order.items.map(item => ({
-        name: cliente ? item.name : nombreCocina(item),
+        name: (cliente ? item.name : nombreCocina(item)) + sufijoRegalo(item),
         quantity: item.qty,
         detail: cliente ? item.detail || '' : detalleCocina(item),
         unitPrice: item.price,

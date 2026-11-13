@@ -2,19 +2,25 @@
 import { SceneIllus } from "@/components/ui/Illus";
 import { STOCK_IMAGES } from "@/lib/stock-images";
 import type { Promo } from "@/types";
+import { OfertasHoy } from "@/components/sections/OfertasHoy";
 
 interface PromosProps {
   promos: Promo[];
   hayEmpanadas?: boolean;
   onNav: (section: string) => void;
+  /** Abre el carrito después de agregar un combo. */
+  onAdded?: () => void;
 }
 
-export function Promos({ promos, onNav, hayEmpanadas = true }: PromosProps) {
-  if (promos.length === 0) return null;
+export function Promos({ promos, onNav, onAdded = () => {}, hayEmpanadas = true }: PromosProps) {
+  const ofertas = <OfertasHoy onNav={onNav} onAdded={onAdded} />;
+  if (promos.length === 0) return ofertas;
   const [hero, ...rest] = promos.slice(0, 3);
   const stack = rest.slice(0, 2);
 
   return (
+    <>
+    {ofertas}
     <section className="promos">
       <div className="container">
         <div className={`promos-grid ${stack.length === 0 ? "single" : ""}`}>
@@ -58,5 +64,6 @@ export function Promos({ promos, onNav, hayEmpanadas = true }: PromosProps) {
         </div>
       </div>
     </section>
+    </>
   );
 }

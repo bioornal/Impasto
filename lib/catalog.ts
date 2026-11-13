@@ -13,11 +13,13 @@ import { aplicarMasas, quedanMasas, type FilaMasas } from "@/lib/masas-noche";
 import { diaDeNegocio } from "@/lib/resumen-diario";
 import { leerStockBebidas } from './stock-bebidas-server';
 import { aplicarStockBebidas } from './stock-bebidas';
+import { leerOfertasVigentes } from './ofertas-web';
 
 export async function getCatalogData(): Promise<CatalogData> {
   try {
     const fotos = listarFotos(); // en paralelo con la base; nunca falla
     const stock = leerStockBebidas();
+    const ofertas = leerOfertasVigentes();
     const safeQuery = settleCatalogQuery;
     const [
       productsResult,
@@ -78,7 +80,7 @@ export async function getCatalogData(): Promise<CatalogData> {
     // y las ilustraciones usan el respaldo de siempre.
     // agregarFotos devuelve una copia: sin conservar el costeo, la cotización de cualquier
     // pedido fallaba con "Costeo de la venta no disponible" (03/10 al 06/10/2026).
-    return conservarCosteo(catalogo, aplicarStockBebidas(aplicarMasas(aplicarCupos(agregarFotos(catalogo, await fotos), cupos), quedanMasas(masas)), await stock ?? []));
+    return conservarCosteo(catalogo, { ...aplicarStockBebidas(aplicarMasas(aplicarCupos(agregarFotos(catalogo, await fotos), cupos), quedanMasas(masas)), await stock ?? []), ofertas: await ofertas });
   } catch (error) {
     if (error instanceof PricingUnavailableError) console.error(`[catalog] fuente crítica ${error.source} no disponible`);
     else console.error("[catalog] fallo al armar el catálogo:", error);

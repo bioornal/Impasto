@@ -1,7 +1,11 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
-import type { CartItem, Masa } from "@/types";
+import type { CartItem, Masa, CatalogData } from "@/types";
+import { promosAplicables, ofertasVigentes } from "@/lib/promos-aplicar";
+import type { Oferta } from "@/lib/promos";
+import { bebidasParaRegalo, cotizarPromo, lineasPromo, type PedidoPromoSeleccion, type PedidoPromo } from "@/lib/promos-web";
+import { bebidasConStock } from "@/lib/stock-bebidas";
 import { uid } from "@/lib/utils";
 import { ajustarMasas, cambiarMasa, esMismaLinea, masaDe, masaUnica } from "@/lib/masa";
 import { avisoOtraMasa, masaParaSumar, topeDePizzas } from "@/lib/masas-noche";
@@ -10,6 +14,15 @@ import { useToast } from "@/components/providers/ToastProvider";
 
 interface CartCtx {
   items: CartItem[];
+  previewItems: CartItem[];
+  catalogo: CatalogData;
+  ofertas: Oferta[];
+  promo: PedidoPromoSeleccion | null;
+  promoAplicada: PedidoPromo | null;
+  promoError: string;
+  promoOpciones: ReturnType<typeof promosAplicables>;
+  setPromo: (promo: PedidoPromoSeleccion | null) => void;
+  addCombo: (productos: Omit<CartItem, "cartId">[], ofertaId: string) => boolean;
   /** false si no entró: no quedan masas para otra pizza (el aviso ya salió). */
   add: (item: Omit<CartItem, "cartId">) => boolean;
   inc: (cartId: string) => boolean;
@@ -25,17 +38,34 @@ interface CartCtx {
 
 const CartCtx = createContext<CartCtx | null>(null);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({ children, data }: { children: React.ReactNode; data: CatalogData }) {
   const [guardados, setItems] = useState<CartItem[]>([]);
   const [ready, setReady] = useState(false);
+  const [elegida, setPromo] = useState<PedidoPromoSeleccion | null | undefined>(undefined);
 
   // Si se terminó una masa (panel → Configuración → Masas), las pizzas del carrito pasan a la
   // que queda, también las del borrador y las que se agregan después. El cliente lo lee en el
   // aviso del carrito. Se deriva en vez de corregirse en un efecto: nunca hay un render con la
   // masa agotada elegida. Cada cambio parte de lo que el cliente ve, así lo guardado se pone al día.
-  const { masas, masasNoche, stockBebidas } = useStoreStatus();
+  const { masas, masasNoche, stockBebidas, ofertas: vigentes } = useStoreStatus();
   const toast = useToast();
   const items = useMemo(() => ajustarMasas(guardados, masas), [guardados, masas]);
+  const catalogo = useMemo(() => ({ ...data, ofertas: ofertasVigentes(vigentes ?? data.ofertas ?? [], new Date()),
+    stockBebidas, bebidas: bebidasConStock(data.bebidas, stockBebidas) }), [data, stockBebidas, vigentes]);
+  const ofertas = catalogo.ofertas;
+  const promoOpciones = useMemo(() => promosAplicables(ofertas, lineasPromo(items), bebidasParaRegalo(catalogo, items), new Date())
+    .filter(({ oferta }) => oferta.tipo !== "regalo" || bebidasParaRegalo(catalogo, items, oferta.config.cantidad)
+      .some(b => oferta.config.opciones.some(op => op.producto === b.id))), [ofertas, items, catalogo]);
+  const mejor = promoOpciones[0];
+  const promo = elegida === undefined ? (mejor ? { ofertaId: mejor.oferta.id,
+    ...(mejor.resultado.regalo ? { regaloProductoId: mejor.resultado.regalo.bebida.id } : {}) } : null) : elegida;
+  const calculo = (() => {
+    try { return { ...cotizarPromo(items, catalogo, promo), error: "" }; }
+    catch (error) { return { items, promo: null, error: error instanceof Error ? error.message : "Revisá tu promo." }; }
+  })();
+  const previewItems = calculo.items;
+  const promoAplicada = calculo.promo;
+  const promoError = calculo.error;
   const cambiar = (cambio: (prev: CartItem[]) => CartItem[]) =>
     setItems((prev) => cambio(ajustarMasas(prev, masas)));
 
@@ -46,13 +76,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (!response.ok || !result.ok) throw new Error(result.error || "Borrador no disponible");
         if (Array.isArray(result.items) && result.items.length > 0) {
           setItems(result.items);
+          if ("promo" in result) setPromo(result.promo);
           return;
         }
+        const savedPromo = localStorage.getItem("impasto_cart_promo");
+        if (savedPromo !== null) setPromo(JSON.parse(savedPromo));
         const stored = JSON.parse(localStorage.getItem("impasto_cart") || "[]");
         if (Array.isArray(stored) && stored.length > 0) setItems(stored);
       })
       .catch(() => {
         try {
+          const savedPromo = localStorage.getItem("impasto_cart_promo");
+          if (savedPromo !== null) setPromo(JSON.parse(savedPromo));
           const stored = JSON.parse(localStorage.getItem("impasto_cart") || "[]");
           if (Array.isArray(stored) && stored.length > 0) setItems(stored);
         } catch {}
@@ -63,6 +98,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     localStorage.setItem("impasto_cart", JSON.stringify(items));
+    localStorage.setItem("impasto_cart_promo", JSON.stringify(promo));
     if (items.length === 0) {
       fetch("/api/cart/draft", { method: "DELETE" }).catch(() => {});
       return;
@@ -70,9 +106,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     fetch("/api/cart/draft", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, promo }),
     }).catch(() => {});
-  }, [items, ready]);
+  }, [items, ready, promo?.ofertaId, promo?.regaloProductoId]);
 
   // Masas de la noche (31/10/2026): el carrito no suma más pizzas de cada masa que las que quedan. La
   // base igual controla al guardar; esto evita que el cliente arme un pedido que no puede confirmar.
@@ -145,12 +181,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     cambiar((p) => cambiarMasa(p, cartId, masa));
   };
   const remove = (cartId: string) => cambiar((p) => p.filter((i) => i.cartId !== cartId));
-  const clear = () => setItems([]);
-  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const addCombo = (productos: Omit<CartItem, "cartId">[], ofertaId: string) => {
+    const next = [...items];
+    for (const producto of productos) {
+      const aviso = topeDeBebidas(next, producto, producto.qty, stockBebidas);
+      if (aviso) { toast(aviso); return false; }
+      let item = producto;
+      const masa = masaDe(item);
+      if (masa) {
+        const preferida = masaUnica(masas) ?? masa;
+        const entra = masaParaSumar(next, preferida, item.qty, masasNoche);
+        if (!entra) { toast(topeDePizzas(next, preferida, item.qty, masasNoche) || "No quedan masas para este combo."); return false; }
+        item = { ...item, masa: entra };
+      }
+      const idx = next.findIndex(p => esMismaLinea(p, item));
+      if (idx >= 0) next[idx] = { ...next[idx], qty: next[idx].qty + item.qty };
+      else next.push({ ...item, cartId: uid() });
+    }
+    setItems(next);
+    setPromo({ ofertaId });
+    return true;
+  };
+  const clear = () => { setItems([]); setPromo(undefined); };
+  const subtotal = previewItems.reduce((s, i) => s + i.price * i.qty, 0);
   const count = items.reduce((s, i) => s + i.qty, 0);
 
   return (
-    <CartCtx.Provider value={{ items, add, inc, dec, incKey, decKey, setMasa, remove, clear, subtotal, count }}>
+    <CartCtx.Provider value={{ items, previewItems, catalogo, ofertas, promo, promoAplicada, promoError, promoOpciones, setPromo, addCombo, add, inc, dec, incKey, decKey, setMasa, remove, clear, subtotal, count }}>
       {children}
     </CartCtx.Provider>
   );

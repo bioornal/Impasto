@@ -6,8 +6,10 @@ import { DETALLE_MOLDE, normalizarMasa } from "./masa";
 import { validarCupos } from "./cupos";
 import { validarMasasNoche } from "./masas-noche";
 import { validarStockBebidas } from "./stock-bebidas";
+import { cotizarPromo, type PedidoPromo, type PedidoPromoSeleccion } from "./promos-web";
 
-interface QuoteResult {
+export interface QuoteResult {
+  promo: PedidoPromo | null;
   items: CartItem[];
   subtotal: number;
   shipping: number;
@@ -133,33 +135,55 @@ function quoteItem(rawItem: CartItem, data: CatalogData): CartItem {
 }
 
 export function quoteItemsWithCatalog(rawItems: CartItem[], data: CatalogData): CartItem[] {
-  return rawItems.map((item) => quoteItem(item, data));
+  return rawItems.map((item) => {
+    // Ninguna marca o precio de promo aportados por el cliente son autoridad.
+    const clean = { ...item };
+    delete clean.promo;
+    return quoteItem(clean, data);
+  });
+}
+
+export interface QuoteOptions {
+  /** El borrador se guarda aunque exceda cupos; el checkout avisa. */
+  cupos?: boolean;
+  promo?: PedidoPromoSeleccion | null;
+  ahora?: Date;
+}
+
+/** Misma cotización que usa el servidor, con catálogo explícito para verificarla sin red. */
+export function quoteOrderWithCatalog(
+  rawItems: CartItem[],
+  data: CatalogData,
+  mode: string,
+  rates: Partial<QuoteRates> = {},
+  { cupos = true, promo = null, ahora = new Date() }: QuoteOptions = {},
+): QuoteResult {
+  if (!Array.isArray(rawItems) || rawItems.length === 0 || rawItems.length > 50) {
+    throw new Error("El carrito está vacío o es demasiado grande");
+  }
+  if (mode !== "delivery" && mode !== "takeaway") throw new Error("Modalidad de entrega inválida");
+  const applied: QuoteRates = { ...DEFAULT_RATES, ...rates };
+  const lista = quoteItemsWithCatalog(rawItems, data);
+  const promocion = cotizarPromo(lista, data, promo, ahora);
+  const items = promocion.items;
+  // El regalo ya es una bebida normal: participa del stock y del costeo.
+  if (cupos) validarStockBebidas(items, data);
+  if (cupos) { validarCupos(items, data); validarMasasNoche(items, data); }
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const freeShipping = subtotal >= applied.freeShippingFrom;
+  const shipping = mode === "delivery" && !freeShipping ? applied.deliveryFee : 0;
+  const context = catalogCosteo(data);
+  const quote = { items, promo: promocion.promo, subtotal, shipping, total: subtotal + shipping, freeShipping };
+  costeos.set(quote, { costo_produccion_centavos: costeoCarrito(items, context.costs), comision_pct: context.commissionPct });
+  return quote;
 }
 
 export async function quoteOrder(
   rawItems: CartItem[],
   mode: string,
   rates: Partial<QuoteRates> = {},
-  /** El borrador del carrito se guarda aunque pase el cupo: el aviso llega en el checkout. */
-  { cupos = true }: { cupos?: boolean } = {},
+  options: QuoteOptions = {},
 ): Promise<QuoteResult> {
-  if (!Array.isArray(rawItems) || rawItems.length === 0 || rawItems.length > 50) {
-    throw new Error("El carrito está vacío o es demasiado grande");
-  }
-  if (mode !== "delivery" && mode !== "takeaway") throw new Error("Modalidad de entrega inválida");
-
-  const applied: QuoteRates = { ...DEFAULT_RATES, ...rates };
   const { getCatalogData } = await import("@/lib/catalog");
-  const data = await getCatalogData();
-  const items = quoteItemsWithCatalog(rawItems, data);
-  if (cupos) validarStockBebidas(items, data);
-  if (cupos) { validarCupos(items, data); validarMasasNoche(items, data); }
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const freeShipping = subtotal >= applied.freeShippingFrom;
-  const shipping = mode === "delivery" && !freeShipping ? applied.deliveryFee : 0;
-
-  const context=catalogCosteo(data);
-  const quote={ items, subtotal, shipping, total: subtotal + shipping, freeShipping };
-  costeos.set(quote,{costo_produccion_centavos:costeoCarrito(items,context.costs),comision_pct:context.commissionPct});
-  return quote;
+  return quoteOrderWithCatalog(rawItems, await getCatalogData(), mode, rates, options);
 }

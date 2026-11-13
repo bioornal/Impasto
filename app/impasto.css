@@ -2717,3 +2717,18 @@ html.ficha-abierta .toast{ top:calc(14px + env(safe-area-inset-top)); bottom:aut
   font-size:11px; font-weight:800; line-height:1; text-align:center; letter-spacing:.01em;
   padding:5px 2px; white-space:nowrap;
 }
+
+/* Promos de hoy (tabla ofertas, etapa 2) */
+.ofertas-hoy-wrap{ padding:28px 0 8px; }
+.ofertas-hoy-titulo{ font-family:var(--font-display); font-size:26px; margin:0 0 14px; }
+.ofertas-hoy-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
+.oferta-hoy{ display:flex; flex-direction:column; gap:8px; padding:18px; border-radius:16px; background:var(--surface); border:1px solid var(--line); }
+.oferta-hoy h4{ margin:0; font-size:20px; }
+.oferta-hoy p{ margin:0; font-size:14px; line-height:1.45; }
+.oferta-hoy-detalle{ color:var(--ink-2); }
+.oferta-hoy-eleccion{ display:flex; flex-direction:column; gap:4px; font-size:13px; }
+.oferta-hoy-eleccion select{ min-height:40px; border-radius:10px; padding:0 10px; font-size:16px; }
+.oferta-hoy .promo-foot{ margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.oferta-hoy-precio{ font-size:22px; }
+.ofertas-hoy-nota{ margin:10px 0 0; font-size:13px; color:var(--ink-2); }
+.co-promo{ color:var(--accent-2); font-weight:600; }

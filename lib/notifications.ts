@@ -9,6 +9,7 @@ import type { CartItem } from "@/types";
 // no romper a quien ya los importaba desde acá.
 export type { TipoAviso, AvisoPedido } from "@/lib/aviso-local";
 import type { AvisoPedido } from "@/lib/aviso-local";
+import { promoGuardada } from "./promo-presentacion";
 
 export { plantilla } from "@/lib/plantilla-email";
 
@@ -26,6 +27,7 @@ export function avisoDesdePedido(fila: Record<string, unknown>): AvisoPedido {
     mode: String(fila.modalidad || "delivery"),
     dir: String(fila.direccion || ""),
     items: productos,
+    promo: promoGuardada(fila.promo),
     subtotal: Number(fila.subtotal || 0),
     shipping: Number(fila.envio || 0),
     total: Number(fila.total || 0),

@@ -1,6 +1,8 @@
 import { fmt } from "@/lib/utils";
 import { detalleCocina, nombreCocina } from "@/lib/masa";
 import type { CartItem } from "@/types";
+import type { PedidoPromo } from "./promos-web";
+import { sufijoRegalo, textoPromo } from "./promo-presentacion";
 
 /**
  * Armado del aviso que le llega al local. Vive aparte de `lib/notifications.ts`
@@ -13,6 +15,7 @@ import type { CartItem } from "@/types";
 export type TipoAviso = "pedido_recibido" | "pago_aprobado";
 
 export interface AvisoPedido {
+  promo?: PedidoPromo | null;
   pedidoId: string;
   referencia: string;
   nombre: string;
@@ -70,8 +73,9 @@ export function plantillaLocal(aviso: AvisoPedido, tipo: TipoAviso): string {
 
   for (const item of aviso.items) {
     const detalle = unaLinea(detalleCocina(item));
-    lineas.push(`${item.qty}x ${unaLinea(nombreCocina(item))}${detalle ? ` (${detalle})` : ""}`);
+    lineas.push(`${item.qty}x ${unaLinea(nombreCocina(item))}${sufijoRegalo(item)}${detalle ? ` (${detalle})` : ""}`);
   }
+  if (aviso.promo) lineas.push(unaLinea(textoPromo(aviso.promo)));
   lineas.push("");
 
   lineas.push(`Total ${fmt(aviso.total)}`);

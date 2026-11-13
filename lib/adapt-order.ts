@@ -2,6 +2,7 @@
 import { datosDesdePedido } from "./cuentas-transferencia";
 import type { AdminOrder, OrderItem } from "../app/admin/components/types";
 import {canReconcilePayment} from './payment-recovery';
+import { marcaPromoGuardada, promoGuardada } from './promo-presentacion';
 
 export function adaptOrder(p: Record<string, unknown>): AdminOrder {
   const mode =
@@ -19,7 +20,8 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
     ? p.productos.map((i: Record<string, unknown>) => ({
         name: String(i.name || i.nombre || "?"),
         qty: Number(i.qty || i.cantidad || 1),
-        price: Number(i.price || i.precio || 0),
+        price: Number(i.price ?? i.precio ?? 0),
+        ...(marcaPromoGuardada(i.promo) ? { promo: marcaPromoGuardada(i.promo) } : {}),
         detail: String(i.detail || i.detalle || ""),
         extra: Math.max(0, Number(i.extra) || 0),
         type: String(i.type || ""),
@@ -41,6 +43,7 @@ export function adaptOrder(p: Record<string, unknown>): AdminOrder {
     dir: isDelivery ? String(p.direccion || "") : "",
     zona: "",
     items,
+    promo: promoGuardada(p.promo),
     subtotal: Number(p.subtotal ?? Math.max(0, Number(p.total_con_descuento || total) - shipping)),
     shipping,
     total,

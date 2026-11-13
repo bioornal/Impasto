@@ -57,6 +57,7 @@ export interface Review {
 }
 
 export interface CatalogData {
+  ofertas?: import("../lib/promos").Oferta[];
   stockBebidas?: Record<string, number | null>;
   pizzas: Pizza[];
   empanadas: Empanada[];
@@ -74,6 +75,8 @@ export interface CatalogData {
 export type Masa = "napoletana" | "molde";
 
 export interface CartItem {
+  /** Marca calculada por el servidor; nunca se acepta como fuente del precio. */
+  promo?: import("../lib/promos-aplicar").MarcaPromo;
   key: string;
   cartId: string;
   type: "pizza" | "pizza-half" | "empanadas" | "bebida";

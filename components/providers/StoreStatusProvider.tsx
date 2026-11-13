@@ -4,8 +4,10 @@ import type { EstadoDelivery } from "@/lib/hours";
 import { TODAS_LAS_MASAS, type EstadoMasas } from "@/lib/masa";
 import type { QuedanMasas } from "@/lib/masas-noche";
 import type { StockBebidas } from '@/lib/stock-bebidas';
+import type { Oferta } from "@/lib/promos";
 
 export interface EstadoTiendaCliente {
+  ofertas?: Oferta[];
   abierto: boolean;
   motivo: string;
   etiqueta: string;
@@ -48,6 +50,7 @@ export function StoreStatusProvider({ inicial, children }: { inicial: EstadoTien
             masas: datos.masas ?? TODAS_LAS_MASAS,
             masasNoche: datos.masasNoche && typeof datos.masasNoche === "object" ? datos.masasNoche : null,
             stockBebidas: datos.stockBebidas ?? anterior.stockBebidas,
+            ofertas: Array.isArray(datos.ofertas) ? datos.ofertas : anterior.ofertas,
           }));
         }
       } catch { /* si falla la consulta se conserva el último estado conocido */ }

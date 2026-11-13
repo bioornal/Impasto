@@ -154,7 +154,7 @@ export function Promociones() {
     finally { setOcupado(false); }
   };
   return <div className="panel ofertas-panel">
-    <p className="oferta-aviso">Todavía no se muestran en la web: eso es la próxima etapa.</p>
+    <p className="oferta-aviso">Las aprobadas se muestran en la web y en el POS los días elegidos.</p>
     <div className="panel-head"><h3>Promociones</h3><div className="oferta-acciones"><button className="btn btn-ghost" disabled={cargando || ocupado} onClick={() => void recargar()}>Actualizar</button><button className="btn btn-primary" disabled={cargando || !!error || ocupado} onClick={() => { setFallo(""); setEditor(nueva()); }}>Nueva promoción</button></div></div>
     <div className="panel-body">
       {!cargando && !error && <p className="oferta-contexto">Gasto fijo por noche (delivery + luz): {dinero(contexto.gastoFijoNoche)} · Hoy: {contexto.pedidosPorNoche === null ? "Sin dato" : contexto.pedidosPorNoche.toLocaleString("es-AR", { maximumFractionDigits: 1 })} pedidos por noche, ticket {dinero(contexto.ticketPromedio)} (últimas 4 semanas, noches con ventas). Envío: {dinero(contexto.envio)} · Gratis desde {dinero(contexto.envioGratisDesde)}.</p>}

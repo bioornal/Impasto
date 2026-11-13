@@ -17,7 +17,7 @@ export function refundOperationResult(data:unknown,operationId:string):RefundOpe
   throw new DatabaseOperationError('Intención de devolución incompatible');
  return o;
 }
-export const PAYMENT_COLUMNS='id,sucursal_id,estado_pago,mp_order_id,id_pago,pagado_en,created_at,proveedor_pago,metodo_pago,status,numero_pedido,external_reference,nombre_cliente,telefono_cliente,email_cliente,direccion,modalidad,productos,subtotal,envio,total,cuenta_transferencia,notas';
+export const PAYMENT_COLUMNS='id,sucursal_id,estado_pago,mp_order_id,id_pago,pagado_en,created_at,proveedor_pago,metodo_pago,status,numero_pedido,external_reference,nombre_cliente,telefono_cliente,email_cliente,direccion,modalidad,productos,subtotal,envio,total,cuenta_transferencia,notas,promo';
 export function paymentRecoveryStore(client:Pick<typeof db,'database'>,pedidoId:string) {
   const reread=async():Promise<RecoveryPedido>=>{
     const {data,error}=await client.database.from('pedidos').select(PAYMENT_COLUMNS).eq('id',pedidoId).eq('proyecto_id','impasto').limit(1);

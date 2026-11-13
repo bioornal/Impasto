@@ -16,6 +16,8 @@ import {
 import { DatabaseOperationError, requireDbRows } from "@/lib/db-result";
 import { PricingUnavailableError } from "@/lib/pricing-safety";
 import { PaymentLedgerError } from '@/lib/payment-ledger';
+import { pricingHttpError } from "@/lib/pricing-http";
+import type { PedidoPromo } from "@/lib/promos-web";
 import { QuoteChangedError } from "@/lib/stabilization";
 
 const TIPOS_TARJETA = ["credit_card", "debit_card"];
@@ -23,6 +25,7 @@ const TIPOS_TARJETA = ["credit_card", "debit_card"];
 const text = (value: unknown) => (typeof value === "string" ? value.trim() : "");
 
 interface ExistingCardOrder extends PersistedCardAttempt {
+  promo?: PedidoPromo | null;
   total: number;
   subtotal: number;
   envio: number;
@@ -39,6 +42,7 @@ function createdFromExisting(existing: ExistingCardOrder): CreatedOrder {
     numero: Number(existing.external_reference.match(/^IM-(\d{6})-/)?.[1] || 0),
     referencia: existing.external_reference,
     items: Array.isArray(existing.productos) ? existing.productos : [],
+    promo: existing.promo ?? null,
     subtotal: Number(existing.subtotal || 0),
     shipping: Number(existing.envio || 0),
     total: Number(existing.total || 0),
@@ -72,6 +76,7 @@ async function responseForExistingCardOrder(existing: ExistingCardOrder, order: 
     numero: created.referencia,
     estadoPago: existing.estado_pago,
     items: created.items,
+    promo: created.promo,
     subtotal: created.subtotal,
     shipping: created.shipping,
     total: created.total,
@@ -227,6 +232,7 @@ export async function POST(req: NextRequest) {
           numero: created.referencia,
           estadoPago: estado,
           items: created.items,
+    promo: created.promo,
           subtotal: created.subtotal,
           shipping: created.shipping,
           total: created.total,
@@ -284,6 +290,7 @@ export async function POST(req: NextRequest) {
       numero: created.referencia,
       estadoPago,
       items: created.items,
+    promo: created.promo,
       subtotal: created.subtotal,
       shipping: created.shipping,
       total: created.total,
@@ -297,7 +304,7 @@ export async function POST(req: NextRequest) {
       : err instanceof Error ? err.message : "No se pudo procesar el pago";
     return NextResponse.json(
       { ok: false, ...(attemptReference ? { numero: attemptReference } : {}), ...(quoteChanged ? { quoteChanged: true } : {}), error: msg },
-      { status: quoteChanged ? 409 : persistenceFailure ? 500 : pricingFailure ? 503 : 400 },
+      { status: quoteChanged ? 409 : persistenceFailure ? 500 : pricingFailure ? 503 : pricingHttpError(err).status },
     );
   }
 }
