@@ -121,7 +121,7 @@ function aplicarDescuento(o: Oferta & { tipo: "descuento_cantidad" }, lineas: re
 function aplicarRegalo(o: Oferta & { tipo: "regalo" }, lineas: readonly LineaPromo[], bebidas: readonly BebidaRegalo[], elegida: string | null): ResultadoPromo | ErrorPromo {
   const c = o.config;
   const pizzas = unidades(lineas).filter(esPizza).length;
-  if (pizzas < c.minimoPizzas) return { error: `Para ${o.titulo || o.nombre} necesitás ${c.minimoPizzas} pizzas en el pedido.` };
+  if (pizzas < c.minimoPizzas) { const faltan = c.minimoPizzas - pizzas; return { error: `Sumá ${faltan} pizza${faltan > 1 ? "s" : ""} más y te llevás la bebida de regalo.` }; }
   const disponibles = c.opciones.filter(op => bebidas.some(b => b.id === op.producto));
   if (!disponibles.length) return { error: "Hoy no quedan bebidas para regalar." };
   const opcion = elegida ? disponibles.find(op => op.producto === elegida) : null;

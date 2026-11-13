@@ -49,7 +49,7 @@ function TarjetaOferta({ oferta, vendibles, onNav, onAdded }: { oferta: Oferta; 
           </>
         )}
         {oferta.tipo === "regalo" && (
-          <p className="oferta-hoy-precio"><b>Gratis</b><span>tu bebida, llevando {oferta.config.minimoPizzas} pizzas</span></p>
+          <p className="oferta-hoy-precio"><b>Bebida gratis</b><span>la que elijas, al llevar {oferta.config.minimoPizzas} pizzas</span></p>
         )}
         {oferta.tipo === "descuento_cantidad" && (
           <p className="oferta-hoy-precio"><b>{oferta.config.porcentaje} % menos</b><span>en la {oferta.config.cada}ª pizza</span></p>
