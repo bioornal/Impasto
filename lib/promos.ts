@@ -37,7 +37,7 @@ export interface AnalisisOferta {
   resumen: { ahorroCliente: number | null; ahorroClientePct: number | null; teQueda: number | null; resignas: number | null };
   totales: TotalesAnalisis; productos: ProductoAnalisis[]; pedidos: PedidoAnalisis[];
   envio: { pagaCliente: RangoOferta; resignas: RangoOferta } | null;
-  conviertePedidoUnaPizza: RangoOferta | null; combosParaCubrirNoche: number | null; veredicto: string;
+  conviertePedidoUnaPizza: RangoOferta | null; combosParaCubrirNoche: number | null; sobranteNoche: number | null; veredicto: string;
 }
 
 /** Receta + caja. Los rangos abarcan opciones reales, sin enumerar combinaciones de lugares. */
@@ -47,7 +47,7 @@ export function analisisOferta(oferta: OfertaInput, productos: readonly Producto
   const a: AnalisisOferta = {
     margen, resumen: { ahorroCliente: null, ahorroClientePct: null, teQueda: null, resignas: null },
     totales: {} as TotalesAnalisis, productos: [], pedidos: [], envio: null,
-    conviertePedidoUnaPizza: null, combosParaCubrirNoche: null, veredicto: "Completá los datos y revisá los productos para ver los números.",
+    conviertePedidoUnaPizza: null, combosParaCubrirNoche: null, sobranteNoche: null, veredicto: "Completá los datos y revisá los productos para ver los números.",
   };
   if (margen.errores.length) return a;
   const ps = productos as readonly (ProductoOferta & { costo: number })[];
@@ -130,9 +130,9 @@ export function analisisOferta(oferta: OfertaInput, productos: readonly Producto
   if (casos.every(p => p.envio !== null)) a.envio = { pagaCliente: rango(casos.map(p => p.envio!.pagaCliente)), resignas: rango(casos.map(p => p.envio!.resignas)) };
   a.resumen = { ahorroCliente: a.totales.ahorroCliente.min, ahorroClientePct: Math.round(a.totales.ahorroClientePct.min), teQueda: a.totales.teQueda.min, resignas: a.totales.resignas.max };
   const teQueda = a.totales.teQueda.min, resignas = a.totales.resignas.max;
-  if (contexto.gastoFijoNoche !== null && Number.isFinite(contexto.gastoFijoNoche) && contexto.gastoFijoNoche >= 0 && teQueda > 0) a.combosParaCubrirNoche = Math.ceil(contexto.gastoFijoNoche / teQueda);
+  if (contexto.gastoFijoNoche !== null && Number.isFinite(contexto.gastoFijoNoche) && contexto.gastoFijoNoche >= 0 && teQueda > 0) { a.combosParaCubrirNoche = Math.ceil(contexto.gastoFijoNoche / teQueda); a.sobranteNoche = Math.round(a.combosParaCubrirNoche * teQueda - contexto.gastoFijoNoche); }
   const monto = (n: number) => `$${Math.round(n).toLocaleString("es-AR")}`;
-  a.veredicto = `Te queda al menos ${monto(teQueda)} por pedido${a.combosParaCubrirNoche === null ? "; falta un gasto fijo válido o una ganancia positiva para calcular cuántos cubren la noche" : `; cubrís la noche con ${a.combosParaCubrirNoche} ${oferta.tipo === "combo" ? "combos" : "pedidos"}`}. Si el cliente ya iba a comprar lo mismo, resignás hasta ${monto(resignas)}${a.envio && a.envio.resignas.max > 0 ? `, más ${monto(a.envio.resignas.max)} de envío cuando llega al envío gratis` : ""}.`;
+  a.veredicto = `Te queda al menos ${monto(teQueda)} por pedido${a.combosParaCubrirNoche === null ? "; falta un gasto fijo válido o una ganancia positiva para calcular cuántos cubren la noche" : `; cubrís la noche con ${a.combosParaCubrirNoche} ${oferta.tipo === "combo" ? "combos" : "pedidos"} y te sobran ${monto(a.sobranteNoche ?? 0)}`}. Si el cliente ya iba a comprar lo mismo, resignás hasta ${monto(resignas)}${a.envio && a.envio.resignas.max > 0 ? `, más ${monto(a.envio.resignas.max)} de envío cuando llega al envío gratis` : ""}.`;
   return a;
 }
 const obj = (v: unknown): Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : {};

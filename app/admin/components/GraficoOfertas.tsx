@@ -4,7 +4,7 @@ import type { AnalisisOferta, PedidoAnalisis, ProductoOferta } from '@/lib/promo
 import { cabeRotulo, casosGrafico, escalaGrafico, geometriaBarra, pedidosNoche, referenciaPizza } from '@/lib/promos-grafico';
 const dinero = (n: number) => `$${Math.round(n).toLocaleString('es-AR')}`;
 const series = ['Te queda', 'El cliente ahorra', 'Costo (receta + caja)'];
-type FilaGrafico = { nombre: string; pedido?: PedidoAnalisis; noche: number | null };
+type FilaGrafico = { nombre: string; pedido?: PedidoAnalisis; noche: number | null; sobrante?: number | null };
 function Barras({ filas, referencia }: { filas: FilaGrafico[]; referencia?: {nombre:string;valor:number} | null }) {
   const [activa, setActiva] = useState<number | null>(null), [ancho, setAncho] = useState(0);
   const ref = useRef<HTMLDivElement>(null), id = useId();
@@ -31,7 +31,7 @@ function Barras({ filas, referencia }: { filas: FilaGrafico[]; referencia?: {nom
             {representable && g ? <span className="promo-barra" role="img" aria-label={`${f.nombre}: ${series.map((s,j)=>`${s} ${dinero(g.segmentos[j].valor)}`).join(', ')}`} style={{width:`${g.ancho}%`}}>{g.segmentos.map((s,j)=><span className={`promo-segmento promo-serie-${j}`} key={j} style={{width:`${geometriaBarra({teQueda:s.valor,resignas:0,costo:0},g.total).ancho}%`}}>{cabeRotulo(s.ancho,dinero(s.valor),ancho) ? dinero(s.valor) : ''}</span>)}</span> : <span className="promo-sin-barra">{p ? 'Importes negativos: revisá el detalle' : 'Revisá los datos de esta promoción'}</span>}
           </button>
         </div>
-        {activa===i && <div id={id} role="tooltip" className="promo-tooltip"><strong>{f.nombre}</strong>{p ? <><span>Paga el cliente: {dinero(p.paga)}</span><span>Te queda: {dinero(p.teQueda)}</span><span>El cliente ahorra: {dinero(p.resignas)}</span><span>Costo: {dinero(p.costo)}</span><span>Pedidos para cubrir la noche: {f.noche ?? 'Sin dato'}</span></> : <span>Completá o corregí los datos.</span>}</div>}
+        {activa===i && <div id={id} role="tooltip" className="promo-tooltip"><strong>{f.nombre}</strong>{p ? <><span>Paga el cliente: {dinero(p.paga)}</span><span>Te queda: {dinero(p.teQueda)}</span><span>El cliente ahorra: {dinero(p.resignas)}</span><span>Costo: {dinero(p.costo)}</span><span>Pedidos para cubrir la noche: {f.noche ?? 'Sin dato'}{f.sobrante != null ? ` · te sobran ${dinero(f.sobrante)}` : ''}</span></> : <span>Completá o corregí los datos.</span>}</div>}
       </div>;
     })}
   </div>;
@@ -42,11 +42,11 @@ export function GraficoDetalleOferta({analisis:a}: {analisis:AnalisisOferta}) {
 }
 export function GraficoOfertas({filas,productos,gastoFijoNoche}: {filas: {id:string;nombre:string;analisis:AnalisisOferta}[]; productos:ProductoOferta[]; gastoFijoNoche:number|null}) {
   if(!filas.length) return null;
-  const datos=filas.map(f=>({nombre:f.nombre,pedido:f.analisis.peorPedido,noche:f.analisis.combosParaCubrirNoche}));
+  const datos=filas.map(f=>({nombre:f.nombre,pedido:f.analisis.peorPedido,noche:f.analisis.combosParaCubrirNoche,sobrante:f.analisis.sobranteNoche}));
   const noche=datos.map(f=>({...f,noche:f.pedido ? pedidosNoche(gastoFijoNoche,f.pedido.teQueda) : null}));
   const escala=escalaGrafico(noche.map(f=>f.noche ?? 0));
   return <div className="promo-graficos">
     <section><h4>Comparación de promociones</h4><p className="text-muted">Peor caso: el pedido que menos te deja. Precio normal = te queda + ahorro + costo.</p><Barras filas={datos} referencia={referenciaPizza(productos)} /></section>
-    {gastoFijoNoche !== null && Number.isFinite(gastoFijoNoche) && gastoFijoNoche >= 0 && <section className="promo-noche"><h4>Pedidos para cubrir la noche (delivery + luz)</h4><p className="text-muted">Menos es mejor. Antes de tarjeta y envío.</p>{noche.map((f,i)=><div className="promo-noche-fila" key={i}><span>{f.nombre}</span><div role="img" aria-label={`${f.nombre}: ${f.noche ?? 'sin dato'} pedidos`}><i style={{width:`${geometriaBarra({teQueda:f.noche ?? 0,resignas:0,costo:0},escala.max).ancho}%`}} /><b>{f.noche ?? 'Sin dato'}</b></div></div>)}</section>}
+    {gastoFijoNoche !== null && Number.isFinite(gastoFijoNoche) && gastoFijoNoche >= 0 && <section className="promo-noche"><h4>Pedidos para cubrir la noche (delivery + luz)</h4><p className="text-muted">Menos es mejor. Al lado, lo que te sobra después de pagar delivery y luz con esos pedidos. Antes de tarjeta, envío y pauta.</p>{noche.map((f,i)=><div className="promo-noche-fila" key={i}><span>{f.nombre}</span><div role="img" aria-label={`${f.nombre}: ${f.noche ?? 'sin dato'} pedidos${f.sobrante != null ? `, sobran ${dinero(f.sobrante)}` : ''}`}><i style={{width:`${geometriaBarra({teQueda:f.noche ?? 0,resignas:0,costo:0},escala.max).ancho}%`}} /><b>{f.noche ?? 'Sin dato'}{f.sobrante != null ? ` · sobran ${dinero(f.sobrante)}` : ''}</b></div></div>)}</section>}
   </div>;
 }

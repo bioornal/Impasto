@@ -18,6 +18,8 @@ test("análisis Dúo: pedido completo, ahorro, tarjeta, envío y cobertura", () 
   const a = analisisOferta(duo, productos, negocio);
   assert.deepEqual(a.resumen, { ahorroCliente: 4100, ahorroClientePct: 13, teQueda: 19318, resignas: 4100 });
   assert.equal(a.combosParaCubrirNoche, 3);
+  assert.equal(a.sobranteNoche, 3723);
+  assert.match(a.veredicto, /cubrís la noche con 3 combos y te sobran \$3\.723/);
   assert.equal(a.totales.gananciaNormal.min, 23418);
   assert.equal(a.totales.conTarjeta!.min, 16628);
   assert.equal(a.envio!.pagaCliente.min, 3000);
