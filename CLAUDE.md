@@ -1,5 +1,14 @@
 @AGENTS.md
 
+## Promociones y combos en el panel — etapa 1 (13/11/2026)
+
+- **Pedido del dueño:** ventas flojas (≈4,8 pizzas por noche; equilibrio ≈4,3) y pauta en Meta Ads. Quiere una sección propia del panel para crear, editar y **aprobar** promos; "luego" se anuncian en la web. Spec: `docs/superpowers/specs/2026-11-13-promociones-panel-design.md`; plan/registro: `docs/superpowers/plans/2026-11-13-promociones-panel.md`. Rama `promociones-panel` (`49ac4b8`), hecha mayormente por Codex y revisada.
+- **Tres tipos** en la tabla nueva **`ofertas`** (no confundir con la vieja `promociones`, decorativa y pública, que no se tocó): `combo` (precio fijo; cada lugar es un producto fijo o varios a elección), `descuento_cantidad` (cada N pizzas, la más barata con X %) y `regalo` (con N pizzas, bebida de regalo con suplemento opcional). Días (vie–dom por defecto) y fechas opcionales. Estados `pendiente → aprobada ⇄ pausada`; editar una aprobada **no** la despublica; edición concurrente da 409.
+- **Margen solo en el panel** (`lib/promos.ts`, puro y testeado; costos de `lib/ofertas-admin.ts` con `productionCosts`, receta + caja, sin delivery ni luz): semáforo rojo (≤ $0, no se puede aprobar ni reanudar), ámbar (< $2.000), verde. Un costo desconocido bloquea la aprobación.
+- **Base:** migración `20261113150000_ofertas.sql`, **aplicada el 13/11/2026** con OK del dueño (antes probada en `BEGIN … ROLLBACK`): RLS sin políticas (el backend entra porque `project_admin` tiene BYPASSRLS; anónimo da 401). Trae 5 propuestas **pendientes**: Dúo Muzza $26.900, Pizza + gaseosa $21.500, Noche Impasto $55.000, 2ª pizza al 50 % y Gaseosa de regalo (Pepsi/7-Up, Coca +$2.000).
+- **Verificado:** `pnpm test`, `tsc`, eslint de lo tocado, `pnpm build` (Codex); en local con la base real y la sesión del dueño: lista con márgenes reales (Dúo $19.318, 2ª al 50 % peor caso $2.647, regalo $20.868), editor y 375 px sin desborde. **No probado:** aprobar/editar/eliminar contra la base real.
+- **La web no lee `ofertas` todavía** (ni carta, ni carrito, ni cotización, ni bot). Etapa 2: mostrarlas y aplicarlas server-side, no acumulables, guardando el combo como líneas normales agrupadas con el precio prorrateado (así siguen andando masas, cupos, costeo, comanda y el POS). Etapa 3: Meta Pixel (hoy no hay ninguna analítica).
+
 ## Servidor de InsForge en Hostinger (13/11/2026)
 
 - **Dónde:** desde el 13/11/2026 InsForge OSS 2.3.4 corre en un **VPS de Hostinger** (KVM 1: 1 vCPU, 4 GB, Ubuntu 24.04, datacenter Boston), detrás del mismo **`https://api.impastopizzas.com`**. La URL y las claves no cambiaron: Netlify, Vercel, el recetario y Android siguen igual. Proxy **nginx** + certificado Let's Encrypt (Certbot) que se renueva solo. IP, accesos y procedimientos en la memoria de Claude, no acá (repo público).
