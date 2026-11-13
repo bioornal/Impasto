@@ -30,7 +30,7 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onBrowse, business, bebidas }: CartDrawerProps) {
-  const { items, previewItems, promoError, add, inc, dec, setMasa, remove, subtotal } = useCart();
+  const { items, previewItems, promoError, promoAplicada, add, inc, dec, setMasa, remove, subtotal } = useCart();
   const tienda = useStoreStatus();
   // Masas de la noche: si bajaron mientras armaba el pedido, se avisa y no se puede seguir.
   const sobranPizzas = excesoEnCarrito(items, tienda.masasNoche);
@@ -78,7 +78,9 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
   if (!open) return null;
 
   const sinDelivery = !tienda.delivery.activo;
-  const freeShipping = subtotal >= business.freeShippingFrom;
+  // Con promo el envío se cobra siempre (decisión del dueño, 13/11/2026).
+  const conPromo = promoAplicada !== null;
+  const freeShipping = !conPromo && subtotal >= business.freeShippingFrom;
   const progress = Math.min(100, (subtotal / business.freeShippingFrom) * 100);
   // Sin reparto no hay envío que cobrar: el pedido es para retirar.
   const shipping = sinDelivery || freeShipping ? 0 : business.deliveryFee;
@@ -143,6 +145,18 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
                 <div className="ship-text">
                   <b>Por ahora, solo retiro en nuestra cocina</b>
                   <small>{tienda.delivery.motivo}</small>
+                </div>
+              </div>
+            </div>
+          ) : conPromo ? (
+            <div className="drawer-ship is-promo">
+              <div className="drawer-ship-top">
+                <span className="ship-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7" /><circle cx="7" cy="17.5" r="1.8" /><circle cx="17" cy="17.5" r="1.8" /></svg>
+                </span>
+                <div className="ship-text">
+                  <b>Con promo, el envío va aparte: {fmt(business.deliveryFee)}</b>
+                  <small>El envío gratis desde {fmt(business.freeShippingFrom)} es para pedidos sin promo.</small>
                 </div>
               </div>
             </div>
@@ -211,7 +225,13 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
                       <button className="ci-remove" aria-label={`Quitar ${item.name} del pedido`} onClick={() => remove(item.cartId)}>Quitar</button>
                     </div>
                   </div>
-                  <b className="ci-price">{fmt(previewItems.filter(p => p.cartId === item.cartId || p.cartId.startsWith(`${item.cartId}-`)).reduce((s, p) => s + p.price * p.qty, 0) || item.price * item.qty)}</b>
+                  {(() => {
+                    const tramos = previewItems.filter(p => p.cartId === item.cartId || p.cartId.startsWith(`${item.cartId}-`));
+                    const total = tramos.length ? tramos.reduce((s, p) => s + p.price * p.qty, 0) : item.price * item.qty;
+                    const lista = item.price * item.qty;
+                    return total === 0 ? <b className="ci-price ci-gratis">Gratis</b>
+                      : <b className="ci-price">{total < lista && <s>{fmt(lista)}</s>} {fmt(total)}</b>;
+                  })()}
                   {masaDe(item) && tienda.masas.molde && (
                     <div className="ci-masa">
                       <span className="ci-masa-titulo" id={`masa-${item.cartId}`}>Elegí la masa{item.qty > 1 ? ` (las ${item.qty})` : ""}</span>
@@ -236,11 +256,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
               ))}
 
               <TuPromo />
-              {previewItems.filter(item => item.type === "bebida" && item.promo?.tipo === "regalo").map(item => (
-                <div className="cart-regalo" key={item.cartId}>
-                  <span>{item.qty} x {item.name} (regalo)</span><b>{item.price ? fmt(item.price * item.qty) : "Sin cargo"}</b>
-                </div>
-              ))}
+
 
               {/* Sugerencias, no ítems del pedido: por eso otra forma (carrusel en
                   vez de filas), "Opcional" a la vista y el precio con "+". Antes

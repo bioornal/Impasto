@@ -24,18 +24,18 @@ function conflict(run:()=>unknown, message:RegExp) {
 }
 test("cotización Dúo con 3 Muzzarellas parte 2 de combo y 1 a lista",()=>{
   const r=quote([pizza(3)],catalog(),{ofertaId:"duo"});
-  assert.equal(r.subtotal,42400); assert.equal(r.total,42400);
+  // Con promo el envío se cobra aunque supere el mínimo del envío gratis.
+  assert.equal(r.subtotal,42400); assert.equal(r.shipping,2000); assert.equal(r.freeShipping,false); assert.equal(r.total,44400);
   assert.deepEqual(r.items.map(i=>[i.qty,i.price,i.promo?.precioLista]),[[2,13450,15500],[1,15500,undefined]]);
   assert.deepEqual(r.promo,{id:"duo",nombre:"Dúo Muzza",tipo:"combo",ahorro:4100});
   assert.equal(new Set(r.items.map(i=>i.cartId)).size,2);
 });
-test("cotización regalo con bebida agotada devuelve 409",()=>{
-  const data=catalog(); data.bebidas[0].stockUnidades=0;
-  conflict(()=>quote([pizza(2)],data,{ofertaId:"regalo",regaloProductoId:"pepsi"}),/bebida/i);
+test("cotización regalo sin bebida en el pedido devuelve 409 con el aviso",()=>{
+  conflict(()=>quote([pizza(2)],catalog(),{ofertaId:"regalo"}),/Agregá una bebida/);
 });
-test("2ª al 50 % calcula envío gratis sobre subtotal descontado",()=>{
+test("2ª al 50 %: con promo el envío se cobra siempre",()=>{
   const r=quote([pizza(4)],catalog(),{ofertaId:"mitad"});
-  assert.equal(r.subtotal,46500); assert.equal(r.freeShipping,true); assert.equal(r.shipping,0);
+  assert.equal(r.subtotal,46500); assert.equal(r.freeShipping,false); assert.equal(r.shipping,2000);
   const below=quote([pizza(2)],catalog(),{ofertaId:"mitad"});
   assert.equal(below.subtotal,23250); assert.equal(below.freeShipping,false); assert.equal(below.total,25250);
 });
@@ -47,15 +47,15 @@ test("sin promo cotiza como antes y descarta marcas enviadas por el cliente",()=
   assert.equal(r.subtotal,31000); assert.equal(r.shipping,0); assert.equal(r.promo,null);
   assert.equal(r.items[0].promo,undefined); assert.equal(r.items[0].price,15500);
 });
-test("regalo cero conserva costo, stock y validación de precio de lista",()=>{
-  const r=quote([pizza(2)],catalog(),{ofertaId:"regalo",regaloProductoId:"pepsi"});
+test("regalo: la bebida del pedido queda a cero y conserva costo, stock y validación de precio de lista",()=>{
+  const r=quote([pizza(2),{key:"pepsi",cartId:"b",type:"bebida",name:"Pepsi",price:4500,qty:1}],catalog(),{ofertaId:"regalo"});
   const bebida=r.items.find(i=>i.type==="bebida")!;
   assert.equal(bebida.price,0); assert.equal(bebida.qty,1); assert.equal(bebida.promo?.tipo,"regalo");
   assert.equal(quotes.quoteCosteo(r).costo_produccion_centavos,900000);
   const data=catalog(); data.bebidas[0].precio=0;
-  assert.throws(()=>quote([pizza(2)],data,{ofertaId:"regalo",regaloProductoId:"pepsi"}));
+  assert.throws(()=>quote([pizza(2),{key:"pepsi",cartId:"b",type:"bebida",name:"Pepsi",price:4500,qty:1}],data,{ofertaId:"regalo"}));
 });
-test("regalo suma su cantidad a bebidas compradas antes de validar stock",()=>{
-  const data=catalog(); data.bebidas[0].stockUnidades=1;
-  conflict(()=>quote([pizza(2),{key:"pepsi",cartId:"b",type:"bebida",name:"Pepsi",price:4500,qty:1}],data,{ofertaId:"regalo",regaloProductoId:"pepsi"}),/no quedan bebidas|Pepsi/i);
+test("regalo respeta el stock de la bebida del pedido",()=>{
+  const data=catalog(); data.bebidas[0].stockUnidades=0;
+  conflict(()=>quote([pizza(2),{key:"pepsi",cartId:"b",type:"bebida",name:"Pepsi",price:4500,qty:1}],data,{ofertaId:"regalo"}),/Pepsi|bebida/i);
 });

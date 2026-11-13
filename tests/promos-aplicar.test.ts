@@ -46,13 +46,18 @@ test("2ª al 50 %: la más barata de cada par, mitades incluidas", () => {
   assert.ok(esErrorPromo(aplicarPromo(mitad, [L(0, "muzza", "pizza", 15500, 1), L(1, "pepsi", "bebida", 4500, 1)])));
 });
 
-test("Regalo: bebida elegida a $0 en una línea nueva; pide elegir y respeta disponibilidad", () => {
-  const lineas = [L(0, "muzza", "pizza", 15500, 2)];
-  const r = aplicarPromo(regalo, lineas, bebidas, "pepsi");
-  assert.ok(!esErrorPromo(r)); assert.equal(r.regalo!.precio, 0); assert.equal(r.ahorro, 4500); assert.equal(total(r), 31000);
-  assert.match((aplicarPromo(regalo, lineas, bebidas, null) as { error: string }).error, /Elegí/);
-  assert.ok(esErrorPromo(aplicarPromo(regalo, lineas, [bebidas[0]], "vino")));
-  assert.ok(esErrorPromo(aplicarPromo(regalo, [L(0, "muzza", "pizza", 15500, 1)], bebidas, "pepsi")));
+test("Regalo: la bebida que el cliente sumó queda gratis; sin bebida avisa; con 1 pizza avisa", () => {
+  const conPepsi = [L(0, "muzza", "pizza", 15500, 2), L(1, "pepsi", "bebida", 4500, 1)];
+  const r = aplicarPromo(regalo, conPepsi, bebidas);
+  assert.ok(!esErrorPromo(r)); assert.equal(r.regalo, null); assert.equal(r.ahorro, 4500); assert.equal(total(r), 31000);
+  assert.equal(r.tramos.find(t => t.idx === 1)!.precio, 0);
+  // Con dos bebidas, regala la que más ahorra (el vino) y cobra la otra.
+  const dos = aplicarPromo(regalo, [...conPepsi, L(2, "vino", "bebida", 7500, 1)], bebidas);
+  assert.ok(!esErrorPromo(dos)); assert.equal(dos.ahorro, 7500); assert.equal(total(dos), 31000 + 4500);
+  assert.match((aplicarPromo(regalo, [L(0, "muzza", "pizza", 15500, 2)], bebidas) as { error: string }).error, /Agregá una bebida/);
+  assert.match((aplicarPromo(regalo, [L(0, "muzza", "pizza", 15500, 1), L(1, "pepsi", "bebida", 4500, 1)], bebidas) as { error: string }).error, /Sumá 1 pizza/);
+  // Una bebida que no está entre las opciones no se regala.
+  assert.ok(esErrorPromo(aplicarPromo(regalo, [L(0, "muzza", "pizza", 15500, 2), L(1, "agua", "bebida", 2000, 1)], bebidas)));
 });
 
 test("Vigencia: aprobada, día de la noche de negocio (corte 06:00) y fechas", () => {
@@ -61,7 +66,22 @@ test("Vigencia: aprobada, día de la noche de negocio (corte 06:00) y fechas", (
   assert.deepEqual(ofertasVigentes([duo, { ...duo, id: "p", estado: "pendiente" as const }, { ...duo, id: "x", hasta: "2026-11-12" }, { ...duo, id: "l", dias: [1] }], vie).map(o => o.id), ["duo"]);
 });
 
-test("promosAplicables ordena por ahorro y evalúa el regalo con su mejor bebida", () => {
-  const r = promosAplicables([duo, mitad, regalo], [L(0, "muzza", "pizza", 15500, 2)], bebidas, new Date("2026-11-13T23:00:00Z"));
+test("promosAplicables ordena por ahorro: la primera se aplica sola", () => {
+  const r = promosAplicables([duo, mitad, regalo], [L(0, "muzza", "pizza", 15500, 2), L(1, "vino", "bebida", 7500, 1)], bebidas, new Date("2026-11-13T23:00:00Z"));
   assert.deepEqual(r.map(x => [x.oferta.id, x.resultado.ahorro]), [["mitad", 7750], ["regalo", 7500], ["duo", 4100]]);
+});
+
+test("No se acumulan: Dúo con 2 Muzzarellas + Pepsi cobra la Pepsi entera; el regalo con Muzzarellas a lista", () => {
+  const pedido = [L(0, "muzza", "pizza", 15500, 2), L(1, "pepsi", "bebida", 4500, 1)];
+  const conDuo = aplicarPromo(duo, pedido, bebidas);
+  assert.ok(!esErrorPromo(conDuo));
+  assert.equal(conDuo.tramos.find(t => t.idx === 1)!.precio, 4500, "la bebida no queda gratis si ya se aplicó el Dúo");
+  assert.equal(total(conDuo), 26900 + 4500);
+  const conRegalo = aplicarPromo(regalo, pedido, bebidas);
+  assert.ok(!esErrorPromo(conRegalo));
+  assert.ok(conRegalo.tramos.filter(t => t.idx === 0).every(t => t.precio === 15500), "las pizzas van a lista si se regala la bebida");
+  assert.equal(total(conRegalo), 31000);
+  // Las dos aplican, pero el pedido se cobra con UNA: la primera de la lista (la de más ahorro).
+  const opciones = promosAplicables([duo, regalo], pedido, bebidas, new Date("2026-11-13T23:00:00Z"));
+  assert.deepEqual(opciones.map(o => o.oferta.id), ["regalo", "duo"]);
 });

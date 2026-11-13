@@ -118,41 +118,40 @@ function aplicarDescuento(o: Oferta & { tipo: "descuento_cantidad" }, lineas: re
   return { oferta: { id: o.id, nombre: o.nombre, titulo: o.titulo, tipo: o.tipo }, tramos: tramos(lineas, conPromo), regalo: null, ahorro, veces: grupos };
 }
 
-function aplicarRegalo(o: Oferta & { tipo: "regalo" }, lineas: readonly LineaPromo[], bebidas: readonly BebidaRegalo[], elegida: string | null): ResultadoPromo | ErrorPromo {
+/**
+ * Regalo: con N pizzas, la(s) bebida(s) que el cliente YA sumó al pedido quedan a precio = suplemento (0 = gratis).
+ * No se elige nada aparte: si hay varias bebidas elegibles, se regala la más cara. Sin bebida, avisa que la sume.
+ */
+function aplicarRegalo(o: Oferta & { tipo: "regalo" }, lineas: readonly LineaPromo[]): ResultadoPromo | ErrorPromo {
   const c = o.config;
-  const pizzas = unidades(lineas).filter(esPizza).length;
-  if (pizzas < c.minimoPizzas) { const faltan = c.minimoPizzas - pizzas; return { error: `Sumá ${faltan} pizza${faltan > 1 ? "s" : ""} más y te llevás la bebida de regalo.` }; }
-  const disponibles = c.opciones.filter(op => bebidas.some(b => b.id === op.producto));
-  if (!disponibles.length) return { error: "Hoy no quedan bebidas para regalar." };
-  const opcion = elegida ? disponibles.find(op => op.producto === elegida) : null;
-  if (!opcion) return { error: elegida ? "Esa bebida ya no está disponible para el regalo. Elegí otra." : "Elegí la bebida de regalo." };
-  const bebida = bebidas.find(b => b.id === opcion.producto)!;
-  const precio = Math.min(bebida.precio, opcion.suplemento);
-  const ahorro = (bebida.precio - precio) * c.cantidad;
-  return {
-    oferta: { id: o.id, nombre: o.nombre, titulo: o.titulo, tipo: o.tipo }, tramos: tramos(lineas, []),
-    regalo: { bebida, cantidad: c.cantidad, precio, promo: marca(o, bebida.precio) }, ahorro, veces: 1,
-  };
+  const us = unidades(lineas);
+  const pizzas = us.filter(esPizza).length;
+  if (pizzas < c.minimoPizzas) { const faltan = c.minimoPizzas - pizzas; return { error: `Sumá ${faltan} pizza${faltan > 1 ? "s" : ""} más y la bebida te la regalamos.` }; }
+  const suplemento = (id: string | null) => c.opciones.find(op => op.producto === id)?.suplemento;
+  const elegibles = us.filter(u => u.tipo === "bebida" && suplemento(u.productoId) !== undefined)
+    .sort((a, b) => (b.precio - Math.min(b.precio, suplemento(b.productoId)!)) - (a.precio - Math.min(a.precio, suplemento(a.productoId)!)));
+  if (!elegibles.length) return { error: "Agregá una bebida a tu pedido y te la regalamos." };
+  const regaladas = elegibles.slice(0, c.cantidad).map(u => ({ idx: u.idx, precio: Math.min(u.precio, suplemento(u.productoId)!), promo: marca(o, u.precio) }));
+  const ahorro = regaladas.reduce((s, u) => s + u.promo.precioLista - u.precio, 0);
+  return { oferta: { id: o.id, nombre: o.nombre, titulo: o.titulo, tipo: o.tipo }, tramos: tramos(lineas, regaladas), regalo: null, ahorro, veces: 1 };
 }
 
 /**
  * Aplica UNA promo (no son acumulables). `bebidas`: bebidas vendibles ahora (disponibles y con stock), para el regalo.
  */
-export function aplicarPromo(oferta: Oferta, lineas: readonly LineaPromo[], bebidas: readonly BebidaRegalo[] = [], regaloElegido: string | null = null): ResultadoPromo | ErrorPromo {
+/** `_bebidas` y `_regaloElegido` quedan por compatibilidad: el regalo ahora sale de las bebidas del pedido. */
+export function aplicarPromo(oferta: Oferta, lineas: readonly LineaPromo[], _bebidas: readonly BebidaRegalo[] = [], _regaloElegido: string | null = null): ResultadoPromo | ErrorPromo {
   if (oferta.estado !== "aprobada") return { error: "Esa promo no está activa." };
   if (oferta.tipo === "combo") return aplicarCombo(oferta, lineas);
   if (oferta.tipo === "descuento_cantidad") return aplicarDescuento(oferta, lineas);
-  return aplicarRegalo(oferta, lineas, bebidas, regaloElegido);
+  return aplicarRegalo(oferta, lineas);
 }
 
-/** Las promos vigentes que aplican al pedido, de mayor a menor ahorro. El regalo se evalúa con su mejor bebida. */
+/** Las promos vigentes que aplican al pedido, de mayor a menor ahorro. La primera es la que se aplica sola. */
 export function promosAplicables(ofertas: readonly Oferta[], lineas: readonly LineaPromo[], bebidas: readonly BebidaRegalo[], ahora: Date) {
   return ofertasVigentes(ofertas, ahora).flatMap(o => {
-    const mejor = o.tipo === "regalo"
-      ? o.config.opciones.filter(op => bebidas.some(b => b.id === op.producto))
-        .map(op => aplicarPromo(o, lineas, bebidas, op.producto)).filter((r): r is ResultadoPromo => !("error" in r)).sort((a, b) => b.ahorro - a.ahorro)[0]
-      : aplicarPromo(o, lineas, bebidas);
-    return mejor && !("error" in mejor) ? [{ oferta: o, resultado: mejor }] : [];
+    const r = aplicarPromo(o, lineas, bebidas);
+    return "error" in r ? [] : [{ oferta: o, resultado: r }];
   }).sort((a, b) => b.resultado.ahorro - a.resultado.ahorro);
 }
 

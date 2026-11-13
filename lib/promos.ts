@@ -56,8 +56,8 @@ export function analisisOferta(oferta: OfertaInput, productos: readonly Producto
   const tasa = numero(contexto.comisionPct) && contexto.comisionPct >= 0 && contexto.comisionPct < 100 ? contexto.comisionPct / 100 : null;
   const envio = (paga: number) => {
     if (contexto.envio === null || contexto.envioGratisDesde === null) return null;
-    const gratis = paga >= contexto.envioGratisDesde;
-    return { pagaCliente: gratis ? 0 : contexto.envio, resignas: gratis ? contexto.envio : 0 };
+    // Con promo el envío se cobra siempre (decisión del dueño, 13/11/2026): nunca se resigna.
+    return { pagaCliente: contexto.envio, resignas: 0 };
   };
   const pedido = (nombre: string, normal: number, paga: number, costo: number, costoRegalo?: number): PedidoAnalisis => ({
     nombre, paga, costo, teQueda: paga - costo, resignas: normal - paga, gananciaNormal: normal - costo,

@@ -4,7 +4,7 @@ import { useStoreStatus } from "@/components/providers/StoreStatusProvider";
 import type { CartItem, Masa, CatalogData } from "@/types";
 import { promosAplicables, ofertasVigentes } from "@/lib/promos-aplicar";
 import type { Oferta } from "@/lib/promos";
-import { bebidasParaRegalo, cotizarPromo, lineasPromo, type PedidoPromoSeleccion, type PedidoPromo } from "@/lib/promos-web";
+import { cotizarPromo, lineasPromo, type PedidoPromoSeleccion, type PedidoPromo } from "@/lib/promos-web";
 import { bebidasConStock } from "@/lib/stock-bebidas";
 import { uid } from "@/lib/utils";
 import { ajustarMasas, cambiarMasa, esMismaLinea, masaDe, masaUnica } from "@/lib/masa";
@@ -53,12 +53,12 @@ export function CartProvider({ children, data }: { children: React.ReactNode; da
   const catalogo = useMemo(() => ({ ...data, ofertas: ofertasVigentes(vigentes ?? data.ofertas ?? [], new Date()),
     stockBebidas, bebidas: bebidasConStock(data.bebidas, stockBebidas) }), [data, stockBebidas, vigentes]);
   const ofertas = catalogo.ofertas;
-  const promoOpciones = useMemo(() => promosAplicables(ofertas, lineasPromo(items), bebidasParaRegalo(catalogo, items), new Date())
-    .filter(({ oferta }) => oferta.tipo !== "regalo" || bebidasParaRegalo(catalogo, items, oferta.config.cantidad)
-      .some(b => oferta.config.opciones.some(op => op.producto === b.id))), [ofertas, items, catalogo]);
-  const mejor = promoOpciones[0];
-  const promo = elegida === undefined ? (mejor ? { ofertaId: mejor.oferta.id,
-    ...(mejor.resultado.regalo ? { regaloProductoId: mejor.resultado.regalo.bebida.id } : {}) } : null) : elegida;
+  // La promo se aplica sola: la de mayor ahorro para lo que armó el cliente. Si agregó un combo desde
+  // "Promos de hoy", se respeta ese combo mientras siga aplicando. El cliente no elige nada en el carrito.
+  const promoOpciones = useMemo(() => promosAplicables(ofertas, lineasPromo(items), [], new Date()), [ofertas, items]);
+  const combo = elegida ? promoOpciones.find(p => p.oferta.id === elegida.ofertaId) : undefined;
+  const mejor = combo ?? promoOpciones[0];
+  const promo: PedidoPromoSeleccion | null = mejor ? { ofertaId: mejor.oferta.id } : null;
   const calculo = (() => {
     try { return { ...cotizarPromo(items, catalogo, promo), error: "" }; }
     catch (error) { return { items, promo: null, error: error instanceof Error ? error.message : "Revisá tu promo." }; }
@@ -98,7 +98,8 @@ export function CartProvider({ children, data }: { children: React.ReactNode; da
   useEffect(() => {
     if (!ready) return;
     localStorage.setItem("impasto_cart", JSON.stringify(items));
-    localStorage.setItem("impasto_cart_promo", JSON.stringify(promo));
+    // Solo se recuerda el combo que el cliente agregó a propósito; lo automático se recalcula.
+    localStorage.setItem("impasto_cart_promo", JSON.stringify(elegida ?? null));
     if (items.length === 0) {
       fetch("/api/cart/draft", { method: "DELETE" }).catch(() => {});
       return;

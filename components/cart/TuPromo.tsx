@@ -1,7 +1,7 @@
 "use client";
-import { useId, useState } from "react";
 import { useCart } from "@/components/providers/CartProvider";
-import { bebidasParaRegalo } from "@/lib/promos-web";
+import { promosAplicables } from "@/lib/promos-aplicar";
+import { lineasPromo } from "@/lib/promos-web";
 import { fmt } from "@/lib/utils";
 
 const Check = () => (
@@ -9,74 +9,38 @@ const Check = () => (
 );
 
 /**
- * La promo del carrito, en una línea: la mejor ya viene aplicada; "Cambiar" muestra las otras.
- * Si es un regalo, la bebida se elige con un toque. Comparte la elección con el checkout y el borrador.
+ * La promo del carrito se aplica sola según lo que armó el cliente: acá solo se confirma y, si le falta
+ * poco para una, se le dice qué sumar. El cliente no elige nada.
  */
-export function TuPromo() {
-  const id = useId();
-  const { items, catalogo, ofertas, promoOpciones, promo, promoAplicada, promoError, setPromo } = useCart();
-  const [cambiando, setCambiando] = useState(false);
+export function TuPromo({ onBebidas }: { onBebidas?: () => void }) {
+  const { items, ofertas, promoAplicada, promoError } = useCart();
 
-  const pizzas = items.filter(i => i.type === "pizza" || i.type === "pizza-half").reduce((s, i) => s + i.qty, 0);
-  const regaloCerca = ofertas.find(o => o.tipo === "regalo" && pizzas > 0 && pizzas < o.config.minimoPizzas);
-  if (!promoOpciones.length && !promo) {
-    if (!regaloCerca || regaloCerca.tipo !== "regalo") return null;
-    const faltan = regaloCerca.config.minimoPizzas - pizzas;
-    return <p className="tu-promo-pista">Sumá {faltan} pizza{faltan > 1 ? "s" : ""} más y te regalamos una bebida.</p>;
-  }
-
-  const seleccionada = promoOpciones.find(p => p.oferta.id === promo?.ofertaId)?.oferta;
-  const bebidas = seleccionada?.tipo === "regalo"
-    ? bebidasParaRegalo(catalogo, items, seleccionada.config.cantidad).filter(b => seleccionada.config.opciones.some(op => op.producto === b.id))
-    : [];
-  const elegir = (ofertaId: string | null) => {
-    const o = promoOpciones.find(x => x.oferta.id === ofertaId);
-    setPromo(o ? { ofertaId: o.oferta.id, ...(o.resultado.regalo ? { regaloProductoId: o.resultado.regalo.bebida.id } : {}) } : null);
-    setCambiando(false);
-  };
-
-  return (
-    <section className="tu-promo" aria-labelledby={`${id}-t`}>
-      <div className={`tu-promo-aplicada ${promoAplicada ? "on" : ""}`}>
-        {promoAplicada ? <span className="tu-promo-icono"><Check /></span> : null}
-        <div className="tu-promo-texto">
-          <b id={`${id}-t`}>{promoAplicada ? promoAplicada.nombre : "Sin promo"}</b>
-          <small>{promoAplicada ? `Ahorrás ${fmt(promoAplicada.ahorro)}` : `Tenés ${promoOpciones.length === 1 ? "una promo disponible" : `${promoOpciones.length} promos disponibles`}`}</small>
-        </div>
-        {(promoOpciones.length > 1 || !promoAplicada) && (
-          <button type="button" className="tu-promo-cambiar" aria-expanded={cambiando} onClick={() => setCambiando(v => !v)}>
-            {cambiando ? "Listo" : promoAplicada ? "Cambiar" : "Ver"}
-          </button>
-        )}
-      </div>
-
-      {seleccionada?.tipo === "regalo" && bebidas.length > 0 && !cambiando && (
-        <div className="tu-promo-bebidas" role="group" aria-label="Elegí tu bebida de regalo">
-          <span>Elegí tu bebida</span>
-          <div>
-            {bebidas.map(b => (
-              <button type="button" key={b.id} aria-pressed={promo?.regaloProductoId === b.id}
-                onClick={() => setPromo({ ofertaId: seleccionada.id, regaloProductoId: b.id })}>
-                {b.nombre}
-              </button>
-            ))}
+  if (promoAplicada) {
+    return (
+      <section className="tu-promo" aria-live="polite">
+        <div className="tu-promo-aplicada on">
+          <span className="tu-promo-icono"><Check /></span>
+          <div className="tu-promo-texto">
+            <b>{promoAplicada.nombre}</b>
+            <small>Ya aplicada · ahorrás {fmt(promoAplicada.ahorro)}</small>
           </div>
         </div>
-      )}
+        {promoError && <p className="tu-promo-error" role="alert">{promoError}</p>}
+      </section>
+    );
+  }
 
-      {cambiando && (
-        <div className="tu-promo-lista" role="radiogroup" aria-label="Elegí tu promo">
-          {promoOpciones.map(({ oferta, resultado }) => (
-            <button type="button" role="radio" aria-checked={promo?.ofertaId === oferta.id} key={oferta.id} onClick={() => elegir(oferta.id)}>
-              <span>{oferta.titulo || oferta.nombre}</span><small>Ahorrás {fmt(resultado.ahorro)}</small>
-            </button>
-          ))}
-          <button type="button" role="radio" aria-checked={!promo} onClick={() => elegir(null)}><span>Sin promo</span></button>
-          <p>Una promo por pedido.</p>
-        </div>
-      )}
-
-      {promoError && <p className="tu-promo-error" role="alert">{promoError}</p>}
-    </section>
+  // Sin promo todavía: el aviso más útil para llegar a una (por ahora, el regalo de bebida).
+  const pizzas = items.filter(i => i.type === "pizza" || i.type === "pizza-half").reduce((s, i) => s + i.qty, 0);
+  const regalo = ofertas.find(o => o.tipo === "regalo");
+  if (!regalo || regalo.tipo !== "regalo" || pizzas === 0 || promosAplicables(ofertas, lineasPromo(items), [], new Date()).length) return null;
+  const faltan = regalo.config.minimoPizzas - pizzas;
+  return (
+    <div className="tu-promo-pista" aria-live="polite">
+      {faltan > 0
+        ? <span>Sumá {faltan} pizza{faltan > 1 ? "s" : ""} más y una bebida: <b>la bebida te la regalamos</b>.</span>
+        : <span>Ya tenés {regalo.config.minimoPizzas} pizzas: <b>agregá una bebida y te la regalamos</b>.</span>}
+      {faltan <= 0 && onBebidas && <button type="button" onClick={onBebidas}>Ver bebidas</button>}
+    </div>
   );
 }

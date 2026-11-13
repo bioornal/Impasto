@@ -69,7 +69,8 @@ function TarjetaOferta({ oferta, vendibles, onNav, onAdded }: { oferta: Oferta; 
         {oferta.tipo === "combo"
           ? <button className="btn btn-dark oferta-hoy-cta" disabled={!completo} onClick={agregar}>{completo ? "Agregar al pedido" : "Hoy no disponible"}</button>
           : <button className="btn btn-dark oferta-hoy-cta" onClick={() => onNav("pizzas")}>Elegir pizzas</button>}
-        {oferta.tipo !== "combo" && <p className="oferta-hoy-nota">Se aplica sola cuando sumás las pizzas.</p>}
+        {oferta.tipo === "regalo" && <p className="oferta-hoy-nota">Sumá {oferta.config.minimoPizzas} pizzas y una bebida: la bebida te sale gratis.</p>}
+        {oferta.tipo === "descuento_cantidad" && <p className="oferta-hoy-nota">Se aplica sola cuando sumás las pizzas.</p>}
       </div>
     </article>
   );
@@ -88,7 +89,7 @@ export function OfertasHoy({ onNav, onAdded }: { onNav: (s: string) => void; onA
       <div className="container">
         <div className="ofertas-hoy-head">
           <h2 id="ofertas-hoy-titulo">Promos de hoy</h2>
-          <p>Una por pedido. Te la aplicamos en el carrito.</p>
+          <p>Se aplican solas en el carrito, una por pedido. Con promo, el envío se cobra aparte.</p>
         </div>
         <div className={`ofertas-hoy-grid ${ofertas.length === 1 ? "una" : ""}`}>
           {ofertas.map(o => <TarjetaOferta key={o.id} oferta={o} vendibles={vendibles} onNav={onNav} onAdded={onAdded} />)}
