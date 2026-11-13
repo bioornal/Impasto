@@ -2732,3 +2732,18 @@ html.ficha-abierta .toast{ top:calc(14px + env(safe-area-inset-top)); bottom:aut
 .oferta-hoy-precio{ font-size:22px; }
 .ofertas-hoy-nota{ margin:10px 0 0; font-size:13px; color:var(--ink-2); }
 .co-promo{ color:var(--accent-2); font-weight:600; }
+/* Tu promo (carrito) */
+.tu-promo{ margin:14px 0 4px; padding:14px; border:1px solid var(--line); border-radius:14px; background:var(--surface); min-width:0; }
+.tu-promo legend{ padding:0 6px; font-family:var(--font-display); font-size:18px; color:var(--ink); }
+.tu-promo-ayuda{ margin:0 0 10px; font-size:13px; color:var(--ink-2); }
+.tu-promo-opciones{ display:flex; flex-direction:column; gap:8px; }
+.tu-promo-opcion{ display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; cursor:pointer; background:var(--bg); }
+.tu-promo-opcion.on{ border-color:var(--accent); background:var(--accent-soft); }
+.tu-promo-opcion input{ accent-color:var(--accent); width:18px; height:18px; flex:none; }
+.tu-promo-opcion span{ display:flex; flex-direction:column; min-width:0; font-size:15px; }
+.tu-promo-opcion small{ font-size:13px; color:var(--accent-2); font-weight:600; }
+.tu-promo-bebida{ display:flex; flex-direction:column; gap:6px; margin-top:12px; font-size:14px; }
+.tu-promo-bebida select{ width:100%; max-width:100%; min-height:44px; border-radius:10px; border:1px solid var(--line-2); padding:0 10px; font-size:16px; background:var(--bg); }
+.tu-promo-ahorro{ margin:10px 0 0; font-weight:700; color:var(--accent-2); }
+.tu-promo-error{ margin:10px 0 0; color:var(--accent); font-size:14px; }
+.cart-regalo{ display:flex; justify-content:space-between; gap:10px; margin:8px 0 0; padding:10px 12px; border-radius:12px; background:var(--ok-soft); font-size:14px; }
