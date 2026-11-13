@@ -167,3 +167,12 @@ Consecuencias para el diseño:
    lleguen por WhatsApp desde los anuncios se cargan ahí. Si el operario cargara a precio de lista y cobrara
    menos, el recetario repartiría mal el descuento.
 5. Android del recetario no tiene las reglas nuevas de Ganancias (ya pasaba antes); queda anotado.
+
+## Regalo: el cliente elige cualquier bebida, según stock (13/11/2026)
+
+Decisión del dueño: la promo pasó a **"+ Bebida de regalo"** (nombre interno "Bebida de regalo"): con 2 pizzas,
+cualquier bebida de la carta sin cargo (suplementos en 0), "siempre y cuando el stock lo permita". Hoy las
+bebidas no tienen contador de stock: solo el interruptor de disponible del producto. En la etapa 2 el
+selector del regalo muestra solo las bebidas disponibles en ese momento y la cotización rechaza una
+bebida que se apagó; si hace falta stock por unidades, va como cupo por bebida (como `cupos_noche`).
+Peor caso con el vino ($4.233): el pedido mínimo deja $19.185.
