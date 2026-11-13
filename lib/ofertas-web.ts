@@ -5,7 +5,7 @@ import type { Oferta } from "./promos";
 import { ofertasVigentes } from "./promos-aplicar";
 
 /** Columnas comerciales exclusivamente: no se consulta ni se serializa ningún costo del panel. */
-const COLUMNAS = "id,tipo,nombre,titulo,descripcion,estado,config,dias,desde,hasta,orden,aprobada_en,creada_en,actualizada_en";
+const COLUMNAS = "id,tipo,nombre,titulo,descripcion,estado,config,dias,desde,hasta,orden,aprobada_en,creada_en,actualizada_en,imagen";
 
 export async function leerOfertasVigentes(ahora = new Date()): Promise<Oferta[]> {
   try {
@@ -18,7 +18,7 @@ export async function leerOfertasVigentes(ahora = new Date()): Promise<Oferta[]>
         : o.tipo === "regalo" ? { minimoPizzas: o.config.minimoPizzas, cantidad: o.config.cantidad, opciones: o.config.opciones.map(op => ({ producto: op.producto, suplemento: op.suplemento })) }
           : { cada: o.config.cada, porcentaje: o.config.porcentaje, productos: o.config.productos === null ? null : [...o.config.productos] },
       dias: [...o.dias], desde: o.desde, hasta: o.hasta, orden: o.orden,
-      aprobada_en: o.aprobada_en, creada_en: o.creada_en, actualizada_en: o.actualizada_en,
+      aprobada_en: o.aprobada_en, creada_en: o.creada_en, actualizada_en: o.actualizada_en, imagen: o.imagen ?? null,
     }) as Oferta);
   } catch (error) {
     console.error("[ofertas] lectura no crítica:", error);

@@ -8,7 +8,7 @@ import type { ContextoNegocioLeido, OfertaInput, ProductoOferta } from "./promos
 import { SUCURSAL_ID } from "./business";
 import { diaDeNegocio } from "./resumen-diario";
 
-export const COLUMNAS_OFERTAS = "id,tipo,nombre,titulo,descripcion,estado,config,dias,desde,hasta,orden,aprobada_en,creada_en,actualizada_en";
+export const COLUMNAS_OFERTAS = "id,tipo,nombre,titulo,descripcion,estado,config,dias,desde,hasta,orden,aprobada_en,creada_en,actualizada_en,imagen";
 
 /** Contexto informativo: cada lectura falla de forma independiente, sin bloquear las ofertas. */
 export async function contextoNegocio(ahora = new Date()): Promise<ContextoNegocioLeido> {

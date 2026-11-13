@@ -7,7 +7,7 @@ export type ConfigOferta =
   | { tipo: "descuento_cantidad"; config: { cada: number; porcentaje: number; productos: string[] | null } }
   | { tipo: "regalo"; config: { minimoPizzas: number; cantidad: number; opciones: { producto: string; suplemento: number }[] } };
 export type OfertaInput = ConfigOferta & { nombre: string; titulo: string; descripcion: string; dias: number[]; desde: string | null; hasta: string | null; orden: number };
-export type Oferta = OfertaInput & { id: string; estado: EstadoOferta; aprobada_en: string | null; creada_en: string; actualizada_en: string };
+export type Oferta = OfertaInput & { id: string; estado: EstadoOferta; aprobada_en: string | null; creada_en: string; actualizada_en: string; imagen?: string | null };
 export interface MargenOferta {
   peor: number | null; mejor: number | null; ahorroMinimo: number | null; ahorroMaximo: number | null;
   pedidoMinimo: number | null; costoRegalo: number | null; conTarjetaPeor: number | null;

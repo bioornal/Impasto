@@ -464,6 +464,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
             <span className="co-summary-head-main">
               <b>Tu pedido</b>
               <small>{count} ítem{count !== 1 ? "s" : ""} · {resumenAbierto ? "Ocultar detalle" : "Ver detalle"}</small>
+              {!quoteLoading && quote?.promo && <small className="co-promo">{quote.promo.nombre} · ahorrás {fmt(quote.promo.ahorro)}</small>}
             </span>
             <b className="co-summary-head-total">{fmt(total)}</b>
           </button>

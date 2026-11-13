@@ -965,3 +965,12 @@ a{ color:inherit; text-decoration:none; }
   .promo-leyenda { gap:8px 14px; font-size:11px; }
 }
 .promo-eje > div > span:last-child { transform:translateX(-100%); }
+/* Imagen de promociones */
+.oferta-thumb{ width:56px; height:42px; flex:none; border-radius:8px; object-fit:cover; background:#eef0f3; }
+.oferta-thumb-vacia{ display:grid; place-items:center; font-size:10px; color:#8a919c; text-align:center; }
+.oferta-imagen{ display:grid; grid-template-columns:160px 1fr; gap:12px; align-items:start; }
+.oferta-imagen img, .oferta-imagen-vacia{ width:160px; aspect-ratio:4/3; border-radius:10px; object-fit:cover; background:#eef0f3; border:1px solid #e3e6eb; }
+.oferta-imagen-vacia{ display:grid; place-items:center; font-size:12px; color:#6b7280; }
+.oferta-imagen label.btn{ cursor:pointer; }
+.oferta-imagen-ayuda{ margin:6px 0 0; font-size:12px; color:#6b7280; line-height:1.4; }
+@media (max-width:520px){ .oferta-imagen{ grid-template-columns:1fr; } .oferta-imagen img, .oferta-imagen-vacia{ width:100%; } }

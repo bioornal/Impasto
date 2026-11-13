@@ -70,6 +70,33 @@ function SelectorProductos({ productos, seleccionados, onChange, categoria }: { 
   </div>;
 }
 
+/** Imagen de la promo: se sube apenas se elige (como la foto de un producto). Recomendado 1200 × 900 px. */
+function ImagenOferta({ id, actual }: { id: string; actual: string | null }) {
+  const { recargar } = usePromociones();
+  const [imagen, setImagen] = useState(actual), [estado, setEstado] = useState(""), [subiendo, setSubiendo] = useState(false);
+  const inputId = useId();
+  const subir = async (archivo: File | undefined) => {
+    if (!archivo) return;
+    setSubiendo(true); setEstado("Subiendo imagen…");
+    try {
+      const datos = new FormData(); datos.append("imagen", archivo);
+      const r = await fetch(`/api/admin/ofertas/${id}/imagen`, { method: "POST", body: datos }); const d = await r.json();
+      if (!r.ok || !d.ok) throw new Error(d.error || "No se pudo subir la imagen.");
+      setImagen(d.imagen); setEstado("Imagen guardada."); void recargar();
+    } catch (e) { setEstado(e instanceof Error ? e.message : "No se pudo subir la imagen."); }
+    finally { setSubiendo(false); }
+  };
+  return <div className="oferta-imagen">
+    {imagen ? <img src={imagen} alt="Imagen actual de la promo" /> : <div className="oferta-imagen-vacia">Sin imagen todavía</div>}
+    <div>
+      <label htmlFor={inputId} className="btn btn-sm">{imagen ? "Cambiar imagen" : "Subir imagen"}</label>
+      <input id={inputId} type="file" accept="image/jpeg,image/png,image/webp" hidden disabled={subiendo} onChange={e => void subir(e.target.files?.[0])} />
+      <p className="oferta-imagen-ayuda">JPG, PNG o WebP, hasta 4 MB. Ideal 1200 × 900 px (4:3), el producto al centro y sin texto: el título y el precio los pone la web.</p>
+      {estado && <p role="status" className="oferta-imagen-ayuda">{estado}</p>}
+    </div>
+  </div>;
+}
+
 function Editor({ inicial, guardar, cerrar, ocupado, error }: { inicial: OfertaInput; guardar: (o: OfertaInput) => void; cerrar: () => void; ocupado: boolean; error: string }) {
   const { productos, comisionPct, contexto } = usePromociones(); const [o, set] = useState<OfertaInput>(() => structuredClone(inicial));
   const ref = useRef<HTMLDialogElement>(null); const id = useId();
@@ -88,6 +115,7 @@ function Editor({ inicial, guardar, cerrar, ocupado, error }: { inicial: OfertaI
         <label>Nombre interno<input autoFocus required maxLength={200} value={o.nombre} onChange={e => set({ ...o, nombre: e.target.value })} /></label>
         <label>Título para el cliente<input required maxLength={200} value={o.titulo} onChange={e => set({ ...o, titulo: e.target.value })} /></label>
         <label>Descripción para el cliente<textarea maxLength={2000} rows={2} value={o.descripcion} onChange={e => set({ ...o, descripcion: e.target.value })} /></label>
+        {"id" in inicial ? <ImagenOferta id={(inicial as Oferta).id} actual={(inicial as Oferta).imagen ?? null} /> : <p className="oferta-imagen-ayuda">La imagen se carga después de guardar la promoción.</p>}
         {o.tipo === "combo" && <>
           <label>Precio del combo ($)<input type="number" min="0.01" step="0.01" value={o.config.precio} onChange={e => set({ ...o, config: { ...o.config, precio: Number(e.target.value) } })} /></label>
           {o.config.lugares.map((l, i) => <fieldset className="oferta-grupo" key={i}><legend>Lugar {i + 1}</legend>
@@ -164,7 +192,7 @@ export function Promociones() {
       {(error || fallo) && <p className="oferta-error" role="alert">{error || fallo} {error && <button className="btn btn-sm" disabled={cargando} onClick={() => void recargar()}>Reintentar</button>}</p>}
       {cargando && <p role="status">Cargando promociones…</p>}
       {!cargando && !error && <ul className="ofertas-lista">{ordenadas.map(o => <li key={o.id}>
-        <div className="oferta-info"><strong>{o.nombre}</strong><div className="promo-rankings"><small>#{ranking.vos.findIndex(f=>f.id===o.id)+1} para vos</small><small>#{ranking.cliente.findIndex(f=>f.id===o.id)+1} para el cliente</small></div><span className="text-muted">{tipos[o.tipo]} · {resumenOferta(o, productos)}</span><small>{dias.filter(([d]) => o.dias.includes(d)).map(([, n]) => n).join(" · ")}{o.desde ? ` · Desde ${o.desde}` : ""}{o.hasta ? ` · Hasta ${o.hasta}` : ""}</small><small>{estados[o.estado]}{o.margen.errores.length ? " · Revisar" : ""} · Última edición: {new Date(o.actualizada_en).toLocaleString("es-AR")}</small></div>
+        {o.imagen ? <img className="oferta-thumb" src={o.imagen} alt="" loading="lazy" /> : <span className="oferta-thumb oferta-thumb-vacia" aria-hidden="true">Sin imagen</span>}<div className="oferta-info"><strong>{o.nombre}</strong><div className="promo-rankings"><small>#{ranking.vos.findIndex(f=>f.id===o.id)+1} para vos</small><small>#{ranking.cliente.findIndex(f=>f.id===o.id)+1} para el cliente</small></div><span className="text-muted">{tipos[o.tipo]} · {resumenOferta(o, productos)}</span><small>{dias.filter(([d]) => o.dias.includes(d)).map(([, n]) => n).join(" · ")}{o.desde ? ` · Desde ${o.desde}` : ""}{o.hasta ? ` · Hasta ${o.hasta}` : ""}</small><small>{estados[o.estado]}{o.margen.errores.length ? " · Revisar" : ""} · Última edición: {new Date(o.actualizada_en).toLocaleString("es-AR")}</small></div>
         <OfertaNumeros analisis={o.analisis} tipo={o.tipo} desplegable />
         <Margen margen={o.margen} tipo={o.tipo} />
         <div className="oferta-acciones">

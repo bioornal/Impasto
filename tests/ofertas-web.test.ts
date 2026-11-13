@@ -7,6 +7,7 @@ const base: Oferta = { id: "duo", nombre: "Dúo", titulo: "Dúo Muzza", descripc
 let falla = false;
 const columnas: string[] = [], filtros: [string, unknown][] = [];
 const loader = Module as unknown as { _load: (id: string, ...args: unknown[]) => unknown };
+let pagina = 0;
 const original = loader._load;
 loader._load = (id, ...args) => {
   if (id === "server-only") return {};
@@ -14,8 +15,9 @@ loader._load = (id, ...args) => {
     assert.equal(tabla, "ofertas");
     const q = {
       select(c: string) { columnas.push(c); return q; }, eq(k: string, v: unknown) { filtros.push([k, v]); return q; }, order() { return q; },
-      range() { return q; }, then(resolve: (value: unknown) => unknown) {
-        if (falla) return Promise.reject(new Error("sin conexión"));
+      range(inicio: number) { pagina = inicio; return q; }, then(resolve: (value: unknown) => unknown, reject: (motivo: unknown) => unknown) {
+        if (pagina > 0) return Promise.resolve(resolve({ error: null, data: [] }));
+        if (falla) return reject(new Error("sin conexión"));
         return Promise.resolve(resolve({ error: null, data: [
           { ...base, costo: 999, margen: { secreto: 1 }, config: { ...base.config, costo: 999 } },
           { ...base, id: "vencida", hasta: "2026-11-12" }, { ...base, id: "pausada", estado: "pausada" },

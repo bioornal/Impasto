@@ -33,3 +33,9 @@ export function claveDeFoto(productoId: string, fecha: Date, ext: TipoImagen["ex
   const sello = fecha.toISOString().replace(/[-:.]/g, "");
   return `fotos/${productoId}/${sello}.${ext}`;
 }
+
+/** `promos/<id>/<fecha>.<ext>`: imagen de una promo. Nunca pisa una anterior (el CDN serviría la vieja). */
+export function claveDeImagenPromo(ofertaId: string, fecha: Date, ext: TipoImagen["ext"]): string {
+  const sello = fecha.toISOString().replace(/[-:.]/g, "");
+  return `promos/${ofertaId}/${sello}.${ext}`;
+}
