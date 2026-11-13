@@ -2,12 +2,12 @@ import { diaDeNegocio } from "./resumen-diario";
 
 export type SeccionAdmin =
   | "arranque" | "pedidos" | "resumen"
-  | "productos" | "etiquetas"
+  | "productos" | "etiquetas" | "promociones"
   | "dashboard" | "clientes" | "testimonios"
   | "configuracion";
 
 export const SECCIONES_ADMIN: readonly SeccionAdmin[] = [
-  "arranque", "pedidos", "resumen", "productos", "etiquetas", "dashboard", "clientes", "testimonios", "configuracion",
+  "arranque", "pedidos", "resumen", "productos", "etiquetas", "promociones", "dashboard", "clientes", "testimonios", "configuracion",
 ];
 
 export const esSeccionAdmin = (valor: unknown): valor is SeccionAdmin =>

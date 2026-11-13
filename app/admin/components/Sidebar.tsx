@@ -5,6 +5,8 @@ import { useAdminSesion } from "./AdminSesion";
 import { Icon } from "./Icons";
 import type { SeccionAdmin } from "@/lib/inicio-admin";
 
+import { usePromociones } from "./Promociones";
+
 interface SidebarProps {
   current: SeccionAdmin;
   onNav: (seccion: SeccionAdmin) => void;
@@ -16,6 +18,8 @@ export function Sidebar({ current, onNav, open, onClose }: SidebarProps) {
   const router = useRouter();
   const { state } = useStore();
   const { email } = useAdminSesion();
+  const { ofertas } = usePromociones();
+  const pendientes = ofertas.filter(o => o.estado === "pendiente").length;
   const nuevos = state.orders.filter((o) => o.estado === "nuevo").length;
   const opinionesPendientes = state.testimonials.filter((t) => t.estado === "pendiente").length;
 
@@ -27,6 +31,7 @@ export function Sidebar({ current, onNav, open, onClose }: SidebarProps) {
     ] },
     { titulo: "Carta", items: [
       { key: "productos", label: "Productos", icon: <Icon.Pizza /> },
+      { key: "promociones", label: "Promociones", icon: <Icon.Tag />, badge: pendientes },
       { key: "etiquetas", label: "Etiquetas", icon: <Icon.Tag /> },
     ] },
     { titulo: "Negocio", items: [

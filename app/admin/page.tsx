@@ -19,6 +19,8 @@ import { BusquedaGlobal } from "./components/BusquedaGlobal";
 import { seccionInicial, type SeccionAdmin } from "@/lib/inicio-admin";
 import type { ResultadoBusqueda } from "@/lib/busqueda-admin";
 
+import { Promociones, PromocionesProvider } from "./components/Promociones";
+
 const CLAVE_SECCION = "impasto_admin_seccion";
 
 const TITLES: Record<SeccionAdmin, [string, string]> = {
@@ -26,6 +28,7 @@ const TITLES: Record<SeccionAdmin, [string, string]> = {
   pedidos:       ["Pedidos", "Los pedidos de la web y del POS"],
   resumen:       ["Resumen diario", "Pizzas, pedidos y cobros de cada noche"],
   productos:     ["Productos", "Pizzas, empanadas y bebidas de la carta"],
+  promociones:   ["Promociones y combos", "Combos y descuentos: se publican recién cuando los aprobás"],
   etiquetas:     ["Etiquetas", "Los cartelitos de las tarjetas del sitio"],
   dashboard:     ["Dashboard", "Cómo vienen las ventas"],
   clientes:      ["Clientes", "Base de clientes y su historial"],
@@ -88,6 +91,7 @@ function AdminApp() {
           {page === "pedidos"       && <><NotificationsRecovery /><Orders abrir={abrir?.tipo === "pedido" ? { id: abrir.id, n: abrir.n } : null} /></>}
           {page === "resumen"       && <ResumenDiario />}
           {page === "productos"     && <Products key={claveDe("producto")} abrirId={abrirDe("producto")} />}
+          {page === "promociones"    && <Promociones />}
           {page === "etiquetas"     && <Etiquetas />}
           {page === "dashboard"     && <Dashboard />}
           {page === "clientes"      && <Customers key={claveDe("cliente")} abrirId={abrirDe("cliente")} />}
@@ -104,7 +108,7 @@ export default function AdminPage() {
     <StoreProvider>
       <SucursalProvider>
         <MasasNocheProvider>
-          <AdminApp />
+          <PromocionesProvider><AdminApp /></PromocionesProvider>
         </MasasNocheProvider>
       </SucursalProvider>
     </StoreProvider>
