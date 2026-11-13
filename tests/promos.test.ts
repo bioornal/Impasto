@@ -22,8 +22,8 @@ test("análisis Dúo: pedido completo, ahorro, tarjeta, envío y cobertura", () 
   assert.match(a.veredicto, /cubrís la noche con 3 combos y te sobran \$3\.723/);
   assert.equal(a.totales.gananciaNormal.min, 23418);
   assert.equal(a.totales.conTarjeta!.min, 16628);
-  assert.equal(a.envio!.pagaCliente.min, 3000);
-  assert.equal(a.envio!.resignas.max, 0);
+  assert.equal(a.envio!.pagaCliente.min, 0);
+  assert.equal(a.envio!.resignas.max, 3000);
   assert.equal(a.conviertePedidoUnaPizza?.min, 7609);
   assert.match(a.veredicto, /19\.318/);
 });
@@ -32,7 +32,7 @@ test("análisis descuento: 3 ejemplos y tabla por pizza, no confundir pizza con 
   assert.equal(a.productos.length, 3); assert.equal(a.pedidos.length, 3);
   assert.equal(a.pedidos[0].paga, 23250); assert.equal(a.pedidos[0].teQueda, 15668); assert.equal(a.pedidos[0].resignas, 7750);
   assert.equal(a.pedidos[1].paga, 31750); assert.equal(a.pedidos[2].paga, 36000);
-  assert.equal(a.pedidos[2].envio!.resignas, 0); assert.equal(a.pedidos[2].envio!.pagaCliente, 3000); // con promo el envío se cobra siempre
+  assert.equal(a.pedidos[2].envio!.resignas, 3000); assert.equal(a.pedidos[2].envio!.pagaCliente, 0); // con promo el envío es gratis siempre
   assert.equal(a.resumen.teQueda, 15668);
 });
 test("análisis regalo: opciones, mínimos baratos/caros y unidades con suplemento", () => {
@@ -49,15 +49,15 @@ test("análisis rangos, umbral inclusivo, validación y falta de gasto fijo", ()
   const a = analisisOferta({ ...duo, config: { precio: 35000, lugares: [{ cantidad: 2, productos: ["m", "s"] }] } }, productos, negocio);
   assert.deepEqual(a.totales.teQueda, { min: 16294, max: 27418 });
   assert.deepEqual(a.totales.gananciaNormal, { min: 23418, max: 29294 });
-  assert.equal(a.envio!.resignas.min, 0); assert.equal(a.envio!.pagaCliente.max, 3000);
+  assert.equal(a.envio!.resignas.min, 3000); assert.equal(a.envio!.pagaCliente.max, 0);
   assert.equal(analisisOferta(duo, productos, { ...negocio, gastoFijoNoche: null }).combosParaCubrirNoche, null);
   assert.equal(analisisOferta({ ...duo, config: { ...duo.config, precio: 7582 } }, productos, negocio).combosParaCubrirNoche, null);
   const rota = analisisOferta({ ...duo, config: null } as never, productos, negocio);
   assert.equal(rota.resumen.teQueda, null); assert.ok(rota.margen.errores.length);
 });
-test("con promo el envío se cobra aunque el umbral sea cero; sin contexto no se inventan importes", () => {
+test("con promo el envío es gratis; sin contexto no se inventan importes", () => {
   const gratis = analisisOferta(duo, productos, { ...negocio, envioGratisDesde: 0 });
-  assert.equal(gratis.envio!.pagaCliente.min, 3000); assert.equal(gratis.envio!.resignas.max, 0);
+  assert.equal(gratis.envio!.pagaCliente.min, 0); assert.equal(gratis.envio!.resignas.max, 3000);
   const sinDatos = analisisOferta(duo, productos, { ...negocio, envio: null, comisionPct: null });
   assert.equal(sinDatos.envio, null); assert.equal(sinDatos.totales.conTarjeta, null); assert.equal(sinDatos.resumen.teQueda, 19318);
 });

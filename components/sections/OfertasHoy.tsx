@@ -89,7 +89,7 @@ export function OfertasHoy({ onNav, onAdded }: { onNav: (s: string) => void; onA
       <div className="container">
         <div className="ofertas-hoy-head">
           <h2 id="ofertas-hoy-titulo">Promos de hoy</h2>
-          <p>Se aplican solas en el carrito, una por pedido. Con promo, el envío se cobra aparte.</p>
+          <p>Se aplican solas en el carrito, una por pedido. <b>Y el envío es gratis.</b></p>
         </div>
         <div className={`ofertas-hoy-grid ${ofertas.length === 1 ? "una" : ""}`}>
           {ofertas.map(o => <TarjetaOferta key={o.id} oferta={o} vendibles={vendibles} onNav={onNav} onAdded={onAdded} />)}

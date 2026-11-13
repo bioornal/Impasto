@@ -170,8 +170,8 @@ export function quoteOrderWithCatalog(
   if (cupos) validarStockBebidas(items, data);
   if (cupos) { validarCupos(items, data); validarMasasNoche(items, data); }
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  // Decisión del dueño (13/11/2026): con promo el envío se cobra siempre; el envío gratis es solo sin promo.
-  const freeShipping = !promocion.promo && subtotal >= applied.freeShippingFrom;
+  // Decisión del dueño (13/11/2026): con promo el envío es gratis siempre, para incentivar la venta.
+  const freeShipping = promocion.promo !== null || subtotal >= applied.freeShippingFrom;
   const shipping = mode === "delivery" && !freeShipping ? applied.deliveryFee : 0;
   const context = catalogCosteo(data);
   const quote = { items, promo: promocion.promo, subtotal, shipping, total: subtotal + shipping, freeShipping };

@@ -84,8 +84,8 @@ class MotivoDelCarrito extends Error {}
 
 export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }: CheckoutProps) {
   const { items, count, subtotal: localSubtotal, promo, promoAplicada } = useCart();
-  // Con promo el envío se cobra siempre (decisión del dueño, 13/11/2026).
-  const gratisTexto = promoAplicada ? "Con promo, el envío se cobra" : `Gratis desde ${fmt(business.freeShippingFrom)}`;
+  // Con promo el envío es gratis siempre (decisión del dueño, 13/11/2026).
+  const gratisTexto = promoAplicada ? "Gratis por tu promo" : `Gratis desde ${fmt(business.freeShippingFrom)}`;
   const { delivery, masas } = useStoreStatus();
   const [data, setData] = useState<CheckoutData>({
     mode: delivery.activo ? "delivery" : "takeaway", when: "asap", nombre: "", tel: "", email: "", dir: "", ref: "",
@@ -134,7 +134,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
 
   const quoteLoading = quote?.key !== quoteKey;
   const subtotal = quoteLoading ? localSubtotal : (quote?.subtotal ?? localSubtotal);
-  const freeShipping = !promoAplicada && subtotal >= business.freeShippingFrom;
+  const freeShipping = !!promoAplicada || subtotal >= business.freeShippingFrom;
   const shipping = quoteLoading
     ? (mode === "delivery" && !freeShipping ? business.deliveryFee : 0)
     : (quote?.shipping ?? 0);
@@ -394,7 +394,7 @@ export function Checkout({ onClose, onBack, onConfirm, onCardConfirm, business }
                     <small>Te ahorrás {fmt(business.deliveryFee)}</small>
                   </>
                 ) : (
-                  promoAplicada ? <b>Con promo, el envío va aparte: {fmt(business.deliveryFee)}</b> : <>
+                  <>
                     <b>Sumá {fmt(Math.max(0, business.freeShippingFrom - subtotal))} y el envío es GRATIS</b>
                     <div className="ship-track">
                       <div className="ship-bar" style={{ width: `${Math.min(100, (subtotal / business.freeShippingFrom) * 100)}%` }} />

@@ -24,8 +24,8 @@ function conflict(run:()=>unknown, message:RegExp) {
 }
 test("cotización Dúo con 3 Muzzarellas parte 2 de combo y 1 a lista",()=>{
   const r=quote([pizza(3)],catalog(),{ofertaId:"duo"});
-  // Con promo el envío se cobra aunque supere el mínimo del envío gratis.
-  assert.equal(r.subtotal,42400); assert.equal(r.shipping,2000); assert.equal(r.freeShipping,false); assert.equal(r.total,44400);
+  // Con promo el envío es gratis siempre.
+  assert.equal(r.subtotal,42400); assert.equal(r.shipping,0); assert.equal(r.freeShipping,true); assert.equal(r.total,42400);
   assert.deepEqual(r.items.map(i=>[i.qty,i.price,i.promo?.precioLista]),[[2,13450,15500],[1,15500,undefined]]);
   assert.deepEqual(r.promo,{id:"duo",nombre:"Dúo Muzza",tipo:"combo",ahorro:4100});
   assert.equal(new Set(r.items.map(i=>i.cartId)).size,2);
@@ -33,11 +33,11 @@ test("cotización Dúo con 3 Muzzarellas parte 2 de combo y 1 a lista",()=>{
 test("cotización regalo sin bebida en el pedido devuelve 409 con el aviso",()=>{
   conflict(()=>quote([pizza(2)],catalog(),{ofertaId:"regalo"}),/Agregá una bebida/);
 });
-test("2ª al 50 %: con promo el envío se cobra siempre",()=>{
+test("2ª al 50 %: con promo el envío es gratis aunque no llegue al mínimo",()=>{
   const r=quote([pizza(4)],catalog(),{ofertaId:"mitad"});
-  assert.equal(r.subtotal,46500); assert.equal(r.freeShipping,false); assert.equal(r.shipping,2000);
+  assert.equal(r.subtotal,46500); assert.equal(r.freeShipping,true); assert.equal(r.shipping,0);
   const below=quote([pizza(2)],catalog(),{ofertaId:"mitad"});
-  assert.equal(below.subtotal,23250); assert.equal(below.freeShipping,false); assert.equal(below.total,25250);
+  assert.equal(below.subtotal,23250); assert.equal(below.freeShipping,true); assert.equal(below.total,23250);
 });
 test("cotización promo vencida devuelve 409",()=>{
   conflict(()=>quote([pizza(2)],catalog([{...duo,hasta:"2026-11-12"}]),{ofertaId:"duo"}),/promo/i);

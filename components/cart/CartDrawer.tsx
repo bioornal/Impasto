@@ -78,9 +78,9 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
   if (!open) return null;
 
   const sinDelivery = !tienda.delivery.activo;
-  // Con promo el envío se cobra siempre (decisión del dueño, 13/11/2026).
+  // Con promo el envío es gratis siempre (decisión del dueño, 13/11/2026).
   const conPromo = promoAplicada !== null;
-  const freeShipping = !conPromo && subtotal >= business.freeShippingFrom;
+  const freeShipping = conPromo || subtotal >= business.freeShippingFrom;
   const progress = Math.min(100, (subtotal / business.freeShippingFrom) * 100);
   // Sin reparto no hay envío que cobrar: el pedido es para retirar.
   const shipping = sinDelivery || freeShipping ? 0 : business.deliveryFee;
@@ -149,14 +149,14 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
               </div>
             </div>
           ) : conPromo ? (
-            <div className="drawer-ship is-promo">
+            <div className="drawer-ship is-free">
               <div className="drawer-ship-top">
                 <span className="ship-icon" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7" /><circle cx="7" cy="17.5" r="1.8" /><circle cx="17" cy="17.5" r="1.8" /></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                 </span>
                 <div className="ship-text">
-                  <b>Con promo, el envío va aparte: {fmt(business.deliveryFee)}</b>
-                  <small>El envío gratis desde {fmt(business.freeShippingFrom)} es para pedidos sin promo.</small>
+                  <b>¡Envío GRATIS por tu promo!</b>
+                  <small>Te ahorrás {fmt(business.deliveryFee)} de envío</small>
                 </div>
               </div>
             </div>
