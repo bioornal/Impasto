@@ -35,7 +35,7 @@ LANGUAGE plpgsql AS $$
 DECLARE v_pedido jsonb; v_numero integer;
 BEGIN
  SELECT COALESCE(max(numero_pedido),0)+1 INTO v_numero FROM public.pedidos
- WHERE proyecto_id='impasto' AND fecha=public.noche_de_negocio(now())::text;
+ WHERE proyecto_id='impasto' AND fecha::text=public.noche_de_negocio(now())::text;
  v_pedido:=public.crear_pedido_costeado(jsonb_build_object(
   'numero_pedido',v_numero,'proyecto_id','impasto','sucursal_id','iguazu',
   'modalidad','takeaway','status','normal','direccion','Retiro: prueba transaccional stock',
