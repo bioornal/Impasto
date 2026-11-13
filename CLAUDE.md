@@ -1,5 +1,12 @@
 @AGENTS.md
 
+## Stock de bebidas (13/11/2026)
+
+- **Pedido del dueño:** que el sistema sepa si una bebida se puede vender o elegir como regalo ("+ Bebida de regalo" deja elegir cualquiera "según stock"). Eligió **inventario que se arrastra** entre noches. Spec: `docs/superpowers/specs/2026-11-13-stock-bebidas-design.md`; rama `stock-bebidas` (web `e127ce6`/`a171382`, POS `0b9a537`). Hecho por Codex en su mayor parte, revisado.
+- **Reglas:** sin fila o `unidades` NULL = sin control (se vende como antes). Cada venta (web o POS, también regalos) descuenta; cancelar, pago rechazado o eliminar devuelven (`pedidos.stock_consumo` + `stock_liberado`, mismos triggers que cupos). `crear_pedido_costeado` bloquea cupos, masas y después stock por `producto_id` y rechaza con `STOCK_AGOTADO|<nombre>|<quedan>`. Historial en `stock_movimientos`. Con 0: Agotado en la web y oculta en el POS; con ≤3: "¡Quedan N!".
+- **Panel:** bloque "Stock de bebidas" en Arranque (− n +, "+ Compra", "Sin control") y columna en Productos; API `/api/admin/stock`.
+- **Migración** `20261113200000_stock-bebidas.sql`: la función nueva se comparó palabra por palabra con la de producción (solo agrega lo del stock) y la migración + 24 casos (`tests/fixtures/stock-bebidas-casos.sql`) corrieron en la base real dentro de `BEGIN … ROLLBACK`: todo pasó y no quedó rastro. Ojo: en producción `pedidos.fecha` es `text`. **Sin aplicar ni publicar todavía**: orden obligatorio migración → web → POS.
+
 ## Promociones y combos en el panel — etapa 1 (13/11/2026)
 
 - **Pedido del dueño:** ventas flojas (≈4,8 pizzas por noche; equilibrio ≈4,3) y pauta en Meta Ads. Quiere una sección propia del panel para crear, editar y **aprobar** promos; "luego" se anuncian en la web. Spec: `docs/superpowers/specs/2026-11-13-promociones-panel-design.md`; plan/registro: `docs/superpowers/plans/2026-11-13-promociones-panel.md`. Rama `promociones-panel` (`49ac4b8`), hecha mayormente por Codex y revisada.
