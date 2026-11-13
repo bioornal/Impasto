@@ -1,5 +1,15 @@
 @AGENTS.md
 
+## Promociones — etapa 2: web, POS y ganancias (13/11/2026)
+
+- **Pedido del dueño:** que al aprobar una promo el carrito, los cobros, el POS y las ganancias del recetario la manejen. Spec: `docs/superpowers/specs/2026-11-13-promos-etapa2-design.md`. Ramas `promos-etapa2` (web y POS) y `promos-ganancias` (recetario).
+- **Motor único** `lib/promos-aplicar.ts` (puro, tests en `tests/promos-aplicar.test.ts`), copiado tal cual en `carroFogon/next-app/src/lib/promos-aplicar.ts`: mantener las dos copias iguales. Vigencia por noche de negocio (corte 06:00 AR), una promo por pedido, combos repetibles, el descuento queda dentro del precio de cada línea (tramos) y el regalo es una línea nueva de bebida a precio = suplemento.
+- **Web:** `lib/ofertas-web.ts` (lectura no crítica, sin costos), `lib/promos-web.ts` (`cotizarPromo`, `normalizarSeleccionPromo`), "Promos de hoy" en el home (`components/sections/OfertasHoy.tsx`), "Tu promo" en el carrito (`components/cart/TuPromo.tsx`), checkout con "Incluye … ahorrás $X". El servidor responde 409 con el motivo si la promo no aplica.
+- **POS:** selector "Promo" (`src/components/PromoPedido.tsx`); `POST /api/pedidos` aplica el motor (`src/lib/promos-pos.ts`). `matchesPosAttempt` junta tramos e ignora el regalo para que un reintento recupere el pedido guardado.
+- **Base:** `pedidos.promo` + `crear_pedido_costeado` con `promo` en su lista blanca de columnas (la función **rechaza columnas que no estén en `allowed`**: cualquier columna nueva de `pedidos` que se escriba al crear tiene que sumarse ahí). Migración `20261113220000_pedidos-promo.sql`.
+- **Recetario:** bloque "Promociones del mes" en Ganancias (`resumenPromociones` en `src/utils/ganancias.ts`).
+- **Verificado:** tests y builds de los tres; en la base real con rollback (Dúo con Pepsi de regalo: promo guardada, 2 masas, stock de la Pepsi 5 → 4, costeo); cotizaciones reales en local (Dúo $26.900; 3 Muzza = dúo + 1 a lista con envío gratis; vino de regalo a $0; regalo con 1 pizza rechazado); Playwright a 1366 y 375 px (home, carrito, checkout). El 13/11 el dueño pidió aprobar Dúo Muzza y "+ Bebida de regalo". **Sin publicar.**
+
 ## Stock de bebidas (13/11/2026)
 
 - **Pedido del dueño:** que el sistema sepa si una bebida se puede vender o elegir como regalo ("+ Bebida de regalo" deja elegir cualquiera "según stock"). Eligió **inventario que se arrastra** entre noches. Spec: `docs/superpowers/specs/2026-11-13-stock-bebidas-design.md`; rama `stock-bebidas` (web `e127ce6`/`a171382`, POS `0b9a537`). Hecho por Codex en su mayor parte, revisado.
