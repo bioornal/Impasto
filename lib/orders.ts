@@ -18,6 +18,7 @@ import { matchesManualOrder, restoredManualOrder } from './manual-order-data';
 import {createCostedPedido} from './create-costed-pedido';
 import { errorDeCupoDeLaBase } from './cupos';
 import { errorDeMasasDeLaBase } from './masas-noche';
+import { errorDeStockDeLaBase } from './stock-bebidas';
 
 export interface OrderPayload {
   nombre: string;
@@ -170,6 +171,8 @@ async function createPedidoNew(
   if (cupo) throw cupo;
   const masas = errorDeMasasDeLaBase(error);
   if (masas) throw masas;
+  const stock = errorDeStockDeLaBase(error);
+  if (stock) throw stock;
   const inserted = requireUpdatedRow(
     { data, error },
     "crear el pedido",
@@ -177,7 +180,7 @@ async function createPedidoNew(
   const id = String((inserted as { id?: unknown }).id || "");
   if (!id) throw new Error("El pedido se guardó sin identificador");
   // Consumió cupo de la noche: la carta muestra lo que queda sin esperar el minuto del caché.
-  if ((inserted as { cupo_consumo?: unknown }).cupo_consumo || (inserted as { masas_consumo?: unknown }).masas_consumo) {
+  if ((inserted as { cupo_consumo?: unknown }).cupo_consumo || (inserted as { masas_consumo?: unknown }).masas_consumo || (inserted as { stock_consumo?: unknown }).stock_consumo) {
     try { (await import("./catalog-cache")).invalidarCatalogo(); } catch { /* fuera de una request de Next */ }
   }
 

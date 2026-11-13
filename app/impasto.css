@@ -2220,6 +2220,7 @@ h1,h2,h3,h4,h5{ font-family:var(--font-display); font-weight:600; letter-spacing
   .drink-media img{ object-fit:contain; }
   .drink-card:not(.is-agotado):hover .drink-media img{ transform:none; }
   .drink-media .media-agotado-bar{ font-size:9px; letter-spacing:.15em; padding:4px 0; }
+  .drink-media .cupo-foto-bar{ font-size:9px; letter-spacing:0; padding:4px 0; }
   .drink-card h4{ font-size:16px; }
   .drink-card small{ font-family:var(--font-display); font-size:15.5px; font-weight:600; color:var(--ink); font-variant-numeric:lining-nums tabular-nums; }
   .drink-add{ display:none; }

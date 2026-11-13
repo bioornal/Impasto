@@ -1,5 +1,6 @@
 "use client";
 import { AvisoCupo } from "./AvisoCupo";
+import { avisoStock } from '@/lib/stock-bebidas';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { PizzaIllus } from "@/components/ui/PizzaIllus";
 import { EmpanadaIllus, DrinkIllus } from "@/components/ui/Illus";
@@ -230,6 +231,7 @@ export function ProductSheet({ items, indice, onIndice, onClose, accion }: Produ
           <b className="ficha-precio">{item.precioTexto}</b>
           {item.desc && <p className="ficha-desc">{item.desc}</p>}
           {!item.agotado && <AvisoCupo quedanMitades={item.quedanMitades} />}
+          {!item.agotado && item.tipo === 'bebida' && avisoStock(item.stockUnidades) && <p className="cupo-aviso" role="status">{avisoStock(item.stockUnidades)}</p>}
         </div>
 
         <div className="ficha-pie">{accion}</div>

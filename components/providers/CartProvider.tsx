@@ -5,6 +5,7 @@ import type { CartItem, Masa } from "@/types";
 import { uid } from "@/lib/utils";
 import { ajustarMasas, cambiarMasa, esMismaLinea, masaDe, masaUnica } from "@/lib/masa";
 import { avisoOtraMasa, masaParaSumar, topeDePizzas } from "@/lib/masas-noche";
+import { topeDeBebidas } from '@/lib/stock-bebidas';
 import { useToast } from "@/components/providers/ToastProvider";
 
 interface CartCtx {
@@ -32,7 +33,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // que queda, también las del borrador y las que se agregan después. El cliente lo lee en el
   // aviso del carrito. Se deriva en vez de corregirse en un efecto: nunca hay un render con la
   // masa agotada elegida. Cada cambio parte de lo que el cliente ve, así lo guardado se pone al día.
-  const { masas, masasNoche } = useStoreStatus();
+  const { masas, masasNoche, stockBebidas } = useStoreStatus();
   const toast = useToast();
   const items = useMemo(() => ajustarMasas(guardados, masas), [guardados, masas]);
   const cambiar = (cambio: (prev: CartItem[]) => CartItem[]) =>
@@ -83,6 +84,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const add = (pedido: Omit<CartItem, "cartId">) => {
+    const aviso = topeDeBebidas(items, pedido, pedido.qty || 1, stockBebidas);
+    if (aviso) { toast(aviso); return false; }
     let item = pedido;
     const masa = masaDe(pedido);
     if (masa) {
@@ -112,6 +115,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const inc = (cartId: string) => {
     const linea = items.find((i) => i.cartId === cartId);
+    const aviso = linea ? topeDeBebidas(items, linea, 1, stockBebidas) : null;
+    if (aviso) { toast(aviso); return false; }
     if (linea && !hayMasas(linea, 1)) return false;
     cambiar((p) => p.map((i) => i.cartId === cartId ? { ...i, qty: i.qty + 1 } : i));
     return true;

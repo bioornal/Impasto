@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { EstadoDelivery } from "@/lib/hours";
 import { TODAS_LAS_MASAS, type EstadoMasas } from "@/lib/masa";
 import type { QuedanMasas } from "@/lib/masas-noche";
+import type { StockBebidas } from '@/lib/stock-bebidas';
 
 export interface EstadoTiendaCliente {
   abierto: boolean;
@@ -13,6 +14,7 @@ export interface EstadoTiendaCliente {
   masas: EstadoMasas;
   /** Pizzas que quedan esta noche por masa (31/10/2026); null = sin límite. */
   masasNoche?: QuedanMasas | null;
+  stockBebidas?: StockBebidas;
 }
 
 const DELIVERY_ACTIVO: EstadoDelivery = { activo: true, motivo: "" };
@@ -37,7 +39,7 @@ export function StoreStatusProvider({ inicial, children }: { inicial: EstadoTien
         const respuesta = await fetch("/api/store-status", { cache: "no-store" });
         const datos = await respuesta.json();
         if (activo && datos?.ok) {
-          setEstado({
+          setEstado((anterior) => ({
             abierto: datos.abierto,
             motivo: datos.motivo,
             etiqueta: datos.etiqueta,
@@ -45,7 +47,8 @@ export function StoreStatusProvider({ inicial, children }: { inicial: EstadoTien
             delivery: datos.delivery ?? DELIVERY_ACTIVO,
             masas: datos.masas ?? TODAS_LAS_MASAS,
             masasNoche: datos.masasNoche && typeof datos.masasNoche === "object" ? datos.masasNoche : null,
-          });
+            stockBebidas: datos.stockBebidas ?? anterior.stockBebidas,
+          }));
         }
       } catch { /* si falla la consulta se conserva el último estado conocido */ }
     };

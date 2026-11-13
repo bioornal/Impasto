@@ -8,6 +8,7 @@ import { DrinkIllus } from "@/components/ui/Illus";
 import { fmt } from "@/lib/utils";
 import { MASAS, detalleSinMasa, masaDe } from "@/lib/masa";
 import { excesoEnCarrito } from "@/lib/masas-noche";
+import { excesoDeBebidas } from '@/lib/stock-bebidas';
 import type { BusinessConfig } from "@/lib/business";
 import type { Bebida } from "@/types";
 
@@ -32,6 +33,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
   const tienda = useStoreStatus();
   // Masas de la noche: si bajaron mientras armaba el pedido, se avisa y no se puede seguir.
   const sobranPizzas = excesoEnCarrito(items, tienda.masasNoche);
+  const sobranBebidas = excesoDeBebidas(items, tienda.stockBebidas);
   const toast = useToast();
   const railRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -189,6 +191,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
           ) : (
             <>
               {sobranPizzas && <p className="ci-masa-aviso" role="alert">{sobranPizzas}</p>}
+              {sobranBebidas && <p className="ci-masa-aviso" role="alert">{sobranBebidas}</p>}
               {tienda.masas.aviso && items.some((item) => masaDe(item)) && (
                 <p className="ci-masa-aviso" role="status">{tienda.masas.aviso}</p>
               )}
@@ -266,8 +269,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
                             className="upsell-add"
                             aria-label={`Agregar ${bebida.nombre} al pedido`}
                             onClick={() => {
-                              add({ key: bebida.id, type: "bebida", name: bebida.nombre, price: bebida.precio, qty: 1 });
-                              toast(`${bebida.nombre} sumada`);
+                              if (add({ key: bebida.id, type: "bebida", name: bebida.nombre, price: bebida.precio, qty: 1 })) toast(`${bebida.nombre} sumada`);
                             }}
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
@@ -301,7 +303,7 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
               <span className="mono">Total</span>
               <b>{fmt(subtotal + shipping)}</b>
             </div>
-            <button className="drawer-cta" onClick={onCheckout} disabled={!tienda.abierto || Boolean(sobranPizzas)}>
+            <button className="drawer-cta" onClick={onCheckout} disabled={!tienda.abierto || Boolean(sobranPizzas || sobranBebidas)}>
               {tienda.abierto ? "Continuar con el pedido" : "Cerrado por ahora"}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14" /><path d="m13 5 7 7-7 7" /></svg>
             </button>

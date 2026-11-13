@@ -4,6 +4,7 @@ import { useSucursal } from "./SucursalProvider";
 import { Interruptor } from "./Interruptor";
 import { Cupos } from "./Cupos";
 import { MasasNoche } from "./MasasNoche";
+import { StockBebidas } from './StockBebidas';
 import { useMasasNoche } from "./MasasNocheProvider";
 import { Orders } from "./Orders";
 import { estadoMasas } from "@/lib/masa";
@@ -47,6 +48,7 @@ export function Arranque({ onVerPedidos }: { onVerPedidos: () => void }) {
   return (
     <div className="arranque">
       <MasasNoche />
+      <StockBebidas />
       <section className="panel">
         <div className="panel-head"><h3>Interruptores</h3><span className="tbl-muted">Se guardan al tocarlos</span></div>
         <div className="panel-body int-grid">

@@ -5,6 +5,7 @@ import { Icon } from "./Icons";
 import { ProductThumb } from "./ProductThumb";
 import type { AdminProduct } from "./types";
 import { ordenarProductosAdmin } from "@/lib/orden-admin";
+import { StockControl, useStockBebidas } from './StockBebidas';
 
 const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-AR");
 
@@ -108,6 +109,7 @@ function CeldaEtiquetas({ producto }: { producto: AdminProduct }) {
 }
 
 export function Products({ abrirId = null }: { abrirId?: string | null }) {
+  const stock = useStockBebidas();
   const { state, updateProduct, createProduct, deleteProduct } = useStore();
   const [type, setType] = useState("todos");
   // "En carta" (false) o "Dados de baja" (true): los archivados no se venden.
@@ -161,7 +163,7 @@ export function Products({ abrirId = null }: { abrirId?: string | null }) {
           <div className="tbl-wrap">
             <table className="tbl">
               <thead>
-                <tr><th>Producto</th><th>Tipo</th><th>Etiquetas</th><th className="right">Precio</th><th>Disponibilidad</th><th></th></tr>
+                <tr><th>Producto</th><th>Tipo</th><th>Etiquetas</th><th className="right">Precio</th><th>Disponibilidad</th><th>Stock</th><th></th></tr>
               </thead>
               <tbody>
                 {filtered.map(p => (
@@ -190,6 +192,7 @@ export function Products({ abrirId = null }: { abrirId?: string | null }) {
                         </span>
                       </div>
                     </td>
+                    <td>{p.type === 'bebida' ? <StockControl productoId={p._dbId} nombre={p.nombre} stock={stock} /> : <span className="tbl-muted">—</span>}</td>
                     <td>
                       <div className="tbl-actions">
                         <button type="button" aria-label={`Editar ${p.nombre}`} className="btn btn-icon btn-ghost" onClick={() => setEdit(p)}><Icon.Edit /></button>

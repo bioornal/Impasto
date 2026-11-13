@@ -756,6 +756,24 @@ a{ color:inherit; text-decoration:none; }
 .cupo-ctrl.agotado input{ color:var(--a-danger); font-weight:700; border-color:var(--a-danger); }
 .cupo-ctrl small{ flex-basis:100%; text-align:right; font-size:11px; color:var(--a-muted); }
 .cupo-ctrl.agotado small{ color:var(--a-danger); font-weight:600; }
+.stock-lista{padding:0 12px 12px;display:grid;gap:8px;}
+.stock-fila{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px;border:1px solid var(--a-line);border-radius:8px;}
+.stock-fila.stock-poco{background:var(--a-warn-soft);}
+.stock-fila.stock-agotado{background:var(--a-danger-soft);}
+.stock-acciones{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+.stock-acciones>small{min-width:76px;font-variant-numeric:tabular-nums;}
+.stock-ctrl{flex-wrap:nowrap;}
+.stock-ctrl input{width:64px;font-variant-numeric:tabular-nums;}
+.stock-fila .cupo-nombre b{white-space:normal;overflow-wrap:anywhere;}
+@media(max-width:600px){
+  .stock-fila{align-items:flex-start;flex-direction:column;gap:10px;}
+  .stock-acciones{gap:6px;}
+  .stock-acciones>small{flex-basis:100%;}
+  .stock-acciones .btn{min-height:36px;}
+  .stock-ctrl button,.stock-ctrl input{height:36px;}
+  .stock-ctrl button{width:32px;}
+  .stock-ctrl input{font-size:16px;width:56px;}
+}
 /* Resumen diario: corregir el medio de pago de cada pedido de la noche */
 .medio-select{
   height:30px; padding:0 8px; border:1px solid var(--a-line); border-radius:8px;

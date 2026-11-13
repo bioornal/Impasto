@@ -26,6 +26,7 @@ export interface FichaItem {
   foto?: string;
   /** Cupo de la noche (solo pizzas): mitades que quedan. */
   quedanMitades?: number;
+  stockUnidades?: number | null;
 }
 
 /* ── cartelitos: los mismos en la foto de la tarjeta y en la ficha ── */
@@ -70,7 +71,7 @@ export function fichaDeEmpanada(e: Empanada, pesoTexto: string): FichaItem {
 export function fichaDeBebida(b: Bebida): FichaItem {
   return {
     id: b.id, tipo: "bebida", nombre: b.nombre, desc: "", foto: b.foto,
-    precio: b.precio, precioTexto: fmt(b.precio), badges: [], agotado: b.disponible === false, tags: [],
+    precio: b.precio, precioTexto: fmt(b.precio), badges: [], agotado: b.disponible === false || b.stockUnidades === 0, tags: [], stockUnidades: b.stockUnidades,
   };
 }
 

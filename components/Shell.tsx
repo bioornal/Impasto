@@ -31,6 +31,7 @@ import { ProductSheet, useCierreConAtras } from "@/components/ui/ProductSheet";
 import { FichaAccion } from "@/components/cart/FichaAccion";
 import { fichaDeBebida, fichaDeEmpanada, fichaDePizza, type FichaItem } from "@/lib/ficha";
 import { argumento } from "@/lib/marca";
+import { bebidasConStock } from '@/lib/stock-bebidas';
 import type { BusinessConfig } from "@/lib/business";
 import type { DatosTransferencia } from "@/lib/cuentas-transferencia";
 import { EMPANADAS } from "@/lib/opiniones";
@@ -110,7 +111,9 @@ function TweaksPanel() {
   );
 }
 
-function SiteContent({ data, business, chatDisponible, destacadaId }: { data: CatalogData; business: BusinessConfig; chatDisponible: boolean; destacadaId?: string }) {
+function SiteContent({ data: inicial, business, chatDisponible, destacadaId }: { data: CatalogData; business: BusinessConfig; chatDisponible: boolean; destacadaId?: string }) {
+  const { stockBebidas } = useStoreStatus();
+  const data = useMemo(() => ({ ...inicial, bebidas: bebidasConStock(inicial.bebidas, stockBebidas) }), [inicial, stockBebidas]);
   const { paletteClass, typeClass } = useTweaks();
   const { add, clear, subtotal, count } = useCart();
   const { delivery } = useStoreStatus();
@@ -664,7 +667,7 @@ export function Shell({ data, business, estadoInicial, chatDisponible, destacada
   business = negocioDeCarta(business, data.empanadas.length > 0);
   return (
     <TweakProvider>
-      <StoreStatusProvider inicial={estadoInicial}>
+      <StoreStatusProvider inicial={{ ...estadoInicial, stockBebidas: data.stockBebidas ?? {} }}>
         <ToastProvider>
           <CartProvider>
             <FotosProvider data={data}>

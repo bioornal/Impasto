@@ -38,6 +38,7 @@ export interface Bebida {
   precio: number;
   disponible: boolean;
   foto?: string;
+  stockUnidades?: number | null;
 }
 
 export interface Promo {
@@ -56,6 +57,7 @@ export interface Review {
 }
 
 export interface CatalogData {
+  stockBebidas?: Record<string, number | null>;
   pizzas: Pizza[];
   empanadas: Empanada[];
   bebidas: Bebida[];

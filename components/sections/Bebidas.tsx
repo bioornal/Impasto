@@ -5,6 +5,7 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { fmt } from "@/lib/utils";
 import { esMobile, lineaDeBebida } from "@/lib/ficha";
 import type { Bebida } from "@/types";
+import { avisoStock } from '@/lib/stock-bebidas';
 
 export function Bebidas({ bebidas, onVerFicha, indice = "03" }: { indice?: string; bebidas: Bebida[]; onVerFicha: (ids: string[], indice: number) => void }) {
   const { items, add, incKey, decKey } = useCart();
@@ -13,8 +14,7 @@ export function Bebidas({ bebidas, onVerFicha, indice = "03" }: { indice?: strin
 
   const qtyOf = (id: string) => items.find((i) => i.key === id && i.type === "bebida")?.qty || 0;
   const agregar = (bebida: Bebida) => {
-    add(lineaDeBebida(bebida));
-    toast(`${bebida.nombre} agregada`);
+    if (add(lineaDeBebida(bebida))) toast(`${bebida.nombre} agregada`);
   };
   const verFicha = (id: string) => onVerFicha(bebidas.map((b) => b.id), bebidas.findIndex((b) => b.id === id));
 
@@ -38,6 +38,7 @@ export function Bebidas({ bebidas, onVerFicha, indice = "03" }: { indice?: strin
                   <DrinkIllus id={bebida.id} label={bebida.nombre} name={bebida.nombre} src={bebida.foto} />
                   <button type="button" className="media-zoom" onClick={() => verFicha(bebida.id)} aria-label={`Ver ${bebida.nombre} en grande`} />
                   {agotado && <div className="media-agotado-bar">Agotado</div>}
+                  {!agotado && avisoStock(bebida.stockUnidades) && <div className="cupo-foto-bar">{avisoStock(bebida.stockUnidades)}</div>}
                 </div>
                 {/* Mobile: la miniatura es chica, así que el nombre también abre la ficha. */}
                 <div style={{ flex: 1 }} onClick={() => esMobile() && verFicha(bebida.id)}>
