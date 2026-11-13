@@ -85,3 +85,17 @@ test("No se acumulan: Dúo con 2 Muzzarellas + Pepsi cobra la Pepsi entera; el r
   const opciones = promosAplicables([duo, regalo], pedido, bebidas, new Date("2026-11-13T23:00:00Z"));
   assert.deepEqual(opciones.map(o => o.oferta.id), ["regalo", "duo"]);
 });
+
+test("Regalo con pizzas excluidas: la Muzzarella no cuenta; la mitad y mitad cuenta salvo que sea toda excluida", () => {
+  const sinMuzza: Oferta = { ...regalo, config: { ...regalo.config, excluidas: ["muzza"] } };
+  const pepsi = L(9, "pepsi", "bebida", 4500, 1);
+  const r1 = aplicarPromo(sinMuzza, [L(0, "muzza", "pizza", 15500, 2), pepsi], bebidas);
+  assert.ok(esErrorPromo(r1)); assert.match(r1.error, /La muzza no entra en el regalo: sumá 2 pizzas más/);
+  const r2 = aplicarPromo(sinMuzza, [L(0, "muzza", "pizza", 15500, 1), L(1, "fuga", "pizza", 17000, 1), pepsi], bebidas);
+  assert.ok(esErrorPromo(r2)); assert.match(r2.error, /sumá 1 pizza más/);
+  const r3 = aplicarPromo(sinMuzza, [L(1, "fuga", "pizza", 17000, 2), pepsi], bebidas);
+  assert.ok(!esErrorPromo(r3)); assert.equal(r3.ahorro, 4500);
+  const mitad = (ids: [string, string]): LineaPromo => ({ ...L(2, null, "mitad", 19500, 1), mitades: ids });
+  assert.ok(!esErrorPromo(aplicarPromo(sinMuzza, [L(1, "fuga", "pizza", 17000, 1), mitad(["muzza", "napo"]), pepsi], bebidas)));
+  assert.ok(esErrorPromo(aplicarPromo(sinMuzza, [L(1, "fuga", "pizza", 17000, 1), mitad(["muzza", "muzza"]), pepsi], bebidas)));
+});

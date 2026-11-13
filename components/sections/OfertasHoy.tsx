@@ -69,7 +69,7 @@ function TarjetaOferta({ oferta, vendibles, onNav, onAdded }: { oferta: Oferta; 
         {oferta.tipo === "combo"
           ? <button className="btn btn-dark oferta-hoy-cta" disabled={!completo} onClick={agregar}>{completo ? "Agregar al pedido" : "Hoy no disponible"}</button>
           : <button className="btn btn-dark oferta-hoy-cta" onClick={() => onNav("pizzas")}>Elegir pizzas</button>}
-        {oferta.tipo === "regalo" && <p className="oferta-hoy-nota">Sumá {oferta.config.minimoPizzas} pizzas y una bebida: la bebida te sale gratis.</p>}
+        {oferta.tipo === "regalo" && <p className="oferta-hoy-nota">Sumá {oferta.config.minimoPizzas} pizzas y una bebida: la bebida te sale gratis.{(oferta.config.excluidas ?? []).length > 0 && <> No cuenta: {(oferta.config.excluidas ?? []).map(nombre).join(", ")}.</>}</p>}
         {oferta.tipo === "descuento_cantidad" && <p className="oferta-hoy-nota">Se aplica sola cuando sumás las pizzas.</p>}
       </div>
     </article>

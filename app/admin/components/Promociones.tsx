@@ -135,6 +135,11 @@ function Editor({ inicial, guardar, cerrar, ocupado, error }: { inicial: OfertaI
         {o.tipo === "regalo" && <>
           <label>Mínimo de pizzas<input type="number" min={1} max={100} value={o.config.minimoPizzas} onChange={e => set({ ...o, config: { ...o.config, minimoPizzas: Number(e.target.value) } })} /></label>
           <label>Cantidad de regalos<input type="number" min={1} max={100} value={o.config.cantidad} onChange={e => set({ ...o, config: { ...o.config, cantidad: Number(e.target.value) } })} /></label>
+          <fieldset className="oferta-grupo"><legend>Pizzas que NO cuentan para el regalo</legend>
+            <small>Por ejemplo la Muzzarella, que ya tiene su Dúo. Una mitad y mitad cuenta salvo que las dos mitades estén acá.</small>
+            <SelectorProductos productos={productos} categoria="pizzas" seleccionados={o.config.excluidas ?? []} onChange={ids => set({ ...o, config: { ...o.config, excluidas: ids } })} />
+          </fieldset>
+          <p className="oferta-imagen-ayuda">Bebidas de regalo (la que el cliente sume al pedido sale a precio de suplemento):</p>
           <SelectorProductos productos={productos} categoria="bebidas" seleccionados={o.config.opciones.map(v => v.producto)} onChange={ids => set({ ...o, config: { ...o.config, opciones: ids.map(producto => o.config.opciones.find(v => v.producto === producto) ?? { producto, suplemento: 0 }) } })} />
           {o.config.opciones.map((v, i) => <label key={v.producto}>Suplemento por unidad · {productos.find(p => p.id === v.producto)?.nombre ?? "No disponible"} ($)<input type="number" min={0} step="0.01" value={v.suplemento} onChange={e => set({ ...o, config: { ...o.config, opciones: o.config.opciones.map((v, n) => n === i ? { ...v, suplemento: Number(e.target.value) } : v) } })} /></label>)}
         </>}

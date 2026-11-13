@@ -14,6 +14,7 @@ export class PromoNoAplicableError extends Error {
 export function lineasPromo(items: readonly CartItem[]): LineaPromo[] {
   return items.map((item, idx) => ({
     idx, productoId: item.type === "pizza-half" || item.type === "empanadas" ? null : item.key,
+    mitades: item.type === "pizza-half" && item.variant?.kind === "half" ? item.variant.ids : null,
     nombre: item.name, tipo: item.type === "pizza-half" ? "mitad" : item.type === "empanadas" ? "otro" : item.type,
     precio: item.price, cantidad: item.qty,
   }));

@@ -1,6 +1,6 @@
 "use client";
 import { useCart } from "@/components/providers/CartProvider";
-import { promosAplicables } from "@/lib/promos-aplicar";
+import { aplicarPromo, promosAplicables } from "@/lib/promos-aplicar";
 import { lineasPromo } from "@/lib/promos-web";
 import { fmt } from "@/lib/utils";
 
@@ -30,17 +30,16 @@ export function TuPromo({ onBebidas }: { onBebidas?: () => void }) {
     );
   }
 
-  // Sin promo todavía: el aviso más útil para llegar a una (por ahora, el regalo de bebida).
+  // Sin promo todavía: el aviso sale del mismo motor que cobra, así nunca promete algo que no aplica.
   const pizzas = items.filter(i => i.type === "pizza" || i.type === "pizza-half").reduce((s, i) => s + i.qty, 0);
   const regalo = ofertas.find(o => o.tipo === "regalo");
-  if (!regalo || regalo.tipo !== "regalo" || pizzas === 0 || promosAplicables(ofertas, lineasPromo(items), [], new Date()).length) return null;
-  const faltan = regalo.config.minimoPizzas - pizzas;
+  if (!regalo || pizzas === 0 || promosAplicables(ofertas, lineasPromo(items), [], new Date()).length) return null;
+  const r = aplicarPromo(regalo, lineasPromo(items));
+  if (!("error" in r)) return null;
   return (
     <div className="tu-promo-pista" aria-live="polite">
-      {faltan > 0
-        ? <span>Sumá {faltan} pizza{faltan > 1 ? "s" : ""} más y una bebida: <b>la bebida te la regalamos</b>.</span>
-        : <span>Ya tenés {regalo.config.minimoPizzas} pizzas: <b>agregá una bebida y te la regalamos</b>.</span>}
-      {faltan <= 0 && onBebidas && <button type="button" onClick={onBebidas}>Ver bebidas</button>}
+      <span>{r.error}</span>
+      {onBebidas && /bebida a tu pedido/.test(r.error) && <button type="button" onClick={onBebidas}>Ver bebidas</button>}
     </div>
   );
 }

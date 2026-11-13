@@ -30,7 +30,9 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onBrowse, business, bebidas }: CartDrawerProps) {
-  const { items, previewItems, promoError, promoAplicada, add, inc, dec, setMasa, remove, subtotal } = useCart();
+  const { items, previewItems, promoError, promoAplicada, add, inc, dec, setMasa, remove, clear, subtotal } = useCart();
+  // Vaciar pide un segundo toque en el mismo lugar: un toque solo nunca borra el pedido.
+  const [confirmarVaciar, setConfirmarVaciar] = useState(false);
   const tienda = useStoreStatus();
   // Masas de la noche: si bajaron mientras armaba el pedido, se avisa y no se puede seguir.
   const sobranPizzas = excesoEnCarrito(items, tienda.masasNoche);
@@ -133,7 +135,18 @@ export function CartDrawer({ hayEmpanadas = true, open, onClose, onCheckout, onB
               <h3>Tu pedido</h3>
               <small>{items.length} ítem{items.length !== 1 ? "s" : ""}</small>
             </div>
-            <button className="drawer-close" onClick={onClose} aria-label="Cerrar carrito">✕</button>
+            {/* Los botones no inician el arrastre de la hoja (que captura el puntero y se comería el toque). */}
+            <div className="drawer-head-acciones" onPointerDown={(e) => e.stopPropagation()}>
+              {items.length > 0 && (confirmarVaciar ? (
+                <span className="drawer-vaciar-confirmar" role="group" aria-label="Confirmar vaciar el carrito">
+                  <button type="button" className="drawer-vaciar si" onClick={() => { clear(); setConfirmarVaciar(false); }}>Vaciar todo</button>
+                  <button type="button" className="drawer-vaciar" onClick={() => setConfirmarVaciar(false)}>Cancelar</button>
+                </span>
+              ) : (
+                <button type="button" className="drawer-vaciar" onClick={() => setConfirmarVaciar(true)}>Vaciar</button>
+              ))}
+              <button className="drawer-close" onClick={onClose} aria-label="Cerrar carrito">✕</button>
+            </div>
           </div>
 
           {sinDelivery ? (

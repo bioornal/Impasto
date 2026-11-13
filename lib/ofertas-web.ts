@@ -15,7 +15,7 @@ export async function leerOfertasVigentes(ahora = new Date()): Promise<Oferta[]>
     return ofertasVigentes(data as Oferta[], ahora).map(o => ({
       id: o.id, tipo: o.tipo, nombre: o.nombre, titulo: o.titulo, descripcion: o.descripcion, estado: o.estado,
       config: o.tipo === "combo" ? { precio: o.config.precio, lugares: o.config.lugares.map(l => ({ etiqueta: l.etiqueta, cantidad: l.cantidad, productos: [...l.productos] })) }
-        : o.tipo === "regalo" ? { minimoPizzas: o.config.minimoPizzas, cantidad: o.config.cantidad, opciones: o.config.opciones.map(op => ({ producto: op.producto, suplemento: op.suplemento })) }
+        : o.tipo === "regalo" ? { minimoPizzas: o.config.minimoPizzas, cantidad: o.config.cantidad, opciones: o.config.opciones.map(op => ({ producto: op.producto, suplemento: op.suplemento })), excluidas: Array.isArray(o.config.excluidas) ? [...o.config.excluidas] : [] }
           : { cada: o.config.cada, porcentaje: o.config.porcentaje, productos: o.config.productos === null ? null : [...o.config.productos] },
       dias: [...o.dias], desde: o.desde, hasta: o.hasta, orden: o.orden,
       aprobada_en: o.aprobada_en, creada_en: o.creada_en, actualizada_en: o.actualizada_en, imagen: o.imagen ?? null,

@@ -19,6 +19,8 @@ export interface LineaPromo {
   /** Precio de lista por unidad. */
   precio: number;
   cantidad: number;
+  /** Solo mitad y mitad: ids de las dos mitades, para saber si cuenta en un regalo con pizzas excluidas. */
+  mitades?: [string, string] | null;
 }
 export interface BebidaRegalo { id: string; nombre: string; precio: number }
 export interface MarcaPromo { id: string; nombre: string; tipo: Oferta["tipo"]; precioLista: number }
@@ -49,9 +51,9 @@ export function ofertasVigentes<T extends Pick<Oferta, "estado" | "dias" | "desd
   return ofertas.filter(o => o.estado === "aprobada" && o.dias.includes(dia) && (!o.desde || o.desde <= fecha) && (!o.hasta || o.hasta >= fecha));
 }
 
-interface Unidad { idx: number; productoId: string | null; tipo: TipoLinea; precio: number; usada: boolean }
+interface Unidad { idx: number; productoId: string | null; tipo: TipoLinea; precio: number; usada: boolean; mitades?: [string, string] | null }
 const unidades = (lineas: readonly LineaPromo[]): Unidad[] =>
-  lineas.flatMap(l => Array.from({ length: Math.max(0, Math.floor(l.cantidad)) }, () => ({ idx: l.idx, productoId: l.productoId, tipo: l.tipo, precio: l.precio, usada: false })));
+  lineas.flatMap(l => Array.from({ length: Math.max(0, Math.floor(l.cantidad)) }, () => ({ idx: l.idx, productoId: l.productoId, tipo: l.tipo, precio: l.precio, usada: false, mitades: l.mitades ?? null })));
 const marca = (o: Oferta, precioLista: number): MarcaPromo => ({ id: o.id, nombre: o.titulo || o.nombre, tipo: o.tipo, precioLista });
 const esPizza = (u: { tipo: TipoLinea }) => u.tipo === "pizza" || u.tipo === "mitad";
 
@@ -125,8 +127,18 @@ function aplicarDescuento(o: Oferta & { tipo: "descuento_cantidad" }, lineas: re
 function aplicarRegalo(o: Oferta & { tipo: "regalo" }, lineas: readonly LineaPromo[]): ResultadoPromo | ErrorPromo {
   const c = o.config;
   const us = unidades(lineas);
-  const pizzas = us.filter(esPizza).length;
-  if (pizzas < c.minimoPizzas) { const faltan = c.minimoPizzas - pizzas; return { error: `Sumá ${faltan} pizza${faltan > 1 ? "s" : ""} más y la bebida te la regalamos.` }; }
+  const excluidas = c.excluidas ?? [];
+  // Una pizza excluida (p. ej. la Muzzarella, que tiene su Dúo) no cuenta; la mitad y mitad cuenta salvo que las dos mitades lo estén.
+  const cuenta = (u: Unidad) => u.tipo === "pizza" ? !(u.productoId && excluidas.includes(u.productoId))
+    : u.tipo === "mitad" ? !(u.mitades && u.mitades.every(id => excluidas.includes(id))) : false;
+  const pizzas = us.filter(cuenta).length;
+  if (pizzas < c.minimoPizzas) {
+    const faltan = c.minimoPizzas - pizzas;
+    const afuera = lineas.find(l => l.tipo === "pizza" && l.productoId && excluidas.includes(l.productoId));
+    return { error: afuera
+      ? `La ${afuera.nombre} no entra en el regalo: sumá ${faltan} pizza${faltan > 1 ? "s" : ""} más de la carta y la bebida te la regalamos.`
+      : `Sumá ${faltan} pizza${faltan > 1 ? "s" : ""} más y la bebida te la regalamos.` };
+  }
   const suplemento = (id: string | null) => c.opciones.find(op => op.producto === id)?.suplemento;
   const elegibles = us.filter(u => u.tipo === "bebida" && suplemento(u.productoId) !== undefined)
     .sort((a, b) => (b.precio - Math.min(b.precio, suplemento(b.productoId)!)) - (a.precio - Math.min(a.precio, suplemento(a.productoId)!)));

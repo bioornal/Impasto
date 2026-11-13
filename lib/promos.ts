@@ -5,7 +5,7 @@ export interface LugarCombo { etiqueta?: string; cantidad: number; productos: st
 export type ConfigOferta =
   | { tipo: "combo"; config: { precio: number; lugares: LugarCombo[] } }
   | { tipo: "descuento_cantidad"; config: { cada: number; porcentaje: number; productos: string[] | null } }
-  | { tipo: "regalo"; config: { minimoPizzas: number; cantidad: number; opciones: { producto: string; suplemento: number }[] } };
+  | { tipo: "regalo"; config: { minimoPizzas: number; cantidad: number; opciones: { producto: string; suplemento: number }[]; excluidas?: string[] } };
 export type OfertaInput = ConfigOferta & { nombre: string; titulo: string; descripcion: string; dias: number[]; desde: string | null; hasta: string | null; orden: number };
 export type Oferta = OfertaInput & { id: string; estado: EstadoOferta; aprobada_en: string | null; creada_en: string; actualizada_en: string; imagen?: string | null };
 export interface MargenOferta {
@@ -103,7 +103,8 @@ export function analisisOferta(oferta: OfertaInput, productos: readonly Producto
     const barata = elegibles[0], cara = elegibles[elegibles.length - 1];
     a.pedidos = [[barata, barata], [barata, cara], [cara, cara]].map(([p, q]) => pedido(`${p.nombre} + ${c.cada - 1} × ${q.nombre}`, p.precio + (c.cada - 1) * q.precio, p.precio * (1 - c.porcentaje / 100) + (c.cada - 1) * q.precio, p.costo + (c.cada - 1) * q.costo));
   } else {
-    const c = oferta.config, ordenadas = [...pizzas].sort((x, y) => x.precio - y.precio || y.costo - x.costo);
+    const c = oferta.config, cuentan = pizzas.filter(p => !(c.excluidas ?? []).includes(p.id));
+    const ordenadas = [...cuentan].sort((x, y) => x.precio - y.precio || y.costo - x.costo);
     const regaloPedido = (p: typeof pizzas[number], o: typeof c.opciones[number]) => {
       const bebida = producto(o.producto), neto = c.cantidad * (bebida.costo - o.suplemento);
       return pedido(`${c.minimoPizzas} × ${p.nombre} + ${c.cantidad} × ${bebida.nombre}`, c.minimoPizzas * p.precio + c.cantidad * bebida.precio, c.minimoPizzas * p.precio + c.cantidad * o.suplemento, c.minimoPizzas * p.costo + c.cantidad * bebida.costo, neto);
@@ -111,7 +112,7 @@ export function analisisOferta(oferta: OfertaInput, productos: readonly Producto
     c.opciones.forEach(o => {
       const p = producto(o.producto);
       a.productos.push({ nombre: p.nombre, cantidad: c.cantidad, precio: p.precio, costo: p.costo, suplemento: o.suplemento, costoRegalo: c.cantidad * (p.costo - o.suplemento), resignas: c.cantidad * (p.precio - o.suplemento) });
-      pizzas.forEach(p => casos.push(regaloPedido(p, o)));
+      cuentan.forEach(p => casos.push(regaloPedido(p, o)));
     });
     a.pedidos = [ordenadas[0], ordenadas[ordenadas.length - 1]].flatMap(p => c.opciones.map(o => regaloPedido(p, o)));
   }
@@ -173,7 +174,10 @@ export function validarOferta(input: unknown, productosElegibles: readonly Produ
     if (!cantidad(c.minimoPizzas) || !cantidad(c.cantidad)) errores.push("Las cantidades de pizzas y regalos deben ser enteros de 1 a 100.");
     if (!Array.isArray(c.opciones) || !c.opciones.length) errores.push("Elegí al menos una bebida de regalo.");
     else { ids(c.opciones.map(v => obj(v).producto), "bebidas"); for (const v of c.opciones) if (!numero(obj(v).suplemento) || Number(obj(v).suplemento) < 0) errores.push("El suplemento no puede ser negativo."); }
-    ids(productosElegibles.filter(p => p.categoria === "pizzas").map(p => p.id), "pizzas");
+    if (c.excluidas !== undefined && (!Array.isArray(c.excluidas) || c.excluidas.some(id => typeof id !== "string"))) errores.push("Revisá las pizzas excluidas.");
+    const cuentan = productosElegibles.filter(p => p.categoria === "pizzas" && !(Array.isArray(c.excluidas) && c.excluidas.includes(p.id)));
+    if (!cuentan.length) errores.push("Dejá al menos una pizza que cuente para el regalo.");
+    else ids(cuentan.map(p => p.id), "pizzas");
   } else errores.push("Elegí un tipo de promoción válido.");
   return [...new Set(errores)];
 }
@@ -209,15 +213,15 @@ export function margenOferta(oferta: OfertaInput, productos: readonly ProductoOf
     ahorroMinimo = Math.min(...elegibles.map(p => p.precio * c.porcentaje / 100)); ahorroMaximo = Math.max(...elegibles.map(p => p.precio * c.porcentaje / 100));
     tarjeta = Math.min(...casos.map(c => c.margen - c.cobro * comision));
   } else {
-    const c = oferta.config, barata = [...pizzas].sort((a, b) => a.precio - b.precio || b.costo - a.costo)[0];
+    const c = oferta.config, cuentan = pizzas.filter(x => !(c.excluidas ?? []).includes(x.id)), barata = [...cuentan].sort((a, b) => a.precio - b.precio || b.costo - a.costo)[0];
     const base = c.minimoPizzas * (barata.precio - barata.costo);
     const netos = c.opciones.map(o => c.cantidad * (o.suplemento - p(o.producto).costo));
-    peor = c.minimoPizzas * Math.min(...pizzas.map(p => p.precio - p.costo)) + Math.min(...netos);
-    mejor = c.minimoPizzas * Math.max(...pizzas.map(p => p.precio - p.costo)) + Math.max(...netos);
+    peor = c.minimoPizzas * Math.min(...cuentan.map(p => p.precio - p.costo)) + Math.min(...netos);
+    mejor = c.minimoPizzas * Math.max(...cuentan.map(p => p.precio - p.costo)) + Math.max(...netos);
     pedidoMinimo = base + Math.min(...netos);
     costoRegalo = c.cantidad * Math.max(...c.opciones.map(o => p(o.producto).costo));
     ahorroMinimo = c.cantidad * Math.min(...c.opciones.map(o => p(o.producto).precio - o.suplemento)); ahorroMaximo = c.cantidad * Math.max(...c.opciones.map(o => p(o.producto).precio - o.suplemento));
-    tarjeta = c.minimoPizzas * Math.min(...pizzas.map(p => p.precio * (1 - comision) - p.costo))
+    tarjeta = c.minimoPizzas * Math.min(...cuentan.map(p => p.precio * (1 - comision) - p.costo))
       + Math.min(...c.opciones.map(o => c.cantidad * (o.suplemento * (1 - comision) - p(o.producto).costo)));
   }
   if (![peor, mejor, ahorroMinimo, ahorroMaximo, tarjeta, pedidoMinimo ?? 0, costoRegalo ?? 0].every(Number.isFinite)) return { ...vacio, errores: ["Los importes están fuera de rango."] };
@@ -237,7 +241,8 @@ export function resumenOferta(o: OfertaInput, productos: readonly ProductoOferta
   try {
     if (o.tipo === "combo") return `${o.config.lugares.map(l => `${l.cantidad} × ${l.productos.map(id => productos.find(p => p.id === id)?.nombre ?? "Producto no disponible").join(" / ")}`).join(" + ")} · ${pesos(o.config.precio)}`;
     if (o.tipo === "descuento_cantidad") return `Cada ${o.config.cada} pizzas, la más barata al ${o.config.porcentaje}% de descuento`;
-    return `Con ${o.config.minimoPizzas} pizzas, ${o.config.cantidad} bebida(s) de regalo`;
+    const fuera = (o.config.excluidas ?? []).map(id => productos.find(p => p.id === id)?.nombre).filter(Boolean);
+    return `Con ${o.config.minimoPizzas} pizzas, ${o.config.cantidad} bebida(s) de regalo${fuera.length ? ` · no cuentan: ${fuera.join(", ")}` : ""}`;
   } catch { return "Revisá la configuración"; }
 }
 

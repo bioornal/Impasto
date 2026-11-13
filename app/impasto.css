@@ -2783,3 +2783,10 @@ html.ficha-abierta .toast{ top:calc(14px + env(safe-area-inset-top)); bottom:aut
 .ci-price s{ margin-right:4px; font-weight:400; font-size:.85em; color:var(--muted); }
 .ci-gratis{ color:var(--accent-2); }
 .drawer-ship.is-promo{ background:var(--bg-2); }
+/* Vaciar el carrito: discreto, con confirmación en el lugar */
+.drawer-head-acciones{ display:flex; align-items:center; gap:8px; }
+.drawer-vaciar-confirmar{ display:flex; gap:6px; }
+.drawer-vaciar{ min-height:34px; padding:0 12px; border-radius:999px; border:1px solid var(--line-2); background:transparent; color:var(--ink-2); font-size:13px; font-weight:600; cursor:pointer; }
+.drawer-vaciar:hover{ border-color:var(--ink-2); color:var(--ink); }
+.drawer-vaciar.si{ border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
+.drawer-vaciar:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
